@@ -1,0 +1,9 @@
+fastapi~=0.67.0
+beautifulsoup4~=4.9.3
+graypy~=2.1.0
+PyYAML
+python-multipart
+lxml==4.6.3
+pydantic~=1.8.2
+uvicorn
+gunicorn
