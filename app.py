@@ -19,3 +19,8 @@ async def info():
 async def error():
     graylog.error("This is a test error from the error endpoint")
     raise HTTPException(status_code=500, detail='This is a test error from the error endpoint')
+
+
+@app.post('/labeled_data')
+async def labeled_data():
+    pass

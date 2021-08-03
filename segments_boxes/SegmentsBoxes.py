@@ -1,31 +1,18 @@
 import json
 from typing import List
 
-from information_extraction.InformationExtraction import InformationExtraction
-from information_extraction.Segment import Segment
-
 
 class SegmentBox:
-    def __init__(self, text, left, top, width, height, page_number):
-        self.text = text
+    def __init__(self, page_number, left, top, width, height, ):
         self.left = left
         self.top = top
         self.width = width
         self.height = height
         self.page_number = page_number
 
-    @staticmethod
-    def from_segment(segment: Segment) -> 'SegmentBox':
-        return SegmentBox(segment.text_content,
-                          segment.left,
-                          segment.top,
-                          segment.width,
-                          segment.height,
-                          segment.page_number)
-
     def to_dictionary(self):
-        return {"text": self.text, "left": self.left, "top": self.top, "width": self.width, "height": self.height,
-                "pageNumber": self.page_number}
+        return {"pageNumber": self.page_number,
+                "left": self.left, "top": self.top, "width": self.width, "height": self.height}
 
 
 class SegmentsBoxes:
@@ -39,13 +26,3 @@ class SegmentsBoxes:
         segments_boxes_json = {"pageWidth": self.page_width, "pageHeight": self.page_height, "segments": segments}
         return json.dumps(segments_boxes_json)
 
-    @staticmethod
-    def from_information_extraction(information_extraction: InformationExtraction) -> 'SegmentsBoxes':
-        if not len(information_extraction.segments):
-            return SegmentsBoxes(information_extraction.pdf_features.page_width,
-                                 information_extraction.pdf_features.page_height, [])
-
-        segment_boxes = [SegmentBox.from_segment(segment) for segment in information_extraction.segments]
-
-        return SegmentsBoxes(information_extraction.pdf_features.page_width,
-                             information_extraction.pdf_features.page_height, segment_boxes)
