@@ -6,8 +6,8 @@ from SegmentBox import SegmentBox
 
 
 class LabeledData(BaseModel):
-    xml_file_name: str
     extraction_name: str
+    xml_file_name: str
     tenant: str
     label_text: str
     page_width: float

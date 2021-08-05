@@ -11,13 +11,10 @@ class XmlFile:
         self.filename = filename
 
     def save(self, file: bytes):
-        if not os.path.exists(f'{self.root_folder}/docker_volume/labeled_xmls'):
-            os.mkdir(f'{self.root_folder}/docker_volume/labeled_xmls')
+        if not os.path.exists(f'{self.root_folder}/docker_volume/{self.tenant}'):
+            os.mkdir(f'{self.root_folder}/docker_volume/{self.tenant}')
 
-        if not os.path.exists(f'{self.root_folder}/docker_volume/labeled_xmls/{self.tenant}'):
-            os.mkdir(f'{self.root_folder}/docker_volume/labeled_xmls/{self.tenant}')
-
-        path = f'{self.root_folder}/docker_volume/labeled_xmls/{self.tenant}/{self.filename}'
+        path = f'{self.root_folder}/docker_volume/{self.tenant}/{self.filename}'
 
         file_path_pdf = pathlib.Path(path)
         file_path_pdf.write_bytes(file)

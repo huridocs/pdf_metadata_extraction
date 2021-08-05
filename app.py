@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
 from LabeledData import LabeledData
+from PredictionData import PredictionData
 from get_graylog import get_graylog
 from xml_file.XmlFile import XmlFile
 
@@ -33,8 +34,16 @@ async def labeled_data_post(labeled_data: LabeledData):
     return 'labeled data saved'
 
 
-@app.post('/labeled_xml/{tenant}')
-async def labeled_xml(tenant, file: UploadFile = File(...)):
+@app.post('/prediction_data')
+async def labeled_data_post(prediction_data: PredictionData):
+    client = pymongo.MongoClient('mongodb://mongo:27017')
+    pdf_information_extraction_db = client['pdf_information_extraction']
+    pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
+    return 'labeled data saved'
+
+
+@app.post('/xml_file/{tenant}')
+async def xml_file(tenant, file: UploadFile = File(...)):
     filename = '"No file name! Probably an error about the file in the request"'
     try:
         filename = file.filename
