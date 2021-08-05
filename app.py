@@ -1,8 +1,8 @@
+import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
-from pydantic import BaseModel
-
+from LabeledData import LabeledData
 from get_graylog import get_graylog
 from xml_file.XmlFile import XmlFile
 
@@ -11,10 +11,6 @@ graylog = get_graylog()
 app = FastAPI()
 
 graylog.info(f'PDF information extraction service has started')
-
-
-class LabeledDataParams(BaseModel):
-    label_id: str
 
 
 @app.get('/info')
@@ -30,8 +26,11 @@ async def error():
 
 
 @app.post('/labeled_data')
-async def labeled_data(labeled_data_params: LabeledDataParams):
-    pass
+async def labeled_data_post(labeled_data: LabeledData):
+    client = pymongo.MongoClient('mongodb://mongo:27017')
+    pdf_information_extraction_db = client['pdf_information_extraction']
+    pdf_information_extraction_db.labeleddata.insert_one(labeled_data.dict())
+    return 'labeled data saved'
 
 
 @app.post('/labeled_xml/{tenant}')
