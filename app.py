@@ -2,8 +2,8 @@ import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
-from LabeledData import LabeledData
-from PredictionData import PredictionData
+from data.LabeledData import LabeledData
+from data.PredictionData import PredictionData
 from get_graylog import get_graylog
 from xml_file.XmlFile import XmlFile
 

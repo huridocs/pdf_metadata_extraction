@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from SegmentBox import SegmentBox
+from data.SegmentBox import SegmentBox
 
 
 class LabeledData(BaseModel):
