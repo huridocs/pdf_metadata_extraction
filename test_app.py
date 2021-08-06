@@ -25,8 +25,9 @@ class TestApp(TestCase):
             response = client.post("/xml_file/tenant_one", files=files)
             self.assertEqual('task registered', response.json())
             self.assertEqual(200, response.status_code)
-            self.assertTrue(os.path.exists('./docker_volume/tenant_one/test.pdf'))
-            os.remove('./docker_volume/tenant_one/test.pdf')
+            self.assertTrue(os.path.exists('./docker_volume/tenant_one/xml_files/test.pdf'))
+            os.remove('./docker_volume/tenant_one/xml_files/test.pdf')
+            os.rmdir('./docker_volume/tenant_one/xml_files')
             os.rmdir('./docker_volume/tenant_one')
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])

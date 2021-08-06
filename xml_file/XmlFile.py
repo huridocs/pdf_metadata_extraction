@@ -14,7 +14,10 @@ class XmlFile:
         if not os.path.exists(f'{self.root_folder}/docker_volume/{self.tenant}'):
             os.mkdir(f'{self.root_folder}/docker_volume/{self.tenant}')
 
-        path = f'{self.root_folder}/docker_volume/{self.tenant}/{self.filename}'
+        if not os.path.exists(f'{self.root_folder}/docker_volume/{self.tenant}/xml_files'):
+            os.mkdir(f'{self.root_folder}/docker_volume/{self.tenant}/xml_files')
+
+        path = f'{self.root_folder}/docker_volume/{self.tenant}/xml_files/{self.filename}'
 
         file_path_pdf = pathlib.Path(path)
         file_path_pdf.write_bytes(file)

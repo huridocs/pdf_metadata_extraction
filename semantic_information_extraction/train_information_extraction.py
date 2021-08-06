@@ -2,15 +2,15 @@ import os
 from random import choice
 from typing import List
 
-from information_extraction.InformationExtraction import InformationExtraction
-from information_extraction.Model import Model
+from segment_predictor.InformationExtraction import SegmentPredictor
+from segment_predictor.Model import Model
 import pandas as pd
 
-from information_extraction.SegmentsBoxes import SegmentsBoxes
+from segment_predictor.SegmentsBoxes import SegmentsBoxes
 
 
 def train_information_extraction(name, pdfs, segments_boxes: SegmentsBoxes,  texts: List[str]):
-    information_extractions: List[InformationExtraction] = []
+    information_extractions: List[SegmentPredictor] = []
 
     xml_labeled_documents = []
     for information_extraction in information_extractions:
