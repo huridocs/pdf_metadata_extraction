@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import mongomock
 import pymongo
@@ -20,22 +21,21 @@ class TestApp(TestCase):
         self.assertEqual({'detail': 'This is a test error from the error endpoint'}, response.json())
 
     def test_xml_file(self):
-        with open('test_xml/test.xml', 'rb') as stream:
+        with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
             files = {'file': stream}
-            response = client.post("/xml_file/tenant%20one", files=files)
+            response = client.post("/xml_file/tenant%20one/extraction%20name", files=files)
             self.assertEqual('task registered', response.json())
             self.assertEqual(200, response.status_code)
-            self.assertTrue(os.path.exists('./docker_volume/tenant_one/xml_files/test.xml'))
-            os.remove('./docker_volume/tenant_one/xml_files/test.xml')
-            os.rmdir('./docker_volume/tenant_one/xml_files')
-            os.rmdir('./docker_volume/tenant_one')
+            self.assertTrue(os.path.exists('./docker_volume/tenant_one/extraction_name/xml_files/test.xml'))
+
+            shutil.rmtree('./docker_volume/tenant_one', ignore_errors=True)
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
     def test_labeled_data(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
 
         json_data = {"xml_file_name": "xml_file_name",
-                     "extraction_name": "extraction_name",
+                     "extraction_name": "extraction name",
                      "tenant": "tenant one",
                      "label_text": "text",
                      "page_width": 1.1,
@@ -111,7 +111,7 @@ class TestApp(TestCase):
         mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
 
         json_data = {"xml_file_name": "xml_file_name",
-                     "extraction_name": "extraction_name",
+                     "extraction_name": "extraction name",
                      "tenant": "tenant",
                      }
 

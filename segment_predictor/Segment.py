@@ -3,12 +3,12 @@ from typing import List
 import numpy as np
 
 from data.SegmentBox import SegmentBox
-from segment_predictor.PDFFeatures import PDFFeatures
+from segment_predictor.PdfFeatures import PdfFeatures
 from segment_predictor.SegmentTag import SegmentTag
 
 
 class Segment(object):
-    def __init__(self, segment_tag: SegmentTag, pdf_features: PDFFeatures):
+    def __init__(self, segment_tag: SegmentTag, pdf_features: PdfFeatures):
         self.ml_class_label: int = 0
         self.confidence: float = 0
         self.page_number = segment_tag.page_number

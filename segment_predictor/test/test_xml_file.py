@@ -1,4 +1,5 @@
 import os
+import shutil
 from unittest import TestCase
 
 import mongomock
@@ -9,18 +10,19 @@ from segment_predictor.XmlFile import XmlFile
 
 class TestXmlFile(TestCase):
     tenant = "tenant_test"
+    extraction_name = 'extraction_name'
 
     def test_save(self):
-        with open('../../docker_volume/tenant_test/xml_files/test.xml', 'rb') as file:
-            XmlFile(file_name='test.xml', tenant='tenant_one').save(file=file.read())
+        with open('../../docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as file:
+            xml_file = XmlFile(file_name='test.xml', tenant='tenant_one', extraction_name='extraction_one')
+            xml_file.save(file=file.read())
 
-        self.assertTrue(os.path.exists('../../docker_volume/tenant_one/xml_files/test.xml'))
-        os.remove('../../docker_volume/tenant_one/xml_files/test.xml')
-        os.rmdir('../../docker_volume/tenant_one/xml_files')
-        os.rmdir('../../docker_volume/tenant_one')
+        self.assertTrue(os.path.exists('../../docker_volume/tenant_one/extraction_one/xml_files/test.xml'))
+
+        shutil.rmtree('../../docker_volume/tenant_one', ignore_errors=True)
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_set_segments(self):
+    def test_get_segments(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
 
         json_data = {"xml_file_name": "test.xml",
@@ -62,8 +64,8 @@ class TestXmlFile(TestCase):
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
         mongo_client.pdf_information_extraction.labeleddata.insert_one(last_json_data)
 
-        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant)
-        xml_file.set_segments(extraction_name='extraction_name')
+        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant, extraction_name=TestXmlFile.extraction_name)
+        xml_file.get_segments()
 
         self.assertEqual(612, xml_file.segments[0].page_width)
         self.assertEqual(792, xml_file.segments[0].page_height)
@@ -76,7 +78,7 @@ class TestXmlFile(TestCase):
             [segment for segment in xml_file.segments if segment.ml_class_label == 1][0].text_content)
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_set_segments_page_2(self):
+    def test_get_segments_page_2(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
 
         json_data = {"xml_file_name": "test.xml",
@@ -94,17 +96,18 @@ class TestXmlFile(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant)
-        xml_file.set_segments(extraction_name='extraction_name')
+        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant, extraction_name=TestXmlFile.extraction_name)
+        xml_file.get_segments()
         labeled_segments = [segment for segment in xml_file.segments if segment.ml_class_label == 1]
 
         self.assertEqual(612, xml_file.segments[0].page_width)
         self.assertEqual(792, xml_file.segments[0].page_height)
         self.assertEqual(1, len(labeled_segments))
         self.assertTrue('In accordance with paragraph' in labeled_segments[0].text_content)
+        self.assertTrue('every four years' in labeled_segments[0].text_content)
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_set_segments_when_no_file(self):
+    def test_get_segments_when_no_file(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
 
         json_data = {"xml_file_name": "test.xml",
@@ -119,15 +122,15 @@ class TestXmlFile(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant)
-        xml_file.set_segments(extraction_name='extraction_name')
+        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant, extraction_name=TestXmlFile.extraction_name)
+        xml_file.get_segments()
 
         self.assertEqual(0, len(xml_file.segments))
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_set_segments_when_no_data_base_entry(self):
-        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant)
-        xml_file.set_segments(extraction_name='extraction_name')
+    def test_get_segments_when_no_data_base_entry(self):
+        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant, extraction_name=TestXmlFile.extraction_name)
+        xml_file.get_segments()
 
         self.assertEqual(0, len(xml_file.segments))
 

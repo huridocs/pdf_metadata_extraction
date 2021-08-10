@@ -9,39 +9,36 @@ from bs4 import BeautifulSoup
 
 from data.LabeledData import LabeledData
 from segment_predictor.Font import Font
-from segment_predictor.PDFFeatures import PDFFeatures
+from segment_predictor.PdfFeatures import PdfFeatures
 from segment_predictor.Segment import Segment
 from segment_predictor.SegmentTag import SegmentTag
 
 
 class XmlFile:
-    def __init__(self, file_name: str, tenant: str):
-        path = Path(os.path.dirname(os.path.realpath(__file__)))
-        self.root_folder = path.parent.absolute()
-        self.tenant = tenant
+    def __init__(self, file_name: str, tenant: str, extraction_name: str):
         self.file_name = file_name
-        self.file_path = pathlib.Path(f'{self.root_folder}/docker_volume/{self.tenant}/xml_files/{self.file_name}')
+        self.tenant = tenant
+        self.extraction_name = extraction_name
+        path = Path(os.path.dirname(os.path.realpath(__file__)))
+        self.root_folder = f'{path.parent.absolute()}/docker_volume/{self.tenant}/{self.extraction_name}/xml_files'
+        self.file_path = pathlib.Path(f'{self.root_folder}/{self.file_name}')
         self.xml_file = None
         self.segments = list()
-        self.extraction_name = None
 
     def save(self, file: bytes):
         self.xml_file = file
-        if not os.path.exists(f'{self.root_folder}/docker_volume/{self.tenant}'):
-            os.mkdir(f'{self.root_folder}/docker_volume/{self.tenant}')
 
-        if not os.path.exists(self.file_path.parents[0]):
-            os.mkdir(self.file_path.parents[0])
+        if not os.path.exists(self.root_folder):
+            os.makedirs(self.root_folder)
 
         self.file_path.write_bytes(self.xml_file)
 
-    def set_segments(self, extraction_name):
+    def set_segments(self):
         try:
             self.xml_file = self.file_path.read_bytes()
         except FileNotFoundError:
             return
 
-        self.extraction_name = extraction_name
         labeled_data = self.get_labeled_data_from_database()
 
         if not labeled_data:
@@ -61,7 +58,7 @@ class XmlFile:
             for text_line in self.get_text_lines(xml_page):
                 segment_tags.append(SegmentTag(text_line, page_width, page_height, page_number, fonts))
 
-        pdf_features = PDFFeatures(segment_tags)
+        pdf_features = PdfFeatures(segment_tags)
         one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in segment_tags]
 
         return one_tag_segments
@@ -103,3 +100,7 @@ class XmlFile:
 
         for segment in self.segments:
             segment.set_ml_label(labeled_data.label_segments_boxes)
+
+    def get_segments(self):
+        self.set_segments()
+        return self.segments

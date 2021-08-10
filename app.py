@@ -14,10 +14,10 @@ app = FastAPI()
 graylog.info(f'PDF information extraction service has started')
 
 
-def sanitize_tenant(tenant: str):
-    tenant = tenant.replace(' ', '_')
-    tenant = ''.join(x for x in tenant if x.isalnum() or x == '_')
-    return tenant
+def sanitize_name(name: str):
+    name = name.replace(' ', '_')
+    name = ''.join(x for x in name if x.isalnum() or x == '_')
+    return name
 
 
 @app.get('/info')
@@ -36,7 +36,8 @@ async def error():
 async def labeled_data_post(labeled_data: LabeledData):
     client = pymongo.MongoClient('mongodb://mongo:27017')
     pdf_information_extraction_db = client['pdf_information_extraction']
-    labeled_data.tenant = sanitize_tenant(labeled_data.tenant)
+    labeled_data.tenant = sanitize_name(labeled_data.tenant)
+    labeled_data.extraction_name = sanitize_name(labeled_data.extraction_name)
     pdf_information_extraction_db.labeleddata.insert_one(labeled_data.dict())
     return 'labeled data saved'
 
@@ -45,17 +46,20 @@ async def labeled_data_post(labeled_data: LabeledData):
 async def prediction_data_post(prediction_data: PredictionData):
     client = pymongo.MongoClient('mongodb://mongo:27017')
     pdf_information_extraction_db = client['pdf_information_extraction']
-    prediction_data.tenant = sanitize_tenant(prediction_data.tenant)
+    prediction_data.tenant = sanitize_name(prediction_data.tenant)
+    prediction_data.extraction_name = sanitize_name(prediction_data.extraction_name)
     pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
     return 'labeled data saved'
 
 
-@app.post('/xml_file/{tenant}')
-async def xml_file(tenant, file: UploadFile = File(...)):
+@app.post('/xml_file/{tenant}/{extraction_name}')
+async def xml_file(tenant, extraction_name, file: UploadFile = File(...)):
     filename = '"No file name! Probably an error about the file in the request"'
     try:
         filename = file.filename
-        XmlFile(file_name=filename, tenant=sanitize_tenant(tenant)).save(file=file.file.read())
+        tenant = sanitize_name(tenant)
+        extraction_name = sanitize_name(extraction_name)
+        XmlFile(file_name=filename, tenant=tenant, extraction_name=extraction_name).save(file=file.file.read())
         return 'task registered'
     except Exception:
         graylog.error(f'Error adding task {filename}', exc_info=1)

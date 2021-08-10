@@ -4,7 +4,7 @@ from statistics import mode
 from segment_predictor.SegmentTag import SegmentTag
 
 
-class PDFFeatures:
+class PdfFeatures:
     def __init__(self, segment_tags: List[SegmentTag]):
         self.page_height = float(segment_tags[0].page_height)
         self.page_width = float(segment_tags[0].page_width)
