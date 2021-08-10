@@ -9,10 +9,10 @@ from segment_predictor.XmlFile import XmlFile
 
 
 class TestXmlFile(TestCase):
-    tenant = "test_segments_tenant"
+    tenant = "tenant_test"
 
     def test_save(self):
-        with open('../../test_xml/test.xml', 'rb') as file:
+        with open('../../docker_volume/tenant_test/xml_files/test.xml', 'rb') as file:
             XmlFile(file_name='test.xml', tenant='tenant_one').save(file=file.read())
 
         self.assertTrue(os.path.exists('../../docker_volume/tenant_one/xml_files/test.xml'))
@@ -63,10 +63,6 @@ class TestXmlFile(TestCase):
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
         mongo_client.pdf_information_extraction.labeleddata.insert_one(last_json_data)
 
-        os.mkdir(f'../../docker_volume/{TestXmlFile.tenant}')
-        os.mkdir(f'../../docker_volume/{TestXmlFile.tenant}/xml_files')
-        shutil.copyfile(f'../../test_xml/test.xml', f'../../docker_volume/{TestXmlFile.tenant}/xml_files/test.xml')
-
         xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant)
         xml_file.set_segments(extraction_name='extraction_name')
 
@@ -80,9 +76,33 @@ class TestXmlFile(TestCase):
             'Opening dates of forthcoming regular sessions of the General Assembly and of the general debate',
             [segment for segment in xml_file.segments if segment.ml_class_label == 1][0].text_content)
 
-        os.remove(f'../../docker_volume/{TestXmlFile.tenant}/xml_files/test.xml')
-        os.rmdir(f'../../docker_volume/{TestXmlFile.tenant}/xml_files')
-        os.rmdir(f'../../docker_volume/{TestXmlFile.tenant}')
+    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    def test_set_segments_page_2(self):
+        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+
+        json_data = {"xml_file_name": "test.xml",
+                     "extraction_name": "extraction_name",
+                     "tenant": TestXmlFile.tenant,
+                     "label_text": "text",
+                     "page_width": 612,
+                     "page_height": 792,
+                     "xml_segments_boxes": [
+                         {"left": 0, "top": 130, "width": 612, "height": 70,
+                          "page_number": 2},
+                     ],
+                     "label_segments_boxes": [{"left": 300, "top": 150, "width": 5, "height": 5, "page_number": 2}]
+                     }
+
+        mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
+
+        xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant)
+        xml_file.set_segments(extraction_name='extraction_name')
+        labeled_segments = [segment for segment in xml_file.segments if segment.ml_class_label == 1]
+
+        self.assertEqual(612, xml_file.segments[0].page_width)
+        self.assertEqual(792, xml_file.segments[0].page_height)
+        self.assertEqual(1, len(labeled_segments))
+        self.assertTrue('In accordance with paragraph' in labeled_segments[0].text_content)
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
     def test_set_segments_when_no_file(self):
@@ -90,7 +110,7 @@ class TestXmlFile(TestCase):
 
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "extraction_name",
-                     "tenant": TestXmlFile.tenant,
+                     "tenant": 'non-existent_tenant',
                      "label_text": "text",
                      "page_width": 612,
                      "page_height": 792,
@@ -106,17 +126,9 @@ class TestXmlFile(TestCase):
         self.assertEqual(0, len(xml_file.segments))
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_set_segments_when_data_base_entry(self):
-        os.mkdir(f'../../docker_volume/{TestXmlFile.tenant}')
-        os.mkdir(f'../../docker_volume/{TestXmlFile.tenant}/xml_files')
-        shutil.copyfile(f'../../test_xml/test.xml', f'../../docker_volume/{TestXmlFile.tenant}/xml_files/test.xml')
-
+    def test_set_segments_when_no_data_base_entry(self):
         xml_file = XmlFile(file_name='test.xml', tenant=TestXmlFile.tenant)
         xml_file.set_segments(extraction_name='extraction_name')
 
         self.assertEqual(0, len(xml_file.segments))
-
-        os.remove(f'../../docker_volume/{TestXmlFile.tenant}/xml_files/test.xml')
-        os.rmdir(f'../../docker_volume/{TestXmlFile.tenant}/xml_files')
-        os.rmdir(f'../../docker_volume/{TestXmlFile.tenant}')
 

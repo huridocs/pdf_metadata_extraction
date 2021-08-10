@@ -51,7 +51,7 @@ class XmlFile:
         pdf_features = PDFFeatures(segment_tags)
         one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in segment_tags]
 
-        self.load_segments(one_tag_segments, labeled_data)
+        self.create_segments_from_labeled_data(one_tag_segments, labeled_data)
 
     def get_segment_tags(self, xml: BeautifulSoup) -> (List[SegmentTag], List[Font]):
         segment_tags = list()
@@ -89,12 +89,12 @@ class XmlFile:
 
         return LabeledData(**document)
 
-    def load_segments(self, one_tag_segments: List[Segment], labeled_data: LabeledData):
+    def create_segments_from_labeled_data(self, one_tag_segments: List[Segment], labeled_data: LabeledData):
         box_segments_to_merge = defaultdict(list)
         for segment in one_tag_segments:
             index = segment.intersects_with_boxes(labeled_data.xml_segments_boxes)
 
-            if index:
+            if index is not None:
                 box_segments_to_merge[index].append(segment)
             else:
                 box_segments_to_merge[segment].append(segment)
