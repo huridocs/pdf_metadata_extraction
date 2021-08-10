@@ -1,5 +1,6 @@
 import os
 import pathlib
+import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import List
@@ -15,7 +16,7 @@ from segment_predictor.SegmentTag import SegmentTag
 
 
 class XmlFile:
-    def __init__(self, file_name: str, tenant: str, extraction_name: str):
+    def __init__(self, tenant: str, extraction_name: str, file_name: str = ''):
         self.file_name = file_name
         self.tenant = tenant
         self.extraction_name = extraction_name
@@ -33,13 +34,11 @@ class XmlFile:
 
         self.file_path.write_bytes(self.xml_file)
 
-    def set_segments(self):
+    def set_segments(self, labeled_data: LabeledData):
         try:
             self.xml_file = self.file_path.read_bytes()
         except FileNotFoundError:
             return
-
-        labeled_data = self.get_labeled_data_from_database()
 
         if not labeled_data:
             return
@@ -74,18 +73,6 @@ class XmlFile:
 
         return page_text_lines
 
-    def get_labeled_data_from_database(self):
-        client = pymongo.MongoClient('mongodb://mongo:27017')
-        pdf_information_extraction_db = client['pdf_information_extraction']
-
-        find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant, "xml_file_name": self.file_name}
-        document = pdf_information_extraction_db.labeleddata.find_one(find_filter)
-
-        if not document:
-            return
-
-        return LabeledData(**document)
-
     def create_segments_from_labeled_data(self, one_tag_segments: List[Segment], labeled_data: LabeledData):
         box_segments_to_merge = defaultdict(list)
         for segment in one_tag_segments:
@@ -101,6 +88,12 @@ class XmlFile:
         for segment in self.segments:
             segment.set_ml_label(labeled_data.label_segments_boxes)
 
-    def get_segments(self):
-        self.set_segments()
-        return self.segments
+    @staticmethod
+    def get_segments(labeled_data: LabeledData):
+        xml_file = XmlFile(file_name=labeled_data.xml_file_name, tenant=labeled_data.tenant,
+                           extraction_name=labeled_data.extraction_name)
+        xml_file.set_segments(labeled_data)
+        return xml_file.segments
+
+    def remove_files(self):
+        shutil.rmtree(self.root_folder)

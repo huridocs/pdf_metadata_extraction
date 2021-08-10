@@ -139,6 +139,7 @@ class Segment(object):
 
     def get_features_array(self) -> np.array:
         return np.array([
+            self.page_number,
             self.pdf_features.font_size_mode,
             self.pdf_features.lines_space_mode,
             self.pdf_features.font_family_mode_normalized,
