@@ -47,13 +47,10 @@ class XmlFile:
         if not labeled_data:
             return
 
-        segment_tags = self.get_segment_tags(BeautifulSoup(self.xml_file, 'lxml-xml'))
-        pdf_features = PDFFeatures(segment_tags)
-        one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in segment_tags]
-
+        one_tag_segments = self.get_one_tag_segments(BeautifulSoup(self.xml_file, 'lxml-xml'))
         self.create_segments_from_labeled_data(one_tag_segments, labeled_data)
 
-    def get_segment_tags(self, xml: BeautifulSoup) -> (List[SegmentTag], List[Font]):
+    def get_one_tag_segments(self, xml: BeautifulSoup) -> (List[SegmentTag], List[Font]):
         segment_tags = list()
         xml_fonts = xml.find_all('TextStyle')
         fonts = Font.from_page_xml_tag(xml_fonts)
@@ -64,7 +61,10 @@ class XmlFile:
             for text_line in self.get_text_lines(xml_page):
                 segment_tags.append(SegmentTag(text_line, page_width, page_height, page_number, fonts))
 
-        return segment_tags
+        pdf_features = PDFFeatures(segment_tags)
+        one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in segment_tags]
+
+        return one_tag_segments
 
     @staticmethod
     def get_text_lines(xml_page):
