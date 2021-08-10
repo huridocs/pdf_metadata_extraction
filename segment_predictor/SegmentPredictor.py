@@ -16,7 +16,7 @@ class SegmentPredictor:
         self.segments: List[Segment] = list()
         root_folder = Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute()
         self.model_path = f'{root_folder}/docker_volume/{self.tenant}/segment_predictor_model/model.model'
-        self.xml_paths = f'{root_folder}/docker_volume/{self.tenant}/xmls/'
+        self.xml_paths = f'{root_folder}/docker_volume/{self.tenant}/xml_files/'
         self.model = None
         self.load_model()
 
@@ -31,19 +31,7 @@ class SegmentPredictor:
 
     def create_model(self):
         self.set_segments()
-
-        X, y = self.get_training_data()
-
-        if X is None:
-            return
-
-        model = self.light_gbm(X, y)
-
-        if not model:
-            return
-
-        self.model = model
-        self.model.save_model(self.model_path, num_iteration=model.best_iteration)
+        self.run_light_gbm()
 
     def get_training_data(self):
         features_array = None
@@ -70,8 +58,12 @@ class SegmentPredictor:
                                features_objective_segment),
                               axis=None)
 
-    @staticmethod
-    def light_gbm(X_train, y_train):
+    def run_light_gbm(self):
+        x_train, y_train = self.get_training_data()
+
+        if x_train is None:
+            return
+
         parameters = dict()
         parameters["num_leaves"] = 35
         parameters['feature_fraction'] = 1
@@ -84,8 +76,13 @@ class SegmentPredictor:
         parameters['verbose'] = -1
         parameters['boosting_type'] = 'gbdt'
 
-        train_data = lgb.Dataset(X_train, y_train)
+        train_data = lgb.Dataset(x_train, y_train)
         num_round = 3000
         bst = lgb.train(parameters, train_data, num_round)
-        return bst
+
+        if not bst:
+            return
+
+        self.model = bst
+        self.model.save_model(self.model_path, num_iteration=bst.best_iteration)
 

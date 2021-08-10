@@ -1,20 +1,19 @@
 import re
 from typing import List
 import numpy as np
-from matplotlib.patches import Rectangle
 
-from pdfalto.PDFFeatures import PDFFeatures
-from segment.SegmentTag import SegmentTag
+from data.SegmentBox import SegmentBox
+from segment_predictor.PDFFeatures import PDFFeatures
+from segment_predictor.SegmentTag import SegmentTag
 
 
 class Segment(object):
-    def __init__(self, segment_tags: List[SegmentTag], pdf_features: PDFFeatures, page_number: int):
+    def __init__(self, segment_tag: SegmentTag, pdf_features: PDFFeatures):
         self.ml_class_label: int = 0
         self.confidence: float = 0
-        self.page_number = page_number
-        self.segment_tags = segment_tags
+        self.page_number = segment_tag.page_number
+        self.segment_tags = [segment_tag]
         self.pdf_features = pdf_features
-        self.images = pdf_features.page_images[page_number]
         self.page_width = self.pdf_features.page_width
         self.page_height = self.pdf_features.page_height
         self.text_content: str = ''
@@ -49,8 +48,6 @@ class Segment(object):
         self.fourth_word_type: int = 100
         self.last_word_type: int = 100
         self.dots_percentage: float = 0
-        self.distance_to_last_image: float = 0
-        self.last_image_height: float = 0
         self.set_features()
 
     def initialize_features(self):
@@ -89,8 +86,6 @@ class Segment(object):
         self.fourth_word_type: int = 100
         self.last_word_type: int = 100
         self.dots_percentage: float = 0
-        self.distance_to_last_image: float = 0
-        self.last_image_height: float = 0
 
     def set_features(self):
         self.initialize_features()
@@ -120,11 +115,6 @@ class Segment(object):
         self.bottom = self.bottom / self.page_height
         self.right = self.right / self.page_width
         self.left = self.left / self.page_width
-
-        if len(list(self.images)) > 0:
-            positions = [float(image['VPOS']) + float(image['HEIGHT']) for image in list(self.images)]
-            self.last_image_height = max(positions) / self.page_height
-            self.distance_to_last_image = self.last_image_height - self.top
 
         self.text_content = ' '.join(words)
         self.text_len = len(self.text_content)
@@ -172,40 +162,33 @@ class Segment(object):
             self.starts_with_square_brackets,
             self.starts_letter_dot,
             self.dots_percentage,
-            self.distance_to_last_image,
-            self.last_image_height,
             1 if self.uppercase else 0
         ])
 
-    def is_selected(self, box_left, box_top, box_right, box_bottom):
-        left = self.left * self.page_width
-        right = self.right * self.page_width
-        top = self.top * self.page_height
-        bottom = self.bottom * self.page_height
-
-        if box_bottom < top or bottom < box_top:
+    def intersects_with_box(self, segment_box: SegmentBox):
+        if segment_box.page_number != self.page_number:
             return False
 
-        if box_right < left or right < box_left:
+        box_top = segment_box.top / self.page_height
+        box_bottom = (segment_box.top + segment_box.height) / self.page_height
+
+        if box_bottom < self.top or self.bottom < box_top:
+            return False
+
+        box_left = segment_box.left / self.page_width
+        box_right = (segment_box.left + segment_box.width) / self.page_width
+
+        if box_right < self.left or self.right < box_left:
             return False
 
         return True
 
-    def to_json(self):
-        return dict(self)
+    def intersects_with_boxes(self, segment_boxes: List[SegmentBox]):
+        for index, segment_box in enumerate(segment_boxes):
+            if self.intersects_with_box(segment_box):
+                return index
 
-    def create_text_patch(self, color: str):
-        left = self.left * self.page_width
-        top = self.top * self.page_height
-        height = self.height * self.page_height
-        width = self.width * self.page_width
-        return Rectangle((left, top), width, height, alpha=.2, facecolor=color)
-
-    def __iter__(self):
-        for attr, value in self.__dict__.items():
-            if attr == 'tags':
-                value = list(map(lambda x: str(x.tag), value))
-            yield attr, value
+        return None
 
     def tag_after_last_tag(self, tag: SegmentTag):
         if self.last_tag is None:
@@ -219,26 +202,22 @@ class Segment(object):
 
         return False
 
-    def load_prediction(self):
-        for tag in self.segment_tags:
-            if tag.ml_class_label != 0:
-                self.ml_class_label = tag.ml_class_label
+    def set_ml_label(self, segment_boxes: List[SegmentBox]):
+        for box in segment_boxes:
+            if self.intersects_with_box(box):
+                self.ml_class_label = 1
                 break
 
-    def remove_tag(self, segment_tag: SegmentTag):
-        self.segment_tags.remove(segment_tag)
-        if len(self.segment_tags) == 0:
-            self.initialize_features()
-            return
-        self.set_features()
+    @staticmethod
+    def merge(segments_to_merge: List['Segment']):
+        if len(segments_to_merge) == 1:
+            return segments_to_merge[0]
 
-    def add_tag(self, segment_tag: SegmentTag):
-        self.segment_tags.append(segment_tag)
-        self.set_features()
+        tags = []
+        for segment_to_merge in segments_to_merge:
+            tags.extend(segment_to_merge.segment_tags)
+        segment = segments_to_merge[0]
+        segment.segment_tags = tags
+        segment.set_features()
+        return segment
 
-    def merge_segment(self, segment_to_merge: 'Segment'):
-        tags = self.segment_tags
-        tags.extend(segment_to_merge.segment_tags)
-        self.initialize_features()
-        self.set_features()
-        return self

@@ -1,9 +1,4 @@
 import bs4
-import numpy as np
-from matplotlib.patches import Rectangle
-
-from segment.segmentation_config import *
-
 
 ML_CLASS_LABEL_PROPERTY = 'MLCLASSLABEL'
 GROUP = 'GROUP'
@@ -23,55 +18,11 @@ class SegmentTag:
         self.right = self.left + self.width
         self.bottom = self.top + self.height
 
-        try:
-            self.ml_class_label: int = int(self.tag[ML_CLASS_LABEL_PROPERTY])
-        except KeyError:
-            self.ml_class_label: int = 0
-
         self.font = []
         self.text = ''
 
         if len(tag_xml.find_all('String')) > 0:
             font_id = tag_xml.find_all('String')[0]['STYLEREFS']
             self.font = list(filter(lambda font: font.id == font_id, fonts))[0]
-
             self.text = ' '.join([string_tag['CONTENT'] for string_tag in tag_xml.find_all('String')])
 
-    def get_features(self):
-        x1 = self.left
-        y1 = self.top
-        width = self.width
-        height = self.height
-
-        x4 = (x1 + width)
-        y4 = (y1 + height)
-
-        result = np.array([x1, y1, x4, y4])
-        result = result / SCALE_FACTOR
-        return result
-
-    def get_id(self):
-        return f'{self.left}_{self.top}'
-
-    def is_selected(self, box_left, box_top, box_right, box_bottom):
-        if box_bottom < self.top or self.bottom < box_top:
-            return False
-
-        if box_right < self.left or self.right < box_left:
-            return False
-
-        return True
-
-    def create_text_patch(self, color: str):
-        left = self.left
-        top = self.top
-        width = self.width
-        height = self.height
-        return Rectangle((left, top), width, height, alpha=.2, facecolor=color)
-
-    def __eq__(self, other):
-        return (self.page_number, self.left, self.top, self.height, self.width) == (
-        other.page_number, other.left, other.top, other.height, other.width)
-
-    def __hash__(self):
-        return hash((self.page_number, self.left, self.top, self.height, self.width))

@@ -20,13 +20,13 @@ class TestApp(TestCase):
         self.assertEqual({'detail': 'This is a test error from the error endpoint'}, response.json())
 
     def test_xml_file(self):
-        with open('test_pdf/test.pdf', 'rb') as stream:
+        with open('test_xml/test.xml', 'rb') as stream:
             files = {'file': stream}
-            response = client.post("/xml_file/tenant_one", files=files)
+            response = client.post("/xml_file/tenant%20one", files=files)
             self.assertEqual('task registered', response.json())
             self.assertEqual(200, response.status_code)
-            self.assertTrue(os.path.exists('./docker_volume/tenant_one/xml_files/test.pdf'))
-            os.remove('./docker_volume/tenant_one/xml_files/test.pdf')
+            self.assertTrue(os.path.exists('./docker_volume/tenant_one/xml_files/test.xml'))
+            os.remove('./docker_volume/tenant_one/xml_files/test.xml')
             os.rmdir('./docker_volume/tenant_one/xml_files')
             os.rmdir('./docker_volume/tenant_one')
 
@@ -36,7 +36,7 @@ class TestApp(TestCase):
 
         json_data = {"xml_file_name": "xml_file_name",
                      "extraction_name": "extraction_name",
-                     "tenant": "tenant",
+                     "tenant": "tenant one",
                      "label_text": "text",
                      "page_width": 1.1,
                      "page_height": 2.1,
@@ -50,7 +50,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual('extraction_name', labeled_data_document['extraction_name'])
-        self.assertEqual('tenant', labeled_data_document['tenant'])
+        self.assertEqual('tenant_one', labeled_data_document['tenant'])
         self.assertEqual('text', labeled_data_document['label_text'])
         self.assertEqual(1.1, labeled_data_document['page_width'])
         self.assertEqual(2.1, labeled_data_document['page_height'])
@@ -83,7 +83,7 @@ class TestApp(TestCase):
 
         json_data = {"xml_file_name": "other_xml_file_name",
                      "extraction_name": "other_extraction_name",
-                     "tenant": "other_tenant",
+                     "tenant": "other tenant",
                      "label_text": "other_text",
                      "page_width": 4.1,
                      "page_height": 5.1,
