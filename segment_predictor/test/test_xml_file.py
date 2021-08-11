@@ -11,6 +11,7 @@ class TestXmlFile(TestCase):
     extraction_name = 'extraction_name'
 
     def test_save(self):
+        shutil.rmtree('../../docker_volume/tenant_one', ignore_errors=True)
         with open('../../docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as file:
             xml_file = XmlFile(file_name='test.xml', tenant='tenant_one', extraction_name='extraction_one')
             xml_file.save(file=file.read())

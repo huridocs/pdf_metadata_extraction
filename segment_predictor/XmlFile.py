@@ -20,17 +20,16 @@ class XmlFile:
         self.file_name = file_name
         self.tenant = tenant
         self.extraction_name = extraction_name
-        path = Path(os.path.dirname(os.path.realpath(__file__)))
-        self.root_folder = f'{path.parent.absolute()}/docker_volume/{self.tenant}/{self.extraction_name}/xml_files'
-        self.file_path = pathlib.Path(f'{self.root_folder}/{self.file_name}')
+        self.xml_folder_path = XmlFile.get_xml_folder_path(tenant, extraction_name)
+        self.file_path = pathlib.Path(f'{self.xml_folder_path}/{self.file_name}')
         self.xml_file = None
         self.segments = list()
 
     def save(self, file: bytes):
         self.xml_file = file
 
-        if not os.path.exists(self.root_folder):
-            os.makedirs(self.root_folder)
+        if not os.path.exists(self.xml_folder_path):
+            os.makedirs(self.xml_folder_path)
 
         self.file_path.write_bytes(self.xml_file)
 
@@ -95,5 +94,7 @@ class XmlFile:
         xml_file.set_segments(labeled_data)
         return xml_file.segments
 
-    def remove_files(self):
-        shutil.rmtree(self.root_folder)
+    @staticmethod
+    def get_xml_folder_path(tenant: str, extraction_name: str):
+        path = Path(os.path.dirname(os.path.realpath(__file__)))
+        return f'{path.parent.absolute()}/docker_volume/{tenant}/{extraction_name}/xml_files'

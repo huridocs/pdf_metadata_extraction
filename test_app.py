@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 
@@ -6,6 +7,7 @@ import pymongo
 from fastapi.testclient import TestClient
 from unittest import TestCase
 from app import app
+from data.Suggestion import Suggestion
 
 client = TestClient(app)
 
@@ -68,7 +70,8 @@ class TestApp(TestCase):
                      "label_text": "text",
                      "page_width": 1.1,
                      "page_height": 2.1,
-                     "xml_segments_boxes": [{"left": "string_value", "top": 2, "width": 3, "height": 4, "page_number": 5}],
+                     "xml_segments_boxes": [
+                         {"left": "string_value", "top": 2, "width": 3, "height": 4, "page_number": 5}],
                      "label_segments_boxes": [{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}]
                      }
 
@@ -123,3 +126,53 @@ class TestApp(TestCase):
         self.assertEqual('extraction_name', prediction_data_document['extraction_name'])
         self.assertEqual('tenant', prediction_data_document['tenant'])
         self.assertEqual('xml_file_name', prediction_data_document['xml_file_name'])
+
+    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    def test_get_suggestions(self):
+        tenant = "tenant_to_be_removed"
+        extraction_name = "prediction_property_name"
+
+        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
+
+        to_predict_json = {"xml_file_name": "test.xml",
+                           "extraction_name": extraction_name,
+                           "tenant": tenant,
+                           }
+
+        labeled_data_json = {"xml_file_name": "test.xml",
+                             "extraction_name": extraction_name,
+                             "tenant": tenant,
+                             "label_text": "text",
+                             "page_width": 612,
+                             "page_height": 792,
+                             "xml_segments_boxes": [],
+                             "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13,
+                                                       "page_number": 1}]
+                             }
+
+        client.post("/prediction_data", json=to_predict_json)
+        client.post("/labeled_data", json=labeled_data_json)
+        with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
+            files = {'file': stream}
+            client.post(f"/xml_file/{tenant}/{extraction_name}", files=files)
+
+        response = client.post(f"/get_suggestions/{tenant}/{extraction_name}")
+        suggestions = json.loads(response.json())
+        suggestion_1 = Suggestion(**suggestions[0])
+        suggestion_2 = Suggestion(**suggestions[1])
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(2, len(suggestions))
+
+        self.assertEqual(tenant, suggestion_1.tenant)
+        self.assertEqual(extraction_name, suggestion_1.extraction_name)
+        self.assertEqual("test.xml", suggestion_1.xml_file_name)
+        self.assertEqual("United Nations", suggestion_1.segment_text)
+        self.assertEqual("United Nations", suggestion_1.text)
+
+        self.assertEqual(tenant, suggestion_2.tenant)
+        self.assertEqual(extraction_name, suggestion_2.extraction_name)
+        self.assertEqual("test.xml", suggestion_2.xml_file_name)
+        self.assertEqual("United Nations", suggestion_2.segment_text)
+        self.assertEqual("United Nations", suggestion_2.text)
+
+        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
