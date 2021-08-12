@@ -73,8 +73,8 @@ class TestXmlFile(TestCase):
         self.assertEqual(612, segments[0].page_width)
         self.assertEqual(792, segments[0].page_height)
         self.assertEqual(1, len(labeled_segments))
-        self.assertTrue('In accordance with paragraph' in labeled_segments[0].text_content)
-        self.assertTrue('every four years' in labeled_segments[0].text_content)
+        self.assertEqual('a In accordance with paragraph', labeled_segments[0].text_content[:30])
+        self.assertEqual('every four years.', labeled_segments[0].text_content[-17:])
 
     def test_get_segments_when_no_file_in_tenant(self):
         labeled_data = LabeledData(xml_file_name="test.xml",
