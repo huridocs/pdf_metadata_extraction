@@ -1,4 +1,5 @@
 import os
+import shutil
 from pathlib import Path
 from typing import List
 
@@ -6,22 +7,27 @@ import numpy as np
 import pymongo
 
 from data.LabeledData import LabeledData
+from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
-from segment_predictor.Segment import Segment
+from information_extraction.Segment import Segment
 import lightgbm as lgb
 
-from segment_predictor.XmlFile import XmlFile
+from information_extraction.XmlFile import XmlFile
+from semantic_information_extraction.SemanticInformationExtraction import SemanticInformationExtraction
 
 
-class SegmentPredictor:
+class InformationExtraction:
     def __init__(self, tenant: str, extraction_name: str):
-        self.extraction_name = extraction_name
         self.tenant = tenant
+        self.extraction_name = extraction_name
+        self.semantic_information_extraction = SemanticInformationExtraction(tenant, extraction_name)
         self.segments: List[Segment] = list()
         root_folder = f'{Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute()}/docker_volume'
         self.model_path = f'{root_folder}/{self.tenant}/{self.extraction_name}/segment_predictor_model/model.model'
         self.model = None
         self.load_model()
+        client = pymongo.MongoClient('mongodb://mongo:27017')
+        self.pdf_information_extraction_db = client['pdf_information_extraction']
 
     def load_model(self):
         if os.path.exists(self.model_path):
@@ -36,9 +42,23 @@ class SegmentPredictor:
             segments = XmlFile.get_segments(LabeledData(**document))
             self.segments.extend(segments)
 
-    def create_model(self):
+    def create_models(self):
         self.set_segments()
         self.run_light_gbm()
+
+        find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
+        semantic_extraction_data: List[SemanticExtractionData] = list()
+
+        for document in self.pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
+            labeled_data = LabeledData(**document)
+            suggestion = self.get_suggested_segment(labeled_data)
+            semantic_extraction_data.append(
+                SemanticExtractionData(text=labeled_data.label_text, segment_text=suggestion.segment_text))
+
+        if len(semantic_extraction_data) < 10:
+            return
+
+        self.semantic_information_extraction.create_model(semantic_extraction_data)
 
     @staticmethod
     def get_training_data(segments):
@@ -84,29 +104,35 @@ class SegmentPredictor:
         self.model.save_model(self.model_path, num_iteration=self.model.best_iteration)
 
     def get_suggestions(self) -> List[Suggestion]:
-        self.create_model()
-        client = pymongo.MongoClient('mongodb://mongo:27017')
-        pdf_information_extraction_db = client['pdf_information_extraction']
-
+        self.create_models()
         find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
         suggestions: List[Suggestion] = list()
 
-        for document in pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
+        for document in self.pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
-            suggestions.append(self.get_suggestion(labeled_data))
+            suggestions.append(self.get_suggested_segment(labeled_data))
 
-        for document in pdf_information_extraction_db.predictiondata.find(find_filter, no_cursor_timeout=True):
+        for document in self.pdf_information_extraction_db.predictiondata.find(find_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document, label_text="",
                                        page_width=0,
                                        page_height=0,
                                        xml_segments_boxes=[],
                                        label_segments_boxes=[])
-            suggestions.append(self.get_suggestion(labeled_data))
+            suggestions.append(self.get_suggested_segment(labeled_data))
 
+        segments_text = [x.segment_text for x in suggestions]
+        texts = self.semantic_information_extraction.get_semantic_predictions(segments_text)
+        for index, suggestion in enumerate(suggestions):
+            suggestion.text = texts[index]
+
+        shutil.rmtree(XmlFile.get_xml_folder_path(self.tenant, self.extraction_name), ignore_errors=True)
         return suggestions
 
-    def get_suggestion(self, labeled_data: LabeledData):
+    def get_suggested_segment(self, labeled_data: LabeledData):
         segments = XmlFile.get_segments(labeled_data)
+        if not segments:
+            return Suggestion(**labeled_data.dict(), text='', segment_text='')
+
         x, y = self.get_training_data(segments)
         predictions = self.model.predict(x)
         texts = []

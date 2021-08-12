@@ -9,10 +9,10 @@ import pymongo
 from bs4 import BeautifulSoup
 
 from data.LabeledData import LabeledData
-from segment_predictor.Font import Font
-from segment_predictor.PdfFeatures import PdfFeatures
-from segment_predictor.Segment import Segment
-from segment_predictor.SegmentTag import SegmentTag
+from information_extraction.Font import Font
+from information_extraction.PdfFeatures import PdfFeatures
+from information_extraction.Segment import Segment
+from information_extraction.SegmentTag import SegmentTag
 
 
 class XmlFile:
@@ -75,7 +75,8 @@ class XmlFile:
     def create_segments_from_labeled_data(self, one_tag_segments: List[Segment], labeled_data: LabeledData):
         box_segments_to_merge = defaultdict(list)
         for segment in one_tag_segments:
-            index = segment.intersects_with_boxes(labeled_data.xml_segments_boxes)
+            index = segment.intersects_with_boxes(labeled_data.page_width, labeled_data.page_height,
+                                                  labeled_data.xml_segments_boxes)
 
             if index is not None:
                 box_segments_to_merge[index].append(segment)
@@ -85,7 +86,7 @@ class XmlFile:
         self.segments = [Segment.merge(segments_to_merge) for segments_to_merge in box_segments_to_merge.values()]
 
         for segment in self.segments:
-            segment.set_ml_label(labeled_data.label_segments_boxes)
+            segment.set_ml_label(labeled_data.page_width, labeled_data.page_height, labeled_data.label_segments_boxes)
 
     @staticmethod
     def get_segments(labeled_data: LabeledData):

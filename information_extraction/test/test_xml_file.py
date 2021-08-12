@@ -3,7 +3,7 @@ import shutil
 from unittest import TestCase
 from data.LabeledData import LabeledData
 from data.SegmentBox import SegmentBox
-from segment_predictor.XmlFile import XmlFile
+from information_extraction.XmlFile import XmlFile
 
 
 class TestXmlFile(TestCase):
@@ -52,19 +52,20 @@ class TestXmlFile(TestCase):
             'Opening dates of forthcoming regular sessions of the General Assembly and of the general debate',
             [segment for segment in segments if segment.ml_class_label == 1][0].text_content)
 
-    def test_get_segments_page_2(self):
+    def test_get_segments_different_page_size_scale(self):
         labeled_data = LabeledData(xml_file_name="test.xml",
                                    extraction_name=TestXmlFile.extraction_name,
                                    tenant=TestXmlFile.tenant,
                                    label_text="text",
-                                   page_width=612,
-                                   page_height=792,
+                                   page_width=1,  # 612
+                                   page_height=2,  # 396
                                    xml_segments_boxes=[
-                                       SegmentBox(left=0, top=130, width=612, height=70,
+                                       SegmentBox(left=0, top=0.3282828, width=1, height=0.1767676,
                                                   page_number=2),
                                    ],
                                    label_segments_boxes=[
-                                       SegmentBox(left=300, top=150, width=5, height=5, page_number=2)])
+                                       SegmentBox(left=0.49019, top=0.37878, width=0.008169, height=0.0126,
+                                                  page_number=2)])
         segments = XmlFile.get_segments(labeled_data)
 
         labeled_segments = [segment for segment in segments if segment.ml_class_label == 1]

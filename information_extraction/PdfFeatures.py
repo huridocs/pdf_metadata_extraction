@@ -1,7 +1,7 @@
 import hashlib
 from typing import List
 from statistics import mode
-from segment_predictor.SegmentTag import SegmentTag
+from information_extraction.SegmentTag import SegmentTag
 
 
 class PdfFeatures:

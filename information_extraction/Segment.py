@@ -3,8 +3,8 @@ from typing import List
 import numpy as np
 
 from data.SegmentBox import SegmentBox
-from segment_predictor.PdfFeatures import PdfFeatures
-from segment_predictor.SegmentTag import SegmentTag
+from information_extraction.PdfFeatures import PdfFeatures
+from information_extraction.SegmentTag import SegmentTag
 
 
 class Segment(object):
@@ -166,27 +166,27 @@ class Segment(object):
             1 if self.uppercase else 0
         ])
 
-    def intersects_with_box(self, segment_box: SegmentBox):
+    def intersects_with_box(self, page_width: float, page_height: float, segment_box: SegmentBox):
         if segment_box.page_number != self.page_number:
             return False
 
-        box_top = segment_box.top / self.page_height
-        box_bottom = (segment_box.top + segment_box.height) / self.page_height
+        box_top = segment_box.top / page_height
+        box_bottom = (segment_box.top + segment_box.height) / page_height
 
         if box_bottom < self.top or self.bottom < box_top:
             return False
 
-        box_left = segment_box.left / self.page_width
-        box_right = (segment_box.left + segment_box.width) / self.page_width
+        box_left = segment_box.left / page_width
+        box_right = (segment_box.left + segment_box.width) / page_width
 
         if box_right < self.left or self.right < box_left:
             return False
 
         return True
 
-    def intersects_with_boxes(self, segment_boxes: List[SegmentBox]):
+    def intersects_with_boxes(self, page_width: float, page_height: float, segment_boxes: List[SegmentBox]):
         for index, segment_box in enumerate(segment_boxes):
-            if self.intersects_with_box(segment_box):
+            if self.intersects_with_box(page_width, page_height, segment_box):
                 return index
 
         return None
@@ -203,9 +203,9 @@ class Segment(object):
 
         return False
 
-    def set_ml_label(self, segment_boxes: List[SegmentBox]):
+    def set_ml_label(self, page_width: float, page_height: float, segment_boxes: List[SegmentBox]):
         for box in segment_boxes:
-            if self.intersects_with_box(box):
+            if self.intersects_with_box(page_width, page_height, box):
                 self.ml_class_label = 1
                 break
 

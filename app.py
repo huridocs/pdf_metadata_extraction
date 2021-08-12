@@ -5,7 +5,7 @@ import sys
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from get_graylog import get_graylog
-from segment_predictor.XmlFile import XmlFile
+from information_extraction.XmlFile import XmlFile
 
 graylog = get_graylog()
 
