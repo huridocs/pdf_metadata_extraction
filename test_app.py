@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from typing import List
 
 import mongomock
 import pymongo
@@ -116,6 +117,9 @@ class TestApp(TestCase):
         json_data = {"xml_file_name": "xml_file_name",
                      "extraction_name": "extraction name",
                      "tenant": "tenant",
+                     "page_width": 612,
+                     "page_height": 792,
+                     "xml_segments_boxes": [{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}],
                      }
 
         response = client.post("/prediction_data", json=json_data)
@@ -176,6 +180,48 @@ class TestApp(TestCase):
         self.assertEqual("other_text_predicted", suggestions[1]['text'])
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
+    def test_should_remove_suggestions_when_returned(self):
+        tenant = "tenant_to_be_removed"
+        extraction_name = "prediction_property_name"
+
+        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+
+        json_data = [{'tenant': 'wrong tenant',
+                      'extraction_name': extraction_name,
+                      'xml_file_name': "one_file_name",
+                      'text': "one_text_predicted",
+                      'segment_text': "one_segment_text",
+                      }, {'tenant': tenant,
+                          'extraction_name': extraction_name,
+                          'xml_file_name': "one_file_name",
+                          'text': "one_text_predicted",
+                          'segment_text': "one_segment_text",
+                          }, {'tenant': tenant,
+                              'extraction_name': extraction_name,
+                              'xml_file_name': "other_file_name",
+                              'text': "other_text_predicted",
+                              'segment_text': "other_segment_text",
+                              }, {'tenant': tenant,
+                                  'extraction_name': 'wrong extraction name',
+                                  'xml_file_name': "other_file_name",
+                                  'text': "other_text_predicted",
+                                  'segment_text': "other_segment_text",
+                                  }]
+
+        mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
+
+        client.get(f"/get_suggestions/{tenant}/{extraction_name}")
+
+        suggestions: List[Suggestion] = list()
+
+        for document in mongo_client.pdf_information_extraction.suggestions.find():
+            suggestions.append(Suggestion(**document))
+
+        self.assertEqual(2, len(suggestions))
+        self.assertEqual('wrong tenant', suggestions[0].tenant)
+        self.assertEqual('wrong extraction name', suggestions[1].extraction_name)
+
+    @mongomock.patch(servers=['mongodb://mongo:27017'])
     def test_get_suggestions_when_no_suggestions(self):
         tenant = "tenant_to_be_removed"
         extraction_name = "prediction_property_name"
@@ -199,6 +245,9 @@ class TestApp(TestCase):
         predict_data_json = {"xml_file_name": "test.xml",
                              "extraction_name": extraction_name,
                              "tenant": tenant,
+                             "page_width": 612,
+                             "page_height": 792,
+                             "xml_segments_boxes": [],
                              }
 
         labeled_data_json = {"xml_file_name": "test.xml",

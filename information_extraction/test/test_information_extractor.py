@@ -142,6 +142,9 @@ class TestSegmentPredictor(TestCase):
         to_predict_json = {"xml_file_name": "test.xml",
                            "extraction_name": extraction_name,
                            "tenant": tenant,
+                           "page_width": 612,
+                           "page_height": 792,
+                           "xml_segments_boxes": []
                            }
 
         labeled_data_json = {"xml_file_name": "test.xml",
@@ -200,6 +203,10 @@ class TestSegmentPredictor(TestCase):
         to_predict_json = {"xml_file_name": "test.xml",
                            "extraction_name": extraction_name,
                            "tenant": tenant,
+                           "page_width": 306,
+                           "page_height": 396,
+                           "xml_segments_boxes": [SegmentBox(left=0, top=75, width=306, height=35,
+                                                             page_number=2).dict()],
                            }
 
         labeled_data_json = {"xml_file_name": "test.xml",
@@ -257,6 +264,9 @@ class TestSegmentPredictor(TestCase):
         to_predict_json = {"xml_file_name": "test.xml",
                            "extraction_name": extraction_name,
                            "tenant": tenant,
+                           "page_width": 612,
+                           "page_height": 792,
+                           "xml_segments_boxes": [],
                            }
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 

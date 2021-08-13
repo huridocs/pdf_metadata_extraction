@@ -78,12 +78,13 @@ async def get_suggestions(tenant: str, extraction_name: str):
     extraction_name = sanitize_name(extraction_name)
     client = pymongo.MongoClient('mongodb://mongo:27017')
     pdf_information_extraction_db = client['pdf_information_extraction']
-    find_filter = {"extraction_name": extraction_name, "tenant": tenant}
+    suggestions_filter = {"extraction_name": extraction_name, "tenant": tenant}
     suggestions_list: List[Dict[str, str]] = list()
 
-    for document in pdf_information_extraction_db.suggestions.find(find_filter, no_cursor_timeout=True):
+    for document in pdf_information_extraction_db.suggestions.find(suggestions_filter, no_cursor_timeout=True):
         suggestions_list.append(Suggestion(**document).dict())
 
+    pdf_information_extraction_db.suggestions.delete_many(suggestions_filter)
     return json.dumps(suggestions_list)
 
 

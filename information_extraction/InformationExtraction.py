@@ -1,5 +1,4 @@
 import os
-import shutil
 from pathlib import Path
 from typing import List
 
@@ -45,10 +44,11 @@ class InformationExtraction:
     def create_models(self):
         self.set_segments()
         self.run_light_gbm()
+        self.create_semantic_model()
 
+    def create_semantic_model(self):
         find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
         semantic_extraction_data: List[SemanticExtractionData] = list()
-
         for document in self.pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
             suggestion = self.get_suggested_segment(labeled_data)
@@ -105,29 +105,28 @@ class InformationExtraction:
 
     def calculate_suggestions(self):
         self.create_models()
-        find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
-        suggestions: List[Suggestion] = list()
-
-        for document in self.pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
-            labeled_data = LabeledData(**document)
-            suggestions.append(self.get_suggested_segment(labeled_data))
-
-        for document in self.pdf_information_extraction_db.predictiondata.find(find_filter, no_cursor_timeout=True):
-            labeled_data = LabeledData(**document, label_text="",
-                                       page_width=0,
-                                       page_height=0,
-                                       xml_segments_boxes=[],
-                                       label_segments_boxes=[])
-            suggestions.append(self.get_suggested_segment(labeled_data))
-
-        segments_text = [x.segment_text for x in suggestions]
-
-        texts = self.semantic_information_extraction.get_semantic_predictions(segments_text)
-        for index, suggestion in enumerate(suggestions):
-            suggestion.text = texts[index]
+        suggestions = self.get_suggestions()
 
         XmlFile.remove_files(self.tenant, self.extraction_name)
         self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
+
+    def get_suggestions(self):
+        find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
+
+        suggestions: List[Suggestion] = list()
+        for document in self.pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
+            labeled_data = LabeledData(**document)
+            suggestions.append(self.get_suggested_segment(labeled_data))
+        for document in self.pdf_information_extraction_db.predictiondata.find(find_filter, no_cursor_timeout=True):
+            labeled_data = LabeledData(**document, label_text="", label_segments_boxes=[])
+            suggestions.append(self.get_suggested_segment(labeled_data))
+        segments_text = [x.segment_text for x in suggestions]
+        texts = self.semantic_information_extraction.get_semantic_predictions(segments_text)
+
+        for index, suggestion in enumerate(suggestions):
+            suggestion.text = texts[index] if '<extra_id_' not in texts[index] else suggestion.segment_text
+
+        return suggestions
 
     def get_suggested_segment(self, labeled_data: LabeledData):
         segments = XmlFile.get_segments(labeled_data)

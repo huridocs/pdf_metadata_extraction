@@ -26,13 +26,13 @@ class TestSemanticInformationExtraction(TestCase):
 
     def test_get_suggestions(self):
         tenant = 'tenant_to_be_removed'
-        extraction_name = 'extraction_name'
+        extraction_name = 'ex'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
         semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
 
-        training_data = [SemanticExtractionData(text="English", segment_text="Origin: English") for _ in range(7)]
+        training_data = [SemanticExtractionData(text="English", segment_text="Origin: English") for _ in range(10)]
 
         semantic_extraction_input = training_data
         semantic_information_extraction.create_model(semantic_extraction_input)
