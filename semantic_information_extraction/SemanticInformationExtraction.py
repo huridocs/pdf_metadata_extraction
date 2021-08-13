@@ -38,7 +38,7 @@ class SemanticInformationExtraction:
         model_args.max_length = tokens_length
         model_args.max_seq_length = 512
         model_args.max_length = 512
-        model_args.train_batch_size = 2
+        model_args.train_batch_size = 1
         model_args.eval_batch_size = 2
         model_args.num_train_epochs = 5
         model_args.evaluate_during_training = False

@@ -248,7 +248,7 @@ class TestSegmentPredictor(TestCase):
                            }
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
-        for i in range(10):
+        for i in range(7):
             labeled_data_json = {"xml_file_name": "test.xml",
                                  "extraction_name": extraction_name,
                                  "tenant": tenant,
@@ -265,7 +265,7 @@ class TestSegmentPredictor(TestCase):
         segment_predictor = InformationExtraction(tenant, extraction_name)
         suggestions = segment_predictor.get_suggestions()
 
-        self.assertEqual(11, len(suggestions))
+        self.assertEqual(8, len(suggestions))
 
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
         self.assertEqual({extraction_name}, {x.extraction_name for x in suggestions})

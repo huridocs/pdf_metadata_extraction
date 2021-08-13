@@ -22,7 +22,7 @@ class TestApp(TestCase):
         self.assertEqual(500, response.status_code)
         self.assertEqual({'detail': 'This is a test error from the error endpoint'}, response.json())
 
-    def test_xml_file(self):
+    def test_post_xml_file(self):
         with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
             files = {'file': stream}
             response = client.post("/xml_file/tenant%20one/extraction%20name", files=files)
@@ -33,7 +33,7 @@ class TestApp(TestCase):
             shutil.rmtree('./docker_volume/tenant_one', ignore_errors=True)
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_labeled_data(self):
+    def test_post_labeled_data(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
 
         json_data = {"xml_file_name": "xml_file_name",
@@ -81,7 +81,7 @@ class TestApp(TestCase):
         self.assertEqual(422, response.status_code)
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_labeled_data_different_values(self):
+    def test_post_labeled_data_different_values(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
 
         json_data = {"xml_file_name": "other_xml_file_name",
@@ -110,7 +110,7 @@ class TestApp(TestCase):
         self.assertEqual([], labeled_data_document['label_segments_boxes'])
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_prediction_data(self):
+    def test_post_prediction_data(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
 
         json_data = {"xml_file_name": "xml_file_name",
@@ -128,51 +128,9 @@ class TestApp(TestCase):
         self.assertEqual('xml_file_name', prediction_data_document['xml_file_name'])
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
-    def test_get_suggestions(self):
-        tenant = "tenant_to_be_removed"
-        extraction_name = "prediction_property_name"
-
-        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
-
-        to_predict_json = {"xml_file_name": "test.xml",
-                           "extraction_name": extraction_name,
-                           "tenant": tenant,
-                           }
-
-        labeled_data_json = {"xml_file_name": "test.xml",
-                             "extraction_name": extraction_name,
-                             "tenant": tenant,
-                             "label_text": "text",
-                             "page_width": 612,
-                             "page_height": 792,
-                             "xml_segments_boxes": [],
-                             "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13,
-                                                       "page_number": 1}]
-                             }
-
-        client.post("/prediction_data", json=to_predict_json)
-        client.post("/labeled_data", json=labeled_data_json)
-        with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
-            files = {'file': stream}
-            client.post(f"/xml_file/{tenant}/{extraction_name}", files=files)
-
-        response = client.post(f"/get_suggestions/{tenant}/{extraction_name}")
+    def test_get_suggestions_when_no_suggestions(self):
+        response = client.post(f"/get_suggestions/tenant/extraction_name")
         suggestions = json.loads(response.json())
-        suggestion_1 = Suggestion(**suggestions[0])
-        suggestion_2 = Suggestion(**suggestions[1])
+
         self.assertEqual(200, response.status_code)
-        self.assertEqual(2, len(suggestions))
-
-        self.assertEqual(tenant, suggestion_1.tenant)
-        self.assertEqual(extraction_name, suggestion_1.extraction_name)
-        self.assertEqual("test.xml", suggestion_1.xml_file_name)
-        self.assertEqual("United Nations", suggestion_1.segment_text)
-        self.assertEqual("United Nations", suggestion_1.text)
-
-        self.assertEqual(tenant, suggestion_2.tenant)
-        self.assertEqual(extraction_name, suggestion_2.extraction_name)
-        self.assertEqual("test.xml", suggestion_2.xml_file_name)
-        self.assertEqual("United Nations", suggestion_2.segment_text)
-        self.assertEqual("United Nations", suggestion_2.text)
-
-        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
+        self.assertEqual(0, len(suggestions))

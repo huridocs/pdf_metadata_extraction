@@ -55,7 +55,7 @@ class InformationExtraction:
             semantic_extraction_data.append(
                 SemanticExtractionData(text=labeled_data.label_text, segment_text=suggestion.segment_text))
 
-        if len(semantic_extraction_data) < 10:
+        if len(semantic_extraction_data) < 7:
             return
 
         self.semantic_information_extraction.create_model(semantic_extraction_data)
@@ -125,7 +125,7 @@ class InformationExtraction:
         for index, suggestion in enumerate(suggestions):
             suggestion.text = texts[index]
 
-        shutil.rmtree(XmlFile.get_xml_folder_path(self.tenant, self.extraction_name), ignore_errors=True)
+        XmlFile.remove_files(self.tenant, self.extraction_name)
         return suggestions
 
     def get_suggested_segment(self, labeled_data: LabeledData):

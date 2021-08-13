@@ -32,7 +32,7 @@ class TestSemanticInformationExtraction(TestCase):
 
         semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
 
-        training_data = [SemanticExtractionData(text="English", segment_text="Origin: English") for _ in range(10)]
+        training_data = [SemanticExtractionData(text="English", segment_text="Origin: English") for _ in range(7)]
         semantic_extraction_input = training_data
         semantic_information_extraction.create_model(semantic_extraction_input)
         predicted_texts = semantic_information_extraction.get_semantic_predictions(["Origin: English"])

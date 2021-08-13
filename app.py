@@ -1,9 +1,13 @@
+import json
+from typing import List, Dict
+
 import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
+from data.Suggestion import Suggestion
 from get_graylog import get_graylog
 from information_extraction.XmlFile import XmlFile
 
@@ -64,3 +68,16 @@ async def xml_file(tenant, extraction_name, file: UploadFile = File(...)):
     except Exception:
         graylog.error(f'Error adding task {filename}', exc_info=1)
         raise HTTPException(status_code=422, detail=f'Error adding task {filename}')
+
+
+@app.post('/get_suggestions/{tenant}/{extraction_name}')
+async def get_suggestions(tenant: str, extraction_name: str):
+    client = pymongo.MongoClient('mongodb://mongo:27017')
+    pdf_information_extraction_db = client['pdf_information_extraction']
+    find_filter = {"extraction_name": extraction_name, "tenant": tenant}
+    suggestions_list: List[Dict[str, str]] = list()
+
+    for document in pdf_information_extraction_db.suggestions.find(find_filter, no_cursor_timeout=True):
+        suggestions_list.append(Suggestion(**document).dict())
+
+    return json.dumps(suggestions_list)

@@ -99,3 +99,7 @@ class XmlFile:
     def get_xml_folder_path(tenant: str, extraction_name: str):
         path = Path(os.path.dirname(os.path.realpath(__file__)))
         return f'{path.parent.absolute()}/docker_volume/{tenant}/{extraction_name}/xml_files'
+
+    @staticmethod
+    def remove_files(tenant, extraction_name):
+        shutil.rmtree(XmlFile.get_xml_folder_path(tenant, extraction_name), ignore_errors=True)
