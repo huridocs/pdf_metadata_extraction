@@ -5,20 +5,22 @@ from data.LabeledData import LabeledData
 from data.SegmentBox import SegmentBox
 from information_extraction.XmlFile import XmlFile
 
+DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/docker_volume'
+
 
 class TestXmlFile(TestCase):
     tenant = "tenant_test"
     extraction_name = 'extraction_name'
 
     def test_save(self):
-        shutil.rmtree('../../docker_volume/tenant_one', ignore_errors=True)
-        with open('../../docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as file:
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/tenant_one', ignore_errors=True)
+        with open(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml', 'rb') as file:
             xml_file = XmlFile(file_name='test.xml', tenant='tenant_one', extraction_name='extraction_one')
             xml_file.save(file=file.read())
 
-        self.assertTrue(os.path.exists('../../docker_volume/tenant_one/extraction_one/xml_files/test.xml'))
+        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/tenant_one/extraction_one/xml_files/test.xml'))
 
-        shutil.rmtree('../../docker_volume/tenant_one', ignore_errors=True)
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/tenant_one', ignore_errors=True)
 
     def test_get_segments(self):
         labeled_data = LabeledData(xml_file_name="test.xml",

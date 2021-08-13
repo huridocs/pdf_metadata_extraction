@@ -1,5 +1,6 @@
 import os
 import shutil
+from os.path import dirname, abspath
 from typing import List
 from unittest import TestCase
 
@@ -10,7 +11,7 @@ from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
 from information_extraction.InformationExtraction import InformationExtraction
 
-DOCKER_VOLUME_PATH = '../../docker_volume'
+DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/docker_volume'
 
 
 class TestSegmentPredictor(TestCase):

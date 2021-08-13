@@ -5,7 +5,7 @@ from unittest import TestCase
 from data.SemanticExtractionData import SemanticExtractionData
 from semantic_information_extraction.SemanticInformationExtraction import SemanticInformationExtraction
 
-DOCKER_VOLUME_PATH = '../../docker_volume'
+DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/docker_volume'
 
 
 class TestSemanticInformationExtraction(TestCase):
