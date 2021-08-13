@@ -5,10 +5,12 @@ import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
+import threading
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
 from get_graylog import get_graylog
+from information_extraction.InformationExtraction import InformationExtraction
 from information_extraction.XmlFile import XmlFile
 
 graylog = get_graylog()
@@ -70,8 +72,10 @@ async def xml_file(tenant, extraction_name, file: UploadFile = File(...)):
         raise HTTPException(status_code=422, detail=f'Error adding task {filename}')
 
 
-@app.post('/get_suggestions/{tenant}/{extraction_name}')
+@app.get('/get_suggestions/{tenant}/{extraction_name}')
 async def get_suggestions(tenant: str, extraction_name: str):
+    tenant = sanitize_name(tenant)
+    extraction_name = sanitize_name(extraction_name)
     client = pymongo.MongoClient('mongodb://mongo:27017')
     pdf_information_extraction_db = client['pdf_information_extraction']
     find_filter = {"extraction_name": extraction_name, "tenant": tenant}
@@ -81,3 +85,13 @@ async def get_suggestions(tenant: str, extraction_name: str):
         suggestions_list.append(Suggestion(**document).dict())
 
     return json.dumps(suggestions_list)
+
+
+@app.post('/calculate_suggestions/{tenant}/{extraction_name}')
+async def calculate_suggestions(tenant: str, extraction_name: str):
+    tenant = sanitize_name(tenant)
+    extraction_name = sanitize_name(extraction_name)
+    information_extraction = InformationExtraction(tenant=tenant, extraction_name=extraction_name)
+    information_extraction.calculate_suggestions()
+    return 'Started'
+

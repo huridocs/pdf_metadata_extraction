@@ -1,11 +1,13 @@
 import os
 import shutil
+from typing import List
 from unittest import TestCase
 
 import mongomock
 import pymongo
 
 from data.SegmentBox import SegmentBox
+from data.Suggestion import Suggestion
 from information_extraction.InformationExtraction import InformationExtraction
 
 DOCKER_VOLUME_PATH = '../../docker_volume'
@@ -157,7 +159,12 @@ class TestSegmentPredictor(TestCase):
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
         segment_predictor = InformationExtraction(tenant, extraction_name)
-        suggestions = segment_predictor.get_suggestions()
+        segment_predictor.calculate_suggestions()
+
+        suggestions: List[Suggestion] = list()
+        find_filter = {"extraction_name": extraction_name, "tenant": tenant}
+        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
+            suggestions.append(Suggestion(**document))
 
         suggestion_1 = suggestions[0]
         suggestion_2 = suggestions[1]
@@ -211,7 +218,12 @@ class TestSegmentPredictor(TestCase):
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
         segment_predictor = InformationExtraction(tenant, extraction_name)
-        suggestions = segment_predictor.get_suggestions()
+        segment_predictor.calculate_suggestions()
+
+        suggestions: List[Suggestion] = list()
+        find_filter = {"extraction_name": extraction_name, "tenant": tenant}
+        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
+            suggestions.append(Suggestion(**document))
 
         suggestion_1 = suggestions[0]
         suggestion_2 = suggestions[1]
@@ -263,7 +275,12 @@ class TestSegmentPredictor(TestCase):
             mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
 
         segment_predictor = InformationExtraction(tenant, extraction_name)
-        suggestions = segment_predictor.get_suggestions()
+        segment_predictor.calculate_suggestions()
+
+        suggestions: List[Suggestion] = list()
+        find_filter = {"extraction_name": extraction_name, "tenant": tenant}
+        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
+            suggestions.append(Suggestion(**document))
 
         self.assertEqual(8, len(suggestions))
 

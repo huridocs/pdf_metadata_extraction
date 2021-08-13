@@ -103,7 +103,7 @@ class InformationExtraction:
 
         self.model.save_model(self.model_path, num_iteration=self.model.best_iteration)
 
-    def get_suggestions(self) -> List[Suggestion]:
+    def calculate_suggestions(self):
         self.create_models()
         find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
         suggestions: List[Suggestion] = list()
@@ -121,12 +121,13 @@ class InformationExtraction:
             suggestions.append(self.get_suggested_segment(labeled_data))
 
         segments_text = [x.segment_text for x in suggestions]
+
         texts = self.semantic_information_extraction.get_semantic_predictions(segments_text)
         for index, suggestion in enumerate(suggestions):
             suggestion.text = texts[index]
 
         XmlFile.remove_files(self.tenant, self.extraction_name)
-        return suggestions
+        self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
 
     def get_suggested_segment(self, labeled_data: LabeledData):
         segments = XmlFile.get_segments(labeled_data)

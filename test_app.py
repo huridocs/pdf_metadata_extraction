@@ -128,9 +128,111 @@ class TestApp(TestCase):
         self.assertEqual('xml_file_name', prediction_data_document['xml_file_name'])
 
     @mongomock.patch(servers=['mongodb://mongo:27017'])
+    def test_get_suggestions(self):
+        tenant = "tenant_to_be_removed"
+        extraction_name = "prediction_property_name"
+
+        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+
+        json_data = [{'tenant': 'wrong tenant',
+                      'extraction_name': extraction_name,
+                      'xml_file_name': "one_file_name",
+                      'text': "one_text_predicted",
+                      'segment_text': "one_segment_text",
+                      }, {'tenant': tenant,
+                          'extraction_name': extraction_name,
+                          'xml_file_name': "one_file_name",
+                          'text': "one_text_predicted",
+                          'segment_text': "one_segment_text",
+                          }, {'tenant': tenant,
+                              'extraction_name': extraction_name,
+                              'xml_file_name': "other_file_name",
+                              'text': "other_text_predicted",
+                              'segment_text': "other_segment_text",
+                              }, {'tenant': tenant,
+                                  'extraction_name': 'wrong extraction name',
+                                  'xml_file_name': "other_file_name",
+                                  'text': "other_text_predicted",
+                                  'segment_text': "other_segment_text",
+                                  }]
+
+        mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
+
+        response = client.get(f"/get_suggestions/{tenant}/{extraction_name}")
+        suggestions = json.loads(response.json())
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(2, len(suggestions))
+
+        self.assertEqual({tenant}, {x['tenant'] for x in suggestions})
+        self.assertEqual({extraction_name}, {x['extraction_name'] for x in suggestions})
+
+        self.assertEqual("one_file_name", suggestions[0]['xml_file_name'])
+        self.assertEqual("one_segment_text", suggestions[0]['segment_text'])
+        self.assertEqual("one_text_predicted", suggestions[0]['text'])
+
+        self.assertEqual("other_file_name", suggestions[1]['xml_file_name'])
+        self.assertEqual("other_segment_text", suggestions[1]['segment_text'])
+        self.assertEqual("other_text_predicted", suggestions[1]['text'])
+
+    @mongomock.patch(servers=['mongodb://mongo:27017'])
     def test_get_suggestions_when_no_suggestions(self):
-        response = client.post(f"/get_suggestions/tenant/extraction_name")
+        tenant = "tenant_to_be_removed"
+        extraction_name = "prediction_property_name"
+
+        response = client.get(f"/get_suggestions/{tenant}/{extraction_name}")
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(0, len(suggestions))
+
+    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    def test_post_calculate_suggestions(self):
+        tenant = "tenant_to_be_removed"
+        extraction_name = "extraction_name"
+
+        tenant_url = tenant.replace('_', '%20')
+        extraction_name_url = extraction_name.replace('_', '%20')
+
+        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
+
+        predict_data_json = {"xml_file_name": "test.xml",
+                             "extraction_name": extraction_name,
+                             "tenant": tenant,
+                             }
+
+        labeled_data_json = {"xml_file_name": "test.xml",
+                             "extraction_name": extraction_name,
+                             "tenant": tenant,
+                             "label_text": "text",
+                             "page_width": 612,
+                             "page_height": 792,
+                             "xml_segments_boxes": [],
+                             "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13,
+                                                       "page_number": 1}]
+                             }
+
+        with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
+            files = {'file': stream}
+            client.post(f"/xml_file/{tenant_url}/{extraction_name_url}", files=files)
+
+        client.post("/prediction_data", json=predict_data_json)
+        client.post("/labeled_data", json=labeled_data_json)
+
+        calculate_result = client.post(f"/calculate_suggestions/{tenant_url}/{extraction_name_url}")
+
+        response = client.get(f"/get_suggestions/{tenant_url}/{extraction_name_url}")
+        suggestions = json.loads(response.json())
+
+        suggestion_1 = Suggestion(**suggestions[0])
+
+        self.assertEqual(200, calculate_result.status_code)
+        self.assertEqual(2, len(suggestions))
+
+        self.assertEqual(tenant, suggestion_1.tenant)
+        self.assertEqual(extraction_name, suggestion_1.extraction_name)
+        self.assertEqual("test.xml", suggestion_1.xml_file_name)
+        self.assertEqual("United Nations", suggestion_1.segment_text)
+        self.assertEqual("United Nations", suggestion_1.text)
+
+        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)

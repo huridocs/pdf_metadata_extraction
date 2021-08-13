@@ -33,6 +33,7 @@ class TestSemanticInformationExtraction(TestCase):
         semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
 
         training_data = [SemanticExtractionData(text="English", segment_text="Origin: English") for _ in range(7)]
+
         semantic_extraction_input = training_data
         semantic_information_extraction.create_model(semantic_extraction_input)
         predicted_texts = semantic_information_extraction.get_semantic_predictions(["Origin: English"])
@@ -40,5 +41,6 @@ class TestSemanticInformationExtraction(TestCase):
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
         self.assertEqual("English", predicted_texts[0])
+        self.assertEqual(1, len(predicted_texts))
 
 
