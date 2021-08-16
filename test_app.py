@@ -284,3 +284,14 @@ class TestApp(TestCase):
         self.assertEqual("United Nations", suggestion_1.text)
 
         shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_post_calculate_suggestions_when_no_label_data(self):
+        tenant = "tenant_to_be_removed"
+        extraction_name = "extraction_name"
+
+        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
+
+        calculate_result = client.post(f"/calculate_suggestions/{tenant}/{extraction_name}")
+
+        self.assertEqual(200, calculate_result.status_code)

@@ -39,8 +39,11 @@ Post prediction data:
 
 Calculate suggestions:
 
-`curl -X POST  localhost:5050/calculate_suggestions/tenant_name/extration_name`
+`curl -X POST  localhost:5050/calculate_suggestions/tenant_name/extraction_name`
 
+Get suggestions:
+
+`curl -X GET  localhost:5050/get_suggestions/tenant_name/extraction_name`
 
 
 To stop the server:

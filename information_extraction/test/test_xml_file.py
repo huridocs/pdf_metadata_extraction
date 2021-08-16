@@ -5,7 +5,7 @@ from data.LabeledData import LabeledData
 from data.SegmentBox import SegmentBox
 from information_extraction.XmlFile import XmlFile
 
-DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/docker_volume'
+DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))}/docker_volume'
 
 
 class TestXmlFile(TestCase):

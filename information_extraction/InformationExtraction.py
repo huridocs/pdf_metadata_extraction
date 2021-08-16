@@ -108,7 +108,10 @@ class InformationExtraction:
         suggestions = self.get_suggestions()
 
         XmlFile.remove_files(self.tenant, self.extraction_name)
-        self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
+        if suggestions:
+            self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
+
+        return suggestions
 
     def get_suggestions(self):
         find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}

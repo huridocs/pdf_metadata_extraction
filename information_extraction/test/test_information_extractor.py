@@ -1,6 +1,5 @@
 import os
 import shutil
-from os.path import dirname, abspath
 from typing import List
 from unittest import TestCase
 
@@ -11,10 +10,10 @@ from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
 from information_extraction.InformationExtraction import InformationExtraction
 
-DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/docker_volume'
+DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))}/docker_volume'
 
 
-class TestSegmentPredictor(TestCase):
+class TestInformationExtractor(TestCase):
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
@@ -36,8 +35,8 @@ class TestSegmentPredictor(TestCase):
         shutil.copy(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml',
                     f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files/test.xml')
 
-        segment_predictor = InformationExtraction("segment_test", "extraction_name")
-        segment_predictor.create_models()
+        information_extraction = InformationExtraction("segment_test", "extraction_name")
+        information_extraction.create_models()
 
         self.assertTrue(
             os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/segment_predictor_model/model.model'))
@@ -60,8 +59,8 @@ class TestSegmentPredictor(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        segment_predictor = InformationExtraction("segment_test", "extraction_name")
-        segment_predictor.create_models()
+        information_extraction = InformationExtraction("segment_test", "extraction_name")
+        information_extraction.create_models()
 
         self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files'))
         self.assertFalse(
@@ -88,8 +87,8 @@ class TestSegmentPredictor(TestCase):
         shutil.copy(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml',
                     f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files/test.xml')
 
-        segment_predictor = InformationExtraction("segment_test", "extraction_name")
-        segment_predictor.create_models()
+        information_extraction = InformationExtraction("segment_test", "extraction_name")
+        information_extraction.create_models()
 
         self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files'))
         self.assertFalse(
@@ -121,8 +120,8 @@ class TestSegmentPredictor(TestCase):
         shutil.copy(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml',
                     f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files/test.xml')
 
-        segment_predictor = InformationExtraction("segment_test", "extraction_name")
-        segment_predictor.create_models()
+        information_extraction = InformationExtraction("segment_test", "extraction_name")
+        information_extraction.create_models()
 
         self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files'))
         self.assertFalse(
@@ -162,8 +161,8 @@ class TestSegmentPredictor(TestCase):
         mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
-        segment_predictor = InformationExtraction(tenant, extraction_name)
-        segment_predictor.calculate_suggestions()
+        information_extraction = InformationExtraction(tenant, extraction_name)
+        information_extraction.calculate_suggestions()
 
         suggestions: List[Suggestion] = list()
         find_filter = {"extraction_name": extraction_name, "tenant": tenant}
@@ -225,8 +224,8 @@ class TestSegmentPredictor(TestCase):
         mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
-        segment_predictor = InformationExtraction(tenant, extraction_name)
-        segment_predictor.calculate_suggestions()
+        information_extraction = InformationExtraction(tenant, extraction_name)
+        information_extraction.calculate_suggestions()
 
         suggestions: List[Suggestion] = list()
         find_filter = {"extraction_name": extraction_name, "tenant": tenant}
@@ -285,8 +284,8 @@ class TestSegmentPredictor(TestCase):
 
             mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
 
-        segment_predictor = InformationExtraction(tenant, extraction_name)
-        segment_predictor.calculate_suggestions()
+        information_extraction = InformationExtraction(tenant, extraction_name)
+        information_extraction.calculate_suggestions()
 
         suggestions: List[Suggestion] = list()
         find_filter = {"extraction_name": extraction_name, "tenant": tenant}

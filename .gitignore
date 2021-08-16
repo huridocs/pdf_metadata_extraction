@@ -11,6 +11,7 @@ config.py
 .env
 *_config.py
 docker_volume/*
+!docker_volume/tenant_test
 db/*
 graylog.yml
 core
