@@ -13,3 +13,4 @@ config.py
 docker_volume/*
 db/*
 graylog.yml
+core
