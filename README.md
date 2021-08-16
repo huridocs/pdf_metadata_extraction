@@ -4,3 +4,45 @@ Project to extract information extraction
 
 ### Execute tests
 python -m unittest
+
+### How to use it
+
+Start service:
+
+  `docker-compose up`
+
+Post xml file:
+
+   `curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5050/xml_file/tenant_name/extraction_name`
+
+Post labeled data:
+
+   `curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
+                             "extraction_name": "extraction_name",
+                             "tenant": "tenant_name",
+                             "label_text": "text",
+                             "page_width": 612,
+                             "page_height": 792,
+                             "xml_segments_boxes": [],
+                             "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
+                             }' localhost:5050/labeled_data`
+
+Post prediction data:
+
+   `curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
+                             "extraction_name": "extraction_name",
+                             "tenant": "tenant_name",
+                             "page_width": 612,
+                             "page_height": 792,
+                             "xml_segments_boxes": []
+                             }' localhost:5050/prediction_data`
+
+Calculate suggestions:
+
+`curl -X POST  localhost:5050/calculate_suggestions/tenant_name/extration_name`
+
+
+
+To stop the server:
+
+  `docker-compose down`

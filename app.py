@@ -5,7 +5,6 @@ import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
-import threading
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
@@ -40,7 +39,7 @@ async def error():
 
 @app.post('/labeled_data')
 async def labeled_data_post(labeled_data: LabeledData):
-    client = pymongo.MongoClient('mongodb://mongo:27017')
+    client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
     pdf_information_extraction_db = client['pdf_information_extraction']
     labeled_data.tenant = sanitize_name(labeled_data.tenant)
     labeled_data.extraction_name = sanitize_name(labeled_data.extraction_name)
@@ -50,12 +49,12 @@ async def labeled_data_post(labeled_data: LabeledData):
 
 @app.post('/prediction_data')
 async def prediction_data_post(prediction_data: PredictionData):
-    client = pymongo.MongoClient('mongodb://mongo:27017')
+    client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
     pdf_information_extraction_db = client['pdf_information_extraction']
     prediction_data.tenant = sanitize_name(prediction_data.tenant)
     prediction_data.extraction_name = sanitize_name(prediction_data.extraction_name)
     pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
-    return 'labeled data saved'
+    return 'prediction data saved'
 
 
 @app.post('/xml_file/{tenant}/{extraction_name}')
@@ -66,7 +65,7 @@ async def xml_file(tenant, extraction_name, file: UploadFile = File(...)):
         tenant = sanitize_name(tenant)
         extraction_name = sanitize_name(extraction_name)
         XmlFile(file_name=filename, tenant=tenant, extraction_name=extraction_name).save(file=file.file.read())
-        return 'task registered'
+        return 'xml saved'
     except Exception:
         graylog.error(f'Error adding task {filename}', exc_info=1)
         raise HTTPException(status_code=422, detail=f'Error adding task {filename}')
@@ -76,7 +75,7 @@ async def xml_file(tenant, extraction_name, file: UploadFile = File(...)):
 async def get_suggestions(tenant: str, extraction_name: str):
     tenant = sanitize_name(tenant)
     extraction_name = sanitize_name(extraction_name)
-    client = pymongo.MongoClient('mongodb://mongo:27017')
+    client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
     pdf_information_extraction_db = client['pdf_information_extraction']
     suggestions_filter = {"extraction_name": extraction_name, "tenant": tenant}
     suggestions_list: List[Dict[str, str]] = list()

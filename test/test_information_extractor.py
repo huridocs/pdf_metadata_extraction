@@ -15,9 +15,9 @@ DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.realpath(__file_
 
 
 class TestSegmentPredictor(TestCase):
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "extraction_name",
                      "tenant": "segment_test",
@@ -45,9 +45,9 @@ class TestSegmentPredictor(TestCase):
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test')
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model_no_xml(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "extraction_name",
                      "tenant": "segment_test",
@@ -67,9 +67,9 @@ class TestSegmentPredictor(TestCase):
         self.assertFalse(
             os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/segment_predictor_model/model.model'))
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model_no_tenant_labeled_data(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "extraction_name",
                      "tenant": "other_tenant_name",
@@ -97,9 +97,9 @@ class TestSegmentPredictor(TestCase):
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test')
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model_no_extraction_name_labeled_data(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "other_extraction_name",
                      "tenant": "segment_test",
@@ -130,9 +130,9 @@ class TestSegmentPredictor(TestCase):
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test')
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         tenant = "tenant_to_be_removed"
         extraction_name = "extraction_name"
@@ -191,9 +191,9 @@ class TestSegmentPredictor(TestCase):
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions_page_2(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         tenant = "tenant_to_be_removed"
         extraction_name = "extraction_name"
@@ -252,9 +252,9 @@ class TestSegmentPredictor(TestCase):
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_semantic_suggestions(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         tenant = "tenant_to_be_removed"
         extraction_name = "extraction_name"

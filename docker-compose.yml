@@ -1,9 +1,15 @@
 version: '3'
 services:
-  pdf_to_paragraphs:
+  pdf_information_extraction:
     build: .
     ports:
       - "5050:5050"
     volumes:
       - .:/developer
       - ./docker_volume:/developer/docker_volume
+  mongo_information_extraction:
+    image: "mongo:4.0.1"
+    volumes:
+      - ./db:/data/db
+    ports:
+      - '28017-28019:27017-27019'

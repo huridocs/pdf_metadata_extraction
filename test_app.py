@@ -27,15 +27,15 @@ class TestApp(TestCase):
         with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
             files = {'file': stream}
             response = client.post("/xml_file/tenant%20one/extraction%20name", files=files)
-            self.assertEqual('task registered', response.json())
+            self.assertEqual('xml saved', response.json())
             self.assertEqual(200, response.status_code)
             self.assertTrue(os.path.exists('./docker_volume/tenant_one/extraction_name/xml_files/test.xml'))
 
             shutil.rmtree('./docker_volume/tenant_one', ignore_errors=True)
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_labeled_data(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = {"xml_file_name": "xml_file_name",
                      "extraction_name": "extraction name",
@@ -78,12 +78,11 @@ class TestApp(TestCase):
 
         response = client.post("/labeled_data", json=json_data)
 
-        print(response.json())
         self.assertEqual(422, response.status_code)
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_labeled_data_different_values(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = {"xml_file_name": "other_xml_file_name",
                      "extraction_name": "other_extraction_name",
@@ -110,9 +109,9 @@ class TestApp(TestCase):
         self.assertEqual([], labeled_data_document['xml_segments_boxes'])
         self.assertEqual([], labeled_data_document['label_segments_boxes'])
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_prediction_data(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = {"xml_file_name": "xml_file_name",
                      "extraction_name": "extraction name",
@@ -131,12 +130,12 @@ class TestApp(TestCase):
         self.assertEqual('tenant', prediction_data_document['tenant'])
         self.assertEqual('xml_file_name', prediction_data_document['xml_file_name'])
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions(self):
         tenant = "tenant_to_be_removed"
         extraction_name = "prediction_property_name"
 
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = [{'tenant': 'wrong tenant',
                       'extraction_name': extraction_name,
@@ -179,12 +178,12 @@ class TestApp(TestCase):
         self.assertEqual("other_segment_text", suggestions[1]['segment_text'])
         self.assertEqual("other_text_predicted", suggestions[1]['text'])
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_should_remove_suggestions_when_returned(self):
         tenant = "tenant_to_be_removed"
         extraction_name = "prediction_property_name"
 
-        mongo_client = pymongo.MongoClient('mongodb://mongo:27017')
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = [{'tenant': 'wrong tenant',
                       'extraction_name': extraction_name,
@@ -221,7 +220,7 @@ class TestApp(TestCase):
         self.assertEqual('wrong tenant', suggestions[0].tenant)
         self.assertEqual('wrong extraction name', suggestions[1].extraction_name)
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions_when_no_suggestions(self):
         tenant = "tenant_to_be_removed"
         extraction_name = "prediction_property_name"
@@ -232,7 +231,7 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(0, len(suggestions))
 
-    @mongomock.patch(servers=['mongodb://mongo:27017'])
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_calculate_suggestions(self):
         tenant = "tenant_to_be_removed"
         extraction_name = "extraction_name"

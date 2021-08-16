@@ -25,7 +25,7 @@ class InformationExtraction:
         self.model_path = f'{root_folder}/{self.tenant}/{self.extraction_name}/segment_predictor_model/model.model'
         self.model = None
         self.load_model()
-        client = pymongo.MongoClient('mongodb://mongo:27017')
+        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         self.pdf_information_extraction_db = client['pdf_information_extraction']
 
     def load_model(self):
@@ -33,7 +33,7 @@ class InformationExtraction:
             self.model = lgb.Booster(model_file=self.model_path)
 
     def set_segments(self):
-        client = pymongo.MongoClient('mongodb://mongo:27017')
+        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         pdf_information_extraction_db = client['pdf_information_extraction']
 
         find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
