@@ -27,6 +27,7 @@ class InformationExtraction:
         self.load_model()
         client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         self.pdf_information_extraction_db = client['pdf_information_extraction']
+        self.mongo_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
 
     def load_model(self):
         if os.path.exists(self.model_path):
@@ -36,8 +37,7 @@ class InformationExtraction:
         client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         pdf_information_extraction_db = client['pdf_information_extraction']
 
-        find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
-        for document in pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
+        for document in pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             segments = XmlFile.get_segments(LabeledData(**document))
             self.segments.extend(segments)
 
@@ -47,9 +47,8 @@ class InformationExtraction:
         self.create_semantic_model()
 
     def create_semantic_model(self):
-        find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
         semantic_extraction_data: List[SemanticExtractionData] = list()
-        for document in self.pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
+        for document in self.pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
             suggestion = self.get_suggested_segment(labeled_data)
             semantic_extraction_data.append(
@@ -108,19 +107,20 @@ class InformationExtraction:
         suggestions = self.get_suggestions()
 
         XmlFile.remove_files(self.tenant, self.extraction_name)
+
         if suggestions:
             self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
+            self.pdf_information_extraction_db.labeleddata.delete_many(self.mongo_filter)
+            self.pdf_information_extraction_db.predictiondata.delete_many(self.mongo_filter)
 
         return suggestions
 
     def get_suggestions(self):
-        find_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
-
         suggestions: List[Suggestion] = list()
-        for document in self.pdf_information_extraction_db.labeleddata.find(find_filter, no_cursor_timeout=True):
+        for document in self.pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
             suggestions.append(self.get_suggested_segment(labeled_data))
-        for document in self.pdf_information_extraction_db.predictiondata.find(find_filter, no_cursor_timeout=True):
+        for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document, label_text="", label_segments_boxes=[])
             suggestions.append(self.get_suggested_segment(labeled_data))
         segments_text = [x.segment_text for x in suggestions]

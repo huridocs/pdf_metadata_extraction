@@ -67,7 +67,7 @@ class TestInformationExtractor(TestCase):
             os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/segment_predictor_model/model.model'))
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_model_no_tenant_labeled_data(self):
+    def test_create_model_wrong_tenant(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "extraction_name",
@@ -97,7 +97,7 @@ class TestInformationExtractor(TestCase):
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test')
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_model_no_extraction_name_labeled_data(self):
+    def test_create_model_wrong_extraction_name(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "other_extraction_name",
@@ -185,6 +185,9 @@ class TestInformationExtractor(TestCase):
         self.assertEqual("test.xml", suggestion_2.xml_file_name)
         self.assertEqual("United Nations", suggestion_2.segment_text)
         self.assertEqual("United Nations", suggestion_2.text)
+
+        self.assertIsNone(mongo_client.pdf_information_extraction.labeleddata.find_one())
+        self.assertIsNone(mongo_client.pdf_information_extraction.predictiondata.find_one())
 
         self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files'))
 
