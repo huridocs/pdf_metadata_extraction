@@ -10,7 +10,7 @@ DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.
 
 class TestSemanticInformationExtraction(TestCase):
     def test_create_model(self):
-        tenant = 'tenant_to_be_removed'
+        tenant = 'semantic_tenant_to_be_removed'
         extraction_name = 'extraction_name'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
@@ -25,7 +25,7 @@ class TestSemanticInformationExtraction(TestCase):
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
     def test_remove_model_if_it_is_not_good(self):
-        tenant = 'tenant_to_be_removed'
+        tenant = 'semantic_tenant_to_be_removed'
         extraction_name = 'ex'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
@@ -44,7 +44,7 @@ class TestSemanticInformationExtraction(TestCase):
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
     def test_remove_model_if_it_is_not_good_multilingual(self):
-        tenant = 'tenant_to_be_removed'
+        tenant = 'semantic_tenant_to_be_removed'
         extraction_name = 'ex'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
