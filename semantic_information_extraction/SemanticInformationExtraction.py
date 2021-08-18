@@ -30,9 +30,9 @@ class SemanticInformationExtraction:
         return train_df
 
     def create_model(self, semantic_extraction_data: List[SemanticExtractionData]):
+        self.semantic_extraction_data = semantic_extraction_data
         non_en_extractions = [x for x in semantic_extraction_data if x.language_iso != 'en' and x.language_iso != "eng"]
         multilingual = len(non_en_extractions) > 0
-        self.semantic_extraction_data = semantic_extraction_data
         train_df = self.prepare_dataset()
         model_args = T5Args()
         model_args.max_seq_length = self.get_max_input_length(multilingual)
@@ -78,7 +78,7 @@ class SemanticInformationExtraction:
 
         good_predictions = len([x for index, x in enumerate(predictions) if x == target_texts[index]])
         good_texts_without_t5 = len([x for index, x in enumerate(input_texts) if x == target_texts[index]])
-        if good_predictions < good_texts_without_t5:
+        if good_predictions <= good_texts_without_t5:
             shutil.rmtree(self.model_path, ignore_errors=True)
             shutil.rmtree(self.multilingual_model_path, ignore_errors=True)
 
@@ -103,7 +103,7 @@ class SemanticInformationExtraction:
         sentence_piece = sentencepiece.SentencePieceProcessor(spiece_model)
         texts = [self.extraction_name + ': ' + x.segment_text for x in self.semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
-        return int(max(tokens_number) * 1.1)
+        return int((max(tokens_number) + 1) * 1.2)
 
     def get_max_output_length(self, multilingual: bool):
         if multilingual:
@@ -114,4 +114,4 @@ class SemanticInformationExtraction:
         sentence_piece = sentencepiece.SentencePieceProcessor(spiece_model)
         texts = [self.extraction_name + ': ' + x.text for x in self.semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
-        return int(max(tokens_number) * 1.1)
+        return int((max(tokens_number) + 1) * 1.2)

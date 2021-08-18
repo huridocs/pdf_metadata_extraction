@@ -323,17 +323,18 @@ class TestInformationExtractor(TestCase):
         shutil.copytree(f'{DOCKER_VOLUME_PATH}/{tenant}/extraction_name/xml_files',
                         f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files')
 
-        for i in range(45):
+        samples_number = 20
+        for i in range(samples_number):
             labeled_data_json = {"xml_file_name": "spanish.xml",
                                  "extraction_name": extraction_name,
                                  "tenant": tenant,
                                  "language_iso": "spa",
-                                 "label_text": "período",
+                                 "label_text": "día",
                                  "page_width": 612,
                                  "page_height": 792,
                                  "xml_segments_boxes": [],
                                  "label_segments_boxes": [
-                                     SegmentBox(left=60, top=216, width=202, height=8, page_number=1).dict()]
+                                     SegmentBox(left=289, top=206, width=34, height=10, page_number=1).dict()]
                                  }
 
             mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
@@ -346,12 +347,12 @@ class TestInformationExtractor(TestCase):
         for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
             suggestions.append(Suggestion(**document))
 
-        self.assertEqual(45, len(suggestions))
+        self.assertEqual(samples_number, len(suggestions))
 
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
         self.assertEqual({extraction_name}, {x.extraction_name for x in suggestions})
         self.assertEqual({"spanish.xml"}, {x.xml_file_name for x in suggestions})
-        self.assertEqual({"período"}, {x.text for x in suggestions})
-        self.assertEqual({"Septuagésimo quinto período de sesiones"}, {x.segment_text for x in suggestions})
+        self.assertEqual({"por día"}, {x.segment_text for x in suggestions})
+        self.assertEqual({"día"}, {x.text for x in suggestions})
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
