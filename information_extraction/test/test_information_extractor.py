@@ -21,6 +21,7 @@ class TestInformationExtractor(TestCase):
                      "extraction_name": "extraction_name",
                      "tenant": "segment_test",
                      "label_text": "text",
+                     "language_iso": "en",
                      "page_width": 612,
                      "page_height": 792,
                      "xml_segments_boxes": [],
@@ -50,6 +51,7 @@ class TestInformationExtractor(TestCase):
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "extraction_name",
                      "tenant": "segment_test",
+                     "language_iso": "en",
                      "label_text": "text",
                      "page_width": 612,
                      "page_height": 792,
@@ -150,6 +152,7 @@ class TestInformationExtractor(TestCase):
         labeled_data_json = {"xml_file_name": "test.xml",
                              "extraction_name": extraction_name,
                              "tenant": tenant,
+                             "language_iso": "en",
                              "label_text": "text",
                              "page_width": 612,
                              "page_height": 792,
@@ -215,6 +218,7 @@ class TestInformationExtractor(TestCase):
         labeled_data_json = {"xml_file_name": "test.xml",
                              "extraction_name": extraction_name,
                              "tenant": tenant,
+                             "language_iso": "en",
                              "label_text": "text",
                              "page_width": 612,
                              "page_height": 792,
@@ -277,6 +281,7 @@ class TestInformationExtractor(TestCase):
             labeled_data_json = {"xml_file_name": "test.xml",
                                  "extraction_name": extraction_name,
                                  "tenant": tenant,
+                                 "language_iso": "en",
                                  "label_text": "English",
                                  "page_width": 612,
                                  "page_height": 792,
@@ -303,5 +308,50 @@ class TestInformationExtractor(TestCase):
         self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"Original: English"}, {x.segment_text for x in suggestions})
         self.assertEqual({"English"}, {x.text for x in suggestions})
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_get_semantic_suggestions_spanish(self):
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+
+        tenant = "tenant_to_be_removed"
+        extraction_name = "spa"
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+        shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
+        shutil.copytree(f'{DOCKER_VOLUME_PATH}/{tenant}/extraction_name/xml_files',
+                        f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files')
+
+        for i in range(45):
+            labeled_data_json = {"xml_file_name": "spanish.xml",
+                                 "extraction_name": extraction_name,
+                                 "tenant": tenant,
+                                 "language_iso": "spa",
+                                 "label_text": "período",
+                                 "page_width": 612,
+                                 "page_height": 792,
+                                 "xml_segments_boxes": [],
+                                 "label_segments_boxes": [
+                                     SegmentBox(left=60, top=216, width=202, height=8, page_number=1).dict()]
+                                 }
+
+            mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
+
+        information_extraction = InformationExtraction(tenant, extraction_name)
+        information_extraction.calculate_suggestions()
+
+        suggestions: List[Suggestion] = list()
+        find_filter = {"extraction_name": extraction_name, "tenant": tenant}
+        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
+            suggestions.append(Suggestion(**document))
+
+        self.assertEqual(45, len(suggestions))
+
+        self.assertEqual({tenant}, {x.tenant for x in suggestions})
+        self.assertEqual({extraction_name}, {x.extraction_name for x in suggestions})
+        self.assertEqual({"spanish.xml"}, {x.xml_file_name for x in suggestions})
+        self.assertEqual({"período"}, {x.text for x in suggestions})
+        self.assertEqual({"Septuagésimo quinto período de sesiones"}, {x.segment_text for x in suggestions})
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)

@@ -20,6 +20,7 @@ Post labeled data:
    `curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
                              "extraction_name": "extraction_name",
                              "tenant": "tenant_name",
+                             "language_iso": "en",
                              "label_text": "text",
                              "page_width": 612,
                              "page_height": 792,

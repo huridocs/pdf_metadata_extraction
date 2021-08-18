@@ -27,4 +27,5 @@ RUN pip3 install -r requirements.txt
 
 ENV FLASK_APP app.py
 
+CMD []
 CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "app:app", "--bind", "0.0.0.0:5050"]

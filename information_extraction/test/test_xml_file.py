@@ -26,6 +26,7 @@ class TestXmlFile(TestCase):
         labeled_data = LabeledData(xml_file_name="test.xml",
                                    extraction_name=TestXmlFile.extraction_name,
                                    tenant=TestXmlFile.tenant,
+                                   language_iso='en',
                                    label_text="text",
                                    page_width=612,
                                    page_height=792,
@@ -58,6 +59,7 @@ class TestXmlFile(TestCase):
         labeled_data = LabeledData(xml_file_name="test.xml",
                                    extraction_name=TestXmlFile.extraction_name,
                                    tenant=TestXmlFile.tenant,
+                                   language_iso='en',
                                    label_text="text",
                                    page_width=1,  # 612
                                    page_height=2,  # 396
@@ -82,6 +84,7 @@ class TestXmlFile(TestCase):
         labeled_data = LabeledData(xml_file_name="test.xml",
                                    extraction_name=TestXmlFile.extraction_name,
                                    tenant='non_existent_tenant',
+                                   language_iso='en',
                                    label_text="text",
                                    page_width=612,
                                    page_height=792,
@@ -99,6 +102,7 @@ class TestXmlFile(TestCase):
         labeled_data = LabeledData(xml_file_name="test.xml",
                                    extraction_name="non_existent_extraction",
                                    tenant=TestXmlFile.tenant,
+                                   language_iso='en',
                                    label_text="text",
                                    page_width=612,
                                    page_height=792,

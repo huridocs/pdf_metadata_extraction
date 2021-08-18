@@ -27,11 +27,12 @@ class TestApp(TestCase):
         with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
             files = {'file': stream}
             response = client.post("/xml_file/tenant%20one/extraction%20name", files=files)
-            self.assertEqual('xml saved', response.json())
-            self.assertEqual(200, response.status_code)
-            self.assertTrue(os.path.exists('./docker_volume/tenant_one/extraction_name/xml_files/test.xml'))
 
-            shutil.rmtree('./docker_volume/tenant_one', ignore_errors=True)
+        self.assertEqual('xml saved', response.json())
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(os.path.exists('./docker_volume/tenant_one/extraction_name/xml_files/test.xml'))
+
+        shutil.rmtree('./docker_volume/tenant_one', ignore_errors=True)
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_labeled_data(self):
@@ -40,6 +41,7 @@ class TestApp(TestCase):
         json_data = {"xml_file_name": "xml_file_name",
                      "extraction_name": "extraction name",
                      "tenant": "tenant one",
+                     "language_iso" : "en",
                      "label_text": "text",
                      "page_width": 1.1,
                      "page_height": 2.1,
@@ -87,6 +89,7 @@ class TestApp(TestCase):
         json_data = {"xml_file_name": "other_xml_file_name",
                      "extraction_name": "other_extraction_name",
                      "tenant": "other tenant",
+                     "language_iso": "en",
                      "label_text": "other_text",
                      "page_width": 4.1,
                      "page_height": 5.1,
@@ -252,6 +255,7 @@ class TestApp(TestCase):
         labeled_data_json = {"xml_file_name": "test.xml",
                              "extraction_name": extraction_name,
                              "tenant": tenant,
+                             "language_iso": "en",
                              "label_text": "text",
                              "page_width": 612,
                              "page_height": 792,

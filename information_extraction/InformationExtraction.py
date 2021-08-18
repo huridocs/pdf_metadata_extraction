@@ -52,7 +52,9 @@ class InformationExtraction:
             labeled_data = LabeledData(**document)
             suggestion = self.get_suggested_segment(labeled_data)
             semantic_extraction_data.append(
-                SemanticExtractionData(text=labeled_data.label_text, segment_text=suggestion.segment_text))
+                SemanticExtractionData(text=labeled_data.label_text,
+                                       segment_text=suggestion.segment_text,
+                                       language_iso=labeled_data.language_iso))
 
         if len(semantic_extraction_data) < 7:
             return
@@ -106,12 +108,13 @@ class InformationExtraction:
         self.create_models()
         suggestions = self.get_suggestions()
 
-        XmlFile.remove_files(self.tenant, self.extraction_name)
+        if not suggestions:
+            return []
 
-        if suggestions:
-            self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
-            self.pdf_information_extraction_db.labeleddata.delete_many(self.mongo_filter)
-            self.pdf_information_extraction_db.predictiondata.delete_many(self.mongo_filter)
+        self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
+        self.pdf_information_extraction_db.labeleddata.delete_many(self.mongo_filter)
+        self.pdf_information_extraction_db.predictiondata.delete_many(self.mongo_filter)
+        XmlFile.remove_files(self.tenant, self.extraction_name)
 
         return suggestions
 
@@ -121,7 +124,7 @@ class InformationExtraction:
             labeled_data = LabeledData(**document)
             suggestions.append(self.get_suggested_segment(labeled_data))
         for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
-            labeled_data = LabeledData(**document, label_text="", label_segments_boxes=[])
+            labeled_data = LabeledData(**document, language_iso='', label_text="", label_segments_boxes=[])
             suggestions.append(self.get_suggested_segment(labeled_data))
         segments_text = [x.segment_text for x in suggestions]
         texts = self.semantic_information_extraction.get_semantic_predictions(segments_text)
@@ -142,5 +145,5 @@ class InformationExtraction:
         for index, segment in enumerate(segments):
             if predictions[index] > 0.5:
                 texts.append(segment.text_content)
-        text = ' '.join(texts)
-        return Suggestion(**labeled_data.dict(), text=text, segment_text=text)
+        segment_texts = ' '.join(texts)
+        return Suggestion(**labeled_data.dict(), text=segment_texts, segment_text=segment_texts)

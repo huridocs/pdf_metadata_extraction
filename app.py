@@ -1,6 +1,5 @@
-import json
 from typing import List, Dict
-
+import json
 import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
@@ -51,6 +50,8 @@ async def labeled_data_post(labeled_data: LabeledData):
 async def prediction_data_post(prediction_data: PredictionData):
     client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
     pdf_information_extraction_db = client['pdf_information_extraction']
+
+    print('prediction_data.tenant',prediction_data.tenant )
     prediction_data.tenant = sanitize_name(prediction_data.tenant)
     prediction_data.extraction_name = sanitize_name(prediction_data.extraction_name)
     pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
@@ -94,4 +95,3 @@ async def calculate_suggestions(tenant: str, extraction_name: str):
     information_extraction = InformationExtraction(tenant=tenant, extraction_name=extraction_name)
     information_extraction.calculate_suggestions()
     return 'Started'
-
