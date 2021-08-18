@@ -135,7 +135,7 @@ class TestApp(TestCase):
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions(self):
-        tenant = "tenant_to_be_removed"
+        tenant = "example_tenant_name"
         extraction_name = "prediction_property_name"
 
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
@@ -183,7 +183,7 @@ class TestApp(TestCase):
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_should_remove_suggestions_when_returned(self):
-        tenant = "tenant_to_be_removed"
+        tenant = "example_tenant_name"
         extraction_name = "prediction_property_name"
 
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
@@ -225,7 +225,7 @@ class TestApp(TestCase):
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions_when_no_suggestions(self):
-        tenant = "tenant_to_be_removed"
+        tenant = "example_tenant_name"
         extraction_name = "prediction_property_name"
 
         response = client.get(f"/get_suggestions/{tenant}/{extraction_name}")
@@ -236,7 +236,7 @@ class TestApp(TestCase):
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_calculate_suggestions(self):
-        tenant = "tenant_to_be_removed"
+        tenant = "example_tenant_name"
         extraction_name = "extraction_name"
 
         tenant_url = tenant.replace('_', '%20')
@@ -291,7 +291,7 @@ class TestApp(TestCase):
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_calculate_suggestions_when_no_label_data(self):
-        tenant = "tenant_to_be_removed"
+        tenant = "example_tenant_name"
         extraction_name = "extraction_name"
 
         shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
