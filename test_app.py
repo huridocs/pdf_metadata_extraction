@@ -28,7 +28,7 @@ class TestApp(TestCase):
         self.assertEqual({'detail': 'This is a test error from the error endpoint'}, response.json())
 
     def test_post_xml_file(self):
-        with open('DOCKER_VOLUME_PATH/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
+        with open(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
             files = {'file': stream}
             response = client.post("/xml_file/tenant%20one/extraction%20name", files=files)
 
@@ -45,7 +45,7 @@ class TestApp(TestCase):
         json_data = {"xml_file_name": "xml_file_name",
                      "extraction_name": "extraction name",
                      "tenant": "tenant one",
-                     "language_iso" : "en",
+                     "language_iso": "en",
                      "label_text": "text",
                      "page_width": 1.1,
                      "page_height": 2.1,
@@ -268,7 +268,7 @@ class TestApp(TestCase):
                                                        "page_number": 1}]
                              }
 
-        with open('DOCKER_VOLUME_PATH/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
+        with open(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
             files = {'file': stream}
             client.post(f"/xml_file/{tenant_url}/{extraction_name_url}", files=files)
 
@@ -319,4 +319,3 @@ class TestApp(TestCase):
         self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/semantic_model/best_model'))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
-
