@@ -71,13 +71,7 @@ class SemanticInformationExtraction:
             model = T5Model("t5", "t5-small", args=model_args, use_cuda=torch.cuda.is_available())
 
         model.train_model(train_df)
-        print('real path')
-        print(self.model_path)
-        print(self.model_path)
-        print(self.model_path)
-
-        print('exists: ', os.path.exists(self.model_path))
-        # self.remove_model_if_not_good(train_df)
+        self.remove_model_if_not_good(train_df)
 
     def remove_model_if_not_good(self, train_df):
         input_texts = train_df['input_text'].tolist()
@@ -86,6 +80,8 @@ class SemanticInformationExtraction:
 
         good_predictions = len([x for index, x in enumerate(predictions) if x == target_texts[index]])
         good_texts_without_t5 = len([x for index, x in enumerate(input_texts) if x == target_texts[index]])
+        print('good_predictions, good_texts_without_t5')
+        print(good_predictions, good_texts_without_t5)
         if good_predictions <= good_texts_without_t5:
             shutil.rmtree(self.model_path, ignore_errors=True)
             shutil.rmtree(self.multilingual_model_path, ignore_errors=True)
