@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from unittest import TestCase
 
 from data.SemanticExtractionData import SemanticExtractionData
@@ -22,7 +23,7 @@ class TestSemanticInformationExtraction(TestCase):
         print(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/semantic_model/best_model')
         print(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/semantic_model/best_model')
         self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/semantic_model/best_model'))
-
+        time.sleep(5)
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
     # def test_remove_model_if_it_is_not_good(self):

@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import List
 
@@ -74,6 +75,7 @@ class SemanticInformationExtraction:
         print(self.model_path)
         print(self.model_path)
         print(self.model_path)
+
         print('exists: ', os.path.exists(self.model_path))
         self.remove_model_if_not_good(train_df)
 
