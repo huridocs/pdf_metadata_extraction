@@ -299,3 +299,11 @@ class TestApp(TestCase):
         calculate_result = client.post(f"/calculate_suggestions/{tenant}/{extraction_name}")
 
         self.assertEqual(200, calculate_result.status_code)
+
+    def test_github_problem(self):
+        shutil.rmtree('./docker_volume/tenant_two', ignore_errors=True)
+        os.makedirs('./docker_volume/tenant_two/buu')
+        shutil.copytree('./docker_volume/tenant_test', './docker_volume/tenant_two/buu/test')
+        shutil.rmtree('./docker_volume/tenant_two', ignore_errors=True)
+        self.assertFalse(os.path.exists('./docker_volume/tenant_two'))
+
