@@ -8,9 +8,13 @@ import pymongo
 from fastapi.testclient import TestClient
 from unittest import TestCase
 from app import app
+from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
+from semantic_information_extraction.SemanticInformationExtraction import SemanticInformationExtraction
 
 client = TestClient(app)
+
+DOCKER_VOLUME_PATH = f'./docker_volume'
 
 
 class TestApp(TestCase):
@@ -24,15 +28,15 @@ class TestApp(TestCase):
         self.assertEqual({'detail': 'This is a test error from the error endpoint'}, response.json())
 
     def test_post_xml_file(self):
-        with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
+        with open('DOCKER_VOLUME_PATH/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
             files = {'file': stream}
             response = client.post("/xml_file/tenant%20one/extraction%20name", files=files)
 
         self.assertEqual('xml saved', response.json())
         self.assertEqual(200, response.status_code)
-        self.assertTrue(os.path.exists('./docker_volume/tenant_one/extraction_name/xml_files/test.xml'))
+        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/tenant_one/extraction_name/xml_files/test.xml'))
 
-        shutil.rmtree('./docker_volume/tenant_one', ignore_errors=True)
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/tenant_one', ignore_errors=True)
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_labeled_data(self):
@@ -242,7 +246,7 @@ class TestApp(TestCase):
         tenant_url = tenant.replace('_', '%20')
         extraction_name_url = extraction_name.replace('_', '%20')
 
-        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
         predict_data_json = {"xml_file_name": "test.xml",
                              "extraction_name": extraction_name,
@@ -264,7 +268,7 @@ class TestApp(TestCase):
                                                        "page_number": 1}]
                              }
 
-        with open('docker_volume/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
+        with open('DOCKER_VOLUME_PATH/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
             files = {'file': stream}
             client.post(f"/xml_file/{tenant_url}/{extraction_name_url}", files=files)
 
@@ -287,23 +291,31 @@ class TestApp(TestCase):
         self.assertEqual("United Nations", suggestion_1.segment_text)
         self.assertEqual("United Nations", suggestion_1.text)
 
-        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_calculate_suggestions_when_no_label_data(self):
         tenant = "example_tenant_name"
         extraction_name = "extraction_name"
 
-        shutil.rmtree(f'./docker_volume/{tenant}', ignore_errors=True)
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
         calculate_result = client.post(f"/calculate_suggestions/{tenant}/{extraction_name}")
 
         self.assertEqual(200, calculate_result.status_code)
 
-    def test_github_problem(self):
-        shutil.rmtree('./docker_volume/tenant_two', ignore_errors=True)
-        os.makedirs('./docker_volume/tenant_two/buu')
-        shutil.copytree('./docker_volume/tenant_test', './docker_volume/tenant_two/buu/test')
-        shutil.rmtree('./docker_volume/tenant_two', ignore_errors=True)
-        self.assertFalse(os.path.exists('./docker_volume/tenant_two'))
+    def test_create_model(self):
+        tenant = 'semantic_tenant_to_be_removed_1'
+        extraction_name = 'extraction_name'
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+
+        semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
+
+        semantic_information_data = [SemanticExtractionData(text="one", segment_text="one two", language_iso="en")]
+        semantic_information_extraction.create_model(semantic_information_data)
+
+        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/semantic_model/best_model'))
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
