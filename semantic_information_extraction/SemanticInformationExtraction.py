@@ -64,7 +64,6 @@ class SemanticInformationExtraction:
         model_args.tensorboard_dir = f'{self.semantic_extraction_folder}/tensorboard_dir'
         model_args.output_dir = self.multilingual_model_path if multilingual else self.model_path
 
-        print(model_args.output_dir)
         if multilingual:
             model = T5Model("mt5", "google/mt5-small", args=model_args, use_cuda=torch.cuda.is_available())
         else:
