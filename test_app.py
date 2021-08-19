@@ -303,19 +303,3 @@ class TestApp(TestCase):
         calculate_result = client.post(f"/calculate_suggestions/{tenant}/{extraction_name}")
 
         self.assertEqual(200, calculate_result.status_code)
-
-    def test_create_model(self):
-        tenant = 'semantic_tenant_to_be_removed_1'
-        extraction_name = 'extraction_name'
-
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
-
-        semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
-
-        semantic_information_data = [SemanticExtractionData(text="one", segment_text="one two", language_iso="en")]
-        semantic_information_extraction.create_model(semantic_information_data)
-
-        self.assertEqual(os.path.exists(f'docker_volume/{tenant}/{extraction_name}/semantic_model/best_model'), True)
-        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/semantic_model/best_model'))
-
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
