@@ -71,7 +71,7 @@ class SemanticInformationExtraction:
 
         model.train_model(train_df)
         print('exists: ', os.path.exists(self.model_path))
-        # self.remove_model_if_not_good(train_df)
+        self.remove_model_if_not_good(train_df)
 
     def remove_model_if_not_good(self, train_df):
         input_texts = train_df['input_text'].tolist()
