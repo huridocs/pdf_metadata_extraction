@@ -124,7 +124,8 @@ class InformationExtraction:
         for document in self.pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
             suggestions.append(self.get_suggested_segment(labeled_data))
-        for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
+        for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter,
+                                                                               no_cursor_timeout=True):
             labeled_data = LabeledData(**document, language_iso='', label_text="", label_segments_boxes=[])
             suggestions.append(self.get_suggested_segment(labeled_data))
         segments_text = [x.segment_text for x in suggestions]
