@@ -63,13 +63,15 @@ class SemanticInformationExtraction:
         model_args.tensorboard_dir = f'{self.semantic_extraction_folder}/tensorboard_dir'
         model_args.output_dir = self.multilingual_model_path if multilingual else self.model_path
 
+        print(model_args.output_dir)
         if multilingual:
             model = T5Model("mt5", "google/mt5-small", args=model_args, use_cuda=torch.cuda.is_available())
         else:
             model = T5Model("t5", "t5-small", args=model_args, use_cuda=torch.cuda.is_available())
 
         model.train_model(train_df)
-        self.remove_model_if_not_good(train_df)
+        print('exists: ', os.path.exists(self.model_path))
+        # self.remove_model_if_not_good(train_df)
 
     def remove_model_if_not_good(self, train_df):
         input_texts = train_df['input_text'].tolist()
