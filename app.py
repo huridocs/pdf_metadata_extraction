@@ -7,6 +7,7 @@ import sys
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
+from data.Task import Task
 from get_graylog import get_graylog
 from information_extraction.InformationExtraction import InformationExtraction
 from information_extraction.XmlFile import XmlFile
@@ -54,6 +55,17 @@ async def prediction_data_post(prediction_data: PredictionData):
     prediction_data.extraction_name = sanitize_name(prediction_data.extraction_name)
     pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
     return 'prediction data saved'
+
+
+@app.post('/add_task')
+async def prediction_data_post(task: Task):
+    client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+    pdf_information_extraction_db = client['pdf_information_extraction']
+    task.tenant = sanitize_name(task.tenant)
+    task.extraction_name = sanitize_name(task.extraction_name)
+    pdf_information_extraction_db.tasks.delete_many(task.dict())
+    pdf_information_extraction_db.tasks.insert_one(task.dict())
+    return 'task added'
 
 
 @app.post('/xml_file/{tenant}/{extraction_name}')

@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from unittest import TestCase
 from app import app
 from data.Suggestion import Suggestion
+from data.Task import Task
 
 client = TestClient(app)
 
@@ -129,6 +130,46 @@ class TestApp(TestCase):
         self.assertEqual('extraction_name', prediction_data_document['extraction_name'])
         self.assertEqual('tenant', prediction_data_document['tenant'])
         self.assertEqual('xml_file_name', prediction_data_document['xml_file_name'])
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_post_add_calculation_task(self):
+        tenant = "example tenant name%"
+        extraction_name = "prediction property name%"
+        tenant_normalized = "example_tenant_name"
+        extraction_name_normalized = "prediction_property_name"
+        task_1_json = {"extraction_name": f'{extraction_name}_1', "tenant": f'{tenant}_1'}
+        task_2_json = {"extraction_name": f'{extraction_name}_1', "tenant": f'{tenant}_2'}
+        task_3_json = {"extraction_name": f'{extraction_name}_2', "tenant": f'{tenant}_1'}
+        task_4_json = {"extraction_name": f'{extraction_name}_2', "tenant": f'{tenant}_2'}
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+        responses = [client.post('/add_task', json=task_1_json),
+                     client.post('/add_task', json=task_1_json),
+                     client.post('/add_task', json=task_2_json),
+                     client.post('/add_task', json=task_2_json),
+                     client.post('/add_task', json=task_4_json),
+                     client.post('/add_task', json=task_4_json),
+                     client.post('/add_task', json=task_3_json),
+                     client.post('/add_task', json=task_3_json)]
+
+        tasks: List[Task] = list()
+
+        for document in mongo_client.pdf_information_extraction.tasks.find():
+            tasks.append(Task(**document))
+
+        self.assertEqual({200}, {x.status_code for x in responses})
+        self.assertEqual(4, len(tasks))
+
+        self.assertEqual(f'{extraction_name_normalized}_1', tasks[0].extraction_name)
+        self.assertEqual(f'{tenant_normalized}_1', tasks[0].tenant)
+
+        self.assertEqual(f'{extraction_name_normalized}_1', tasks[1].extraction_name)
+        self.assertEqual(f'{tenant_normalized}_2', tasks[1].tenant)
+
+        self.assertEqual(f'{extraction_name_normalized}_2', tasks[2].extraction_name)
+        self.assertEqual(f'{tenant_normalized}_2', tasks[2].tenant)
+
+        self.assertEqual(f'{extraction_name_normalized}_2', tasks[3].extraction_name)
+        self.assertEqual(f'{tenant_normalized}_1', tasks[3].tenant)
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions(self):
