@@ -80,8 +80,7 @@ class SemanticInformationExtraction:
         good_predictions = len([x for index, x in enumerate(predictions) if x == target_texts[index]])
         good_texts_without_t5 = len([x for index, x in enumerate(input_texts) if x == target_texts[index]])
         if good_predictions <= good_texts_without_t5:
-            shutil.rmtree(self.model_path, ignore_errors=True)
-            shutil.rmtree(self.multilingual_model_path, ignore_errors=True)
+            self.remove_models()
 
     def get_semantic_predictions(self, segments_text: List[str]) -> List[str]:
         if not os.path.exists(self.model_path) and not os.path.exists(self.multilingual_model_path):
@@ -121,3 +120,7 @@ class SemanticInformationExtraction:
         texts = [self.extraction_name + ': ' + x.text for x in self.semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
         return int((max(tokens_number) + 1) * 1.2)
+
+    def remove_models(self):
+        shutil.rmtree(self.model_path, ignore_errors=True)
+        shutil.rmtree(self.multilingual_model_path, ignore_errors=True)

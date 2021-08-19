@@ -16,6 +16,8 @@ DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.
 class TestInformationExtractor(TestCase):
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model(self):
+        tenant = 'segment_test'
+        extraction_name = 'extraction_name'
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         json_data = {"xml_file_name": "test.xml",
                      "extraction_name": "extraction_name",
@@ -30,20 +32,53 @@ class TestInformationExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test', ignore_errors=True)
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
-        os.makedirs(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files')
+        os.makedirs(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files')
         shutil.copy(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml',
-                    f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files/test.xml')
+                    f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files/test.xml')
 
-        information_extraction = InformationExtraction("segment_test", "extraction_name")
+        information_extraction = InformationExtraction(tenant, "extraction_name")
         information_extraction.create_models()
 
         self.assertTrue(
-            os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/segment_predictor_model/model.model'))
-        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/extraction_name/xml_files'))
+            os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/segment_predictor_model/model.model'))
+        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/extraction_name/xml_files'))
 
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test')
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_create_second_model(self):
+        tenant = 'segment_test'
+        extraction_name = 'extraction_name'
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+        json_data = {"xml_file_name": "test.xml",
+                     "extraction_name": "extraction_name",
+                     "tenant": "segment_test",
+                     "label_text": "text",
+                     "language_iso": "en",
+                     "page_width": 612,
+                     "page_height": 792,
+                     "xml_segments_boxes": [],
+                     "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}]
+                     }
+
+        mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+        shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
+
+        information_extraction = InformationExtraction(tenant, "extraction_name")
+        information_extraction.create_models()
+
+        self.assertTrue(
+            os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/segment_predictor_model/model.model'))
+        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/extraction_name/xml_files'))
+        self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/extraction_name/semantic_model/best_model'))
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model_no_xml(self):

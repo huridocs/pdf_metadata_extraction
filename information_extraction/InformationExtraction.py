@@ -47,6 +47,7 @@ class InformationExtraction:
         self.create_semantic_model()
 
     def create_semantic_model(self):
+        self.semantic_information_extraction.remove_models()
         semantic_extraction_data: List[SemanticExtractionData] = list()
         for document in self.pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
