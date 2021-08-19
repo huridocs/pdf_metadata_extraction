@@ -70,6 +70,10 @@ class SemanticInformationExtraction:
             model = T5Model("t5", "t5-small", args=model_args, use_cuda=torch.cuda.is_available())
 
         model.train_model(train_df)
+        print('real path')
+        print(self.model_path)
+        print(self.model_path)
+        print(self.model_path)
         print('exists: ', os.path.exists(self.model_path))
         self.remove_model_if_not_good(train_df)
 
