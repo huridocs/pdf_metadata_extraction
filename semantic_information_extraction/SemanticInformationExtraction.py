@@ -79,8 +79,6 @@ class SemanticInformationExtraction:
 
         good_predictions = len([x for index, x in enumerate(predictions) if x == target_texts[index]])
         good_texts_without_t5 = len([x for index, x in enumerate(input_texts) if x == target_texts[index]])
-        print('good_predictions, good_texts_without_t5')
-        print(good_predictions, good_texts_without_t5)
         if good_predictions <= good_texts_without_t5:
             shutil.rmtree(self.model_path, ignore_errors=True)
             shutil.rmtree(self.multilingual_model_path, ignore_errors=True)
@@ -95,6 +93,11 @@ class SemanticInformationExtraction:
             model = T5Model("mt5", self.multilingual_model_path, use_cuda=torch.cuda.is_available())
 
         predictions = model.predict([f"{self.extraction_name}: {input_text}" for input_text in segments_text])
+
+        for index in range(len(segments_text)):
+            if '<extra_id_' in predictions[index]:
+                predictions[index] = segments_text[index]
+
         return predictions
 
     def get_max_input_length(self, multilingual: bool):

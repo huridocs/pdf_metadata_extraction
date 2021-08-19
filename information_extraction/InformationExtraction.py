@@ -130,7 +130,7 @@ class InformationExtraction:
         texts = self.semantic_information_extraction.get_semantic_predictions(segments_text)
 
         for index, suggestion in enumerate(suggestions):
-            suggestion.text = texts[index] if '<extra_id_' not in texts[index] else suggestion.segment_text
+            suggestion.text = texts[index]
 
         return suggestions
 
