@@ -17,9 +17,11 @@ class TestSemanticInformationExtraction(TestCase):
 
         semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
 
-        semantic_information_data = [SemanticExtractionData(text="one", segment_text="one two", language_iso="en")]
+        semantic_information_data = [SemanticExtractionData(text="one", segment_text="one two", language_iso="en")
+                                     for _ in range(5)]
         semantic_information_extraction.create_model(semantic_information_data)
 
+        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/semantic_model/best_model'))
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
     #
     # def test_remove_model_if_it_is_not_good(self):
