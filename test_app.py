@@ -8,9 +8,7 @@ import pymongo
 from fastapi.testclient import TestClient
 from unittest import TestCase
 from app import app
-from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
-from semantic_information_extraction.SemanticInformationExtraction import SemanticInformationExtraction
 
 client = TestClient(app)
 
@@ -21,11 +19,6 @@ class TestApp(TestCase):
     def test_info(self):
         response = client.get("/info")
         self.assertEqual(200, response.status_code)
-
-    def test_error(self):
-        response = client.get("/error")
-        self.assertEqual(500, response.status_code)
-        self.assertEqual({'detail': 'This is a test error from the error endpoint'}, response.json())
 
     def test_post_xml_file(self):
         with open(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
