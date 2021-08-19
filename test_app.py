@@ -135,8 +135,8 @@ class TestApp(TestCase):
     def test_post_add_calculation_task(self):
         tenant = "example tenant name%"
         extraction_name = "prediction property name%"
-        tenant_normalized = "example_tenant_name"
-        extraction_name_normalized = "prediction_property_name"
+        tenant_normalized = "example_tenant_name_"
+        extraction_name_normalized = "prediction_property_name_"
         task_1_json = {"extraction_name": f'{extraction_name}_1', "tenant": f'{tenant}_1'}
         task_2_json = {"extraction_name": f'{extraction_name}_1', "tenant": f'{tenant}_2'}
         task_3_json = {"extraction_name": f'{extraction_name}_2', "tenant": f'{tenant}_1'}

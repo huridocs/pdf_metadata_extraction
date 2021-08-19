@@ -20,9 +20,7 @@ graylog.info(f'PDF information extraction service has started')
 
 
 def sanitize_name(name: str):
-    name = name.replace(' ', '_')
-    name = ''.join(x for x in name if x.isalnum() or x == '_')
-    return name
+    return ''.join(x if x.isalnum() else '_' for x in name)
 
 
 @app.get('/info')
