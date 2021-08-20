@@ -54,16 +54,16 @@ class TestEndToEnd(TestCase):
         sleep(10)
 
         response = requests.get(f"{host}/get_suggestions/{tenant}/{extraction_name}")
-        suggestions = json.loads(response.json())
+        suggestions_dict = json.loads(response.json())
 
-        suggestion_1 = Suggestion(**suggestions[0])
+        suggestions = [Suggestion(**suggestions_dict[0]), Suggestion(**suggestions_dict[1])]
 
         self.assertEqual(2, len(suggestions))
 
-        self.assertEqual(tenant, suggestion_1.tenant)
-        self.assertEqual(extraction_name, suggestion_1.extraction_name)
-        self.assertEqual("test.xml", suggestion_1.xml_file_name)
-        self.assertEqual("United Nations", suggestion_1.segment_text)
-        self.assertEqual("United Nations", suggestion_1.text)
+        self.assertEqual({tenant}, {x.tenant for x in suggestions})
+        self.assertEqual({extraction_name}, {x.extraction_name for x in suggestions})
+        self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
+        self.assertEqual({"United Nations"}, {x.segment_text for x in suggestions})
+        self.assertEqual({"United Nations"}, {x.text for x in suggestions})
 
         subprocess.run('docker-compose down', shell=True)
