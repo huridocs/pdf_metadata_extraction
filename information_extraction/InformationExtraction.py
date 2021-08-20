@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from random import randint
 from typing import List
 
 import numpy as np
@@ -8,6 +9,7 @@ import pymongo
 from data.LabeledData import LabeledData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
+from data.Task import Task
 from information_extraction.Segment import Segment
 import lightgbm as lgb
 
@@ -61,19 +63,6 @@ class InformationExtraction:
             return
 
         self.semantic_information_extraction.create_model(semantic_extraction_data)
-
-    @staticmethod
-    def get_training_data(segments):
-        X = None
-        y = np.array([])
-
-        for segment in segments:
-            features = segment.get_features_array()
-            features = features.reshape(1, len(features))
-            X = features if X is None else np.concatenate((X, features), axis=0)
-            y = np.append(y, segment.ml_class_label)
-
-        return X, y
 
     def run_light_gbm(self):
         x_train, y_train = self.get_training_data(self.segments)
@@ -149,3 +138,30 @@ class InformationExtraction:
                 texts.append(segment.text_content)
         segment_texts = ' '.join(texts)
         return Suggestion(**labeled_data.dict(), text=segment_texts, segment_text=segment_texts)
+
+    @staticmethod
+    def get_training_data(segments):
+        X = None
+        y = np.array([])
+
+        for segment in segments:
+            features = segment.get_features_array()
+            features = features.reshape(1, len(features))
+            X = features if X is None else np.concatenate((X, features), axis=0)
+            y = np.append(y, segment.ml_class_label)
+
+        return X, y
+
+    @staticmethod
+    def calculate_suggestions_from_database():
+        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+        pdf_information_extraction_db = client['pdf_information_extraction']
+        document = pdf_information_extraction_db.tasks.find_one()
+        if document:
+            task = Task(**document)
+            information_extraction = InformationExtraction(**task.dict())
+            information_extraction.calculate_suggestions()
+            pdf_information_extraction_db.tasks.delete_many(task.dict())
+
+
+

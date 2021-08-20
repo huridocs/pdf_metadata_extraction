@@ -198,9 +198,9 @@ class TestInformationExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
+        mongo_client.pdf_information_extraction.tasks.insert_one({"extraction_name": extraction_name, "tenant": tenant})
 
-        information_extraction = InformationExtraction(tenant, extraction_name)
-        information_extraction.calculate_suggestions()
+        InformationExtraction.calculate_suggestions_from_database()
 
         suggestions: List[Suggestion] = list()
         find_filter = {"extraction_name": extraction_name, "tenant": tenant}
@@ -226,6 +226,7 @@ class TestInformationExtractor(TestCase):
 
         self.assertIsNone(mongo_client.pdf_information_extraction.labeleddata.find_one())
         self.assertIsNone(mongo_client.pdf_information_extraction.predictiondata.find_one())
+        self.assertIsNone(mongo_client.pdf_information_extraction.tasks.find_one())
 
         self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files'))
 
@@ -265,9 +266,9 @@ class TestInformationExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
+        mongo_client.pdf_information_extraction.tasks.insert_one({"extraction_name": extraction_name, "tenant": tenant})
 
-        information_extraction = InformationExtraction(tenant, extraction_name)
-        information_extraction.calculate_suggestions()
+        InformationExtraction.calculate_suggestions_from_database()
 
         suggestions: List[Suggestion] = list()
         find_filter = {"extraction_name": extraction_name, "tenant": tenant}
@@ -326,9 +327,9 @@ class TestInformationExtractor(TestCase):
                                  }
 
             mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
+        mongo_client.pdf_information_extraction.tasks.insert_one({"extraction_name": extraction_name, "tenant": tenant})
 
-        information_extraction = InformationExtraction(tenant, extraction_name)
-        information_extraction.calculate_suggestions()
+        InformationExtraction.calculate_suggestions_from_database()
 
         suggestions: List[Suggestion] = list()
         find_filter = {"extraction_name": extraction_name, "tenant": tenant}
@@ -373,9 +374,9 @@ class TestInformationExtractor(TestCase):
                                  }
 
             mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
+        mongo_client.pdf_information_extraction.tasks.insert_one({"extraction_name": extraction_name, "tenant": tenant})
 
-        information_extraction = InformationExtraction(tenant, extraction_name)
-        information_extraction.calculate_suggestions()
+        InformationExtraction.calculate_suggestions_from_database()
 
         suggestions: List[Suggestion] = list()
         find_filter = {"extraction_name": extraction_name, "tenant": tenant}

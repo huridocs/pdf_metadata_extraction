@@ -1,3 +1,4 @@
+import shutil
 from typing import List, Dict
 import json
 import pymongo
