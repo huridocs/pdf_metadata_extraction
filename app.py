@@ -1,4 +1,3 @@
-import shutil
 from typing import List, Dict
 import json
 import pymongo
@@ -38,33 +37,45 @@ async def error():
 
 @app.post('/labeled_data')
 async def labeled_data_post(labeled_data: LabeledData):
-    client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-    pdf_information_extraction_db = client['pdf_information_extraction']
-    labeled_data.tenant = sanitize_name(labeled_data.tenant)
-    labeled_data.extraction_name = sanitize_name(labeled_data.extraction_name)
-    pdf_information_extraction_db.labeleddata.insert_one(labeled_data.dict())
-    return 'labeled data saved'
+    try:
+        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+        pdf_information_extraction_db = client['pdf_information_extraction']
+        labeled_data.tenant = sanitize_name(labeled_data.tenant)
+        labeled_data.extraction_name = sanitize_name(labeled_data.extraction_name)
+        pdf_information_extraction_db.labeleddata.insert_one(labeled_data.dict())
+        return 'labeled data saved'
+    except Exception:
+        graylog.error('Error', exc_info=1)
+        raise HTTPException(status_code=422, detail='An error has occurred. Check graylog for more info')
 
 
 @app.post('/prediction_data')
 async def prediction_data_post(prediction_data: PredictionData):
-    client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-    pdf_information_extraction_db = client['pdf_information_extraction']
-    prediction_data.tenant = sanitize_name(prediction_data.tenant)
-    prediction_data.extraction_name = sanitize_name(prediction_data.extraction_name)
-    pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
-    return 'prediction data saved'
+    try:
+        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+        pdf_information_extraction_db = client['pdf_information_extraction']
+        prediction_data.tenant = sanitize_name(prediction_data.tenant)
+        prediction_data.extraction_name = sanitize_name(prediction_data.extraction_name)
+        pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
+        return 'prediction data saved'
+    except Exception:
+        graylog.error('Error', exc_info=1)
+        raise HTTPException(status_code=422, detail='An error has occurred. Check graylog for more info')
 
 
 @app.post('/add_task')
 async def prediction_data_post(task: Task):
-    client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-    pdf_information_extraction_db = client['pdf_information_extraction']
-    task.tenant = sanitize_name(task.tenant)
-    task.extraction_name = sanitize_name(task.extraction_name)
-    pdf_information_extraction_db.tasks.delete_many(task.dict())
-    pdf_information_extraction_db.tasks.insert_one(task.dict())
-    return 'task added'
+    try:
+        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+        pdf_information_extraction_db = client['pdf_information_extraction']
+        task.tenant = sanitize_name(task.tenant)
+        task.extraction_name = sanitize_name(task.extraction_name)
+        pdf_information_extraction_db.tasks.delete_many(task.dict())
+        pdf_information_extraction_db.tasks.insert_one(task.dict())
+        return 'task added'
+    except Exception:
+        graylog.error('Error', exc_info=1)
+        raise HTTPException(status_code=422, detail='An error has occurred. Check graylog for more info')
 
 
 @app.post('/xml_file/{tenant}/{extraction_name}')
@@ -85,22 +96,32 @@ async def xml_file(tenant, extraction_name, file: UploadFile = File(...)):
 async def get_suggestions(tenant: str, extraction_name: str):
     tenant = sanitize_name(tenant)
     extraction_name = sanitize_name(extraction_name)
-    client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-    pdf_information_extraction_db = client['pdf_information_extraction']
-    suggestions_filter = {"extraction_name": extraction_name, "tenant": tenant}
-    suggestions_list: List[Dict[str, str]] = list()
+    try:
+        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+        pdf_information_extraction_db = client['pdf_information_extraction']
+        suggestions_filter = {"extraction_name": extraction_name, "tenant": tenant}
+        suggestions_list: List[Dict[str, str]] = list()
 
-    for document in pdf_information_extraction_db.suggestions.find(suggestions_filter, no_cursor_timeout=True):
-        suggestions_list.append(Suggestion(**document).dict())
+        for document in pdf_information_extraction_db.suggestions.find(suggestions_filter, no_cursor_timeout=True):
+            suggestions_list.append(Suggestion(**document).dict())
 
-    pdf_information_extraction_db.suggestions.delete_many(suggestions_filter)
-    return json.dumps(suggestions_list)
+        pdf_information_extraction_db.suggestions.delete_many(suggestions_filter)
+        graylog.info(f'{len(suggestions_list)} suggestions created for {tenant} {extraction_name}')
+        return json.dumps(suggestions_list)
+    except Exception:
+        graylog.error('Error', exc_info=1)
+        raise HTTPException(status_code=422, detail='An error has occurred. Check graylog for more info')
 
 
 @app.post('/calculate_suggestions/{tenant}/{extraction_name}')
 async def calculate_suggestions(tenant: str, extraction_name: str):
-    tenant = sanitize_name(tenant)
-    extraction_name = sanitize_name(extraction_name)
-    information_extraction = InformationExtraction(tenant=tenant, extraction_name=extraction_name)
-    information_extraction.calculate_suggestions()
-    return 'Started'
+    try:
+        tenant = sanitize_name(tenant)
+        extraction_name = sanitize_name(extraction_name)
+        information_extraction = InformationExtraction(tenant=tenant, extraction_name=extraction_name)
+        information_extraction.calculate_suggestions()
+        return 'Started'
+    except Exception:
+        graylog.error('Error', exc_info=1)
+        raise HTTPException(status_code=422, detail='An error has occurred. Check graylog for more info')
+

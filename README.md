@@ -51,3 +51,10 @@ Get suggestions:
 To stop the server:
 
   `docker-compose down`
+  
+
+### Configuring external graylog server 
+
+Set graylog ip in the ./graylog.yml file:
+
+   `graylog_ip: [ip]`

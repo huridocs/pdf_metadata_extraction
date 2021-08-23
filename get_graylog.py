@@ -10,8 +10,8 @@ def get_graylog():
     graylog.setLevel(logging.INFO)
 
     if os.path.exists('graylog.yml'):
-        graylog_ip = yaml.safe_load(open("graylog.yml", 'r'))['graylog_ip']
-        handler = graypy.GELFUDPHandler(graylog_ip, 12201, localname="get_pdf_paragraphs")
+        graylog_ip = yaml.safe_load(open('graylog.yml', mode='r'))['graylog']
+        handler = graypy.GELFUDPHandler(graylog_ip, 12201, localname="information_extraction")
         graylog.addHandler(handler)
 
     return graylog

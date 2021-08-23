@@ -13,12 +13,11 @@ RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
-
 RUN pip3 install --upgrade pip
 
 COPY . .
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install --default-timeout=200 -r requirements.txt
 
 ENV FLASK_APP app.py
 
