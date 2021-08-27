@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from random import randint
 from typing import List
 
 import numpy as np
@@ -9,7 +8,7 @@ import pymongo
 from data.LabeledData import LabeledData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
-from data.Task import Task
+from data.CreateModelTask import CreateModelTask
 from information_extraction.Segment import Segment
 import lightgbm as lgb
 
@@ -29,7 +28,7 @@ class InformationExtraction:
         self.load_model()
         client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         self.pdf_information_extraction_db = client['pdf_information_extraction']
-        self.mongo_filter = {"extraction_name": self.extraction_name, "tenant": self.tenant}
+        self.mongo_filter = {"property_name": self.extraction_name, "tenant": self.tenant}
 
     def load_model(self):
         if os.path.exists(self.model_path):
@@ -158,7 +157,7 @@ class InformationExtraction:
         pdf_information_extraction_db = client['pdf_information_extraction']
         document = pdf_information_extraction_db.tasks.find_one()
         if document:
-            task = Task(**document)
+            task = CreateModelTask(**document)
             information_extraction = InformationExtraction(**task.dict())
             information_extraction.calculate_suggestions()
             pdf_information_extraction_db.tasks.delete_many(task.dict())

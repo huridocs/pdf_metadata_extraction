@@ -6,9 +6,10 @@ from data.SegmentBox import SegmentBox
 
 
 class LabeledData(BaseModel):
-    extraction_name: str
-    xml_file_name: str
     tenant: str
+    template: str
+    property_name: str
+    xml_file_name: str
     language_iso: str
     label_text: str
     page_width: float

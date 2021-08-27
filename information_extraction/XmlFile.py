@@ -16,22 +16,27 @@ from information_extraction.SegmentTag import SegmentTag
 
 
 class XmlFile:
-    def __init__(self, tenant: str, extraction_name: str, file_name: str = ''):
-        self.file_name = file_name
+    def __init__(self, tenant: str, template: str, property_name: str, file_name: str = ''):
         self.tenant = tenant
-        self.extraction_name = extraction_name
-        self.xml_folder_path = XmlFile.get_xml_folder_path(tenant, extraction_name)
-        self.file_path = pathlib.Path(f'{self.xml_folder_path}/{self.file_name}')
+        self.template = template
+        self.property_name = property_name
+        self.file_name = file_name
         self.xml_file = None
         self.segments = list()
 
-    def save(self, file: bytes):
-        self.xml_file = file
+    def save_as_to_train(self, file: bytes):
+        if not os.path.exists(self.get_to_train_xml_folder_path()):
+            os.makedirs(self.get_to_train_xml_folder_path())
 
-        if not os.path.exists(self.xml_folder_path):
-            os.makedirs(self.xml_folder_path)
+        file_path = pathlib.Path(f'{self.get_to_train_xml_folder_path()}/{self.file_name}')
+        file_path.write_bytes(file)
 
-        self.file_path.write_bytes(self.xml_file)
+    def save_as_to_predict(self, file):
+        if not os.path.exists(self.get_to_predict_xml_folder_path()):
+            os.makedirs(self.get_to_predict_xml_folder_path())
+
+        file_path = pathlib.Path(f'{self.get_to_predict_xml_folder_path()}/{self.file_name}')
+        file_path.write_bytes(file)
 
     def set_segments(self, labeled_data: LabeledData):
         try:
@@ -88,18 +93,28 @@ class XmlFile:
         for segment in self.segments:
             segment.set_ml_label(labeled_data.page_width, labeled_data.page_height, labeled_data.label_segments_boxes)
 
+    def get_to_train_xml_folder_path(self):
+        path = Path(os.path.dirname(os.path.realpath(__file__)))
+        training_xml_folder_path = f'{path.parent.absolute()}/docker_volume'
+        training_xml_folder_path += f'/{self.tenant}/{self.template}/{self.property_name}'
+        training_xml_folder_path += f'/to_train_xml'
+        return training_xml_folder_path
+
+    def get_to_predict_xml_folder_path(self):
+        path = Path(os.path.dirname(os.path.realpath(__file__)))
+        training_xml_folder_path = f'{path.parent.absolute()}/docker_volume'
+        training_xml_folder_path += f'/{self.tenant}/{self.template}/{self.property_name}'
+        training_xml_folder_path += f'/to_predict_xml'
+        return training_xml_folder_path
+
     @staticmethod
     def get_segments(labeled_data: LabeledData):
         xml_file = XmlFile(file_name=labeled_data.xml_file_name, tenant=labeled_data.tenant,
-                           extraction_name=labeled_data.extraction_name)
+                           extraction_name=labeled_data.property_name)
         xml_file.set_segments(labeled_data)
         return xml_file.segments
 
     @staticmethod
-    def get_xml_folder_path(tenant: str, extraction_name: str):
-        path = Path(os.path.dirname(os.path.realpath(__file__)))
-        return f'{path.parent.absolute()}/docker_volume/{tenant}/{extraction_name}/xml_files'
-
-    @staticmethod
     def remove_files(tenant, extraction_name):
-        shutil.rmtree(XmlFile.get_xml_folder_path(tenant, extraction_name), ignore_errors=True)
+        shutil.rmtree(XmlFile.get_to_train_xml_folder_path(tenant, extraction_name), ignore_errors=True)
+

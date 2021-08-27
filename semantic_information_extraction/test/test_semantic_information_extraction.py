@@ -11,7 +11,7 @@ DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.
 class TestSemanticInformationExtraction(TestCase):
     def test_create_model(self):
         tenant = 'semantic_tenant_to_be_removed'
-        extraction_name = 'extraction_name'
+        extraction_name = 'property_name'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 

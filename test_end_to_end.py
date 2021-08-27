@@ -2,10 +2,12 @@ import json
 import subprocess
 from time import sleep
 from unittest import TestCase
+from rsmq import RedisSMQ
 
 import requests
 
 from data.Suggestion import Suggestion
+from data.SuggestionsCalculatedMessage import SuggestionsCalculatedMessage
 
 DOCKER_VOLUME_PATH = f'./docker_volume'
 
@@ -13,27 +15,16 @@ DOCKER_VOLUME_PATH = f'./docker_volume'
 class TestEndToEnd(TestCase):
     def test_end_to_end(self):
         tenant = "end_to_end_test"
-        extraction_name = "property_name"
-        
+        template = "template_test"
+        property_name = "property_name"
+
         host = 'http://localhost:5050'
 
-        subprocess.run('docker-compose up -d', shell=True)
-        sleep(20)
-
-        with open(f'{DOCKER_VOLUME_PATH}/tenant_test/extraction_name/xml_files/test.xml', 'rb') as stream:
-            files = {'file': stream}
-            requests.post(f"{host}/xml_file/{tenant}/{extraction_name}", files=files)
-
-        predict_data_json = {"xml_file_name": "test.xml",
-                             "extraction_name": extraction_name,
-                             "tenant": tenant,
-                             "page_width": 612,
-                             "page_height": 792,
-                             "xml_segments_boxes": [],
-                             }
+        subprocess.run('docker-compose -f docker-compose-redis.yml up -d', shell=True)
+        sleep(5)
 
         labeled_data_json = {"xml_file_name": "test.xml",
-                             "extraction_name": extraction_name,
+                             "property_name": property_name,
                              "tenant": tenant,
                              "language_iso": "en",
                              "label_text": "text",
@@ -44,26 +35,55 @@ class TestEndToEnd(TestCase):
                                                        "page_number": 1}]
                              }
 
-        requests.post(f"{host}/prediction_data", json=predict_data_json)
+        with open(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_files/test.xml', 'rb') as stream:
+            files = {'file': stream}
+            requests.post(f"{host}/training_xml_file/{tenant}/{property_name}", files=files)
+
         requests.post(f"{host}/labeled_data", json=labeled_data_json)
-        requests.post(f"{host}/add_task/", json={
-            "extraction_name": extraction_name,
+        requests.post(f"{host}/create_model/", json={
+            "property_name": property_name,
             "tenant": tenant,
         })
 
-        sleep(10)
+        predict_data_json = {"tenant": tenant,
+                             "template": template,
+                             "property_name": property_name,
+                             "xml_file_name": "test.xml",
+                             "page_width": 612,
+                             "page_height": 792,
+                             "xml_segments_boxes": [],
+                             }
 
-        response = requests.get(f"{host}/get_suggestions/{tenant}/{extraction_name}")
-        suggestions_dict = json.loads(response.json())
+        with open(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_files/test.xml', 'rb') as stream:
+            files = {'file': stream}
+            requests.post(f"{host}/predict_xml_file/{tenant}/{property_name}", files=files)
 
-        suggestions = [Suggestion(**suggestions_dict[0]), Suggestion(**suggestions_dict[1])]
+        requests.post(f"{host}/prediction_data", json=predict_data_json)
 
-        self.assertEqual(2, len(suggestions))
+        suggestion_calculated_message = self.get_redis_message()
 
-        self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({extraction_name}, {x.extraction_name for x in suggestions})
-        self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
-        self.assertEqual({"United Nations"}, {x.segment_text for x in suggestions})
-        self.assertEqual({"United Nations"}, {x.text for x in suggestions})
+        response = requests.get(
+            f"{host}/get_suggestions/{suggestion_calculated_message.tenant}/{suggestion_calculated_message.template}/{suggestion_calculated_message.property_name}")
 
-        subprocess.run('docker-compose down', shell=True)
+        suggestions = json.loads(response.json())
+        suggestion = Suggestion(**suggestions[0])
+
+        self.assertEqual(1, len(suggestions))
+
+        self.assertEqual(tenant, suggestion.tenant)
+        self.assertEqual(template, suggestion.template)
+        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual('test.xml', suggestion.xml_file_name)
+        self.assertEqual('United Nations', suggestion.text)
+        self.assertEqual('United Nations', suggestion.segment_text)
+
+        subprocess.run('docker-compose -f docker-compose-redis.yml down', shell=True)
+
+    @staticmethod
+    def get_redis_message() -> SuggestionsCalculatedMessage:
+        for i in range(10):
+            sleep(1)
+            queue = RedisSMQ(host='127.0.0.1', port='6479', qname="suggestions_calculated", quiet=True)
+            message = queue.receiveMessage().exceptions(False).execute()
+            if message:
+                return SuggestionsCalculatedMessage(**json.loads(message['message']))
