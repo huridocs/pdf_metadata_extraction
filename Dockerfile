@@ -21,4 +21,4 @@ RUN pip3 install --default-timeout=200 -r requirements.txt
 
 ENV FLASK_APP app.py
 
-CMD python3 calculate_suggestions_async.py ;  gunicorn -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:5050
+CMD python3 async_calculations/calculate_subprocess.py ;  gunicorn -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:5050

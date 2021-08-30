@@ -14,12 +14,12 @@ Start service:
 
 Post xml file:
 
-   `curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5050/xml_file/tenant_name/extraction_name`
+   `curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5050/xml_file/tenant_name/property_name`
 
 Post labeled data:
 
    `curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
-                             "extraction_name": "extraction_name",
+                             "property_name": "property_name",
                              "tenant": "tenant_name",
                              "language_iso": "en",
                              "label_text": "text",
@@ -32,7 +32,7 @@ Post labeled data:
 Post prediction data:
 
    `curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
-                             "extraction_name": "extraction_name",
+                             "property_name": "property_name",
                              "tenant": "tenant_name",
                              "page_width": 612,
                              "page_height": 792,
@@ -41,11 +41,11 @@ Post prediction data:
 
 Calculate suggestions:
 
-`curl -X POST  localhost:5050/calculate_suggestions/tenant_name/extraction_name`
+`curl -X POST  localhost:5050/calculate_suggestions/tenant_name/property_name`
 
 Get suggestions:
 
-`curl -X GET  localhost:5050/get_suggestions/tenant_name/extraction_name`
+`curl -X GET  localhost:5050/get_suggestions/tenant_name/property_name`
 
 
 To stop the server:

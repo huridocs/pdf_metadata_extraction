@@ -1,9 +1,15 @@
 import asyncio
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
 from information_extraction.InformationExtraction import InformationExtraction
 
 
 async def calculate_suggestions():
     InformationExtraction.calculate_suggestions_from_database()
+    InformationExtraction.create_models_from_database()
     await asyncio.sleep(5)
 
 

@@ -6,6 +6,7 @@ from unittest import TestCase
 import mongomock
 import pymongo
 
+from data.CreateModelTask import CreateModelTask
 from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
 from information_extraction.InformationExtraction import InformationExtraction
@@ -14,14 +15,20 @@ DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.
 
 
 class TestInformationExtractor(TestCase):
+    test_xml_path = f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml'
+
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_model(self):
+    def test_create_next_model(self):
         tenant = 'segment_test'
-        extraction_name = 'property_name'
+        property_name = 'property_name'
+
+        base_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}'
+
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-        json_data = {"xml_file_name": "test.xml",
-                     "property_name": "property_name",
-                     "tenant": "segment_test",
+
+        json_data = {"tenant": tenant,
+                     "property_name": property_name,
+                     "xml_file_name": "test.xml",
                      "label_text": "text",
                      "language_iso": "en",
                      "page_width": 612,
@@ -29,32 +36,69 @@ class TestInformationExtractor(TestCase):
                      "xml_segments_boxes": [],
                      "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}]
                      }
-
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
+
+        task = CreateModelTask(tenant=tenant, property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
-        os.makedirs(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files')
-        shutil.copy(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_files/test.xml',
-                    f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files/test.xml')
+        os.makedirs(f'{base_path}/xml_to_train')
+        shutil.copy(self.test_xml_path, f'{base_path}/xml_to_train/test.xml')
 
-        information_extraction = InformationExtraction(tenant, "property_name")
-        information_extraction.create_models()
+        InformationExtraction.create_next_model()
 
-        self.assertTrue(
-            os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/segment_predictor_model/model.model'))
-        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/property_name/xml_files'))
+        self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
+        self.assertEqual(0, mongo_client.pdf_information_extraction.tasks.count_documents({}))
+        self.assertEqual(0, mongo_client.pdf_information_extraction.labeleddata.count_documents({}))
+        self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_second_model(self):
+    def test_create_next_model_should_execute_only_one_task(self):
         tenant = 'segment_test'
-        extraction_name = 'property_name'
+        property_name = 'property_name'
+
+        base_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}'
+
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-        json_data = {"xml_file_name": "test.xml",
-                     "property_name": "property_name",
-                     "tenant": "segment_test",
+
+        other_task = CreateModelTask(tenant='other', property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(other_task.dict())
+
+        task = CreateModelTask(tenant=tenant, property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+
+        os.makedirs(f'{base_path}/xml_to_train')
+        shutil.copy(self.test_xml_path, f'{base_path}/xml_to_train/test.xml')
+
+        InformationExtraction.create_next_model()
+
+        create_model_task = CreateModelTask(**mongo_client.pdf_information_extraction.tasks.find_one())
+
+        self.assertEqual(1, mongo_client.pdf_information_extraction.tasks.count_documents({}))
+        self.assertEqual(tenant, create_model_task.tenant)
+        self.assertEqual(property_name, create_model_task.property_name)
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_create_next_model_different_tenant(self):
+        tenant = 'different_segment_test'
+        property_name = 'different_property_name'
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+
+        base_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}'
+
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+
+        json_data = {"tenant": tenant,
+                     "property_name": property_name,
+                     "xml_file_name": "test.xml",
                      "label_text": "text",
                      "language_iso": "en",
                      "page_width": 612,
@@ -62,30 +106,67 @@ class TestInformationExtractor(TestCase):
                      "xml_segments_boxes": [],
                      "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}]
                      }
-
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+        task = CreateModelTask(tenant=tenant, property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
 
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
-        shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
+        os.makedirs(f'{base_path}/xml_to_train')
+        shutil.copy(self.test_xml_path, f'{base_path}/xml_to_train/test.xml')
 
-        information_extraction = InformationExtraction(tenant, "property_name")
-        information_extraction.create_models()
+        InformationExtraction.create_next_model()
 
-        self.assertTrue(
-            os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/segment_predictor_model/model.model'))
-        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/property_name/xml_files'))
-        self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/property_name/semantic_model/best_model'))
+        self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
+        self.assertEqual(0, mongo_client.pdf_information_extraction.tasks.count_documents({}))
+        self.assertEqual(0, mongo_client.pdf_information_extraction.labeleddata.count_documents({}))
+        self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_model_no_xml(self):
+    def test_create_model_should_remove_previous_models(self):
+        tenant = 'segment_test'
+        property_name = 'property_name'
+
+        base_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}'
+
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-        json_data = {"xml_file_name": "test.xml",
-                     "property_name": "property_name",
-                     "tenant": "segment_test",
+        json_data = {"tenant": tenant,
+                     "property_name": property_name,
+                     "xml_file_name": "test.xml",
+                     "label_text": "text",
+                     "language_iso": "en",
+                     "page_width": 612,
+                     "page_height": 792,
+                     "xml_segments_boxes": [],
+                     "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}]
+                     }
+        mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
+
+        task = CreateModelTask(tenant=tenant, property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+        shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
+
+        InformationExtraction.create_next_model()
+
+        print(f'{base_path}/segment_predictor_model/model.model')
+        self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
+        self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
+        self.assertFalse(os.path.exists(f'{base_path}/semantic_model/best_model'))
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_create_model_should_do_nothing_when_no_xml(self):
+        tenant = 'segment_test'
+        property_name = 'property_name'
+
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+        json_data = {"tenant": tenant,
+                     "property_name": property_name,
+                     "xml_file_name": "not_found.xml_to_train",
                      "language_iso": "en",
                      "label_text": "text",
                      "page_width": 612,
@@ -96,139 +177,53 @@ class TestInformationExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        information_extraction = InformationExtraction("segment_test", "property_name")
-        information_extraction.create_models()
+        task = CreateModelTask(tenant=tenant, property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
 
-        self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_files'))
+        InformationExtraction.create_next_model()
+
+        self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_to_train'))
         self.assertFalse(
             os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/segment_predictor_model/model.model'))
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_model_wrong_tenant(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-        json_data = {"xml_file_name": "test.xml",
-                     "property_name": "property_name",
-                     "tenant": "other_tenant_name",
-                     "label_text": "text",
-                     "page_width": 612,
-                     "page_height": 792,
-                     "xml_segments_boxes": [],
-                     "label_segments_boxes": [{"left": 125, "top": 247, "width": 319, "height": 29, "page_number": 1}]
-                     }
-
-        mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
-
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test', ignore_errors=True)
-
-        os.makedirs(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_files')
-        shutil.copy(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_files/test.xml',
-                    f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_files/test.xml')
-
-        information_extraction = InformationExtraction("segment_test", "property_name")
-        information_extraction.create_models()
-
-        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_files'))
-        self.assertFalse(
-            os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/segment_predictor_model/model.model'))
-
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test')
-
-    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_model_wrong_extraction_name(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-        json_data = {"xml_file_name": "test.xml",
-                     "property_name": "other_extraction_name",
-                     "tenant": "segment_test",
-                     "label_text": "text",
-                     "page_width": 612,
-                     "page_height": 792,
-                     "xml_segments_boxes": [],
-                     "label_segments_boxes": [{"left": 125, "top": 247, "width": 319, "height": 29, "page_number": 1}]
-                     }
-
-        mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
-
-        try:
-            shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test')
-        except FileNotFoundError:
-            pass
-
-        os.makedirs(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_files')
-        shutil.copy(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_files/test.xml',
-                    f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_files/test.xml')
-
-        information_extraction = InformationExtraction("segment_test", "property_name")
-        information_extraction.create_models()
-
-        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_files'))
-        self.assertFalse(
-            os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/segment_predictor_model/model.model'))
-
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/segment_test')
-
-    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_get_suggestions(self):
+    def test_calculate_suggestions(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
-        tenant = "tenant_to_be_removed"
-        extraction_name = "property_name"
+        tenant = 'segment_test'
+        property_name = 'property_name'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
         shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/semantic_model', ignore_errors=True)
 
-        to_predict_json = {"xml_file_name": "test.xml",
-                           "property_name": extraction_name,
-                           "tenant": tenant,
+        to_predict_json = {"tenant": tenant,
+                           "property_name": property_name,
+                           "xml_file_name": "test.xml",
                            "page_width": 612,
                            "page_height": 792,
                            "xml_segments_boxes": []
                            }
 
-        labeled_data_json = {"xml_file_name": "test.xml",
-                             "property_name": extraction_name,
-                             "tenant": tenant,
-                             "language_iso": "en",
-                             "label_text": "text",
-                             "page_width": 612,
-                             "page_height": 792,
-                             "xml_segments_boxes": [],
-                             "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13,
-                                                       "page_number": 1}]
-                             }
-
-        mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
-        mongo_client.pdf_information_extraction.tasks.insert_one({"property_name": extraction_name, "tenant": tenant})
 
         InformationExtraction.calculate_suggestions_from_database()
 
-        suggestions: List[Suggestion] = list()
-        find_filter = {"property_name": extraction_name, "tenant": tenant}
-        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
-            suggestions.append(Suggestion(**document))
+        documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
+        suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
 
-        suggestion_1 = suggestions[0]
-        suggestion_2 = suggestions[1]
+        self.assertEqual(1, documents_count)
 
-        self.assertEqual(2, len(suggestions))
+        self.assertEqual(tenant, suggestion.tenant)
+        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual("test.xml", suggestion.xml_file_name)
+        self.assertEqual("Original: English", suggestion.segment_text)
+        self.assertEqual("Original: English", suggestion.text)
 
-        self.assertEqual(tenant, suggestion_1.tenant)
-        self.assertEqual(extraction_name, suggestion_1.property_name)
-        self.assertEqual("test.xml", suggestion_1.xml_file_name)
-        self.assertEqual("United Nations", suggestion_1.segment_text)
-        self.assertEqual("United Nations", suggestion_1.text)
-
-        self.assertEqual(tenant, suggestion_2.tenant)
-        self.assertEqual(extraction_name, suggestion_2.property_name)
-        self.assertEqual("test.xml", suggestion_2.xml_file_name)
-        self.assertEqual("United Nations", suggestion_2.segment_text)
-        self.assertEqual("United Nations", suggestion_2.text)
-
-        self.assertIsNone(mongo_client.pdf_information_extraction.labeleddata.find_one())
         self.assertIsNone(mongo_client.pdf_information_extraction.predictiondata.find_one())
-        self.assertIsNone(mongo_client.pdf_information_extraction.tasks.find_one())
 
-        self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files'))
+        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/spanish.xml'))
+        self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml'))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
@@ -236,24 +231,24 @@ class TestInformationExtractor(TestCase):
     def test_get_suggestions_page_2(self):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
-        tenant = "tenant_to_be_removed"
-        extraction_name = "property_name"
+        tenant = 'segment_test'
+        property_name = 'property_name'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
         shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
 
-        to_predict_json = {"xml_file_name": "test.xml",
-                           "property_name": extraction_name,
-                           "tenant": tenant,
-                           "page_width": 306,
-                           "page_height": 396,
-                           "xml_segments_boxes": [SegmentBox(left=0, top=75, width=306, height=35,
-                                                             page_number=2).dict()],
+        to_predict_json = {"tenant": tenant,
+                           "property_name": property_name,
+                           "xml_file_name": "test.xml",
+                           "page_width": 612,
+                           "page_height": 792,
+                           "xml_segments_boxes": [SegmentBox(left=0, top=130, width=612, height=70,
+                                                             page_number=2).dict()]
                            }
 
-        labeled_data_json = {"xml_file_name": "test.xml",
-                             "property_name": extraction_name,
-                             "tenant": tenant,
+        labeled_data_json = {"tenant": tenant,
+                             "property_name": property_name,
+                             "xml_file_name": "test.xml",
                              "language_iso": "en",
                              "label_text": "text",
                              "page_width": 612,
@@ -266,31 +261,25 @@ class TestInformationExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
-        mongo_client.pdf_information_extraction.tasks.insert_one({"property_name": extraction_name, "tenant": tenant})
 
+        task = CreateModelTask(tenant=tenant, property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
+
+        InformationExtraction.create_next_model()
         InformationExtraction.calculate_suggestions_from_database()
 
-        suggestions: List[Suggestion] = list()
-        find_filter = {"property_name": extraction_name, "tenant": tenant}
-        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
-            suggestions.append(Suggestion(**document))
+        documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
+        suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
 
-        suggestion_1 = suggestions[0]
-        suggestion_2 = suggestions[1]
+        self.assertEqual(1, documents_count)
 
-        self.assertEqual(2, len(suggestions))
-
-        self.assertEqual(tenant, suggestion_1.tenant)
-        self.assertEqual(extraction_name, suggestion_1.property_name)
-        self.assertEqual("test.xml", suggestion_1.xml_file_name)
-        self.assertTrue('In accordance with paragraph' in suggestion_1.segment_text)
-        self.assertTrue('every four years' in suggestion_1.text)
-
-        self.assertEqual(tenant, suggestion_2.tenant)
-        self.assertEqual(extraction_name, suggestion_2.property_name)
-        self.assertEqual("test.xml", suggestion_2.xml_file_name)
-        self.assertTrue('In accordance with paragraph' in suggestion_1.segment_text)
-        self.assertTrue('every four years' in suggestion_1.text)
+        self.assertEqual(tenant, suggestion.tenant)
+        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual("test.xml", suggestion.xml_file_name)
+        self.assertTrue('In accordance with paragraph' in suggestion.segment_text)
+        self.assertTrue('every four years' in suggestion.text)
+        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict'))
+        self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml'))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
@@ -299,24 +288,32 @@ class TestInformationExtractor(TestCase):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         tenant = "tenant_to_be_removed"
-        extraction_name = "property_name"
+        property_name = "property_name"
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
         shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
 
-        to_predict_json = {"xml_file_name": "test.xml",
-                           "property_name": extraction_name,
-                           "tenant": tenant,
-                           "page_width": 612,
-                           "page_height": 792,
-                           "xml_segments_boxes": [],
-                           }
-        mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
+        to_predict_json = [{"xml_file_name": "test.xml",
+                            "property_name": property_name,
+                            "tenant": tenant,
+                            "page_width": 612,
+                            "page_height": 792,
+                            "xml_segments_boxes": [],
+                            },
+                           {"xml_file_name": "test.xml",
+                            "property_name": property_name,
+                            "tenant": tenant,
+                            "page_width": 612,
+                            "page_height": 792,
+                            "xml_segments_boxes": [],
+                            }]
+
+        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
 
         for i in range(7):
-            labeled_data_json = {"xml_file_name": "test.xml",
-                                 "property_name": extraction_name,
+            labeled_data_json = {"property_name": property_name,
                                  "tenant": tenant,
+                                 "xml_file_name": "test.xml",
                                  "language_iso": "en",
                                  "label_text": "English",
                                  "page_width": 612,
@@ -327,20 +324,23 @@ class TestInformationExtractor(TestCase):
                                  }
 
             mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
-        mongo_client.pdf_information_extraction.tasks.insert_one({"property_name": extraction_name, "tenant": tenant})
 
+        task = CreateModelTask(tenant=tenant, property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
+
+        InformationExtraction.create_next_model()
         InformationExtraction.calculate_suggestions_from_database()
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"property_name": extraction_name, "tenant": tenant}
+        find_filter = {"property_name": property_name, "tenant": tenant}
         for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
             suggestions.append(Suggestion(**document))
 
-        self.assertEqual(8, len(suggestions))
+        self.assertEqual(2, len(suggestions))
 
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({extraction_name}, {x.property_name for x in suggestions})
-        self.assertEqual({extraction_name}, {x.property_name for x in suggestions})
+        self.assertEqual({property_name}, {x.property_name for x in suggestions})
+        self.assertEqual({property_name}, {x.property_name for x in suggestions})
         self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"Original: English"}, {x.segment_text for x in suggestions})
         self.assertEqual({"English"}, {x.text for x in suggestions})
@@ -352,18 +352,20 @@ class TestInformationExtractor(TestCase):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         tenant = "tenant_to_be_removed"
-        extraction_name = "spa"
+        property_name = "spa"
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
         shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
-        shutil.copytree(f'{DOCKER_VOLUME_PATH}/{tenant}/property_name/xml_files',
-                        f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/xml_files')
+        shutil.copytree(f'{DOCKER_VOLUME_PATH}/{tenant}/property_name/xml_to_train',
+                        f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_train')
+        shutil.copytree(f'{DOCKER_VOLUME_PATH}/{tenant}/property_name/xml_to_train',
+                        f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict')
 
         samples_number = 20
         for i in range(samples_number):
-            labeled_data_json = {"xml_file_name": "spanish.xml",
-                                 "property_name": extraction_name,
-                                 "tenant": tenant,
+            labeled_data_json = {"tenant": tenant,
+                                 "property_name": property_name,
+                                 "xml_file_name": "spanish.xml",
                                  "language_iso": "spa",
                                  "label_text": "día",
                                  "page_width": 612,
@@ -374,19 +376,38 @@ class TestInformationExtractor(TestCase):
                                  }
 
             mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
-        mongo_client.pdf_information_extraction.tasks.insert_one({"property_name": extraction_name, "tenant": tenant})
+        to_predict_json = [{"tenant": tenant,
+                            "property_name": property_name,
+                            "xml_file_name": "spanish.xml",
+                            "page_width": 612,
+                            "page_height": 792,
+                            "xml_segments_boxes": [],
+                            },
+                           {"property_name": property_name,
+                            "tenant": tenant,
+                            "xml_file_name": "spanish.xml",
+                            "page_width": 612,
+                            "page_height": 792,
+                            "xml_segments_boxes": [],
+                            }]
 
+        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
+
+        task = CreateModelTask(tenant=tenant, property_name=property_name)
+        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
+
+        InformationExtraction.create_next_model()
         InformationExtraction.calculate_suggestions_from_database()
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"property_name": extraction_name, "tenant": tenant}
+        find_filter = {"property_name": property_name, "tenant": tenant}
         for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
             suggestions.append(Suggestion(**document))
 
-        self.assertEqual(samples_number, len(suggestions))
+        self.assertEqual(2, len(suggestions))
 
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({extraction_name}, {x.property_name for x in suggestions})
+        self.assertEqual({property_name}, {x.property_name for x in suggestions})
         self.assertEqual({"spanish.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"por día"}, {x.segment_text for x in suggestions})
         self.assertEqual({"día"}, {x.text for x in suggestions})

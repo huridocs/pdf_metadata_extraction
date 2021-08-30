@@ -7,7 +7,6 @@ from data.SegmentBox import SegmentBox
 
 class PredictionData(BaseModel):
     tenant: str
-    template: str
     property_name: str
     xml_file_name: str
     page_width: float

@@ -16,17 +16,17 @@ from data.SemanticExtractionData import SemanticExtractionData
 class SemanticInformationExtraction:
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-    def __init__(self, tenant: str, extraction_name: str):
+    def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
-        self.extraction_name = extraction_name
+        self.property_name = property_name
         root_folder = f'{Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute()}/docker_volume'
-        self.semantic_extraction_folder = f'{root_folder}/{self.tenant}/{self.extraction_name}/semantic_model'
+        self.semantic_extraction_folder = f'{root_folder}/{self.tenant}/{self.property_name}/semantic_model'
         self.model_path = f'{self.semantic_extraction_folder}/best_model'
         self.multilingual_model_path = f'{self.semantic_extraction_folder}/multilingual_best_model'
         self.semantic_extraction_data = list()
 
     def prepare_dataset(self):
-        train_df = pd.DataFrame([[self.extraction_name, x.segment_text, x.text] for x in self.semantic_extraction_data])
+        train_df = pd.DataFrame([[self.property_name, x.segment_text, x.text] for x in self.semantic_extraction_data])
         train_df.columns = ['prefix', 'input_text', 'target_text']
         return train_df
 
@@ -91,7 +91,7 @@ class SemanticInformationExtraction:
         else:
             model = T5Model("mt5", self.multilingual_model_path, use_cuda=torch.cuda.is_available())
 
-        predictions = model.predict([f"{self.extraction_name}: {input_text}" for input_text in segments_text])
+        predictions = model.predict([f"{self.property_name}: {input_text}" for input_text in segments_text])
 
         for index in range(len(segments_text)):
             if '<extra_id_' in predictions[index]:
@@ -106,7 +106,7 @@ class SemanticInformationExtraction:
             spiece_model = f'{SemanticInformationExtraction.SCRIPT_PATH}/t5_small_spiece.model'
 
         sentence_piece = sentencepiece.SentencePieceProcessor(spiece_model)
-        texts = [self.extraction_name + ': ' + x.segment_text for x in self.semantic_extraction_data]
+        texts = [self.property_name + ': ' + x.segment_text for x in self.semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
         return int((max(tokens_number) + 1) * 1.2)
 
@@ -117,7 +117,7 @@ class SemanticInformationExtraction:
             spiece_model = f'{SemanticInformationExtraction.SCRIPT_PATH}/t5_small_spiece.model'
 
         sentence_piece = sentencepiece.SentencePieceProcessor(spiece_model)
-        texts = [self.extraction_name + ': ' + x.text for x in self.semantic_extraction_data]
+        texts = [self.property_name + ': ' + x.text for x in self.semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
         return int((max(tokens_number) + 1) * 1.2)
 

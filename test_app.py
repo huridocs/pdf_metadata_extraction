@@ -1,8 +1,6 @@
 import json
 import os
 import shutil
-from typing import List
-
 import mongomock
 import pymongo
 from fastapi.testclient import TestClient

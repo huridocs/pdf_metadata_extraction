@@ -5,10 +5,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List
 
-import pymongo
 from bs4 import BeautifulSoup
 
-from data.LabeledData import LabeledData
+from data.PredictionData import PredictionData
+from data.SegmentationData import SegmentationData
 from information_extraction.Font import Font
 from information_extraction.PdfFeatures import PdfFeatures
 from information_extraction.Segment import Segment
@@ -16,42 +16,37 @@ from information_extraction.SegmentTag import SegmentTag
 
 
 class XmlFile:
-    def __init__(self, tenant: str, template: str, property_name: str, file_name: str = ''):
+    def __init__(self, tenant: str, property_name: str, to_train: bool, xml_file_name: str):
         self.tenant = tenant
-        self.template = template
         self.property_name = property_name
-        self.file_name = file_name
+        self.to_train = to_train
+        self.xml_file_name = xml_file_name
         self.xml_file = None
         self.segments = list()
+        self.xml_folder_path = XmlFile.get_xml_folder_path(tenant, property_name, to_train)
 
-    def save_as_to_train(self, file: bytes):
-        if not os.path.exists(self.get_to_train_xml_folder_path()):
-            os.makedirs(self.get_to_train_xml_folder_path())
+    def save(self, file: bytes):
+        if not os.path.exists(self.xml_folder_path):
+            os.makedirs(self.xml_folder_path)
 
-        file_path = pathlib.Path(f'{self.get_to_train_xml_folder_path()}/{self.file_name}')
+        file_path = pathlib.Path(f'{self.xml_folder_path}/{self.xml_file_name}')
         file_path.write_bytes(file)
 
-    def save_as_to_predict(self, file):
-        if not os.path.exists(self.get_to_predict_xml_folder_path()):
-            os.makedirs(self.get_to_predict_xml_folder_path())
-
-        file_path = pathlib.Path(f'{self.get_to_predict_xml_folder_path()}/{self.file_name}')
-        file_path.write_bytes(file)
-
-    def set_segments(self, labeled_data: LabeledData):
+    def get_segments(self, segmentation_data: SegmentationData):
         try:
-            self.xml_file = self.file_path.read_bytes()
+            self.xml_file = pathlib.Path(f'{self.xml_folder_path}/{self.xml_file_name}').read_bytes()
         except FileNotFoundError:
-            return
+            return []
 
-        if not labeled_data:
-            return
+        if not segmentation_data:
+            return []
 
-        one_tag_segments = self.get_one_tag_segments(BeautifulSoup(self.xml_file, 'lxml-xml'))
-        self.create_segments_from_labeled_data(one_tag_segments, labeled_data)
+        self.create_segments(segmentation_data)
+        return self.segments
 
-    def get_one_tag_segments(self, xml: BeautifulSoup) -> (List[SegmentTag], List[Font]):
+    def get_one_tag_segments(self) -> (List[SegmentTag], List[Font]):
         segment_tags = list()
+        xml = BeautifulSoup(self.xml_file, 'lxml-xml')
         xml_fonts = xml.find_all('TextStyle')
         fonts = Font.from_page_xml_tag(xml_fonts)
         for xml_page in xml.find_all('Page'):
@@ -77,11 +72,13 @@ class XmlFile:
 
         return page_text_lines
 
-    def create_segments_from_labeled_data(self, one_tag_segments: List[Segment], labeled_data: LabeledData):
+    def create_segments(self, segmentation_data: SegmentationData):
         box_segments_to_merge = defaultdict(list)
-        for segment in one_tag_segments:
-            index = segment.intersects_with_boxes(labeled_data.page_width, labeled_data.page_height,
-                                                  labeled_data.xml_segments_boxes)
+        
+        for segment in self.get_one_tag_segments():
+            index = segment.intersects_with_boxes(segmentation_data.page_width,
+                                                  segmentation_data.page_height,
+                                                  segmentation_data.xml_segments_boxes)
 
             if index is not None:
                 box_segments_to_merge[index].append(segment)
@@ -91,30 +88,16 @@ class XmlFile:
         self.segments = [Segment.merge(segments_to_merge) for segments_to_merge in box_segments_to_merge.values()]
 
         for segment in self.segments:
-            segment.set_ml_label(labeled_data.page_width, labeled_data.page_height, labeled_data.label_segments_boxes)
-
-    def get_to_train_xml_folder_path(self):
-        path = Path(os.path.dirname(os.path.realpath(__file__)))
-        training_xml_folder_path = f'{path.parent.absolute()}/docker_volume'
-        training_xml_folder_path += f'/{self.tenant}/{self.template}/{self.property_name}'
-        training_xml_folder_path += f'/to_train_xml'
-        return training_xml_folder_path
-
-    def get_to_predict_xml_folder_path(self):
-        path = Path(os.path.dirname(os.path.realpath(__file__)))
-        training_xml_folder_path = f'{path.parent.absolute()}/docker_volume'
-        training_xml_folder_path += f'/{self.tenant}/{self.template}/{self.property_name}'
-        training_xml_folder_path += f'/to_predict_xml'
-        return training_xml_folder_path
+            segment.set_ml_label(segmentation_data.page_width, segmentation_data.page_height, segmentation_data.label_segments_boxes)
 
     @staticmethod
-    def get_segments(labeled_data: LabeledData):
-        xml_file = XmlFile(file_name=labeled_data.xml_file_name, tenant=labeled_data.tenant,
-                           extraction_name=labeled_data.property_name)
-        xml_file.set_segments(labeled_data)
-        return xml_file.segments
+    def get_xml_folder_path(tenant: str, property_name: str, to_train: bool) -> str:
+        path = Path(os.path.dirname(os.path.realpath(__file__)))
+        xml_folder_path = f'{path.parent.absolute()}/docker_volume'
+        xml_folder_path += f'/{tenant}/{property_name}'
+        if to_train:
+            xml_folder_path += f'/xml_to_train'
+        else:
+            xml_folder_path += f'/xml_to_predict'
 
-    @staticmethod
-    def remove_files(tenant, extraction_name):
-        shutil.rmtree(XmlFile.get_to_train_xml_folder_path(tenant, extraction_name), ignore_errors=True)
-
+        return xml_folder_path

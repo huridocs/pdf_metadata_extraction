@@ -11,26 +11,30 @@ DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.
 class TestSemanticInformationExtraction(TestCase):
     def test_create_model(self):
         tenant = 'semantic_tenant_to_be_removed'
-        extraction_name = 'property_name'
+        property_name = 'property_name'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
-        semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
+        semantic_information_extraction = SemanticInformationExtraction(tenant=tenant,
+                                                                        property_name=property_name)
 
         semantic_information_data = [SemanticExtractionData(text="one", segment_text="one two", language_iso="en")
                                      for _ in range(5)]
         semantic_information_extraction.create_model(semantic_information_data)
 
-        self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{extraction_name}/semantic_model/best_model'))
+        self.assertTrue(
+            os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/semantic_model/best_model'))
+
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
     def test_remove_model_if_it_is_not_good(self):
         tenant = 'semantic_tenant_to_be_removed'
-        extraction_name = 'ex'
+        property_name = 'ex'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
-        semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
+        semantic_information_extraction = SemanticInformationExtraction(tenant=tenant,
+                                                                        property_name=property_name)
 
         semantic_information_extraction.create_model([SemanticExtractionData(text="Origin: English",
                                                                              segment_text="Origin: English",
@@ -45,11 +49,12 @@ class TestSemanticInformationExtraction(TestCase):
 
     def test_remove_model_if_it_is_not_good_multilingual(self):
         tenant = 'semantic_tenant_to_be_removed'
-        extraction_name = 'ex'
+        property_name = 'ex'
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
-        semantic_information_extraction = SemanticInformationExtraction(tenant=tenant, extraction_name=extraction_name)
+        semantic_information_extraction = SemanticInformationExtraction(tenant=tenant,
+                                                                        property_name=property_name)
 
         semantic_information_extraction.create_model([SemanticExtractionData(text="Origin: English",
                                                                              segment_text="Origin: English",

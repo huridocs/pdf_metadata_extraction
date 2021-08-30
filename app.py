@@ -31,26 +31,26 @@ async def error():
 
 
 @app.post('/to_train_xml/{tenant}/{template}/{property_name}')
-async def training_xml_file(tenant, template, property_name, file: UploadFile = File(...)):
+async def to_train_xml_file(tenant, template, property_name, file: UploadFile = File(...)):
     filename = '"No file name! Probably an error about the file in the request"'
     try:
         filename = file.filename
-        xml_file = XmlFile(template=template, tenant=tenant, property_name=property_name, file_name=filename)
+        xml_file = XmlFile(template=template, tenant=tenant, property_name=property_name, xml_file_name=filename)
         xml_file.save_as_to_train(file=file.file.read())
-        return 'xml saved'
+        return 'xml_to_train saved'
     except Exception:
         logger.error(f'Error adding task {filename}', exc_info=1)
         raise HTTPException(status_code=422, detail=f'Error adding task {filename}')
 
 
-@app.post('/to_predict_xml/{tenant}/{template}/{property_name}')
-async def training_xml_file(tenant, template, property_name, file: UploadFile = File(...)):
+@app.post('/xml_to_train/{tenant}/{template}/{property_name}')
+async def to_predict_xml_file(tenant, template, property_name, file: UploadFile = File(...)):
     filename = '"No file name! Probably an error about the file in the request"'
     try:
         filename = file.filename
-        xml_file = XmlFile(template=template, tenant=tenant, property_name=property_name, file_name=filename)
+        xml_file = XmlFile(template=template, tenant=tenant, property_name=property_name, xml_file_name=filename)
         xml_file.save_as_to_predict(file=file.file.read())
-        return 'xml saved'
+        return 'xml_to_train saved'
     except Exception:
         logger.error(f'Error adding task {filename}', exc_info=1)
         raise HTTPException(status_code=422, detail=f'Error adding task {filename}')
