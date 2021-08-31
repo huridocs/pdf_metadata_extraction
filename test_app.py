@@ -15,7 +15,7 @@ DOCKER_VOLUME_PATH = f'./docker_volume'
 
 
 class TestApp(TestCase):
-    test_file_path = f'{DOCKER_VOLUME_PATH}/tenant_test/template_test/property_name/xml_files/test.xml'
+    test_file_path = f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_predict/test.xml'
 
     def test_info(self):
         response = client.get("/info")
@@ -23,34 +23,32 @@ class TestApp(TestCase):
 
     def test_post_train_xml_file(self):
         tenant = "endpoint_test"
-        template = "endpoint_test"
         property_name = "property_name"
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
         with open(self.test_file_path, 'rb') as stream:
             files = {'file': stream}
-            response = client.post(f'/to_train_xml/{tenant}/{template}/{property_name}', files=files)
+            response = client.post(f'/xml_to_train/{tenant}/{property_name}', files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{template}/{property_name}/to_train_xml/test.xml'
+        to_train_xml_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_train/test.xml'
         self.assertTrue(os.path.exists(to_train_xml_path))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
-    def test_post_to_predict_xml_file(self):
+    def test_post_xml_to_predict(self):
         tenant = "endpoint_test"
-        template = "endpoint_test"
         property_name = "property_name"
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
         with open(self.test_file_path, 'rb') as stream:
             files = {'file': stream}
-            response = client.post(f'/to_predict_xml/{tenant}/{template}/{property_name}', files=files)
+            response = client.post(f'/xml_to_predict/{tenant}/{property_name}', files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{template}/{property_name}/to_predict_xml/test.xml'
+        to_train_xml_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml'
         self.assertTrue(os.path.exists(to_train_xml_path))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
@@ -58,13 +56,11 @@ class TestApp(TestCase):
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_labeled_data(self):
         tenant = "endpoint_test"
-        template = "endpoint_test"
         property_name = "property_name"
 
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = {"tenant": tenant,
-                     "template": template,
                      "property_name": property_name,
                      "xml_file_name": "xml_file_name",
                      "language_iso": "en",
@@ -81,7 +77,6 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document['tenant'])
-        self.assertEqual(template, labeled_data_document['template'])
         self.assertEqual(property_name, labeled_data_document['property_name'])
         self.assertEqual('text', labeled_data_document['label_text'])
         self.assertEqual('en', labeled_data_document['language_iso'])
@@ -96,13 +91,11 @@ class TestApp(TestCase):
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_labeled_data_different_values(self):
         tenant = "different_endpoint_test"
-        template = "different_endpoint_test"
         property_name = "different_property_name"
 
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = {"tenant": tenant,
-                     "template": template,
                      "property_name": property_name,
                      "xml_file_name": "different_xml_file_name",
                      "language_iso": "spa",
@@ -119,7 +112,6 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document['tenant'])
-        self.assertEqual(template, labeled_data_document['template'])
         self.assertEqual(property_name, labeled_data_document['property_name'])
         self.assertEqual('other_text', labeled_data_document['label_text'])
         self.assertEqual('spa', labeled_data_document['language_iso'])
@@ -132,13 +124,11 @@ class TestApp(TestCase):
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_post_prediction_data(self):
         tenant = "endpoint_test"
-        template = "endpoint_test"
         property_name = "property_name"
 
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = {"tenant": tenant,
-                     "template": template,
                      "property_name": property_name,
                      "xml_file_name": "xml_file_name",
                      "page_width": 612,
@@ -152,7 +142,6 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, prediction_data_document['tenant'])
-        self.assertEqual(template, prediction_data_document['template'])
         self.assertEqual(property_name, prediction_data_document['property_name'])
         self.assertEqual(612, prediction_data_document['page_width'])
         self.assertEqual(792, prediction_data_document['page_height'])
@@ -165,10 +154,9 @@ class TestApp(TestCase):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         tenant = "endpoint_test"
-        template = "endpoint_test"
         property_name = "property_name"
 
-        task_to_post = CreateModelTask(tenant=tenant, template=template, property_name=property_name)
+        task_to_post = CreateModelTask(tenant=tenant, property_name=property_name)
         response = client.post('/create_model', json=task_to_post.dict())
 
         task = CreateModelTask(**mongo_client.pdf_information_extraction.tasks.find_one())
@@ -176,7 +164,6 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
 
         self.assertEqual(tenant, task.tenant)
-        self.assertEqual(template, task.template)
         self.assertEqual(property_name, task.property_name)
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
@@ -184,10 +171,9 @@ class TestApp(TestCase):
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         tenant = "endpoint_test"
-        template = "endpoint_test"
         property_name = "property_name"
 
-        task_to_post = CreateModelTask(tenant=tenant, template=template, property_name=property_name)
+        task_to_post = CreateModelTask(tenant=tenant, property_name=property_name)
         client.post('/create_model', json=task_to_post.dict())
         client.post('/create_model', json=task_to_post.dict())
         response = client.post('/create_model', json=task_to_post.dict())
@@ -201,34 +187,29 @@ class TestApp(TestCase):
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions(self):
         tenant = 'example_tenant_name'
-        template = 'example_template'
         property_name = 'prediction_property_name'
 
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = [{'tenant': 'wrong tenant',
-                      'template': 'wrong template',
                       'property_name': property_name,
                       'xml_file_name': "one_file_name",
                       'text': "one_text_predicted",
                       'segment_text': "one_segment_text",
                       },
                      {'tenant': tenant,
-                      'template': template,
                       'property_name': property_name,
                       'xml_file_name': "one_file_name",
                       'text': "one_text_predicted",
                       'segment_text': "one_segment_text",
                       },
                      {'tenant': tenant,
-                      'template': template,
                       'property_name': property_name,
                       'xml_file_name': "other_file_name",
                       'text': "other_text_predicted",
                       'segment_text': "other_segment_text",
                       },
                      {'tenant': tenant,
-                      'template': template,
                       'property_name': 'wrong extraction name',
                       'xml_file_name': "other_file_name",
                       'text': "other_text_predicted",
@@ -237,7 +218,7 @@ class TestApp(TestCase):
 
         mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
 
-        response = client.get(f"/get_suggestions/{tenant}/{template}/{property_name}")
+        response = client.get(f"/get_suggestions/{tenant}/{property_name}")
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)
@@ -257,20 +238,17 @@ class TestApp(TestCase):
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_should_remove_suggestions_when_returned(self):
         tenant = 'example_tenant_name'
-        template = 'example_template'
         property_name = 'prediction_property_name'
 
         mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
 
         json_data = [{'tenant': tenant + '1',
-                      'template': template,
                       'property_name': property_name,
                       'xml_file_name': "one_file_name",
                       'text': "one_text_predicted",
                       'segment_text': "one_segment_text",
                       },
                      {'tenant': tenant + '2',
-                      'template': template,
                       'property_name': property_name,
                       'xml_file_name': "one_file_name",
                       'text': "one_text_predicted",
@@ -280,18 +258,17 @@ class TestApp(TestCase):
 
         mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
 
-        client.get(f"/get_suggestions/{tenant}1/{template}/{property_name}")
+        client.get(f"/get_suggestions/{tenant}1/{property_name}")
 
         suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
 
         self.assertEqual(1, mongo_client.pdf_information_extraction.suggestions.count())
         self.assertEqual(tenant + '2', suggestion.tenant)
-        self.assertEqual(template, suggestion.template)
         self.assertEqual(property_name, suggestion.property_name)
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions_when_no_suggestions(self):
-        response = client.get("/get_suggestions/tenant/template/property")
+        response = client.get("/get_suggestions/tenant/property")
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)

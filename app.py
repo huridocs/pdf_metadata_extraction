@@ -30,26 +30,26 @@ async def error():
     raise HTTPException(status_code=500, detail='This is a test error from the error endpoint')
 
 
-@app.post('/to_train_xml/{tenant}/{template}/{property_name}')
-async def to_train_xml_file(tenant, template, property_name, file: UploadFile = File(...)):
+@app.post('/xml_to_train/{tenant}/{property_name}')
+async def to_train_xml_file(tenant, property_name, file: UploadFile = File(...)):
     filename = '"No file name! Probably an error about the file in the request"'
     try:
         filename = file.filename
-        xml_file = XmlFile(template=template, tenant=tenant, property_name=property_name, xml_file_name=filename)
-        xml_file.save_as_to_train(file=file.file.read())
+        xml_file = XmlFile(tenant=tenant, property_name=property_name, to_train=True, xml_file_name=filename)
+        xml_file.save(file=file.file.read())
         return 'xml_to_train saved'
     except Exception:
         logger.error(f'Error adding task {filename}', exc_info=1)
         raise HTTPException(status_code=422, detail=f'Error adding task {filename}')
 
 
-@app.post('/xml_to_train/{tenant}/{template}/{property_name}')
-async def to_predict_xml_file(tenant, template, property_name, file: UploadFile = File(...)):
+@app.post('/xml_to_predict/{tenant}/{property_name}')
+async def to_predict_xml_file(tenant, property_name, file: UploadFile = File(...)):
     filename = '"No file name! Probably an error about the file in the request"'
     try:
         filename = file.filename
-        xml_file = XmlFile(template=template, tenant=tenant, property_name=property_name, xml_file_name=filename)
-        xml_file.save_as_to_predict(file=file.file.read())
+        xml_file = XmlFile(tenant=tenant, property_name=property_name, to_train=False, xml_file_name=filename)
+        xml_file.save(file=file.file.read())
         return 'xml_to_train saved'
     except Exception:
         logger.error(f'Error adding task {filename}', exc_info=1)
@@ -93,12 +93,12 @@ async def create_model_post(task: CreateModelTask):
         raise HTTPException(status_code=422, detail='An error has occurred. Check graylog for more info')
 
 
-@app.get('/get_suggestions/{tenant}/{template}/{property_name}')
-async def get_suggestions(tenant: str, template: str, property_name: str):
+@app.get('/get_suggestions/{tenant}/{property_name}')
+async def get_suggestions(tenant: str, property_name: str):
     try:
         client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
         pdf_information_extraction_db = client['pdf_information_extraction']
-        suggestions_filter = {"tenant": tenant, "template": template, "property_name": property_name}
+        suggestions_filter = {"tenant": tenant, "property_name": property_name}
         suggestions_list: List[Dict[str, str]] = list()
 
         for document in pdf_information_extraction_db.suggestions.find(suggestions_filter, no_cursor_timeout=True):
