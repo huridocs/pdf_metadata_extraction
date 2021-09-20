@@ -6,7 +6,7 @@ from unittest import TestCase
 import mongomock
 import pymongo
 
-from data.CreateModelTask import CreateModelTask
+from data.InformationExtractionTask import InformationExtractionTask
 from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
 from information_extraction.InformationExtraction import InformationExtraction
@@ -18,7 +18,7 @@ class TestInformationExtractor(TestCase):
     test_xml_path = f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml'
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_next_model(self):
+    def test_create_model(self):
         tenant = 'segment_test'
         property_name = 'property_name'
 
@@ -38,55 +38,24 @@ class TestInformationExtractor(TestCase):
                      }
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        task = CreateModelTask(tenant=tenant, property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
-
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
         os.makedirs(f'{base_path}/xml_to_train')
         shutil.copy(self.test_xml_path, f'{base_path}/xml_to_train/test.xml')
 
-        InformationExtraction.create_next_model()
+        task = InformationExtractionTask(tenant=tenant,
+                                         task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                                         data={'property_name': property_name})
+        InformationExtraction.calculate_task(task)
 
         self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
-        self.assertEqual(0, mongo_client.pdf_information_extraction.tasks.count_documents({}))
         self.assertEqual(0, mongo_client.pdf_information_extraction.labeleddata.count_documents({}))
         self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_next_model_should_execute_only_one_task(self):
-        tenant = 'segment_test'
-        property_name = 'property_name'
-
-        base_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}'
-
-        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-
-        other_task = CreateModelTask(tenant='other', property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(other_task.dict())
-
-        task = CreateModelTask(tenant=tenant, property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
-
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
-
-        os.makedirs(f'{base_path}/xml_to_train')
-        shutil.copy(self.test_xml_path, f'{base_path}/xml_to_train/test.xml')
-
-        InformationExtraction.create_next_model()
-
-        create_model_task = CreateModelTask(**mongo_client.pdf_information_extraction.tasks.find_one())
-
-        self.assertEqual(1, mongo_client.pdf_information_extraction.tasks.count_documents({}))
-        self.assertEqual(tenant, create_model_task.tenant)
-        self.assertEqual(property_name, create_model_task.property_name)
-
-        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
-
-    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_create_next_model_different_tenant(self):
+    def test_create_model_different_tenant(self):
         tenant = 'different_segment_test'
         property_name = 'different_property_name'
 
@@ -108,16 +77,15 @@ class TestInformationExtractor(TestCase):
                      }
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        task = CreateModelTask(tenant=tenant, property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
-
         os.makedirs(f'{base_path}/xml_to_train')
         shutil.copy(self.test_xml_path, f'{base_path}/xml_to_train/test.xml')
 
-        InformationExtraction.create_next_model()
+        task = InformationExtractionTask(tenant=tenant,
+                                         task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                                         data={'property_name': property_name})
+        InformationExtraction.calculate_task(task)
 
         self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
-        self.assertEqual(0, mongo_client.pdf_information_extraction.tasks.count_documents({}))
         self.assertEqual(0, mongo_client.pdf_information_extraction.labeleddata.count_documents({}))
         self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
 
@@ -143,15 +111,14 @@ class TestInformationExtractor(TestCase):
                      }
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        task = CreateModelTask(tenant=tenant, property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
-
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
         shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
 
-        InformationExtraction.create_next_model()
+        task = InformationExtractionTask(tenant=tenant,
+                                         task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                                         data={'property_name': property_name})
+        InformationExtraction.calculate_task(task)
 
-        print(f'{base_path}/segment_predictor_model/model.model')
         self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
         self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
         self.assertFalse(os.path.exists(f'{base_path}/semantic_model/best_model'))
@@ -177,10 +144,10 @@ class TestInformationExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(json_data)
 
-        task = CreateModelTask(tenant=tenant, property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
-
-        InformationExtraction.create_next_model()
+        task = InformationExtractionTask(tenant=tenant,
+                                         task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                                         data={'property_name': property_name})
+        InformationExtraction.calculate_task(task)
 
         self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_to_train'))
         self.assertFalse(
@@ -207,7 +174,10 @@ class TestInformationExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
-        InformationExtraction.calculate_suggestions_from_database()
+        task = InformationExtractionTask(tenant=tenant,
+                                         task=InformationExtraction.SUGGESTIONS_TASK_NAME,
+                                         data={'property_name': property_name})
+        InformationExtraction.calculate_task(task)
 
         documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
         suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
@@ -262,11 +232,13 @@ class TestInformationExtractor(TestCase):
         mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
-        task = CreateModelTask(tenant=tenant, property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
+        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+                                                                       task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                                                                       data={'property_name': property_name}))
 
-        InformationExtraction.create_next_model()
-        InformationExtraction.calculate_suggestions_from_database()
+        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+                                                                       task=InformationExtraction.SUGGESTIONS_TASK_NAME,
+                                                                       data={'property_name': property_name}))
 
         documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
         suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
@@ -325,11 +297,13 @@ class TestInformationExtractor(TestCase):
 
             mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
 
-        task = CreateModelTask(tenant=tenant, property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
+        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+                                                                       task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                                                                       data={'property_name': property_name}))
 
-        InformationExtraction.create_next_model()
-        InformationExtraction.calculate_suggestions_from_database()
+        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+                                                                       task=InformationExtraction.SUGGESTIONS_TASK_NAME,
+                                                                       data={'property_name': property_name}))
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}
@@ -393,11 +367,13 @@ class TestInformationExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
 
-        task = CreateModelTask(tenant=tenant, property_name=property_name)
-        mongo_client.pdf_information_extraction.tasks.insert_one(task.dict())
+        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+                                                                       task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                                                                       data={'property_name': property_name}))
 
-        InformationExtraction.create_next_model()
-        InformationExtraction.calculate_suggestions_from_database()
+        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+                                                                       task=InformationExtraction.SUGGESTIONS_TASK_NAME,
+                                                                       data={'property_name': property_name}))
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}

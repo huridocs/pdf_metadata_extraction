@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 from unittest import TestCase
 from app import app
 from data.Suggestion import Suggestion
-from data.CreateModelTask import CreateModelTask
 
 client = TestClient(app)
 
@@ -148,41 +147,6 @@ class TestApp(TestCase):
         self.assertEqual('xml_file_name', prediction_data_document['xml_file_name'])
         self.assertEqual([{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}],
                          prediction_data_document['xml_segments_boxes'])
-
-    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_post_create_model(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-
-        tenant = "endpoint_test"
-        property_name = "property_name"
-
-        task_to_post = CreateModelTask(tenant=tenant, property_name=property_name)
-        response = client.post('/create_model', json=task_to_post.dict())
-
-        task = CreateModelTask(**mongo_client.pdf_information_extraction.tasks.find_one())
-
-        self.assertEqual(200, response.status_code)
-
-        self.assertEqual(tenant, task.tenant)
-        self.assertEqual(property_name, task.property_name)
-
-    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_post_create_model_should_override_same_old_create_models(self):
-        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-
-        tenant = "endpoint_test"
-        property_name = "property_name"
-
-        task_to_post = CreateModelTask(tenant=tenant, property_name=property_name)
-        client.post('/create_model', json=task_to_post.dict())
-        client.post('/create_model', json=task_to_post.dict())
-        response = client.post('/create_model', json=task_to_post.dict())
-
-        tasks_number = mongo_client.pdf_information_extraction.tasks.count()
-
-        self.assertEqual(200, response.status_code)
-
-        self.assertEqual(1, tasks_number)
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_get_suggestions(self):

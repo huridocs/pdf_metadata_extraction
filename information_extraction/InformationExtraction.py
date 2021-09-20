@@ -12,7 +12,7 @@ from data.PredictionData import PredictionData
 from data.SegmentationData import SegmentationData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
-from data.CreateModelTask import CreateModelTask
+from data.InformationExtractionTask import InformationExtractionTask
 from information_extraction.Segment import Segment
 import lightgbm as lgb
 
@@ -21,6 +21,9 @@ from semantic_information_extraction.SemanticInformationExtraction import Semant
 
 
 class InformationExtraction:
+    CREATE_MODEL_TASK_NAME = 'create_model'
+    SUGGESTIONS_TASK_NAME = 'suggestions'
+
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
@@ -59,6 +62,7 @@ class InformationExtraction:
         shutil.rmtree(XmlFile.get_xml_folder_path(tenant=self.tenant, property_name=self.property_name, to_train=True),
                       ignore_errors=True)
         self.pdf_information_extraction_db.labeleddata.delete_many(self.mongo_filter)
+        return True
 
     def create_semantic_model(self):
         self.semantic_information_extraction.remove_models()
@@ -185,22 +189,16 @@ class InformationExtraction:
         return X, y
 
     @staticmethod
-    def calculate_suggestions_from_database():
-        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-        pdf_information_extraction_db = client['pdf_information_extraction']
-        document = pdf_information_extraction_db.predictiondata.find_one()
-        if document:
-            prediction_data = PredictionData(**document)
-            information_extraction = InformationExtraction(tenant=prediction_data.tenant,
-                                                           property_name=prediction_data.property_name)
-            information_extraction.get_suggestions()
+    def calculate_task(information_extraction_task: InformationExtractionTask):
+        if information_extraction_task.task == InformationExtraction.CREATE_MODEL_TASK_NAME:
+            information_extraction = InformationExtraction(information_extraction_task.tenant,
+                                                           information_extraction_task.data['property_name'])
+            return information_extraction.create_models()
 
-    @staticmethod
-    def create_next_model():
-        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-        pdf_information_extraction_db = client['pdf_information_extraction']
-        document = pdf_information_extraction_db.tasks.find_one_and_delete({})
-        if document:
-            task = CreateModelTask(**document)
-            information_extraction = InformationExtraction(**task.dict())
-            information_extraction.create_models()
+        if information_extraction_task.task == InformationExtraction.SUGGESTIONS_TASK_NAME:
+            information_extraction = InformationExtraction(information_extraction_task.tenant,
+                                                           information_extraction_task.data['property_name'])
+            return information_extraction.get_suggestions()
+
+        return False
+

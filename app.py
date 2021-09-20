@@ -7,11 +7,10 @@ import sys
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
-from data.CreateModelTask import CreateModelTask
 from get_logger import get_logger
 from information_extraction.XmlFile import XmlFile
 
-logger = get_logger()
+logger = get_logger('service')
 
 app = FastAPI()
 
@@ -75,19 +74,6 @@ async def prediction_data_post(prediction_data: PredictionData):
         pdf_information_extraction_db = client['pdf_information_extraction']
         pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
         return 'prediction data saved'
-    except Exception:
-        logger.error('Error', exc_info=1)
-        raise HTTPException(status_code=422, detail='An error has occurred. Check graylog for more info')
-
-
-@app.post('/create_model')
-async def create_model_post(task: CreateModelTask):
-    try:
-        client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
-        pdf_information_extraction_db = client['pdf_information_extraction']
-        pdf_information_extraction_db.tasks.delete_many(task.dict())
-        pdf_information_extraction_db.tasks.insert_one(task.dict())
-        return 'task added'
     except Exception:
         logger.error('Error', exc_info=1)
         raise HTTPException(status_code=422, detail='An error has occurred. Check graylog for more info')

@@ -1,15 +1,35 @@
 version: '3.2'
 services:
-  pdf_information_extraction:
-    build: .
+  server_pdf_information_extraction:
+    build:
+      context: .
+      dockerfile: Dockerfile_server
     ports:
-      - "5050:5050"
+      - "5052:5050"
     volumes:
-      - .:/developer
-      - ./docker_volume:/developer/docker_volume
+      - ./docker_volume:/app/docker_volume
+    depends_on:
+      - mongo_information_extraction
+      - redis_information_extraction
+  pdf_information_extraction:
+    build:
+      context: .
+      dockerfile: Dockerfile_information_extraction
+    volumes:
+      - ./docker_volume:/app/docker_volume
+    depends_on:
+      - mongo_information_extraction
+      - redis_information_extraction
   mongo_information_extraction:
     image: "mongo:4.0.1"
     volumes:
       - ./db:/data/db
     ports:
       - '28017-28019:27017-27019'
+  redis_information_extraction:
+    image: "redis:alpine"
+    command: redis-server
+    ports:
+      - "6479:6379"
+    environment:
+      - REDIS_REPLICATION_MODE=master
