@@ -57,12 +57,16 @@ class InformationExtraction:
 
     def create_models(self):
         self.set_segments_for_training()
+
+        if len(self.segments) == 0:
+            return False, 'No labeled data to create model'
+
         self.run_light_gbm()
         self.create_semantic_model()
         shutil.rmtree(XmlFile.get_xml_folder_path(tenant=self.tenant, property_name=self.property_name, to_train=True),
                       ignore_errors=True)
         self.pdf_information_extraction_db.labeleddata.delete_many(self.mongo_filter)
-        return True
+        return True, ''
 
     def create_semantic_model(self):
         self.semantic_information_extraction.remove_models()
@@ -117,11 +121,11 @@ class InformationExtraction:
         self.model.save_model(self.model_path, num_iteration=self.model.best_iteration)
         sleep(3)
 
-    def get_suggestions(self):
+    def get_suggestions(self) -> (bool, str):
         suggestions = self.calculate_suggestions()
 
         if not suggestions:
-            return []
+            return False, 'No data to calculate suggestions'
 
         self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
         xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.property_name, False)
@@ -130,7 +134,7 @@ class InformationExtraction:
             if os.path.exists(f'{xml_folder_path}/{suggestion.xml_file_name}'):
                 os.remove(f'{xml_folder_path}/{suggestion.xml_file_name}')
 
-        return suggestions
+        return True, ''
 
     def calculate_suggestions(self):
         suggestions: List[Suggestion] = list()
@@ -189,7 +193,7 @@ class InformationExtraction:
         return X, y
 
     @staticmethod
-    def calculate_task(information_extraction_task: InformationExtractionTask):
+    def calculate_task(information_extraction_task: InformationExtractionTask) -> (bool, str):
         if information_extraction_task.task == InformationExtraction.CREATE_MODEL_TASK_NAME:
             information_extraction = InformationExtraction(information_extraction_task.tenant,
                                                            information_extraction_task.data['property_name'])
@@ -200,5 +204,5 @@ class InformationExtraction:
                                                            information_extraction_task.data['property_name'])
             return information_extraction.get_suggestions()
 
-        return False
+        return False, 'Error'
 

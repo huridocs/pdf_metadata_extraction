@@ -37,14 +37,14 @@ class QueueProcessor:
 
     def execute_task(self, id, message, rc, ts):
         task = InformationExtractionTask(**message)
-        model_created = InformationExtraction.calculate_task(task)
+        task_calculated, error_message = InformationExtraction.calculate_task(task)
 
-        if not model_created:
+        if not task_calculated:
             model_results_message = ResultsMessage(tenant=task.tenant,
                                                    task=task.task,
                                                    data=task.data,
                                                    success=False,
-                                                   error_message='Error creating model')
+                                                   error_message=error_message)
 
             self.logger.error(model_results_message.json())
         else:

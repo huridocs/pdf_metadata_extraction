@@ -46,8 +46,9 @@ class TestInformationExtractor(TestCase):
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.CREATE_MODEL_TASK_NAME,
                                          data={'property_name': property_name})
-        InformationExtraction.calculate_task(task)
+        task_calculated, error = InformationExtraction.calculate_task(task)
 
+        self.assertTrue(task_calculated)
         self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
         self.assertEqual(0, mongo_client.pdf_information_extraction.labeleddata.count_documents({}))
         self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
@@ -83,13 +84,27 @@ class TestInformationExtractor(TestCase):
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.CREATE_MODEL_TASK_NAME,
                                          data={'property_name': property_name})
-        InformationExtraction.calculate_task(task)
+        task_calculated, error = InformationExtraction.calculate_task(task)
 
+        self.assertTrue(task_calculated)
         self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
         self.assertEqual(0, mongo_client.pdf_information_extraction.labeleddata.count_documents({}))
         self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_create_model_error_when_no_files(self):
+        tenant = 'error_segment_test'
+        property_name = 'error_property_name'
+
+        task = InformationExtractionTask(tenant=tenant,
+                                         task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                                         data={'property_name': property_name})
+        task_calculated, error = InformationExtraction.calculate_task(task)
+
+        self.assertFalse(task_calculated)
+        self.assertEqual(error, 'No labeled data to create model')
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model_should_remove_previous_models(self):
@@ -117,8 +132,10 @@ class TestInformationExtractor(TestCase):
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.CREATE_MODEL_TASK_NAME,
                                          data={'property_name': property_name})
-        InformationExtraction.calculate_task(task)
 
+        task_calculated, error = InformationExtraction.calculate_task(task)
+
+        self.assertTrue(task_calculated)
         self.assertTrue(os.path.exists(f'{base_path}/segment_predictor_model/model.model'))
         self.assertFalse(os.path.exists(f'{base_path}/xml_to_train/test.xml'))
         self.assertFalse(os.path.exists(f'{base_path}/semantic_model/best_model'))
@@ -177,11 +194,12 @@ class TestInformationExtractor(TestCase):
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.SUGGESTIONS_TASK_NAME,
                                          data={'property_name': property_name})
-        InformationExtraction.calculate_task(task)
+        task_calculated, error = InformationExtraction.calculate_task(task)
 
         documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
         suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
 
+        self.assertTrue(task_calculated)
         self.assertEqual(1, documents_count)
 
         self.assertEqual(tenant, suggestion.tenant)
@@ -236,15 +254,15 @@ class TestInformationExtractor(TestCase):
                                                                        task=InformationExtraction.CREATE_MODEL_TASK_NAME,
                                                                        data={'property_name': property_name}))
 
-        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+        task_calculated, error = InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.SUGGESTIONS_TASK_NAME,
                                                                        data={'property_name': property_name}))
 
         documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
         suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
 
+        self.assertTrue(task_calculated)
         self.assertEqual(1, documents_count)
-
         self.assertEqual(tenant, suggestion.tenant)
         self.assertEqual(property_name, suggestion.property_name)
         self.assertEqual("test.xml", suggestion.xml_file_name)
@@ -301,7 +319,7 @@ class TestInformationExtractor(TestCase):
                                                                        task=InformationExtraction.CREATE_MODEL_TASK_NAME,
                                                                        data={'property_name': property_name}))
 
-        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+        task_calculated, error = InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.SUGGESTIONS_TASK_NAME,
                                                                        data={'property_name': property_name}))
 
@@ -310,8 +328,8 @@ class TestInformationExtractor(TestCase):
         for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
             suggestions.append(Suggestion(**document))
 
+        self.assertTrue(task_calculated)
         self.assertEqual(2, len(suggestions))
-
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
         self.assertEqual({property_name}, {x.property_name for x in suggestions})
         self.assertEqual({property_name}, {x.property_name for x in suggestions})
@@ -371,7 +389,7 @@ class TestInformationExtractor(TestCase):
                                                                        task=InformationExtraction.CREATE_MODEL_TASK_NAME,
                                                                        data={'property_name': property_name}))
 
-        InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
+        task_calculated, error = InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.SUGGESTIONS_TASK_NAME,
                                                                        data={'property_name': property_name}))
 
@@ -380,8 +398,8 @@ class TestInformationExtractor(TestCase):
         for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
             suggestions.append(Suggestion(**document))
 
+        self.assertTrue(task_calculated)
         self.assertEqual(2, len(suggestions))
-
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
         self.assertEqual({property_name}, {x.property_name for x in suggestions})
         self.assertEqual({"spanish.xml"}, {x.xml_file_name for x in suggestions})
@@ -389,3 +407,16 @@ class TestInformationExtractor(TestCase):
         self.assertEqual({"día"}, {x.text for x in suggestions})
 
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_get_suggestions_error_when_no_files(self):
+        tenant = 'error_segment_test'
+        property_name = 'error_property_name'
+
+        task = InformationExtractionTask(tenant=tenant,
+                                         task=InformationExtraction.SUGGESTIONS_TASK_NAME,
+                                         data={'property_name': property_name})
+        task_calculated, error = InformationExtraction.calculate_task(task)
+
+        self.assertFalse(task_calculated)
+        self.assertEqual(error, 'No data to calculate suggestions')
