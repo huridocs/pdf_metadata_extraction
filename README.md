@@ -17,7 +17,7 @@ To use a different redis server, create a file `docker_volume/redis_server.yml` 
     host: [shost_ip]
     port: [port_number]
 
-<b>Start service</b>
+<b>Start the service</b>
 
     docker-compose up
 
@@ -76,7 +76,7 @@ There is a redis queue where it is possible to get notified when the different t
     curl -X GET  localhost:5050/get_suggestions/tenant_name/property_name
 
 
-<b>To stop the server</b>
+<b>Stop the service</b>
 
     docker-compose down
   
