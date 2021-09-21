@@ -122,6 +122,9 @@ class InformationExtraction:
         sleep(3)
 
     def get_suggestions(self) -> (bool, str):
+        if not self.model:
+            return False, 'No model'
+
         suggestions = self.calculate_suggestions()
 
         if not suggestions:

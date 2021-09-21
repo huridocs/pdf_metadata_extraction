@@ -16,6 +16,7 @@ DOCKER_VOLUME_PATH = f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.
 
 class TestInformationExtractor(TestCase):
     test_xml_path = f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml'
+    model_path = f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/segment_predictor_model/model.model'
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_create_model(self):
@@ -225,15 +226,6 @@ class TestInformationExtractor(TestCase):
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
         shutil.copytree(f'{DOCKER_VOLUME_PATH}/tenant_test', f'{DOCKER_VOLUME_PATH}/{tenant}')
 
-        to_predict_json = {"tenant": tenant,
-                           "property_name": property_name,
-                           "xml_file_name": "test.xml",
-                           "page_width": 612,
-                           "page_height": 792,
-                           "xml_segments_boxes": [SegmentBox(left=0, top=130, width=612, height=70,
-                                                             page_number=2).dict()]
-                           }
-
         labeled_data_json = {"tenant": tenant,
                              "property_name": property_name,
                              "xml_file_name": "test.xml",
@@ -248,11 +240,21 @@ class TestInformationExtractor(TestCase):
                              }
 
         mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
-        mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
         InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.CREATE_MODEL_TASK_NAME,
                                                                        data={'property_name': property_name}))
+
+        to_predict_json = {"tenant": tenant,
+                           "property_name": property_name,
+                           "xml_file_name": "test.xml",
+                           "page_width": 612,
+                           "page_height": 792,
+                           "xml_segments_boxes": [SegmentBox(left=0, top=130, width=612, height=70,
+                                                             page_number=2).dict()]
+                           }
+
+        mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
         task_calculated, error = InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.SUGGESTIONS_TASK_NAME,
@@ -409,9 +411,14 @@ class TestInformationExtractor(TestCase):
         shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}', ignore_errors=True)
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
-    def test_get_suggestions_error_when_no_files(self):
+    def test_get_suggestions_no_files_error(self):
         tenant = 'error_segment_test'
         property_name = 'error_property_name'
+
+        base_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}'
+
+        os.makedirs(f'{base_path}/segment_predictor_model')
+        shutil.copy(self.model_path, f'{base_path}/segment_predictor_model/')
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.SUGGESTIONS_TASK_NAME,
@@ -420,3 +427,37 @@ class TestInformationExtractor(TestCase):
 
         self.assertFalse(task_calculated)
         self.assertEqual(error, 'No data to calculate suggestions')
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
+
+    @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
+    def test_get_suggestions_no_model_error(self):
+        mongo_client = pymongo.MongoClient('mongodb://mongo_information_extraction:27017')
+
+        tenant = 'error_segment_test'
+        property_name = 'error_property_name'
+
+        base_path = f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}'
+
+        os.makedirs(f'{base_path}/xml_to_predict')
+        shutil.copy(self.test_xml_path, f'{base_path}/xml_to_predict/test.xml')
+
+        to_predict_json = [{"tenant": tenant,
+                            "property_name": property_name,
+                            "xml_file_name": "test.xml",
+                            "page_width": 612,
+                            "page_height": 792,
+                            "xml_segments_boxes": [],
+                            }]
+
+        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
+
+        task = InformationExtractionTask(tenant=tenant,
+                                         task=InformationExtraction.SUGGESTIONS_TASK_NAME,
+                                         data={'property_name': property_name})
+        task_calculated, error = InformationExtraction.calculate_task(task)
+
+        self.assertFalse(task_calculated)
+        self.assertEqual(error, 'No model')
+
+        shutil.rmtree(f'{DOCKER_VOLUME_PATH}/{tenant}')
