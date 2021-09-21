@@ -4,57 +4,87 @@ Project to extract information extraction
 
 ### Execute tests
 
-    `python -m unittest`
+    python -m unittest
 
 ### How to use it
 
-Start service:
+<b>Configure the redis server</b>
 
-  `docker-compose up`
+If the configuration is not changed, a dockerized redis server will be used.
 
-Post xml file:
+To use a different redis server, create a file `docker_volume/redis_server.yml` with the following content:
 
-   `curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5050/xml_file/tenant_name/property_name`
+    host: [shost_ip]
+    port: [port_number]
 
-Post labeled data:
+<b>Start service</b>
 
-   `curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
+    docker-compose up
+
+<b>Post xml file</b>
+
+    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5050/xml_file/tenant_name/property_name
+
+<b>Post labeled data</b>
+
+    curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
                              "property_name": "property_name",
                              "tenant": "tenant_name",
                              "language_iso": "en",
                              "label_text": "text",
                              "page_width": 612,
                              "page_height": 792,
-                             "xml_segments_boxes": [],
+                             "xml_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}],
                              "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
-                             }' localhost:5050/labeled_data`
+                             }' localhost:5050/labeled_data
 
-Post prediction data:
+<b>Post prediction data</b>
 
-   `curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
+    curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
                              "property_name": "property_name",
                              "tenant": "tenant_name",
                              "page_width": 612,
                              "page_height": 792,
                              "xml_segments_boxes": []
-                             }' localhost:5050/prediction_data`
+                             }' localhost:5050/prediction_data
 
-Calculate suggestions:
+<b>Create model and calculate suggestions</b>
 
-`curl -X POST  localhost:5050/calculate_suggestions/tenant_name/property_name`
+To create the model or calculate the suggestions, a message to redis should be sent. The name for the tasks queue is "information_extraction_tasks"
 
-Get suggestions:
+    queue = RedisSMQ(host='127.0.0.1', port='6479', qname='information_extraction_tasks', quiet=False)
+    # Create model
+    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "create_model", "data": {"property_name": "property_name"}}').execute()
+    # Calculate suggestions
+    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "suggestions", "data": {"property_name": "property_name"}}').execute()
 
-`curl -X GET  localhost:5050/get_suggestions/tenant_name/property_name`
+<b>Notification</b>
+
+There is a redis queue where it is possible to get notified when the different tasks finish
+
+    queue = RedisSMQ(host='127.0.0.1', port='6479', qname='information_extraction_results', quiet=False)
+    message = queue.receiveMessage().exceptions(False).execute()
+
+    # The models have been created message
+    # {"tenant": "tenant_name", "task": "create_model", "data": {"property_name": "property_name"}, "success": true, "error_message": ""}
+
+    # The suggestions have been computed
+    # {"tenant": "tenant_name", "task": "suggestions", "data": {"property_name": "property_name"}, "success": true, "error_message": ""}
+
+<b>Get suggestions</b>
+
+    curl -X GET  localhost:5050/get_suggestions/tenant_name/property_name
 
 
-To stop the server:
+<b>To stop the server</b>
 
-  `docker-compose down`
+    docker-compose down
   
 
-### Configuring external graylog server 
+### Logging
 
-Set graylog ip in the ./graylog.yml file:
+The service logs are stored in the file `docker_volume/service.log`
 
-   `graylog_ip: [ip]`
+To use a graylog server, create a file `docker_volume/graylog.yml` with the following content:
+
+`graylog_ip: [ip]`
