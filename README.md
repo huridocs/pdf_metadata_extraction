@@ -2,9 +2,11 @@
 
 Project to extract information extraction 
 
-### Execute tests
+### Dependencies
 
-    python -m unittest
+* Docker [install] (https://runnable.com/docker/getting-started/)
+* Docker-compose [install] (https://docs.docker.com/compose/install/)
+    * Note: On mac Docker-compose is installed with Docker
 
 ### How to use it
 
@@ -88,3 +90,16 @@ The service logs are stored in the file `docker_volume/service.log`
 To use a graylog server, create a file `docker_volume/graylog.yml` with the following content:
 
 `graylog_ip: [ip]`
+
+### Set up environment for development
+
+It works with Python 3.9
+
+    pip install virtualenv
+    virtualenv venv
+    source venv/bin/activate
+    pip intall -r requirements.txt
+    
+### Execute tests
+
+    python -m unittest
