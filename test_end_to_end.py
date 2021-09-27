@@ -14,7 +14,6 @@ DOCKER_VOLUME_PATH = f'./docker_volume'
 
 
 class TestEndToEnd(TestCase):
-
     def setUp(self):
         subprocess.run('docker-compose up -d', shell=True)
         sleep(5)
@@ -97,6 +96,15 @@ class TestEndToEnd(TestCase):
         results_message = self.get_results_message()
         expected_result = ResultsMessage(tenant=tenant, task='create_model', data={'property_name': property_name},
                                          success=False, error_message='No labeled data to create model')
+
+        self.assertEqual(results_message, expected_result)
+
+        self.set_task_message(
+            InformationExtractionTask(tenant=tenant, task='suggestions', data={'property_name': property_name}))
+
+        results_message = self.get_results_message()
+        expected_result = ResultsMessage(tenant=tenant, task='suggestions', data={'property_name': property_name},
+                                         success=False, error_message='No data to calculate suggestions')
 
         self.assertEqual(results_message, expected_result)
 
