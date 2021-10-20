@@ -11,10 +11,10 @@ services:
     depends_on:
       - mongo_information_extraction
       - redis_information_extraction
-  pdf_information_extraction:
+  queue_processor_information_extraction:
     build:
       context: .
-      dockerfile: Dockerfile_information_extraction
+      dockerfile: Dockerfile_queue_processor
     volumes:
       - ./docker_volume:/app/docker_volume
     depends_on:
@@ -30,6 +30,6 @@ services:
     image: "redis:alpine"
     command: redis-server
     ports:
-      - "6479:6379"
+      - "6579:6379"
     environment:
       - REDIS_REPLICATION_MODE=master

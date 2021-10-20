@@ -10,10 +10,10 @@ services:
       - ./docker_volume:/app/docker_volume
     depends_on:
       - mongo_information_extraction
-  pdf_information_extraction:
+  queue_processor_information_extraction:
     build:
       context: .
-      dockerfile: Dockerfile_information_extraction
+      dockerfile: Dockerfile_queue_processor
     volumes:
       - ./docker_volume:/app/docker_volume
     depends_on:

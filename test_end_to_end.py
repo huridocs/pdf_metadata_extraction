@@ -7,12 +7,19 @@ from rsmq import RedisSMQ
 
 import requests
 
+from config_creator import get_server_port, get_redis_port
 from data.InformationExtractionTask import InformationExtractionTask
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
 from data.Suggestion import Suggestion
 
 DOCKER_VOLUME_PATH = f'./docker_volume'
+
+REDIS_HOST = '127.0.0.1'
+REDIS_PORT = get_redis_port()
+
+SERVER_HOST = 'localhost'
+SERVER_PORT = get_server_port()
 
 
 class TestEndToEnd(TestCase):
@@ -24,13 +31,13 @@ class TestEndToEnd(TestCase):
         subprocess.run('docker-compose -f docker-compose-service-with-redis.yml down', shell=True)
 
     def test_end_to_end(self):
-        host = 'http://localhost:5052'
+        server_url = f'http://{SERVER_HOST}:{SERVER_PORT}'
         tenant = "end_to_end_test"
         property_name = "property_name"
 
         with open(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml', 'rb') as stream:
             files = {'file': stream}
-            requests.post(f"{host}/xml_to_train/{tenant}/{property_name}", files=files)
+            requests.post(f"{server_url}/xml_to_train/{tenant}/{property_name}", files=files)
 
         labeled_data_json = {"property_name": property_name,
                              "tenant": tenant,
@@ -44,9 +51,9 @@ class TestEndToEnd(TestCase):
                                                        "page_number": 1}]
                              }
 
-        requests.post(f"{host}/labeled_data", json=labeled_data_json)
+        requests.post(f"{server_url}/labeled_data", json=labeled_data_json)
 
-        queue = RedisSMQ(host='127.0.0.1', port='6479', qname='information_extraction_tasks', quiet=False)
+        queue = RedisSMQ(host=REDIS_HOST, port=REDIS_PORT, qname='information_extraction_tasks', quiet=False)
         queue.sendMessage().message('{"message_to_avoid":"to_be_written_in_log_file"}').execute()
 
         task = InformationExtractionTask(tenant=tenant, task='create_model', params=Params(property_name=property_name))
@@ -56,11 +63,11 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(tenant=tenant, task='create_model', params=Params(property_name=property_name),
                                          success=True, error_message='', data_url=None)
 
-        self.assertEqual(results_message, expected_result)
+        self.assertEqual(expected_result, results_message)
 
         with open(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_predict/test.xml', 'rb') as stream:
             files = {'file': stream}
-            requests.post(f"{host}/xml_to_predict/{tenant}/{property_name}", files=files)
+            requests.post(f"{server_url}/xml_to_predict/{tenant}/{property_name}", files=files)
 
         predict_data_json = {"tenant": tenant,
                              "property_name": property_name,
@@ -70,7 +77,7 @@ class TestEndToEnd(TestCase):
                              "xml_segments_boxes": [],
                              }
 
-        requests.post(f"{host}/prediction_data", json=predict_data_json)
+        requests.post(f"{server_url}/prediction_data", json=predict_data_json)
 
         task = InformationExtractionTask(tenant=tenant, task='suggestions', params=Params(property_name=property_name))
         queue.sendMessage(delay=0).message(str(task.json())).execute()
@@ -81,7 +88,7 @@ class TestEndToEnd(TestCase):
                                          params=Params(property_name=property_name),
                                          success=True,
                                          error_message='',
-                                         data_url=f"{host}/get_suggestions/{tenant}/{property_name}")
+                                         data_url=f"{server_url}/get_suggestions/{tenant}/{property_name}")
 
         self.assertEqual(results_message, expected_result)
 
@@ -118,9 +125,9 @@ class TestEndToEnd(TestCase):
 
     @staticmethod
     def get_results_message() -> ResultsMessage:
-        for i in range(10):
-            sleep(1)
-            queue = RedisSMQ(host='127.0.0.1', port='6479', qname='information_extraction_results', quiet=False)
+        for i in range(20):
+            sleep(3)
+            queue = RedisSMQ(host=REDIS_HOST, port=REDIS_PORT, qname='information_extraction_results', quiet=False)
             message = queue.receiveMessage().exceptions(False).execute()
             if message:
                 queue.deleteMessage(id=message['id']).execute()

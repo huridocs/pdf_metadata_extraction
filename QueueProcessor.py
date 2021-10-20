@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from rsmq.consumer import RedisSMQConsumer
 from rsmq import RedisSMQ
 
+from config_creator import get_server_port, get_redis_port
 from data.InformationExtractionTask import InformationExtractionTask
 from data.ResultsMessage import ResultsMessage
 from get_logger import get_logger
@@ -26,7 +27,7 @@ class QueueProcessor:
         self.redis_port = 6379
         self.set_redis_parameters_from_yml()
 
-        self.service_url = 'http://localhost:5052'
+        self.service_url = f'http://localhost:{get_server_port()}'
         self.set_server_parameters_from_yml()
 
         self.task_queue = RedisSMQ(host=self.redis_host, port=self.redis_port, qname=f'{self.SERVICE_NAME}_tasks')
@@ -54,7 +55,7 @@ class QueueProcessor:
                 return
 
             service_host = config_dict['service_host'] if 'service_host' in config_dict else 'localhost'
-            service_port = int(config_dict['service_port']) if 'service_port' in config_dict else 5052
+            service_port = int(config_dict['service_port']) if 'service_port' in config_dict else get_server_port()
             self.service_url = f'http://{service_host}:{service_port}'
 
     def process(self, id, message, rc, ts):
@@ -64,9 +65,14 @@ class QueueProcessor:
             self.logger.error(f'Not a valid message: {message}')
             return True
 
+        self.logger.error(f'Valid message: {message}')
         task_calculated, error_message = InformationExtraction.calculate_task(task)
 
+        self.logger.error(f'Error: {error_message}')
+
         if not task_calculated:
+            self.logger.error(f'Task not ok')
+
             model_results_message = ResultsMessage(tenant=task.tenant,
                                                    task=task.task,
                                                    params=task.params,
@@ -75,6 +81,8 @@ class QueueProcessor:
 
             self.logger.error(model_results_message.json())
         else:
+            self.logger.error(f'Task ok')
+
             if task.task == InformationExtraction.SUGGESTIONS_TASK_NAME:
                 data_url = f"{self.service_url}/get_suggestions/{task.tenant}/{task.params.property_name}"
             else:
@@ -87,6 +95,7 @@ class QueueProcessor:
                                                    error_message='',
                                                    data_url=data_url)
 
+        self.logger.error(f'Sending {str(model_results_message.json())}')
         self.results_queue.sendMessage().message(model_results_message.dict()).execute()
 
         return True

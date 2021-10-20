@@ -1,13 +1,11 @@
 import os
 import pathlib
-import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import List
 
 from bs4 import BeautifulSoup
 
-from data.PredictionData import PredictionData
 from data.SegmentationData import SegmentationData
 from information_extraction.Font import Font
 from information_extraction.PdfFeatures import PdfFeatures

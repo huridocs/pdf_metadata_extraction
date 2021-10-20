@@ -4,6 +4,26 @@ import socket
 import yaml
 
 
+def get_server_port():
+    port = 5050
+    if os.path.exists('docker-compose.yml'):
+        with open("docker-compose.yml", 'r') as f:
+            docker_yml = yaml.safe_load(f)
+            services = list(docker_yml['services'].keys())
+            port = docker_yml['services'][services[0]]['ports'][0].split(':')[0]
+    return port
+
+
+def get_redis_port():
+    port = 6379
+    if os.path.exists('docker-compose-service-with-redis.yml'):
+        with open("docker-compose-service-with-redis.yml", 'r') as f:
+            docker_yml = yaml.safe_load(f)
+            services = list(docker_yml['services'].keys())
+            port = docker_yml['services'][services[-1]]['ports'][0].split(':')[0]
+    return port
+
+
 def create_configuration():
     config_dict = dict()
     if os.path.exists('config.yml'):
@@ -15,8 +35,7 @@ def create_configuration():
     config_dict['service_host'] = s.getsockname()[0]
     s.close()
 
-    with open("docker-compose.yml", 'r') as f:
-        config_dict['service_port'] = yaml.safe_load(f)['services']['server_pdf_information_extraction']['ports'][0].split(':')[0]
+    config_dict['service_port'] = get_server_port()
 
     write_configuration(config_dict)
 
@@ -28,4 +47,6 @@ def write_configuration(config_dict):
 
 
 if __name__ == '__main__':
-    create_configuration()
+    # create_configuration()
+    print(get_redis_port())
+    print(get_redis_port())
