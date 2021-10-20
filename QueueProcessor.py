@@ -68,21 +68,13 @@ class QueueProcessor:
         self.logger.error(f'Valid message: {message}')
         task_calculated, error_message = InformationExtraction.calculate_task(task)
 
-        self.logger.error(f'Error: {error_message}')
-
         if not task_calculated:
-            self.logger.error(f'Task not ok')
-
             model_results_message = ResultsMessage(tenant=task.tenant,
                                                    task=task.task,
                                                    params=task.params,
                                                    success=False,
                                                    error_message=error_message)
-
-            self.logger.error(model_results_message.json())
         else:
-            self.logger.error(f'Task ok')
-
             if task.task == InformationExtraction.SUGGESTIONS_TASK_NAME:
                 data_url = f"{self.service_url}/get_suggestions/{task.tenant}/{task.params.property_name}"
             else:
@@ -95,9 +87,7 @@ class QueueProcessor:
                                                    error_message='',
                                                    data_url=data_url)
 
-        self.logger.error(f'Sending {str(model_results_message.json())}')
         self.results_queue.sendMessage().message(model_results_message.dict()).execute()
-
         return True
 
     def subscribe_to_tasks_queue(self):
