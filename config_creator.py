@@ -16,7 +16,7 @@ def create_configuration():
     s.close()
 
     with open("docker-compose.yml", 'r') as f:
-        config_dict['service_port'] = yaml.safe_load(f)['services']['server']['ports'][0].split(':')[0]
+        config_dict['service_port'] = yaml.safe_load(f)['services']['server_pdf_information_extraction']['ports'][0].split(':')[0]
 
     write_configuration(config_dict)
 
