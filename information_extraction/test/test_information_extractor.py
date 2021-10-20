@@ -7,6 +7,7 @@ import mongomock
 import pymongo
 
 from data.InformationExtractionTask import InformationExtractionTask
+from data.Params import Params
 from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
 from information_extraction.InformationExtraction import InformationExtraction
@@ -46,7 +47,7 @@ class TestInformationExtractor(TestCase):
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.CREATE_MODEL_TASK_NAME,
-                                         data={'property_name': property_name})
+                                         params=Params(property_name=property_name))
         task_calculated, error = InformationExtraction.calculate_task(task)
 
         self.assertTrue(task_calculated)
@@ -84,7 +85,7 @@ class TestInformationExtractor(TestCase):
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.CREATE_MODEL_TASK_NAME,
-                                         data={'property_name': property_name})
+                                         params=Params(property_name=property_name))
         task_calculated, error = InformationExtraction.calculate_task(task)
 
         self.assertTrue(task_calculated)
@@ -101,7 +102,7 @@ class TestInformationExtractor(TestCase):
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.CREATE_MODEL_TASK_NAME,
-                                         data={'property_name': property_name})
+                                         params=Params(property_name=property_name))
         task_calculated, error = InformationExtraction.calculate_task(task)
 
         self.assertFalse(task_calculated)
@@ -132,7 +133,7 @@ class TestInformationExtractor(TestCase):
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.CREATE_MODEL_TASK_NAME,
-                                         data={'property_name': property_name})
+                                         params=Params(property_name=property_name))
 
         task_calculated, error = InformationExtraction.calculate_task(task)
 
@@ -164,7 +165,7 @@ class TestInformationExtractor(TestCase):
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.CREATE_MODEL_TASK_NAME,
-                                         data={'property_name': property_name})
+                                         params=Params(property_name=property_name))
         InformationExtraction.calculate_task(task)
 
         self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_to_train'))
@@ -194,7 +195,7 @@ class TestInformationExtractor(TestCase):
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.SUGGESTIONS_TASK_NAME,
-                                         data={'property_name': property_name})
+                                         params=Params(property_name=property_name))
         task_calculated, error = InformationExtraction.calculate_task(task)
 
         documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
@@ -243,7 +244,7 @@ class TestInformationExtractor(TestCase):
 
         InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.CREATE_MODEL_TASK_NAME,
-                                                                       data={'property_name': property_name}))
+                                                                       params=Params(property_name=property_name)))
 
         to_predict_json = {"tenant": tenant,
                            "property_name": property_name,
@@ -258,7 +259,7 @@ class TestInformationExtractor(TestCase):
 
         task_calculated, error = InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.SUGGESTIONS_TASK_NAME,
-                                                                       data={'property_name': property_name}))
+                                                                       params=Params(property_name=property_name)))
 
         documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
         suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
@@ -319,11 +320,11 @@ class TestInformationExtractor(TestCase):
 
         InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.CREATE_MODEL_TASK_NAME,
-                                                                       data={'property_name': property_name}))
+                                                                       params=Params(property_name=property_name)))
 
         task_calculated, error = InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.SUGGESTIONS_TASK_NAME,
-                                                                       data={'property_name': property_name}))
+                                                                       params=Params(property_name=property_name)))
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}
@@ -389,11 +390,11 @@ class TestInformationExtractor(TestCase):
 
         InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.CREATE_MODEL_TASK_NAME,
-                                                                       data={'property_name': property_name}))
+                                                                       params=Params(property_name=property_name)))
 
         task_calculated, error = InformationExtraction.calculate_task(InformationExtractionTask(tenant=tenant,
                                                                        task=InformationExtraction.SUGGESTIONS_TASK_NAME,
-                                                                       data={'property_name': property_name}))
+                                                                       params=Params(property_name=property_name)))
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}
@@ -422,7 +423,7 @@ class TestInformationExtractor(TestCase):
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.SUGGESTIONS_TASK_NAME,
-                                         data={'property_name': property_name})
+                                         params=Params(property_name=property_name))
         task_calculated, error = InformationExtraction.calculate_task(task)
 
         self.assertFalse(task_calculated)
@@ -454,7 +455,7 @@ class TestInformationExtractor(TestCase):
 
         task = InformationExtractionTask(tenant=tenant,
                                          task=InformationExtraction.SUGGESTIONS_TASK_NAME,
-                                         data={'property_name': property_name})
+                                         params=Params(property_name=property_name))
         task_calculated, error = InformationExtraction.calculate_task(task)
 
         self.assertFalse(task_calculated)

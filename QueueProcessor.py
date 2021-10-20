@@ -1,5 +1,9 @@
 import os
+from time import sleep
+
+import redis
 import yaml
+from pydantic import ValidationError
 from rsmq.consumer import RedisSMQConsumer
 from rsmq import RedisSMQ
 
@@ -22,53 +26,87 @@ class QueueProcessor:
         self.redis_port = 6379
         self.set_redis_parameters_from_yml()
 
-        self.task_queue = self.create_queue(f'{self.SERVICE_NAME}_tasks')
-        self.results_queue = self.create_queue(f'{self.SERVICE_NAME}_results')
+        self.service_url = 'http://localhost:5052'
+        self.set_server_parameters_from_yml()
+
+        self.task_queue = RedisSMQ(host=self.redis_host, port=self.redis_port, qname=f'{self.SERVICE_NAME}_tasks')
+        self.results_queue = RedisSMQ(host=self.redis_host, port=self.redis_port, qname=f'{self.SERVICE_NAME}_results')
 
     def set_redis_parameters_from_yml(self):
-        if os.path.exists(f'{self.docker_volume_path}/redis_server.yml'):
-            self.redis_host = yaml.safe_load(open(f'{self.docker_volume_path}/redis_server.yml', 'r'))['host']
-            self.redis_port = int(yaml.safe_load(open(f'{self.docker_volume_path}/redis_server.yml', 'r'))['port'])
+        if not os.path.exists(f'config.yml'):
+            return
 
-    def create_queue(self, queue_name: str):
-        queue = RedisSMQ(host=self.redis_host, port=self.redis_port, qname=queue_name)
-        queue.createQueue().exceptions(False).execute()
-        return queue
+        with open(f'config.yml', 'r') as f:
+            config_dict = yaml.safe_load(f)
+            if not config_dict:
+                return
 
-    def execute_task(self, id, message, rc, ts):
-        task = InformationExtractionTask(**message)
+            self.redis_host = config_dict['redis_host'] if 'redis_host' in config_dict else self.redis_host
+            self.redis_port = int(config_dict['redis_port']) if 'redis_port' in config_dict else self.redis_port
+
+    def set_server_parameters_from_yml(self):
+        if not os.path.exists(f'config.yml'):
+            return
+
+        with open(f'config.yml', 'r') as f:
+            config_dict = yaml.safe_load(f)
+            if not config_dict:
+                return
+
+            service_host = config_dict['service_host'] if 'service_host' in config_dict else 'localhost'
+            service_port = int(config_dict['service_port']) if 'service_port' in config_dict else 5052
+            self.service_url = f'http://{service_host}:{service_port}'
+
+    def process(self, id, message, rc, ts):
+        try:
+            task = InformationExtractionTask(**message)
+        except ValidationError:
+            self.logger.error(f'Not a valid message: {message}')
+            return True
+
         task_calculated, error_message = InformationExtraction.calculate_task(task)
 
         if not task_calculated:
             model_results_message = ResultsMessage(tenant=task.tenant,
                                                    task=task.task,
-                                                   data=task.data,
+                                                   params=task.params,
                                                    success=False,
                                                    error_message=error_message)
 
             self.logger.error(model_results_message.json())
         else:
+            if task.task == InformationExtraction.SUGGESTIONS_TASK_NAME:
+                data_url = f"{self.service_url}/get_suggestions/{task.tenant}/{task.params.property_name}"
+            else:
+                data_url = None
+
             model_results_message = ResultsMessage(tenant=task.tenant,
                                                    task=task.task,
-                                                   data=task.data,
+                                                   params=task.params,
                                                    success=True,
-                                                   error_message='')
+                                                   error_message='',
+                                                   data_url=data_url)
 
         self.results_queue.sendMessage().message(model_results_message.dict()).execute()
 
         return True
 
     def subscribe_to_tasks_queue(self):
-        queue_name = f'{self.SERVICE_NAME}_tasks'
-        extractions_tasks_queue = RedisSMQ(host=self.redis_host, port=self.redis_port,
-                                           qname=queue_name)
-        extractions_tasks_queue.createQueue().exceptions(False).execute()
+        while True:
+            try:
+                self.task_queue.createQueue().exceptions(False).execute()
+                self.results_queue.createQueue().exceptions(False).execute()
 
-        redis_smq_consumer = RedisSMQConsumer(qname=queue_name,
-                                              processor=self.execute_task,
-                                              host=self.redis_host,
-                                              port=self.redis_port)
-        redis_smq_consumer.run()
+                queue_name = f'{self.SERVICE_NAME}_tasks'
+
+                redis_smq_consumer = RedisSMQConsumer(qname=queue_name,
+                                                      processor=self.process,
+                                                      host=self.redis_host,
+                                                      port=self.redis_port)
+                redis_smq_consumer.run()
+            except redis.exceptions.ConnectionError:
+                self.logger.error(f'Error connecting to redis: {self.redis_host}:{self.redis_port}')
+                sleep(20)
 
 
 if __name__ == "__main__":

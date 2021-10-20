@@ -2,10 +2,13 @@ from typing import Dict
 
 from pydantic import BaseModel
 
+from data.Params import Params
+
 
 class ResultsMessage(BaseModel):
     tenant: str
     task: str
-    data: Dict[str, str]
+    params: Params
     success: bool
     error_message: str
+    data_url: str = None

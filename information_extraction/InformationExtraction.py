@@ -199,12 +199,12 @@ class InformationExtraction:
     def calculate_task(information_extraction_task: InformationExtractionTask) -> (bool, str):
         if information_extraction_task.task == InformationExtraction.CREATE_MODEL_TASK_NAME:
             information_extraction = InformationExtraction(information_extraction_task.tenant,
-                                                           information_extraction_task.data['property_name'])
+                                                           information_extraction_task.params.property_name)
             return information_extraction.create_models()
 
         if information_extraction_task.task == InformationExtraction.SUGGESTIONS_TASK_NAME:
             information_extraction = InformationExtraction(information_extraction_task.tenant,
-                                                           information_extraction_task.data['property_name'])
+                                                           information_extraction_task.params.property_name)
             return information_extraction.get_suggestions()
 
         return False, 'Error'

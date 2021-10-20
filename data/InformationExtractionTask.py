@@ -1,9 +1,8 @@
-from typing import Dict
-
 from pydantic import BaseModel
+from data.Params import Params
 
 
 class InformationExtractionTask(BaseModel):
     tenant: str
     task: str
-    data: Dict[str, str]
+    params: Params

@@ -13,5 +13,7 @@ config.py
 docker_volume/*
 !docker_volume/tenant_test
 db/*
+!db/README.md
 graylog.yml
 core
+config.yml
