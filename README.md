@@ -167,7 +167,7 @@ redis queues.
 ## Service configuration
 
 A configuration file could be provided to set the redis server parameters
-and the `extract pdf paragraphs` server hosts and ports. If a configuration is not provided,
+and the `pdf-information-extraction` server hosts and ports. If a configuration is not provided,
 the defaults values uses the redis from the 'docker-compose-service-with-redis.yml' 
 file.
 
