@@ -2,61 +2,31 @@ import os
 from time import sleep
 
 import redis
-import yaml
 from pydantic import ValidationError
 from rsmq.consumer import RedisSMQConsumer
 from rsmq import RedisSMQ
 
-from config_creator import get_server_port, get_redis_port
+from ServiceConfig import ServiceConfig
 from data.InformationExtractionTask import InformationExtractionTask
 from data.ResultsMessage import ResultsMessage
-from get_logger import get_logger
 from information_extraction.InformationExtraction import InformationExtraction
 
 
 class QueueProcessor:
-    SERVICE_NAME = 'information_extraction'
-
     def __init__(self):
         self.docker_volume_path = f'{os.path.dirname(os.path.realpath(__file__))}/docker_volume'
 
-        self.logger = get_logger('redis_tasks')
+        self.config = ServiceConfig()
+        self.logger = self.config.get_logger('redis_tasks')
         self.logger.info('RedisTasksProcessor')
 
-        self.redis_host = 'redis_information_extraction'
-        self.redis_port = 6379
-        self.set_redis_parameters_from_yml()
+        self.task_queue = RedisSMQ(host=self.config.redis_host,
+                                   port=self.config.redis_port,
+                                   qname=self.config.tasks_queue_name)
 
-        self.service_url = f'http://localhost:{get_server_port()}'
-        self.set_server_parameters_from_yml()
-
-        self.task_queue = RedisSMQ(host=self.redis_host, port=self.redis_port, qname=f'{self.SERVICE_NAME}_tasks')
-        self.results_queue = RedisSMQ(host=self.redis_host, port=self.redis_port, qname=f'{self.SERVICE_NAME}_results')
-
-    def set_redis_parameters_from_yml(self):
-        if not os.path.exists(f'config.yml'):
-            return
-
-        with open(f'config.yml', 'r') as f:
-            config_dict = yaml.safe_load(f)
-            if not config_dict:
-                return
-
-            self.redis_host = config_dict['redis_host'] if 'redis_host' in config_dict else self.redis_host
-            self.redis_port = int(config_dict['redis_port']) if 'redis_port' in config_dict else self.redis_port
-
-    def set_server_parameters_from_yml(self):
-        if not os.path.exists(f'config.yml'):
-            return
-
-        with open(f'config.yml', 'r') as f:
-            config_dict = yaml.safe_load(f)
-            if not config_dict:
-                return
-
-            service_host = config_dict['service_host'] if 'service_host' in config_dict else 'localhost'
-            service_port = int(config_dict['service_port']) if 'service_port' in config_dict else get_server_port()
-            self.service_url = f'http://{service_host}:{service_port}'
+        self.results_queue = RedisSMQ(host=self.config.redis_host,
+                                      port=self.config.redis_port,
+                                      qname=self.config.results_queue_name)
 
     def process(self, id, message, rc, ts):
         try:
@@ -76,7 +46,7 @@ class QueueProcessor:
                                                    error_message=error_message)
         else:
             if task.task == InformationExtraction.SUGGESTIONS_TASK_NAME:
-                data_url = f"{self.service_url}/get_suggestions/{task.tenant}/{task.params.property_name}"
+                data_url = f"{self.config.service_url}/get_suggestions/{task.tenant}/{task.params.property_name}"
             else:
                 data_url = None
 
@@ -96,15 +66,13 @@ class QueueProcessor:
                 self.task_queue.createQueue().exceptions(False).execute()
                 self.results_queue.createQueue().exceptions(False).execute()
 
-                queue_name = f'{self.SERVICE_NAME}_tasks'
-
-                redis_smq_consumer = RedisSMQConsumer(qname=queue_name,
+                redis_smq_consumer = RedisSMQConsumer(qname=self.config.tasks_queue_name,
                                                       processor=self.process,
-                                                      host=self.redis_host,
-                                                      port=self.redis_port)
+                                                      host=self.config.redis_host,
+                                                      port=self.config.redis_port)
                 redis_smq_consumer.run()
             except redis.exceptions.ConnectionError:
-                self.logger.error(f'Error connecting to redis: {self.redis_host}:{self.redis_port}')
+                self.logger.error(f'Error connecting to redis: {self.config.redis_host}:{self.config.redis_port}')
                 sleep(20)
 
 

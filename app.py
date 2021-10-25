@@ -4,13 +4,14 @@ import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
+from ServiceConfig import ServiceConfig
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
-from get_logger import get_logger
 from information_extraction.XmlFile import XmlFile
 
-logger = get_logger('service')
+config = ServiceConfig()
+logger = config.get_logger('service')
 
 app = FastAPI()
 

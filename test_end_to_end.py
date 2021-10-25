@@ -7,7 +7,6 @@ from rsmq import RedisSMQ
 
 import requests
 
-from config_creator import get_server_port, get_redis_port
 from data.InformationExtractionTask import InformationExtractionTask
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
@@ -16,10 +15,9 @@ from data.Suggestion import Suggestion
 DOCKER_VOLUME_PATH = f'./docker_volume'
 
 REDIS_HOST = '127.0.0.1'
-REDIS_PORT = get_redis_port()
+REDIS_PORT = '6579'
 
-SERVER_HOST = 'localhost'
-SERVER_PORT = get_server_port()
+SERVER_URL = 'http://localhost:5052'
 
 
 class TestEndToEnd(TestCase):
@@ -31,13 +29,12 @@ class TestEndToEnd(TestCase):
         subprocess.run('docker-compose -f docker-compose-service-with-redis.yml down', shell=True)
 
     def test_end_to_end(self):
-        server_url = f'http://{SERVER_HOST}:{SERVER_PORT}'
         tenant = "end_to_end_test"
         property_name = "property_name"
 
         with open(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml', 'rb') as stream:
             files = {'file': stream}
-            requests.post(f"{server_url}/xml_to_train/{tenant}/{property_name}", files=files)
+            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files)
 
         labeled_data_json = {"property_name": property_name,
                              "tenant": tenant,
@@ -51,7 +48,7 @@ class TestEndToEnd(TestCase):
                                                        "page_number": 1}]
                              }
 
-        requests.post(f"{server_url}/labeled_data", json=labeled_data_json)
+        requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
         queue = RedisSMQ(host=REDIS_HOST, port=REDIS_PORT, qname='information_extraction_tasks', quiet=False)
         queue.sendMessage().message('{"message_to_avoid":"to_be_written_in_log_file"}').execute()
@@ -67,7 +64,7 @@ class TestEndToEnd(TestCase):
 
         with open(f'{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_predict/test.xml', 'rb') as stream:
             files = {'file': stream}
-            requests.post(f"{server_url}/xml_to_predict/{tenant}/{property_name}", files=files)
+            requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{property_name}", files=files)
 
         predict_data_json = {"tenant": tenant,
                              "property_name": property_name,
@@ -77,7 +74,7 @@ class TestEndToEnd(TestCase):
                              "xml_segments_boxes": [],
                              }
 
-        requests.post(f"{server_url}/prediction_data", json=predict_data_json)
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
         task = InformationExtractionTask(tenant=tenant, task='suggestions', params=Params(property_name=property_name))
         queue.sendMessage(delay=0).message(str(task.json())).execute()
@@ -88,7 +85,7 @@ class TestEndToEnd(TestCase):
                                          params=Params(property_name=property_name),
                                          success=True,
                                          error_message='',
-                                         data_url=f"{server_url}/get_suggestions/{tenant}/{property_name}")
+                                         data_url=f"{SERVER_URL}/get_suggestions/{tenant}/{property_name}")
 
         self.assertEqual(results_message, expected_result)
 
