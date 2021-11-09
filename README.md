@@ -4,6 +4,7 @@
 ---
 
 ## Contents
+
 - [Dependencies](#dependencies)
 - [Requirements](#requirements)
 - [Docker containers](#docker-containers)
@@ -29,9 +30,8 @@
 
 ## Docker containers
 
-A redis server is needed to use the service. For that matter, it can be used the 
-docker-compose file `docker-compose-service-with-redis.yml` that has a built-in 
-redis server.
+A redis server is needed to use the service. For that matter, it can be used the docker-compose
+file `docker-compose-service-with-redis.yml` that has a built-in redis server.
 
 Containers with `docker-compose up`
 
@@ -41,26 +41,19 @@ Containers with `docker-compose -f docker-compose-service-with-redis.yml up`
 
 ![Alt logo](readme_pictures/docker_compose_redis.png?raw=true "docker-compose -f docker-compose-service-with-redis.yml up")
 
-
 ## How to use it
 
 1. Start the service with docker compose
 
-    
     docker-compose up
-
 
 2. Post xml files
 
-
     curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5052/xml_file/tenant_name/property_name
-
-
 
 ![Alt logo](readme_pictures/send_files.png?raw=true "Post xml files")
 
 3. Post labeled data
-
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
                              "property_name": "property_name",
@@ -75,9 +68,7 @@ Containers with `docker-compose -f docker-compose-service-with-redis.yml up`
 
 ![Alt logo](readme_pictures/send_json.png?raw=true "Post labeled data")
 
-
 5. Post data to predict
-
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
                              "property_name": "property_name",
@@ -91,8 +82,8 @@ Containers with `docker-compose -f docker-compose-service-with-redis.yml up`
 
 6. Create model and calculate suggestions
 
-To create the model or calculate the suggestions, a message to redis should be sent. 
-The name for the tasks queue is "information_extraction_tasks"
+To create the model or calculate the suggestions, a message to redis should be sent. The name for the tasks queue is "
+information_extraction_tasks"
 
     queue = RedisSMQ(host='127.0.0.1', port='6579', qname='information_extraction_tasks', quiet=False)
     # Create model
@@ -127,7 +118,6 @@ There is a redis queue where it is possible to get notified when the different t
 Get suggestions
 
     curl -X GET  localhost:5052/get_suggestions/tenant_name/property_name
-    curl -X GET  localhost:5052/get_suggestions/tenant_name/property_name
 
 or in python
 
@@ -135,16 +125,36 @@ or in python
 
 ![Alt logo](readme_pictures/get_results.png?raw=true "Get results")
 
+The suggestions have the following format:
+
+```
+        [{
+        "tenant": "tenant", 
+        "property_name": "property_name", 
+        "xml_file_name": "xml_file_name_1", 
+        "text": "suggestion_text_1", 
+        "segment_text": "segment_text_1"
+        }, 
+        {
+        "tenant": "tenant", 
+        "property_name": "property_name", 
+        "xml_file_name": "xml_file_name_2", 
+        "text": "suggestion_text_2", 
+        "segment_text": "segment_text_2"
+        }, ... ]
+
+```
 
 8. Stop the service
 
-    docker-compose down
+   docker-compose down
 
 ## HTTP server
 
 ![Alt logo](readme_pictures/http_server.png?raw=true "HTTP server")
 
-The container `HTTP server` is coded using Python 3.9 and uses the [FastApi](https://fastapi.tiangolo.com/) web framework.
+The container `HTTP server` is coded using Python 3.9 and uses the [FastApi](https://fastapi.tiangolo.com/) web
+framework.
 
 If the service is running, the end point definitions can be founded in the following url:
 
@@ -152,24 +162,23 @@ If the service is running, the end point definitions can be founded in the follo
 
 The end points code can be founded inside the file `app.py`.
 
-The errors are reported to the file `docker_volume/service.log`, if the configuration is not changed (see [Get service logs](#get-service-logs))
-
+The errors are reported to the file `docker_volume/service.log`, if the configuration is not changed (
+see [Get service logs](#get-service-logs))
 
 ## Queue processor
 
 ![Alt logo](readme_pictures/queue_processor.png?raw=true "Queue processor")
 
-The container `Queue processor` is coded using Python 3.9, and it is on charge of the communication with redis. 
+The container `Queue processor` is coded using Python 3.9, and it is on charge of the communication with redis.
 
-The code can be founded in the file `QueueProcessor.py` and it uses the library `RedisSMQ` to interact with the 
-redis queues.
+The code can be founded in the file `QueueProcessor.py` and it uses the library `RedisSMQ` to interact with the redis
+queues.
 
 ## Service configuration
 
-A configuration file could be provided to set the redis server parameters
-and the `pdf-information-extraction` server hosts and ports. If a configuration is not provided,
-the defaults values uses the redis from the 'docker-compose-service-with-redis.yml' 
-file.
+A configuration file could be provided to set the redis server parameters and the `pdf-information-extraction` server
+hosts and ports. If a configuration is not provided, the defaults values uses the redis from the '
+docker-compose-service-with-redis.yml' file.
 
 The configuration could be manually created, or it can be used the following script:
 
@@ -208,15 +217,14 @@ It works with Python 3.9 [install] (https://runnable.com/docker/getting-started/
 
 ## Troubleshooting
 
-Issue: Permission error starting the docker containers
-Cause: Due to docker creating files with the root user some permission errors can occur starting the docker containers.
-Solution: There are two solutions. 
+Issue: Permission error starting the docker containers Cause: Due to docker creating files with the root user some
+permission errors can occur starting the docker containers. Solution: There are two solutions.
 
 First solution is running docker with sudo
 
     sudo docker-compose up 
 
-Second solution is setting up a development environment and running 
+Second solution is setting up a development environment and running
 
     sudo python clean_files.py
     docker-compose up 
