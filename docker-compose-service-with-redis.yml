@@ -27,7 +27,7 @@ services:
     ports:
       - '28017-28019:27017-27019'
   redis_information_extraction:
-    image: "redis:alpine"
+    image: "redis:5.0.14"
     command: redis-server
     ports:
       - "6579:6379"
