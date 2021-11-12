@@ -25,7 +25,7 @@ SERVER_URL = 'http://localhost:5052'
 class TestEndToEnd(TestCase):
     def setUp(self):
         subprocess.run('docker-compose -f docker-compose-service-with-redis.yml up -d --build', shell=True)
-        sleep(5)
+        sleep(15)
 
     def tearDown(self):
         subprocess.run('docker-compose -f docker-compose-service-with-redis.yml down', shell=True)
