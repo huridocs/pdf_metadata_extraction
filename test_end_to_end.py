@@ -1,8 +1,10 @@
 import json
+import os
 import subprocess
 from time import sleep
 from unittest import TestCase
 
+import docker
 from rsmq import RedisSMQ
 
 import requests
@@ -29,6 +31,13 @@ class TestEndToEnd(TestCase):
         subprocess.run('docker-compose -f docker-compose-service-with-redis.yml down', shell=True)
 
     def test_end_to_end(self):
+        docker_client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+        print(docker_client.containers.list())
+
+        if os.path.exists('docker_volume/redis_tasks.log'):
+            with open('docker_volume/redis_tasks.log', 'r') as f:
+                print('\n'.join([x for x in f.readlines()]))
+
         tenant = "end_to_end_test"
         property_name = "property_name"
 
