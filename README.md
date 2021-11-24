@@ -47,9 +47,13 @@ Containers with `docker-compose -f docker-compose-service-with-redis.yml up`
 
     docker-compose up
 
-2. Post xml files
+2. Post xml files to train
 
-    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5052/xml_file/tenant_name/property_name
+    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5052/xml_to_train/tenant_name/property_name
+
+3. Post xml files to get suggestions
+
+    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5052/xml_to_predict/tenant_name/property_name
 
 ![Alt logo](readme_pictures/send_files.png?raw=true "Post xml files")
 
@@ -228,3 +232,22 @@ Second solution is setting up a development environment and running
 
     sudo python clean_files.py
     docker-compose up 
+
+Issue: Configuration changes but not reflected in service
+Cause: Docker should be re-built in order to get the configuration
+Solution: 
+
+    sudo docker-compose up --build
+
+
+Issue: Redis in localhost not used by the service
+Cause: Using linux, it only can be used the redis from other docker
+Solution: 
+
+    rm -rf config.yml
+    sudo docker-compose -f docker-compose-service-with-redis.yml up --build
+
+And using the redis in localhost:6479
+
+Issue: Error downloading torch 
+Solution: Change RAM memory used by the docker containers to 3Gb or 4Gb 
