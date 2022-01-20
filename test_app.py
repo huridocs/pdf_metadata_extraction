@@ -160,24 +160,28 @@ class TestApp(TestCase):
                       'xml_file_name': "one_file_name",
                       'text': "one_text_predicted",
                       'segment_text': "one_segment_text",
+                      'page_number' : 1
                       },
                      {'tenant': tenant,
                       'property_name': property_name,
                       'xml_file_name': "one_file_name",
                       'text': "one_text_predicted",
                       'segment_text': "one_segment_text",
+                      'page_number': 2
                       },
                      {'tenant': tenant,
                       'property_name': property_name,
                       'xml_file_name': "other_file_name",
                       'text': "other_text_predicted",
                       'segment_text': "other_segment_text",
+                      'page_number': 3
                       },
                      {'tenant': tenant,
                       'property_name': 'wrong extraction name',
                       'xml_file_name': "other_file_name",
                       'text': "other_text_predicted",
                       'segment_text': "other_segment_text",
+                      'page_number': 4
                       }]
 
         mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
@@ -194,10 +198,12 @@ class TestApp(TestCase):
         self.assertEqual("one_file_name", suggestions[0]['xml_file_name'])
         self.assertEqual("one_segment_text", suggestions[0]['segment_text'])
         self.assertEqual("one_text_predicted", suggestions[0]['text'])
+        self.assertEqual(2, suggestions[0]['page_number'])
 
         self.assertEqual("other_file_name", suggestions[1]['xml_file_name'])
         self.assertEqual("other_segment_text", suggestions[1]['segment_text'])
         self.assertEqual("other_text_predicted", suggestions[1]['text'])
+        self.assertEqual(3, suggestions[1]['page_number'])
 
     @mongomock.patch(servers=['mongodb://mongo_information_extraction:27017'])
     def test_should_remove_suggestions_when_returned(self):
@@ -211,12 +217,14 @@ class TestApp(TestCase):
                       'xml_file_name': "one_file_name",
                       'text': "one_text_predicted",
                       'segment_text': "one_segment_text",
+                      'page_number':1
                       },
                      {'tenant': tenant + '2',
                       'property_name': property_name,
                       'xml_file_name': "one_file_name",
                       'text': "one_text_predicted",
                       'segment_text': "one_segment_text",
+                      'page_number': 2
                       }
                      ]
 

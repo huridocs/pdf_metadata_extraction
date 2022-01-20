@@ -209,6 +209,7 @@ class TestInformationExtractor(TestCase):
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual("Original: English", suggestion.segment_text)
         self.assertEqual("Original: English", suggestion.text)
+        self.assertEqual(1, suggestion.page_number)
 
         self.assertIsNone(mongo_client.pdf_information_extraction.predictiondata.find_one())
 
@@ -271,6 +272,7 @@ class TestInformationExtractor(TestCase):
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertTrue('In accordance with paragraph' in suggestion.segment_text)
         self.assertTrue('every four years' in suggestion.text)
+        self.assertEqual(2, suggestion.page_number)
         self.assertTrue(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict'))
         self.assertFalse(os.path.exists(f'{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml'))
 

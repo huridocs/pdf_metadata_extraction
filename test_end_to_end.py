@@ -110,6 +110,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual('test.xml', suggestion.xml_file_name)
         self.assertEqual('United Nations', suggestion.text)
         self.assertEqual('United Nations', suggestion.segment_text)
+        self.assertEqual(1, suggestion.page_number)
 
         task = InformationExtractionTask(tenant=tenant, task='create_model', params=Params(property_name=property_name))
         queue.sendMessage(delay=0).message(str(task.json())).execute()

@@ -168,20 +168,22 @@ class InformationExtraction:
                               property_name=self.property_name,
                               xml_file_name=xml_file_name,
                               text='',
-                              segment_text='')
+                              segment_text='',
+                              page_number=1)
 
         x, y = self.get_training_data()
         predictions = self.model.predict(x)
-        segment_texts_list = []
+        predicted_segments : List[Segment] = list()
         for index, segment in enumerate(self.segments):
             if predictions[index] > 0.5:
-                segment_texts_list.append(segment.text_content)
-        segment_text = ' '.join(segment_texts_list)
+                predicted_segments.append(segment)
+        segment_text = ' '.join([x.text_content for x in predicted_segments])
         return Suggestion(tenant=self.tenant,
                           property_name=self.property_name,
                           xml_file_name=xml_file_name,
                           text=segment_text,
-                          segment_text=segment_text)
+                          segment_text=segment_text,
+                          page_number=predicted_segments[0].page_number if len(predicted_segments) else 1)
 
     def get_training_data(self):
         X = None
@@ -208,4 +210,3 @@ class InformationExtraction:
             return information_extraction.get_suggestions()
 
         return False, 'Error'
-
