@@ -12,8 +12,9 @@ config.py
 *_config.py
 docker_volume/*
 !docker_volume/tenant_test
-db/*
-!db/README.md
+db
 graylog.yml
 core
 config.yml
+**/*.pytest_cache
+src/.pytest_cache

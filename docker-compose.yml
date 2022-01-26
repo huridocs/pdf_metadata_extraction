@@ -1,26 +1,41 @@
 version: '3.2'
 services:
-  server_pdf_information_extraction:
+  api:
+    init: true
+    network_mode: host
+    restart: unless-stopped
+    user: "${USER_ID}:${GROUP_ID}"
     build:
       context: .
-      dockerfile: Dockerfile_server
-    ports:
-      - "127.0.0.1:5052:5050"
+      dockerfile: Dockerfile
+      target: api
     volumes:
       - ./docker_volume:/app/docker_volume
     depends_on:
       - mongo_information_extraction
   queue_processor_information_extraction:
+    init: true
+    network_mode: host
+    restart: unless-stopped
+    user: "${USER_ID}:${GROUP_ID}"
     build:
       context: .
-      dockerfile: Dockerfile_queue_processor
+      dockerfile: Dockerfile
+      target: queue_processor_information_extraction
     volumes:
       - ./docker_volume:/app/docker_volume
     depends_on:
       - mongo_information_extraction
   mongo_information_extraction:
+    network_mode: host
+    restart: unless-stopped
     image: "mongo:4.0.1"
-    volumes:
-      - ./db:/data/db
-    ports:
-      - '127.0.0.1:28017-28019:27017-27019'
+  redis_information_extraction:
+    network_mode: host
+    restart: unless-stopped
+    image: "redis:5.0.14"
+    command: redis-server
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    profiles:
+      - testing
