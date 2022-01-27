@@ -33,7 +33,7 @@ class ServiceConfig:
         self.service_port = self.get_parameter_from_yml("service_port", 5052)
 
         self.mongo_host = self.get_parameter_from_yml("mongo_host", "127.0.0.1")
-        self.mongo_port = self.get_parameter_from_yml("mongo_port", 27017)
+        self.mongo_port = self.get_parameter_from_yml("mongo_port", 29017)
 
         self.service_url = f"http://{self.service_host}:{self.service_port}"
 

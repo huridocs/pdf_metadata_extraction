@@ -62,12 +62,12 @@ class TestApp(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data(self):
         tenant = "endpoint_test"
         property_name = "property_name"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
@@ -108,12 +108,12 @@ class TestApp(TestCase):
             labeled_data_document["label_segments_boxes"],
         )
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data_different_values(self):
         tenant = "different_endpoint_test"
         property_name = "different_property_name"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
@@ -146,12 +146,12 @@ class TestApp(TestCase):
         self.assertEqual([], labeled_data_document["xml_segments_boxes"])
         self.assertEqual([], labeled_data_document["label_segments_boxes"])
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_prediction_data(self):
         tenant = "endpoint_test"
         property_name = "property_name"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
@@ -181,12 +181,12 @@ class TestApp(TestCase):
             prediction_data_document["xml_segments_boxes"],
         )
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions(self):
         tenant = "example_tenant_name"
         property_name = "prediction_property_name"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = [
             {
@@ -244,12 +244,12 @@ class TestApp(TestCase):
         self.assertEqual("other_text_predicted", suggestions[1]["text"])
         self.assertEqual(3, suggestions[1]["page_number"])
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_should_remove_suggestions_when_returned(self):
         tenant = "example_tenant_name"
         property_name = "prediction_property_name"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = [
             {
@@ -282,7 +282,7 @@ class TestApp(TestCase):
         self.assertEqual(tenant + "2", suggestion.tenant)
         self.assertEqual(property_name, suggestion.property_name)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_when_no_suggestions(self):
         response = client.get("/get_suggestions/tenant/property")
         suggestions = json.loads(response.json())

@@ -71,7 +71,7 @@ async def to_predict_xml_file(tenant, property_name, file: UploadFile = File(...
 @app.post("/labeled_data")
 async def labeled_data_post(labeled_data: LabeledData):
     try:
-        client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         pdf_information_extraction_db = client["pdf_information_extraction"]
         pdf_information_extraction_db.labeleddata.insert_one(labeled_data.dict())
         return "labeled data saved"
@@ -85,7 +85,7 @@ async def labeled_data_post(labeled_data: LabeledData):
 @app.post("/prediction_data")
 async def prediction_data_post(prediction_data: PredictionData):
     try:
-        client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         pdf_information_extraction_db = client["pdf_information_extraction"]
         pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
         return "prediction data saved"
@@ -99,7 +99,7 @@ async def prediction_data_post(prediction_data: PredictionData):
 @app.get("/get_suggestions/{tenant}/{property_name}")
 async def get_suggestions(tenant: str, property_name: str):
     try:
-        client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         pdf_information_extraction_db = client["pdf_information_extraction"]
         suggestions_filter = {"tenant": tenant, "property_name": property_name}
         suggestions_list: List[Dict[str, str]] = list()

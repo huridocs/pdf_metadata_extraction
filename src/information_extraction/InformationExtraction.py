@@ -49,7 +49,7 @@ class InformationExtraction:
             self.model = lgb.Booster(model_file=self.model_path)
 
     def set_segments_for_training(self):
-        client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         pdf_information_extraction_db = client["pdf_information_extraction"]
 
         self.segments = []
@@ -126,7 +126,7 @@ class InformationExtraction:
         parameters["num_leaves"] = 35
         parameters["feature_fraction"] = 1
         parameters["bagging_fraction"] = 1
-        parameters["bagging_freq"] = 5
+        parameters["bagging_freq"] = 0
         parameters["objective"] = "binary"
         parameters["learning_rate"] = 0.05
         parameters["metric"] = "binary_logloss"

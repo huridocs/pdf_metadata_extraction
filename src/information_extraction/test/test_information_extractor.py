@@ -23,14 +23,14 @@ class TestInformationExtractor(TestCase):
     )
     model_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/segment_predictor_model/model.model"
 
-    @mongomock.patch(servers=[f"mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=[f"mongodb://127.0.0.1:29017"])
     def test_create_model(self):
         tenant = "segment_test"
         property_name = "property_name"
 
         base_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
@@ -70,7 +70,7 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}")
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_different_tenant(self):
         tenant = "different_segment_test"
         property_name = "different_property_name"
@@ -79,7 +79,7 @@ class TestInformationExtractor(TestCase):
 
         base_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
@@ -117,7 +117,7 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}")
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_error_when_no_files(self):
         tenant = "error_segment_test"
         property_name = "error_property_name"
@@ -132,14 +132,14 @@ class TestInformationExtractor(TestCase):
         self.assertFalse(task_calculated)
         self.assertEqual(error, "No labeled data to create model")
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_should_remove_previous_models(self):
         tenant = "segment_test"
         property_name = "property_name"
 
         base_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         json_data = {
             "tenant": tenant,
             "property_name": property_name,
@@ -177,12 +177,12 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}")
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_should_do_nothing_when_no_xml(self):
         tenant = "segment_test"
         property_name = "property_name"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         json_data = {
             "tenant": tenant,
             "property_name": property_name,
@@ -217,9 +217,9 @@ class TestInformationExtractor(TestCase):
             )
         )
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_calculate_suggestions(self):
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "segment_test"
         property_name = "property_name"
@@ -287,9 +287,9 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_page_2(self):
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "segment_test"
         property_name = "property_name"
@@ -378,9 +378,9 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_semantic_suggestions(self):
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "tenant_to_be_removed"
         property_name = "property_name"
@@ -467,9 +467,9 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_semantic_suggestions_numeric(self):
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "tenant_to_be_removed"
         property_name = "property_name"
@@ -548,9 +548,9 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_semantic_suggestions_spanish(self):
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "tenant_to_be_removed"
         property_name = "spa"
@@ -645,7 +645,7 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_no_files_error(self):
         tenant = "error_segment_test"
         property_name = "error_property_name"
@@ -667,9 +667,9 @@ class TestInformationExtractor(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}")
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:27017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_no_model_error(self):
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "error_segment_test"
         property_name = "error_property_name"
