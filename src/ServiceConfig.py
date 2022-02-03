@@ -35,6 +35,8 @@ class ServiceConfig:
         self.mongo_host = self.get_parameter_from_yml("mongo_host", "127.0.0.1")
         self.mongo_port = self.get_parameter_from_yml("mongo_port", 29017)
 
+        self.graylog_ip = self.get_parameter_from_yml("graylog_ip", "")
+
         self.service_url = f"http://{self.service_host}:{self.service_port}"
 
     def get_parameter_from_yml(self, parameter_name: str, default: any):
@@ -58,18 +60,17 @@ class ServiceConfig:
         logger = logging.getLogger("graylog")
         logger.setLevel(logging.INFO)
 
-        if (
-            "graylog_ip" not in self.config_from_yml
-            or not self.config_from_yml["graylog_ip"]
-        ):
-            logger.addHandler(
-                logging.FileHandler(f"{self.docker_volume_path}/{logger_name}.log")
+        if self.graylog_ip:
+            handler = graypy.GELFUDPHandler(
+                self.config_from_yml["graylog_ip"],
+                12201,
+                localname=SERVICE_NAME,
             )
-            return logger
+        else:
+            handler = logging.FileHandler(
+                f"{self.docker_volume_path}/{logger_name}.log"
+            )
 
-        handler = graypy.GELFUDPHandler(
-            self.config_from_yml["graylog_ip"], 12201, localname="segmentation_server"
-        )
         logger.addHandler(handler)
         return logger
 
