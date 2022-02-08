@@ -22,7 +22,7 @@ class ServiceConfig:
         self.tasks_queue_name = SERVICE_NAME + "_tasks"
         self.results_queue_name = SERVICE_NAME + "_results"
 
-        self.config_path = "config.yml"
+        self.config_path = "src/config.yml"
         self.config_from_yml: Dict[str, any] = dict()
         self.read_configuration_from_yml()
 
@@ -92,7 +92,7 @@ class ServiceConfig:
         if len(config_to_write) == 0:
             return
 
-        with open("config.yml", "w") as config_file:
+        with open(self.config_path, "w") as config_file:
             config_file.write(
                 "\n".join([f"{k}: {v}" for k, v in config_to_write.items()])
             )
