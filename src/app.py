@@ -4,6 +4,8 @@ import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
+from rsmq import RedisSMQ
+
 from ServiceConfig import ServiceConfig
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
@@ -64,6 +66,24 @@ async def to_predict_xml_file(tenant, property_name, file: UploadFile = File(...
     except Exception:
         logger.error(f"Error adding task {filename}", exc_info=1)
         raise HTTPException(status_code=422, detail=f"Error adding task {filename}")
+
+
+@app.get("/delete_queues")
+async def delete_queues():
+    try:
+        results_queue = RedisSMQ(
+            host=config.redis_host,
+            port=config.redis_port,
+            qname=config.results_queue_name,
+        )
+
+        results_queue.deleteQueue().execute()
+        results_queue.createQueue().execute()
+
+        return "deleted"
+    except Exception:
+        logger.error("Error", exc_info=1)
+        raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
 
 
 @app.post("/labeled_data")

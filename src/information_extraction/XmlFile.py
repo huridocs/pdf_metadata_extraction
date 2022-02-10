@@ -56,7 +56,7 @@ class XmlFile:
                 segment_tags.append(SegmentTag(text_line, page_width, page_height, page_number, fonts))
 
         pdf_features = PdfFeatures(segment_tags) if segment_tags else []
-        one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in segment_tags]
+        one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in segment_tags if segment_tag.text]
 
         return one_tag_segments
 
