@@ -10,16 +10,8 @@ class Font:
         self.size: int = int(float(xml_style["FONTSIZE"]))
         self.family: str = xml_style["FONTFAMILY"].split(",")[0]
         self.color: str = xml_style["FONTCOLOR"]
-        self.bold: bool = (
-            "bold" in xml_style["FONTSTYLE"]
-            if "FONTSTYLE" in xml_style.attrs
-            else False
-        )
-        self.italics: bool = (
-            "italics" in xml_style["FONTSTYLE"]
-            if "FONTSTYLE" in xml_style.attrs
-            else False
-        )
+        self.bold: bool = "bold" in xml_style["FONTSTYLE"] if "FONTSTYLE" in xml_style.attrs else False
+        self.italics: bool = "italics" in xml_style["FONTSTYLE"] if "FONTSTYLE" in xml_style.attrs else False
 
     @staticmethod
     def from_page_xml_tag(xml_tags: List[Tag]):

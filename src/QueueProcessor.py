@@ -80,9 +80,7 @@ class QueueProcessor:
                 )
                 redis_smq_consumer.run()
             except redis.exceptions.ConnectionError:
-                self.logger.error(
-                    f"Error connecting to redis: {self.config.redis_host}:{self.config.redis_port}"
-                )
+                self.logger.error(f"Error connecting to redis: {self.config.redis_host}:{self.config.redis_port}")
                 sleep(20)
 
 

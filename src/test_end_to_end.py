@@ -46,9 +46,7 @@ class TestEndToEnd(TestCase):
             "rb",
         ) as stream:
             files = {"file": stream}
-            requests.post(
-                f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files
-            )
+            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files)
 
         labeled_data_json = {
             "property_name": property_name,
@@ -59,9 +57,7 @@ class TestEndToEnd(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [
-                {"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}
-            ],
+            "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}],
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
@@ -72,9 +68,7 @@ class TestEndToEnd(TestCase):
             qname="information_extraction_tasks",
             quiet=False,
         )
-        queue.sendMessage().message(
-            '{"message_to_avoid":"to_be_written_in_log_file"}'
-        ).execute()
+        queue.sendMessage().message('{"message_to_avoid":"to_be_written_in_log_file"}').execute()
 
         task = InformationExtractionTask(
             tenant=tenant,
@@ -100,9 +94,7 @@ class TestEndToEnd(TestCase):
             "rb",
         ) as stream:
             files = {"file": stream}
-            requests.post(
-                f"{SERVER_URL}/xml_to_predict/{tenant}/{property_name}", files=files
-            )
+            requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{property_name}", files=files)
 
         predict_data_json = {
             "tenant": tenant,

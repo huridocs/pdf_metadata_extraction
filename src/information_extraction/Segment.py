@@ -105,14 +105,8 @@ class Segment(object):
             self.left = min(self.left, tag.left)
             self.right = max(self.right, tag.left + tag.width)
             self.bottom = max(self.bottom, tag.top + tag.height)
-            self.bold_tag_number = (
-                self.bold_tag_number + 1 if tag.font.bold else self.bold_tag_number
-            )
-            self.italics_tag_number = (
-                self.italics_tag_number + 1
-                if tag.font.italics
-                else self.italics_tag_number
-            )
+            self.bold_tag_number = self.bold_tag_number + 1 if tag.font.bold else self.bold_tag_number
+            self.italics_tag_number = self.italics_tag_number + 1 if tag.font.italics else self.italics_tag_number
             font_sizes.append(tag.font.size)
             if self.tag_after_last_tag(tag):
                 self.last_tag = tag
@@ -124,18 +118,12 @@ class Segment(object):
 
         self.text_content = " ".join(words)
         self.text_len = len(self.text_content)
-        self.dots_percentage = (
-            self.text_content.count(".") / self.text_len if self.text_len > 0 else 0
-        )
+        self.dots_percentage = self.text_content.count(".") / self.text_len if self.text_len > 0 else 0
         self.height = self.bottom - self.top
         self.width = self.right - self.left
         self.font_size = np.mean(font_sizes)
-        self.numbers_quantity = len(
-            list(filter(lambda x: x.isdigit(), self.text_content))
-        )
-        self.numbers_percentage = (
-            self.numbers_quantity / self.text_len if self.text_len > 0 else 0
-        )
+        self.numbers_quantity = len(list(filter(lambda x: x.isdigit(), self.text_content)))
+        self.numbers_percentage = self.numbers_quantity / self.text_len if self.text_len > 0 else 0
         self.bold = self.bold_tag_number / len(self.segment_tags)
         self.italics = self.italics_tag_number / len(self.segment_tags)
         self.starts_upper = self.text_content[0].isupper()
@@ -180,9 +168,7 @@ class Segment(object):
             ]
         )
 
-    def intersects_with_box(
-        self, page_width: float, page_height: float, segment_box: SegmentBox
-    ):
+    def intersects_with_box(self, page_width: float, page_height: float, segment_box: SegmentBox):
         if segment_box.page_number != self.page_number:
             return False
 
@@ -200,9 +186,7 @@ class Segment(object):
 
         return True
 
-    def intersects_with_boxes(
-        self, page_width: float, page_height: float, segment_boxes: List[SegmentBox]
-    ):
+    def intersects_with_boxes(self, page_width: float, page_height: float, segment_boxes: List[SegmentBox]):
         for index, segment_box in enumerate(segment_boxes):
             if self.intersects_with_box(page_width, page_height, segment_box):
                 return index
@@ -221,9 +205,7 @@ class Segment(object):
 
         return False
 
-    def set_ml_label(
-        self, page_width: float, page_height: float, segment_boxes: List[SegmentBox]
-    ):
+    def set_ml_label(self, page_width: float, page_height: float, segment_boxes: List[SegmentBox]):
         for box in segment_boxes:
             if self.intersects_with_box(page_width, page_height, box):
                 self.ml_class_label = 1

@@ -31,6 +31,4 @@ class SegmentTag:
         if len(tag_xml.find_all("String")) > 0:
             font_id = tag_xml.find_all("String")[0]["STYLEREFS"]
             self.font = list(filter(lambda font: font.id == font_id, fonts))[0]
-            self.text = " ".join(
-                [string_tag["CONTENT"] for string_tag in tag_xml.find_all("String")]
-            )
+            self.text = " ".join([string_tag["CONTENT"] for string_tag in tag_xml.find_all("String")])

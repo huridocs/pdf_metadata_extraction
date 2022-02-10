@@ -30,17 +30,13 @@ class InformationExtraction:
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-        self.semantic_information_extraction = SemanticInformationExtraction(
-            tenant, property_name
-        )
+        self.semantic_information_extraction = SemanticInformationExtraction(tenant, property_name)
         service_config = ServiceConfig()
         self.segments: List[Segment] = list()
         self.model_path = f"{service_config.docker_volume_path}/{tenant}/{property_name}/segment_predictor_model/model.model"
         self.model = None
         self.load_model()
-        client = pymongo.MongoClient(
-            f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}"
-        )
+        client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
 
@@ -53,9 +49,7 @@ class InformationExtraction:
         pdf_information_extraction_db = client["pdf_information_extraction"]
 
         self.segments = []
-        for document in pdf_information_extraction_db.labeleddata.find(
-            self.mongo_filter, no_cursor_timeout=True
-        ):
+        for document in pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             xml_file = XmlFile(
@@ -75,9 +69,7 @@ class InformationExtraction:
         self.run_light_gbm()
         self.create_semantic_model()
         shutil.rmtree(
-            XmlFile.get_xml_folder_path(
-                tenant=self.tenant, property_name=self.property_name, to_train=True
-            ),
+            XmlFile.get_xml_folder_path(tenant=self.tenant, property_name=self.property_name, to_train=True),
             ignore_errors=True,
         )
         self.pdf_information_extraction_db.labeleddata.delete_many(self.mongo_filter)
@@ -86,9 +78,7 @@ class InformationExtraction:
     def create_semantic_model(self):
         self.semantic_information_extraction.remove_models()
         semantic_extraction_data: List[SemanticExtractionData] = list()
-        for document in self.pdf_information_extraction_db.labeleddata.find(
-            self.mongo_filter, no_cursor_timeout=True
-        ):
+        for document in self.pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
             xml_file = XmlFile(
                 tenant=self.tenant,
@@ -97,12 +87,8 @@ class InformationExtraction:
                 xml_file_name=labeled_data.xml_file_name,
             )
 
-            self.segments = xml_file.get_segments(
-                SegmentationData.from_labeled_data(labeled_data)
-            )
-            suggestion = self.get_suggested_segment(
-                xml_file_name=labeled_data.xml_file_name
-            )
+            self.segments = xml_file.get_segments(SegmentationData.from_labeled_data(labeled_data))
+            suggestion = self.get_suggested_segment(xml_file_name=labeled_data.xml_file_name)
             semantic_extraction_data.append(
                 SemanticExtractionData(
                     text=labeled_data.label_text,
@@ -156,16 +142,10 @@ class InformationExtraction:
         if not suggestions:
             return False, "No data to calculate suggestions"
 
-        self.pdf_information_extraction_db.suggestions.insert_many(
-            [x.dict() for x in suggestions]
-        )
-        xml_folder_path = XmlFile.get_xml_folder_path(
-            self.tenant, self.property_name, False
-        )
+        self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
+        xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.property_name, False)
         for suggestion in suggestions:
-            self.pdf_information_extraction_db.predictiondata.delete_many(
-                {"xml_file_name": suggestion.xml_file_name}
-            )
+            self.pdf_information_extraction_db.predictiondata.delete_many({"xml_file_name": suggestion.xml_file_name})
             if os.path.exists(f"{xml_folder_path}/{suggestion.xml_file_name}"):
                 os.remove(f"{xml_folder_path}/{suggestion.xml_file_name}")
 
@@ -174,9 +154,7 @@ class InformationExtraction:
     def calculate_suggestions(self):
         suggestions: List[Suggestion] = list()
 
-        for document in self.pdf_information_extraction_db.predictiondata.find(
-            self.mongo_filter, no_cursor_timeout=True
-        ):
+        for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
             prediction_data = PredictionData(**document)
             segmentation_data = SegmentationData.from_prediction_data(prediction_data)
 
@@ -187,14 +165,10 @@ class InformationExtraction:
                 xml_file_name=prediction_data.xml_file_name,
             )
             self.segments = xml_file.get_segments(segmentation_data)
-            suggestions.append(
-                self.get_suggested_segment(xml_file_name=prediction_data.xml_file_name)
-            )
+            suggestions.append(self.get_suggested_segment(xml_file_name=prediction_data.xml_file_name))
 
         segments_text = [x.segment_text for x in suggestions]
-        texts = self.semantic_information_extraction.get_semantic_predictions(
-            segments_text
-        )
+        texts = self.semantic_information_extraction.get_semantic_predictions(segments_text)
 
         for index, suggestion in enumerate(suggestions):
             suggestion.text = texts[index]
@@ -225,9 +199,7 @@ class InformationExtraction:
             xml_file_name=xml_file_name,
             text=segment_text,
             segment_text=segment_text,
-            page_number=predicted_segments[0].page_number
-            if len(predicted_segments)
-            else 1,
+            page_number=predicted_segments[0].page_number if len(predicted_segments) else 1,
         )
 
     def get_training_data(self):
@@ -246,20 +218,14 @@ class InformationExtraction:
     def calculate_task(
         information_extraction_task: InformationExtractionTask,
     ) -> (bool, str):
-        if (
-            information_extraction_task.task
-            == InformationExtraction.CREATE_MODEL_TASK_NAME
-        ):
+        if information_extraction_task.task == InformationExtraction.CREATE_MODEL_TASK_NAME:
             information_extraction = InformationExtraction(
                 information_extraction_task.tenant,
                 information_extraction_task.params.property_name,
             )
             return information_extraction.create_models()
 
-        if (
-            information_extraction_task.task
-            == InformationExtraction.SUGGESTIONS_TASK_NAME
-        ):
+        if information_extraction_task.task == InformationExtraction.SUGGESTIONS_TASK_NAME:
             information_extraction = InformationExtraction(
                 information_extraction_task.tenant,
                 information_extraction_task.params.property_name,

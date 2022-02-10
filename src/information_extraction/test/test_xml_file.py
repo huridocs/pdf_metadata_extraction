@@ -6,13 +6,13 @@ from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
 from information_extraction.XmlFile import XmlFile
 
-DOCKER_VOLUME_PATH = f"{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))}/docker_volume"
+DOCKER_VOLUME_PATH = (
+    f"{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))}/docker_volume"
+)
 
 
 class TestXmlFile(TestCase):
-    test_file_path = (
-        f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
-    )
+    test_file_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
 
     def test_save_xml_to_train(self):
         tenant = "tenant_save"
@@ -95,9 +95,7 @@ class TestXmlFile(TestCase):
                     page_number=1,
                 ),
             ],
-            label_segments_boxes=[
-                SegmentBox(left=125, top=247, width=319, height=29, page_number=1)
-            ],
+            label_segments_boxes=[SegmentBox(left=125, top=247, width=319, height=29, page_number=1)],
         )
 
         with open(self.test_file_path, "rb") as file:
@@ -114,17 +112,13 @@ class TestXmlFile(TestCase):
 
         self.assertEqual(612, xml_file.segments[0].page_width)
         self.assertEqual(792, segments[0].page_height)
-        self.assertEqual(
-            1, len([segment for segment in segments if segment.ml_class_label == 1])
-        )
+        self.assertEqual(1, len([segment for segment in segments if segment.ml_class_label == 1]))
         self.assertEqual("United Nations", segments[0].text_content)
         self.assertEqual("A/INF/76/1", segments[1].text_content)
         self.assertEqual("General Assembly", segments[2].text_content)
         self.assertEqual(
             "Opening dates of forthcoming regular sessions of the General Assembly and of the general debate",
-            [segment for segment in segments if segment.ml_class_label == 1][
-                0
-            ].text_content,
+            [segment for segment in segments if segment.ml_class_label == 1][0].text_content,
         )
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
@@ -138,9 +132,7 @@ class TestXmlFile(TestCase):
             page_width=1,  # 612
             page_height=2,  # 396
             xml_segments_boxes=[
-                SegmentBox(
-                    left=0, top=0.3282828, width=1, height=0.1767676, page_number=2
-                ),
+                SegmentBox(left=0, top=0.3282828, width=1, height=0.1767676, page_number=2),
             ],
             label_segments_boxes=[
                 SegmentBox(
@@ -164,16 +156,12 @@ class TestXmlFile(TestCase):
 
         segments = xml_file.get_segments(segmentation_data)
 
-        labeled_segments = [
-            segment for segment in segments if segment.ml_class_label == 1
-        ]
+        labeled_segments = [segment for segment in segments if segment.ml_class_label == 1]
 
         self.assertEqual(612, segments[0].page_width)
         self.assertEqual(792, segments[0].page_height)
         self.assertEqual(1, len(labeled_segments))
-        self.assertEqual(
-            "a In accordance with paragraph", labeled_segments[0].text_content[:30]
-        )
+        self.assertEqual("a In accordance with paragraph", labeled_segments[0].text_content[:30])
         self.assertEqual("every four years.", labeled_segments[0].text_content[-17:])
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
@@ -215,9 +203,7 @@ class TestXmlFile(TestCase):
             page_width=1,  # 612
             page_height=2,  # 396
             xml_segments_boxes=[
-                SegmentBox(
-                    left=0, top=0.3282828, width=1, height=0.1767676, page_number=2
-                ),
+                SegmentBox(left=0, top=0.3282828, width=1, height=0.1767676, page_number=2),
             ],
             label_segments_boxes=[
                 SegmentBox(

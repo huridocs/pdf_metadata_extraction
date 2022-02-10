@@ -15,18 +15,14 @@ from information_extraction.SegmentTag import SegmentTag
 
 
 class XmlFile:
-    def __init__(
-        self, tenant: str, property_name: str, to_train: bool, xml_file_name: str
-    ):
+    def __init__(self, tenant: str, property_name: str, to_train: bool, xml_file_name: str):
         self.tenant = tenant
         self.property_name = property_name
         self.to_train = to_train
         self.xml_file_name = xml_file_name
         self.xml_file = None
         self.segments = list()
-        self.xml_folder_path = XmlFile.get_xml_folder_path(
-            tenant, property_name, to_train
-        )
+        self.xml_folder_path = XmlFile.get_xml_folder_path(tenant, property_name, to_train)
 
     def save(self, file: bytes):
         if not os.path.exists(self.xml_folder_path):
@@ -37,9 +33,7 @@ class XmlFile:
 
     def get_segments(self, segmentation_data: SegmentationData):
         try:
-            self.xml_file = pathlib.Path(
-                f"{self.xml_folder_path}/{self.xml_file_name}"
-            ).read_bytes()
+            self.xml_file = pathlib.Path(f"{self.xml_folder_path}/{self.xml_file_name}").read_bytes()
         except FileNotFoundError:
             return []
 
@@ -59,14 +53,10 @@ class XmlFile:
             page_width = float(xml_page["WIDTH"])
             page_height = float(xml_page["HEIGHT"])
             for text_line in self.get_text_lines(xml_page):
-                segment_tags.append(
-                    SegmentTag(text_line, page_width, page_height, page_number, fonts)
-                )
+                segment_tags.append(SegmentTag(text_line, page_width, page_height, page_number, fonts))
 
-        pdf_features = PdfFeatures(segment_tags)
-        one_tag_segments = [
-            Segment(segment_tag, pdf_features) for segment_tag in segment_tags
-        ]
+        pdf_features = PdfFeatures(segment_tags) if segment_tags else []
+        one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in segment_tags]
 
         return one_tag_segments
 
@@ -96,10 +86,7 @@ class XmlFile:
             else:
                 box_segments_to_merge[segment].append(segment)
 
-        self.segments = [
-            Segment.merge(segments_to_merge)
-            for segments_to_merge in box_segments_to_merge.values()
-        ]
+        self.segments = [Segment.merge(segments_to_merge) for segments_to_merge in box_segments_to_merge.values()]
 
         for segment in self.segments:
             segment.set_ml_label(
@@ -111,9 +98,7 @@ class XmlFile:
     @staticmethod
     def get_xml_folder_path(tenant: str, property_name: str, to_train: bool) -> str:
         service_config = ServiceConfig()
-        xml_folder_path = (
-            f"{service_config.docker_volume_path}/{tenant}/{property_name}"
-        )
+        xml_folder_path = f"{service_config.docker_volume_path}/{tenant}/{property_name}"
         if to_train:
             xml_folder_path += f"/xml_to_train"
         else:

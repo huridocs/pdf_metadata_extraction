@@ -14,9 +14,7 @@ DOCKER_VOLUME_PATH = f"../docker_volume"
 
 
 class TestApp(TestCase):
-    test_file_path = (
-        f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_predict/test.xml"
-    )
+    test_file_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_predict/test.xml"
 
     def test_info(self):
         response = client.get("/info")
@@ -30,14 +28,10 @@ class TestApp(TestCase):
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
-            response = client.post(
-                f"/xml_to_train/{tenant}/{property_name}", files=files
-            )
+            response = client.post(f"/xml_to_train/{tenant}/{property_name}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = (
-            f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_train/test.xml"
-        )
+        to_train_xml_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_train/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
@@ -50,14 +44,10 @@ class TestApp(TestCase):
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
-            response = client.post(
-                f"/xml_to_predict/{tenant}/{property_name}", files=files
-            )
+            response = client.post(f"/xml_to_predict/{tenant}/{property_name}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = (
-            f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"
-        )
+        to_train_xml_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
@@ -77,19 +67,13 @@ class TestApp(TestCase):
             "label_text": "text",
             "page_width": 1.1,
             "page_height": 2.1,
-            "xml_segments_boxes": [
-                {"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 5}
-            ],
-            "label_segments_boxes": [
-                {"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}
-            ],
+            "xml_segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 5}],
+            "label_segments_boxes": [{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}],
         }
 
         response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = (
-            mongo_client.pdf_information_extraction.labeleddata.find_one()
-        )
+        labeled_data_document = mongo_client.pdf_information_extraction.labeleddata.find_one()
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -129,9 +113,7 @@ class TestApp(TestCase):
 
         response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = (
-            mongo_client.pdf_information_extraction.labeleddata.find_one()
-        )
+        labeled_data_document = mongo_client.pdf_information_extraction.labeleddata.find_one()
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -140,9 +122,7 @@ class TestApp(TestCase):
         self.assertEqual("spa", labeled_data_document["language_iso"])
         self.assertEqual(3.1, labeled_data_document["page_width"])
         self.assertEqual(4.1, labeled_data_document["page_height"])
-        self.assertEqual(
-            "different_xml_file_name", labeled_data_document["xml_file_name"]
-        )
+        self.assertEqual("different_xml_file_name", labeled_data_document["xml_file_name"])
         self.assertEqual([], labeled_data_document["xml_segments_boxes"])
         self.assertEqual([], labeled_data_document["label_segments_boxes"])
 
@@ -159,16 +139,12 @@ class TestApp(TestCase):
             "xml_file_name": "xml_file_name",
             "page_width": 612,
             "page_height": 792,
-            "xml_segments_boxes": [
-                {"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}
-            ],
+            "xml_segments_boxes": [{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}],
         }
 
         response = client.post("/prediction_data", json=json_data)
 
-        prediction_data_document = (
-            mongo_client.pdf_information_extraction.predictiondata.find_one()
-        )
+        prediction_data_document = mongo_client.pdf_information_extraction.predictiondata.find_one()
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, prediction_data_document["tenant"])
@@ -274,9 +250,7 @@ class TestApp(TestCase):
 
         client.get(f"/get_suggestions/{tenant}1/{property_name}")
 
-        suggestion = Suggestion(
-            **mongo_client.pdf_information_extraction.suggestions.find_one()
-        )
+        suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
 
         self.assertEqual(1, mongo_client.pdf_information_extraction.suggestions.count())
         self.assertEqual(tenant + "2", suggestion.tenant)

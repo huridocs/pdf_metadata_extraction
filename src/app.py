@@ -27,9 +27,7 @@ async def info():
 @app.get("/error")
 async def error():
     logger.error("This is a test error from the error endpoint")
-    raise HTTPException(
-        status_code=500, detail="This is a test error from the error endpoint"
-    )
+    raise HTTPException(status_code=500, detail="This is a test error from the error endpoint")
 
 
 @app.post("/xml_to_train/{tenant}/{property_name}")
@@ -77,9 +75,7 @@ async def labeled_data_post(labeled_data: LabeledData):
         return "labeled data saved"
     except Exception:
         logger.error("Error", exc_info=1)
-        raise HTTPException(
-            status_code=422, detail="An error has occurred. Check graylog for more info"
-        )
+        raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
 
 
 @app.post("/prediction_data")
@@ -91,9 +87,7 @@ async def prediction_data_post(prediction_data: PredictionData):
         return "prediction data saved"
     except Exception:
         logger.error("Error", exc_info=1)
-        raise HTTPException(
-            status_code=422, detail="An error has occurred. Check graylog for more info"
-        )
+        raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
 
 
 @app.get("/get_suggestions/{tenant}/{property_name}")
@@ -104,18 +98,12 @@ async def get_suggestions(tenant: str, property_name: str):
         suggestions_filter = {"tenant": tenant, "property_name": property_name}
         suggestions_list: List[Dict[str, str]] = list()
 
-        for document in pdf_information_extraction_db.suggestions.find(
-            suggestions_filter, no_cursor_timeout=True
-        ):
+        for document in pdf_information_extraction_db.suggestions.find(suggestions_filter, no_cursor_timeout=True):
             suggestions_list.append(Suggestion(**document).dict())
 
         pdf_information_extraction_db.suggestions.delete_many(suggestions_filter)
-        logger.info(
-            f"{len(suggestions_list)} suggestions created for {tenant} {property_name}"
-        )
+        logger.info(f"{len(suggestions_list)} suggestions created for {tenant} {property_name}")
         return json.dumps(suggestions_list)
     except Exception:
         logger.error("Error", exc_info=1)
-        raise HTTPException(
-            status_code=422, detail="An error has occurred. Check graylog for more info"
-        )
+        raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
