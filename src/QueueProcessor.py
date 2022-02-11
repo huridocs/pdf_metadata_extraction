@@ -34,11 +34,13 @@ class QueueProcessor:
         try:
             task = InformationExtractionTask(**message)
         except ValidationError:
-            self.logger.error(f"Not a valid message: {message}")
+            self.logger.info(f"Not a valid message: {message}")
             return True
 
-        self.logger.error(f"Valid message: {message}")
+        self.logger.info(f"Valid message: {message}")
         task_calculated, error_message = InformationExtraction.calculate_task(task)
+        if error_message:
+            self.logger.info(f"Error: {error_message}")
 
         if not task_calculated:
             model_results_message = ResultsMessage(

@@ -22,6 +22,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: queue_processor_information_extraction
+    shm_size: '11gb'
     volumes:
       - ./docker_volume:/app/docker_volume
     depends_on:

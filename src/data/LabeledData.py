@@ -15,3 +15,7 @@ class LabeledData(BaseModel):
     page_height: float
     xml_segments_boxes: List[SegmentBox]
     label_segments_boxes: List[SegmentBox]
+
+    def correct_data_scale(self):
+        self.label_segments_boxes = [x.correct_data_scale() for x in self.label_segments_boxes]
+        return self

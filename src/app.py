@@ -91,6 +91,7 @@ async def labeled_data_post(labeled_data: LabeledData):
     try:
         client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         pdf_information_extraction_db = client["pdf_information_extraction"]
+        labeled_data = labeled_data.correct_data_scale()
         pdf_information_extraction_db.labeleddata.insert_one(labeled_data.dict())
         return "labeled data saved"
     except Exception:

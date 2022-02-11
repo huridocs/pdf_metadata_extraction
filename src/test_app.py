@@ -68,7 +68,7 @@ class TestApp(TestCase):
             "page_width": 1.1,
             "page_height": 2.1,
             "xml_segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 5}],
-            "label_segments_boxes": [{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}],
+            "label_segments_boxes": [{"left": 8, "top": 12, "width": 16, "height": 20, "page_number": 10}],
         }
 
         response = client.post("/labeled_data", json=json_data)
@@ -88,7 +88,7 @@ class TestApp(TestCase):
             labeled_data_document["xml_segments_boxes"],
         )
         self.assertEqual(
-            [{"height": 9.0, "left": 6.0, "page_number": 10, "top": 7.0, "width": 8.0}],
+            [{"height": 15.0, "left": 6.0, "page_number": 10, "top": 9.0, "width": 12.0}],
             labeled_data_document["label_segments_boxes"],
         )
 

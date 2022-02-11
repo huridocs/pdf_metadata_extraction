@@ -20,8 +20,9 @@ class SemanticInformationExtraction:
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
+        self.docker_volume = ServiceConfig().docker_volume_path
         self.semantic_extraction_folder = (
-            f"{ServiceConfig().docker_volume_path}/{self.tenant}/{self.property_name}/semantic_model"
+            f"{self.docker_volume}/{self.tenant}/{self.property_name}/semantic_model"
         )
         self.model_path = f"{self.semantic_extraction_folder}/best_model"
         self.multilingual_model_path = f"{self.semantic_extraction_folder}/multilingual_best_model"
@@ -33,6 +34,12 @@ class SemanticInformationExtraction:
         return train_df
 
     def create_model(self, semantic_extraction_data: List[SemanticExtractionData]):
+        cache_path = f"{self.docker_volume}/model_cache"
+        try:
+            os.mkdir(cache_path)
+        except FileExistsError:
+            pass
+
         self.semantic_extraction_data = semantic_extraction_data
         non_en_extractions = [x for x in semantic_extraction_data if x.language_iso != "en" and x.language_iso != "eng"]
         multilingual = len(non_en_extractions) > 0
