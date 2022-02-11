@@ -21,9 +21,7 @@ class SemanticInformationExtraction:
         self.tenant = tenant
         self.property_name = property_name
         self.docker_volume = ServiceConfig().docker_volume_path
-        self.semantic_extraction_folder = (
-            f"{self.docker_volume}/{self.tenant}/{self.property_name}/semantic_model"
-        )
+        self.semantic_extraction_folder = f"{self.docker_volume}/{self.tenant}/{self.property_name}/semantic_model"
         self.model_path = f"{self.semantic_extraction_folder}/best_model"
         self.multilingual_model_path = f"{self.semantic_extraction_folder}/multilingual_best_model"
         self.semantic_extraction_data = list()
