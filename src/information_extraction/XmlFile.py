@@ -43,6 +43,13 @@ class XmlFile:
         self.create_segments(segmentation_data)
         return self.segments
 
+    @staticmethod
+    def is_empty(segment_tag: SegmentTag):
+        if segment_tag.text.replace(" ", "") == "":
+            return True
+
+        return False
+
     def get_one_tag_segments(self) -> (List[SegmentTag], List[Font]):
         segment_tags = list()
         xml = BeautifulSoup(self.xml_file, "lxml-xml")
@@ -56,7 +63,8 @@ class XmlFile:
                 segment_tags.append(SegmentTag(text_line, page_width, page_height, page_number, fonts))
 
         pdf_features = PdfFeatures(segment_tags) if segment_tags else []
-        one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in segment_tags if segment_tag.text]
+        not_empty_segment_tags = [x for x in segment_tags if not self.is_empty(x)]
+        one_tag_segments = [Segment(segment_tag, pdf_features) for segment_tag in not_empty_segment_tags]
 
         return one_tag_segments
 

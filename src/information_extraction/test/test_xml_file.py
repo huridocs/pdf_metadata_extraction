@@ -123,6 +123,37 @@ class TestXmlFile(TestCase):
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 
+    def test_get_segments_when_empty_lines(self):
+        tenant = "tenant_save"
+        property_name = "property_save"
+
+        shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
+
+        segmentation_data = SegmentationData(
+            page_width=612,
+            page_height=792,
+            xml_segments_boxes=[],
+            label_segments_boxes=[SegmentBox(left=125, top=247, width=319, height=29, page_number=1)],
+        )
+
+        with open(f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test_empty_strings.xml", "rb") as file:
+            xml_file = XmlFile(
+                tenant=tenant,
+                property_name=property_name,
+                to_train=True,
+                xml_file_name="test_empty_strings.xml",
+            )
+
+            xml_file.save(file=file.read())
+
+        segments = xml_file.get_segments(segmentation_data)
+
+        self.assertEqual(612, xml_file.segments[0].page_width)
+        self.assertEqual(792, segments[0].page_height)
+        self.assertEqual(1, len(segments))
+
+        shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
+
     def test_get_segments_different_page_size_scale(self):
         tenant = "tenant_save"
         property_name = "property_save"

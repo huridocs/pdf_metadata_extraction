@@ -7,7 +7,7 @@ from information_extraction.PdfFeatures import PdfFeatures
 from information_extraction.SegmentTag import SegmentTag
 
 
-class Segment(object):
+class Segment:
     def __init__(self, segment_tag: SegmentTag, pdf_features: PdfFeatures):
         self.ml_class_label: int = 0
         self.confidence: float = 0
