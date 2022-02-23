@@ -1,7 +1,4 @@
-from typing import Dict
-
 from pydantic import BaseModel
-
 from data.Params import Params
 
 

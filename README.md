@@ -1,4 +1,4 @@
-<h3 align="center">PDF information extraction</h3>
+<h3 align="center">PDF metadata extraction</h3>
 <p align="center">A Docker-powered service for extracting pieces of information from PDFs</p>
 
 ---

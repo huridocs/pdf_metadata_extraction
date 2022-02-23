@@ -34,7 +34,7 @@ class QueueProcessor:
         try:
             task = InformationExtractionTask(**message)
         except ValidationError:
-            self.logger.info(f"Not a valid message: {message}")
+            self.logger.error(f"Not a valid message: {message}")
             return True
 
         self.logger.info(f"Valid message: {message}")
