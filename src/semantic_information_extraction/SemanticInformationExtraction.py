@@ -119,7 +119,7 @@ class SemanticInformationExtraction:
 
         texts = [self.property_name + ": " + x.segment_text for x in self.semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
-        return int((max(tokens_number) + 1) * 1.2)
+        return max(int((max(tokens_number) + 1) * 1.2), 250)
 
     def get_max_output_length(self, multilingual: bool):
         if multilingual:
@@ -129,7 +129,7 @@ class SemanticInformationExtraction:
 
         texts = [self.property_name + ": " + x.text for x in self.semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
-        return int((max(tokens_number) + 1) * 1.2)
+        return max(int((max(tokens_number) + 1) * 1.2), 250)
 
     def remove_models(self):
         shutil.rmtree(self.model_path, ignore_errors=True)
