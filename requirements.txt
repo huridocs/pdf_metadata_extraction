@@ -21,4 +21,4 @@ PyRSMQ
 redis~=3.5.3
 docker~=5.0.3
 pytest
-black
+black~=22.3.0

@@ -17,5 +17,5 @@ class LabeledData(BaseModel):
     label_segments_boxes: List[SegmentBox]
 
     def correct_data_scale(self):
-        self.label_segments_boxes = [x.correct_data_scale() for x in self.label_segments_boxes]
+        self.label_segments_boxes = [x.correct_input_data_scale() for x in self.label_segments_boxes]
         return self

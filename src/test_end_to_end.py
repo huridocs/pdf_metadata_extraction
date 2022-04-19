@@ -140,6 +140,13 @@ class TestEndToEnd(TestCase):
         self.assertEqual("United Nations", suggestion.segment_text)
         self.assertEqual(1, suggestion.page_number)
 
+        self.assertEqual(len(suggestion.segments_boxes), 1)
+        self.assertAlmostEqual(123.380 / 0.75, suggestion.segments_boxes[0].left)
+        self.assertAlmostEqual(48.1103 / 0.75, suggestion.segments_boxes[0].top)
+        self.assertAlmostEqual(82.9812 / 0.75, suggestion.segments_boxes[0].width)
+        self.assertAlmostEqual(12.7624 / 0.75, suggestion.segments_boxes[0].height)
+        self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
+
         task = InformationExtractionTask(
             tenant=tenant,
             task="create_model",

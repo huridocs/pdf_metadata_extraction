@@ -10,6 +10,7 @@ import pymongo
 from ServiceConfig import ServiceConfig
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
+from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
@@ -184,6 +185,7 @@ class InformationExtraction:
                 text="",
                 segment_text="",
                 page_number=1,
+                segments_boxes=list(),
             )
 
         x, y = self.get_training_data()
@@ -193,6 +195,8 @@ class InformationExtraction:
             if predictions[index] > 0.5:
                 predicted_segments.append(segment)
         segment_text = " ".join([x.text_content for x in predicted_segments])
+        segment_boxes = [x.get_segment_box() for x in predicted_segments]
+        segment_boxes = [x.correct_output_data_scale() for x in segment_boxes]
         return Suggestion(
             tenant=self.tenant,
             property_name=self.property_name,
@@ -200,6 +204,7 @@ class InformationExtraction:
             text=segment_text,
             segment_text=segment_text,
             page_number=predicted_segments[0].page_number if len(predicted_segments) else 1,
+            segments_boxes=segment_boxes,
         )
 
     def get_training_data(self):

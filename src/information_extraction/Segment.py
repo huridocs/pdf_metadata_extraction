@@ -223,3 +223,12 @@ class Segment:
         segment.segment_tags = tags
         segment.set_features()
         return segment
+
+    def get_segment_box(self):
+        return SegmentBox(
+            left=self.left * self.page_width,
+            top=self.top * self.page_height,
+            width=self.width * self.page_width,
+            height=self.height * self.page_height,
+            page_number=self.page_number,
+        )

@@ -274,6 +274,13 @@ class TestInformationExtractor(TestCase):
         self.assertEqual("Original: English", suggestion.text)
         self.assertEqual(1, suggestion.page_number)
 
+        self.assertEqual(len(suggestion.segments_boxes), 1)
+        self.assertAlmostEqual(397.030 / 0.75, suggestion.segments_boxes[0].left)
+        self.assertAlmostEqual(115.517 / 0.75, suggestion.segments_boxes[0].top)
+        self.assertAlmostEqual(74.0426 / 0.75, suggestion.segments_boxes[0].width)
+        self.assertAlmostEqual(9.0536 / 0.75, suggestion.segments_boxes[0].height)
+        self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
+
         self.assertIsNone(mongo_client.pdf_information_extraction.predictiondata.find_one())
 
         self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/spanish.xml"))
@@ -345,6 +352,13 @@ class TestInformationExtractor(TestCase):
         self.assertEqual(2, suggestion.page_number)
         self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict"))
         self.assertFalse(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
+
+        self.assertEqual(len(suggestion.segments_boxes), 1)
+        self.assertAlmostEqual(130.700 / 0.75, suggestion.segments_boxes[0].left)
+        self.assertAlmostEqual(126.389 / 0.75, suggestion.segments_boxes[0].top)
+        self.assertAlmostEqual(476.70666666666665, suggestion.segments_boxes[0].width)
+        self.assertAlmostEqual(95.56093333333332, suggestion.segments_boxes[0].height)
+        self.assertAlmostEqual(2, suggestion.segments_boxes[0].page_number)
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 
@@ -422,6 +436,13 @@ class TestInformationExtractor(TestCase):
         self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"Original: English"}, {x.segment_text for x in suggestions})
         self.assertEqual({"English"}, {x.text for x in suggestions})
+
+        self.assertEqual({1}, set([len(x.segments_boxes) for x in suggestions]))
+        self.assertAlmostEqual(397.030 / 0.75, suggestions[0].segments_boxes[0].left)
+        self.assertAlmostEqual(115.517 / 0.75, suggestions[0].segments_boxes[0].top)
+        self.assertAlmostEqual(74.0426 / 0.75, suggestions[0].segments_boxes[0].width)
+        self.assertAlmostEqual(9.0536 / 0.75, suggestions[0].segments_boxes[0].height)
+        self.assertAlmostEqual(1, suggestions[0].segments_boxes[0].page_number)
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
 

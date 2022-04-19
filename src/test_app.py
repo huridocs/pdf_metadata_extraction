@@ -172,6 +172,7 @@ class TestApp(TestCase):
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
                 "page_number": 1,
+                "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}],
             },
             {
                 "tenant": tenant,
@@ -180,6 +181,7 @@ class TestApp(TestCase):
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
                 "page_number": 2,
+                "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 2}],
             },
             {
                 "tenant": tenant,
@@ -188,6 +190,7 @@ class TestApp(TestCase):
                 "text": "other_text_predicted",
                 "segment_text": "other_segment_text",
                 "page_number": 3,
+                "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 3}],
             },
             {
                 "tenant": tenant,
@@ -196,6 +199,7 @@ class TestApp(TestCase):
                 "text": "other_text_predicted",
                 "segment_text": "other_segment_text",
                 "page_number": 4,
+                "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 4}],
             },
         ]
 
@@ -235,6 +239,7 @@ class TestApp(TestCase):
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
                 "page_number": 1,
+                "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}],
             },
             {
                 "tenant": tenant + "2",
@@ -243,6 +248,7 @@ class TestApp(TestCase):
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
                 "page_number": 2,
+                "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 2}],
             },
         ]
 

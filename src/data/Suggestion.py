@@ -1,4 +1,8 @@
+from typing import List
+
 from pydantic import BaseModel
+
+from data.SegmentBox import SegmentBox
 
 
 class Suggestion(BaseModel):
@@ -8,3 +12,4 @@ class Suggestion(BaseModel):
     text: str
     segment_text: str
     page_number: int
+    segments_boxes: List[SegmentBox]
