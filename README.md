@@ -142,14 +142,16 @@ The suggestions have the following format:
         "property_name": "property_name", 
         "xml_file_name": "xml_file_name_1", 
         "text": "suggestion_text_1", 
-        "segment_text": "segment_text_1"
+        "segment_text": "segment_text_1",
+        "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}]
         }, 
         {
         "tenant": "tenant", 
         "property_name": "property_name", 
         "xml_file_name": "xml_file_name_2", 
         "text": "suggestion_text_2", 
-        "segment_text": "segment_text_2"
+        "segment_text": "segment_text_2",
+        "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 2}]
         }, ... ]
 
 ```
