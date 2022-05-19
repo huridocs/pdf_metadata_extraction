@@ -12,7 +12,7 @@ class XmlFile:
         self.xml_file_name = xml_file_name
         self.xml_file = None
         self.xml_folder_path = XmlFile.get_xml_folder_path(tenant, property_name, to_train)
-        self.xml_file_path = os.path.join(self.xml_folder_path , self.xml_file_name)
+        self.xml_file_path = os.path.join(self.xml_folder_path, self.xml_file_name)
 
     def save(self, file: bytes):
         if not os.path.exists(self.xml_folder_path):

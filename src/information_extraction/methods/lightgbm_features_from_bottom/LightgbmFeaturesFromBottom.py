@@ -5,8 +5,9 @@ import numpy as np
 import lightgbm as lgb
 
 from information_extraction.PdfFeatures.PdfFeatures import PdfFeatures
-from information_extraction.methods.lightgbm_features_from_bottom.SegmentLightgbmFeaturesFromBottom import \
-    SegmentLightgbmFeaturesFromBottom
+from information_extraction.methods.lightgbm_features_from_bottom.SegmentLightgbmFeaturesFromBottom import (
+    SegmentLightgbmFeaturesFromBottom,
+)
 
 
 class LightgbmFeaturesFromBottom:

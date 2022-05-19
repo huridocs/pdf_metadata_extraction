@@ -236,4 +236,7 @@ class SegmentLightgbmFeaturesFromBottom:
 
     @staticmethod
     def from_pdf_features(pdf_features: PdfFeatures) -> List["SegmentLightgbmFeaturesFromBottom"]:
-        return [SegmentLightgbmFeaturesFromBottom(index, pdf_segment, pdf_features) for index, pdf_segment in enumerate(pdf_features.pdf_segments)]
+        return [
+            SegmentLightgbmFeaturesFromBottom(index, pdf_segment, pdf_features)
+            for index, pdf_segment in enumerate(pdf_features.pdf_segments)
+        ]

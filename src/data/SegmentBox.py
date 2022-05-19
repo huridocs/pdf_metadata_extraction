@@ -14,7 +14,7 @@ class SegmentBox(BaseModel):
         return self.rescaled(SCALE_CONSTANT, SCALE_CONSTANT)
 
     def correct_output_data_scale(self):
-        return self.rescaled(1/SCALE_CONSTANT, 1/SCALE_CONSTANT)
+        return self.rescaled(1 / SCALE_CONSTANT, 1 / SCALE_CONSTANT)
 
     def rescaled(self, factor_width: float, factor_height: float):
         self.left = self.left * factor_width

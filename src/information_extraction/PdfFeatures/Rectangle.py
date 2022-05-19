@@ -26,10 +26,12 @@ class Rectangle:
     @staticmethod
     def from_segment_dict(paragraph: Dict[str, any]) -> "Rectangle":
 
-        return Rectangle(paragraph['left'],
-                         paragraph['top'],
-                         paragraph['left'] + paragraph['width'],
-                         paragraph['top'] + paragraph['height'])
+        return Rectangle(
+            paragraph["left"],
+            paragraph["top"],
+            paragraph["left"] + paragraph["width"],
+            paragraph["top"] + paragraph["height"],
+        )
 
     @staticmethod
     def merge_rectangles(rectangles: List["Rectangle"]) -> "Rectangle":
@@ -77,8 +79,6 @@ class Rectangle:
 
     @staticmethod
     def from_segment_box(segment_box: SegmentBox):
-        return Rectangle(segment_box.left,
-                         segment_box.top,
-                         segment_box.left + segment_box.width,
-                         segment_box.top + segment_box.height)
-
+        return Rectangle(
+            segment_box.left, segment_box.top, segment_box.left + segment_box.width, segment_box.top + segment_box.height
+        )
