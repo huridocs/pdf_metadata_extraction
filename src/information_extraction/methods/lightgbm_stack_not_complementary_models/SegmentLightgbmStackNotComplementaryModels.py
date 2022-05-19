@@ -1,16 +1,26 @@
 import hashlib
 import re
 from statistics import mode
-from typing import List
+from typing import List, Optional
 import numpy as np
 
-from information_extraction.PdfFeatures.PdfFeatures import PdfFeatures
-from information_extraction.PdfFeatures.PdfSegment import PdfSegment
-from information_extraction.PdfFeatures.PdfTag import PdfTag
+from src.PdfFeatures.PdfFeatures import PdfFeatures
+from src.PdfFeatures.PdfSegment import PdfSegment
+from src.PdfFeatures.PdfTag import PdfTag
+from src.PdfFeatures.TagType import TAG_TYPE_DICT
 
 
-class SegmentLightgbmFeaturesFromBottom:
-    def __init__(self, segment_index: int, pdf_segment: PdfSegment, pdf_features: PdfFeatures):
+class SegmentLightgbmStackNotComplementaryModels:
+    def __init__(
+        self,
+        segment_index: int,
+        pdf_segment: PdfSegment,
+        pdf_features: PdfFeatures,
+    ):
+        self.previous_title_segment = None
+        self.previous_segment = None
+        self.next_segment = None
+        self.sentence_embeddings = pdf_segment.embeddings
         self.segment_index: float = segment_index
         self.confidence: float = 0
         self.page_number = pdf_segment.page_number
@@ -63,6 +73,7 @@ class SegmentLightgbmFeaturesFromBottom:
         self.right_space_mode = None
         self.left_space_mode = None
         self.lines_space_mode = None
+        self.font_sizes = [x.font.font_size for x in self.pdf_features.get_tags()]
         self.get_modes()
         self.set_features()
 
@@ -105,6 +116,7 @@ class SegmentLightgbmFeaturesFromBottom:
 
     def set_features(self):
         self.initialize_features()
+
         self.font_family = self.segment_tags[0].font.font_id
         self.font_color = self.segment_tags[0].font.color
         self.line_height = self.segment_tags[0].font.font_size
@@ -131,7 +143,6 @@ class SegmentLightgbmFeaturesFromBottom:
         self.bottom = self.bottom / self.page_height
         self.right = self.right / self.page_width
         self.left = self.left / self.page_width
-
         self.text_content = " ".join(words)
         self.text_len = len(self.text_content)
         self.dots_percentage = self.text_content.count(".") / self.text_len if self.text_len > 0 else 0
@@ -186,15 +197,79 @@ class SegmentLightgbmFeaturesFromBottom:
         )
         self.font_family_mode_normalized = float(f"{str(self.font_family_mode)[0]}.{str(self.font_family_mode)[1:]}")
 
+    def get_last_title_features(self):
+        if not self.previous_title_segment:
+            return list(np.zeros(534))
+
+        font_size_mode = sum(self.previous_title_segment.font_sizes) / len(self.previous_title_segment.font_sizes)
+
+        return (
+            [
+                self.previous_title_segment.segment_index,
+                len(self.previous_title_segment.pdf_features.pdf_segments) - self.previous_title_segment.segment_index,
+                self.previous_title_segment.page_index,
+                len(self.previous_title_segment.pdf_features.pages) - self.previous_title_segment.page_index,
+                self.previous_title_segment.bold,
+                self.previous_title_segment.italics,
+                self.previous_title_segment.text_len,
+                self.previous_title_segment.top,
+                self.previous_title_segment.bottom,
+                self.previous_title_segment.height,
+                self.previous_title_segment.width,
+                self.previous_title_segment.font_size / font_size_mode,
+                self.previous_title_segment.line_height,
+                self.previous_title_segment.numbers_percentage,
+                1 if self.previous_title_segment.starts_upper else 0,
+                1 if self.previous_title_segment.starts_number else 0,
+                self.previous_title_segment.starts_number_bar,
+                self.previous_title_segment.numbers_quantity,
+                self.previous_title_segment.starts_with_square_brackets,
+                self.previous_title_segment.starts_letter_dot,
+                self.previous_title_segment.dots_percentage,
+                1 if self.previous_title_segment.uppercase else 0,
+            ]
+            + self.previous_title_segment.sentence_embeddings
+        )
+
+    @staticmethod
+    def get_other_segment_features(segment: 'SegmentLightgbmStackNotComplementaryModels'):
+        if not segment:
+            return list(np.zeros(22))
+
+        font_size_mode = sum(segment.font_sizes) / len(segment.font_sizes)
+
+        return [
+            segment.segment_index,
+            len(segment.pdf_features.pdf_segments) - segment.segment_index,
+            segment.page_index,
+            len(segment.pdf_features.pages) - segment.page_index,
+            segment.bold,
+            segment.italics,
+            segment.text_len,
+            segment.top,
+            segment.bottom,
+            segment.height,
+            segment.width,
+            segment.font_size / font_size_mode,
+            segment.line_height,
+            segment.numbers_percentage,
+            1 if segment.starts_upper else 0,
+            1 if segment.starts_number else 0,
+            segment.starts_number_bar,
+            segment.numbers_quantity,
+            segment.starts_with_square_brackets,
+            segment.starts_letter_dot,
+            segment.dots_percentage,
+            1 if segment.uppercase else 0,
+        ]
+
     def get_features_array(self) -> np.array:
-        font_sizes = [x.font.font_size for x in self.pdf_features.get_tags()]
-        font_size_mode = sum(font_sizes) / len(font_sizes)
-        return np.array(
+        font_size_mode = sum(self.font_sizes) / len(self.font_sizes)
+
+        features = np.array(
             [
                 self.segment_index,
-                len(self.pdf_features.pdf_segments) - self.segment_index,
                 self.page_index,
-                len(self.pdf_features.pages) - self.page_index,
                 font_size_mode,
                 self.lines_space_mode,
                 self.font_family_mode_normalized,
@@ -219,8 +294,14 @@ class SegmentLightgbmFeaturesFromBottom:
                 self.starts_letter_dot,
                 self.dots_percentage,
                 1 if self.uppercase else 0,
+                len(self.pdf_features.pdf_segments) - self.segment_index,
+                len(self.pdf_features.pages) - self.page_index,
             ]
+            + self.get_other_segment_features(self.previous_segment)
+            + self.get_other_segment_features(self.next_segment)
+            + self.get_last_illustration_features()
         )
+        return features
 
     def tag_after_last_tag(self, tag: PdfTag):
         if self.last_tag is None:
@@ -234,9 +315,50 @@ class SegmentLightgbmFeaturesFromBottom:
 
         return False
 
-    @staticmethod
-    def from_pdf_features(pdf_features: PdfFeatures) -> List["SegmentLightgbmFeaturesFromBottom"]:
+    def get_last_illustration_features(self):
+        page = [x for x in self.pdf_features.pages if x.page_number == self.page_number][0]
+        top_illustrations = [i for i in page.illustrations if i.bounding_box.top < self.segment_tags[0].bounding_box.top]
+
+        if not top_illustrations:
+            return [0] * 7
+
+        top_illustration = top_illustrations[-1]
+
         return [
-            SegmentLightgbmFeaturesFromBottom(index, pdf_segment, pdf_features)
-            for index, pdf_segment in enumerate(pdf_features.pdf_segments)
+            top_illustration.bounding_box.top / self.page_height,
+            top_illustration.bounding_box.bottom / self.page_height,
+            top_illustration.bounding_box.height / self.page_height,
+            top_illustration.bounding_box.left / self.page_width,
+            top_illustration.bounding_box.right / self.page_height,
+            top_illustration.bounding_box.width / self.page_height,
+            abs(top_illustration.bounding_box.top / self.page_height - self.top),
         ]
+
+
+
+    @staticmethod
+    def from_pdf_features(pdf_features: PdfFeatures) -> List["SegmentLightgbmStackNotComplementaryModels"]:
+
+        segments: List["SegmentLightgbmStackNotComplementaryModels"] = list()
+        for index, pdf_segment in enumerate(pdf_features.pdf_segments):
+
+            segment_landmarks = SegmentLightgbmStackNotComplementaryModels(index, pdf_segment, pdf_features)
+            segments.append(segment_landmarks)
+
+        sorted_pdf_segments = sorted(segments, key=lambda x: (x.page_index, x.top))
+
+        previous_title_segment: Optional["SegmentLightgbmStackNotComplementaryModels"] = None
+
+        for sorted_segment in sorted_pdf_segments:
+            sorted_segment.previous_title_segment = previous_title_segment
+            if sorted_segment.pdf_segment.segment_type == TAG_TYPE_DICT["title"]:
+                previous_title_segment = sorted_segment
+
+        for index, sorted_segment in enumerate(sorted_pdf_segments):
+            if 0 < index:
+                sorted_segment.previous_segment = sorted_pdf_segments[index - 1]
+
+            if index + 1 < len(sorted_pdf_segments):
+                sorted_segment.next_segment = sorted_pdf_segments[index + 1]
+
+        return segments
