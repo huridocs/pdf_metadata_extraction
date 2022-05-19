@@ -4,10 +4,10 @@ from statistics import mode
 from typing import List, Optional
 import numpy as np
 
-from src.PdfFeatures.PdfFeatures import PdfFeatures
-from src.PdfFeatures.PdfSegment import PdfSegment
-from src.PdfFeatures.PdfTag import PdfTag
-from src.PdfFeatures.TagType import TAG_TYPE_DICT
+from information_extraction.PdfFeatures.PdfFeatures import PdfFeatures
+from information_extraction.PdfFeatures.PdfSegment import PdfSegment
+from information_extraction.PdfFeatures.PdfTag import PdfTag
+from information_extraction.PdfFeatures.TagType import TAG_TYPE_DICT
 
 
 class SegmentLightgbmStackNotComplementaryModels:
@@ -203,36 +203,33 @@ class SegmentLightgbmStackNotComplementaryModels:
 
         font_size_mode = sum(self.previous_title_segment.font_sizes) / len(self.previous_title_segment.font_sizes)
 
-        return (
-            [
-                self.previous_title_segment.segment_index,
-                len(self.previous_title_segment.pdf_features.pdf_segments) - self.previous_title_segment.segment_index,
-                self.previous_title_segment.page_index,
-                len(self.previous_title_segment.pdf_features.pages) - self.previous_title_segment.page_index,
-                self.previous_title_segment.bold,
-                self.previous_title_segment.italics,
-                self.previous_title_segment.text_len,
-                self.previous_title_segment.top,
-                self.previous_title_segment.bottom,
-                self.previous_title_segment.height,
-                self.previous_title_segment.width,
-                self.previous_title_segment.font_size / font_size_mode,
-                self.previous_title_segment.line_height,
-                self.previous_title_segment.numbers_percentage,
-                1 if self.previous_title_segment.starts_upper else 0,
-                1 if self.previous_title_segment.starts_number else 0,
-                self.previous_title_segment.starts_number_bar,
-                self.previous_title_segment.numbers_quantity,
-                self.previous_title_segment.starts_with_square_brackets,
-                self.previous_title_segment.starts_letter_dot,
-                self.previous_title_segment.dots_percentage,
-                1 if self.previous_title_segment.uppercase else 0,
-            ]
-            + self.previous_title_segment.sentence_embeddings
-        )
+        return [
+            self.previous_title_segment.segment_index,
+            len(self.previous_title_segment.pdf_features.pdf_segments) - self.previous_title_segment.segment_index,
+            self.previous_title_segment.page_index,
+            len(self.previous_title_segment.pdf_features.pages) - self.previous_title_segment.page_index,
+            self.previous_title_segment.bold,
+            self.previous_title_segment.italics,
+            self.previous_title_segment.text_len,
+            self.previous_title_segment.top,
+            self.previous_title_segment.bottom,
+            self.previous_title_segment.height,
+            self.previous_title_segment.width,
+            self.previous_title_segment.font_size / font_size_mode,
+            self.previous_title_segment.line_height,
+            self.previous_title_segment.numbers_percentage,
+            1 if self.previous_title_segment.starts_upper else 0,
+            1 if self.previous_title_segment.starts_number else 0,
+            self.previous_title_segment.starts_number_bar,
+            self.previous_title_segment.numbers_quantity,
+            self.previous_title_segment.starts_with_square_brackets,
+            self.previous_title_segment.starts_letter_dot,
+            self.previous_title_segment.dots_percentage,
+            1 if self.previous_title_segment.uppercase else 0,
+        ] + self.previous_title_segment.sentence_embeddings
 
     @staticmethod
-    def get_other_segment_features(segment: 'SegmentLightgbmStackNotComplementaryModels'):
+    def get_other_segment_features(segment: "SegmentLightgbmStackNotComplementaryModels"):
         if not segment:
             return list(np.zeros(22))
 
@@ -334,11 +331,8 @@ class SegmentLightgbmStackNotComplementaryModels:
             abs(top_illustration.bounding_box.top / self.page_height - self.top),
         ]
 
-
-
     @staticmethod
     def from_pdf_features(pdf_features: PdfFeatures) -> List["SegmentLightgbmStackNotComplementaryModels"]:
-
         segments: List["SegmentLightgbmStackNotComplementaryModels"] = list()
         for index, pdf_segment in enumerate(pdf_features.pdf_segments):
 
@@ -346,13 +340,6 @@ class SegmentLightgbmStackNotComplementaryModels:
             segments.append(segment_landmarks)
 
         sorted_pdf_segments = sorted(segments, key=lambda x: (x.page_index, x.top))
-
-        previous_title_segment: Optional["SegmentLightgbmStackNotComplementaryModels"] = None
-
-        for sorted_segment in sorted_pdf_segments:
-            sorted_segment.previous_title_segment = previous_title_segment
-            if sorted_segment.pdf_segment.segment_type == TAG_TYPE_DICT["title"]:
-                previous_title_segment = sorted_segment
 
         for index, sorted_segment in enumerate(sorted_pdf_segments):
             if 0 < index:

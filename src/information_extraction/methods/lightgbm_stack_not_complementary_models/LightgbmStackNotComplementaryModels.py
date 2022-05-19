@@ -5,21 +5,17 @@ import numpy as np
 import lightgbm as lgb
 from sklearn.metrics import f1_score
 
-from src.PdfFeatures.PdfFeatures import PdfFeatures
-from src.methods.lightgbm_stack_not_complementary_models.SegmentLightgbmStackNotComplementaryModels import (
+from information_extraction.PdfFeatures.PdfFeatures import PdfFeatures
+from information_extraction.methods.lightgbm_stack_not_complementary_models.SegmentLightgbmStackNotComplementaryModels import (
     SegmentLightgbmStackNotComplementaryModels,
 )
-
 
 TRAINING_CUTS = [16, 27, 71, 78]
 
 
 class LightgbmStackNotComplementaryModels:
-    def __init__(self, property_name: str, method: str):
-        self.property_name = property_name
+    def __init__(self):
         self.segments: List[SegmentLightgbmStackNotComplementaryModels] = list()
-        self.model_path = f"models/{property_name}/{method}/model.model"
-
         self.model = None
         self.best_cut = 0
 
@@ -56,7 +52,7 @@ class LightgbmStackNotComplementaryModels:
 
         best_performance = 0
 
-        if x_train.shape[0] < 200:
+        if x_train.shape[0] < 100:
             self.model = self.set_model(x_train[:, : TRAINING_CUTS[0]], y_train)
             return
 
@@ -94,8 +90,7 @@ class LightgbmStackNotComplementaryModels:
         x, y = self.get_training_data()
         x = x[:, : model.num_feature()]
         predictions = model.predict(x)
-        titles = [x.previous_title_segment.text_content if x.previous_title_segment else "" for x in self.segments]
-        return predictions, titles
+        return predictions
 
     @staticmethod
     def get_performance(predictions, y_truth):

@@ -4,7 +4,6 @@ from pathlib import Path
 from time import sleep
 from typing import List
 
-import numpy as np
 import pymongo
 
 from ServiceConfig import ServiceConfig
@@ -19,9 +18,10 @@ import lightgbm as lgb
 from information_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from information_extraction.PdfFeatures.PdfSegment import PdfSegment
 from information_extraction.XmlFile import XmlFile
-from information_extraction.methods.lightgbm_features_from_bottom.LightgbmFeaturesFromBottom import (
-    LightgbmFeaturesFromBottom,
+from information_extraction.methods.lightgbm_stack_not_complementary_models.LightgbmStackNotComplementaryModels import (
+    LightgbmStackNotComplementaryModels,
 )
+
 from semantic_information_extraction.SemanticInformationExtraction import (
     SemanticInformationExtraction,
 )
@@ -43,7 +43,7 @@ class InformationExtraction:
         client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
-        self.segment_selector = LightgbmFeaturesFromBottom()
+        self.segment_selector = LightgbmStackNotComplementaryModels()
 
     def load_model(self):
         if os.path.exists(self.model_path):
