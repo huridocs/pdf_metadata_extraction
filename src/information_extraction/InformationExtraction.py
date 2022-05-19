@@ -10,15 +10,18 @@ import pymongo
 from ServiceConfig import ServiceConfig
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
-from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
 from data.InformationExtractionTask import InformationExtractionTask
-from information_extraction.Segment import Segment
 import lightgbm as lgb
 
+from information_extraction.PdfFeatures.PdfFeatures import PdfFeatures
+from information_extraction.PdfFeatures.PdfSegment import PdfSegment
 from information_extraction.XmlFile import XmlFile
+from information_extraction.methods.lightgbm_features_from_bottom.LightgbmFeaturesFromBottom import (
+    LightgbmFeaturesFromBottom,
+)
 from semantic_information_extraction.SemanticInformationExtraction import (
     SemanticInformationExtraction,
 )
@@ -33,13 +36,14 @@ class InformationExtraction:
         self.property_name = property_name
         self.semantic_information_extraction = SemanticInformationExtraction(tenant, property_name)
         service_config = ServiceConfig()
-        self.segments: List[Segment] = list()
+        self.pdf_features: List[PdfFeatures] = list()
         self.model_path = f"{service_config.docker_volume_path}/{tenant}/{property_name}/segment_predictor_model/model.model"
         self.model = None
         self.load_model()
         client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
+        self.segment_selector = LightgbmFeaturesFromBottom()
 
     def load_model(self):
         if os.path.exists(self.model_path):
@@ -49,7 +53,7 @@ class InformationExtraction:
         client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         pdf_information_extraction_db = client["pdf_information_extraction"]
 
-        self.segments = []
+        self.pdf_features = list()
         for document in pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
@@ -59,15 +63,24 @@ class InformationExtraction:
                 to_train=True,
                 xml_file_name=labeled_data.xml_file_name,
             )
-            self.segments.extend(xml_file.get_segments(segmentation_data))
+            pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+            if pdf_features:
+                self.pdf_features.append(pdf_features)
 
     def create_models(self):
         self.set_segments_for_training()
 
-        if len(self.segments) == 0:
+        if not len(self.pdf_features) or not sum([len(pdf_features.pdf_segments) for pdf_features in self.pdf_features]):
             return False, "No labeled data to create model"
 
-        self.run_light_gbm()
+        self.model = self.segment_selector.create_model(self.pdf_features)
+
+        if not os.path.exists(Path(self.model_path).parents[0]):
+            os.makedirs(Path(self.model_path).parents[0])
+
+        self.model.save_model(self.model_path, num_iteration=self.model.best_iteration)
+        sleep(3)
+
         self.create_semantic_model()
         shutil.rmtree(
             XmlFile.get_xml_folder_path(tenant=self.tenant, property_name=self.property_name, to_train=True),
@@ -88,8 +101,10 @@ class InformationExtraction:
                 xml_file_name=labeled_data.xml_file_name,
             )
 
-            self.segments = xml_file.get_segments(SegmentationData.from_labeled_data(labeled_data))
-            suggestion = self.get_suggested_segment(xml_file_name=labeled_data.xml_file_name)
+            pdf_features = PdfFeatures.from_xml_file(xml_file, SegmentationData.from_labeled_data(labeled_data))
+            if not pdf_features.pdf_segments:
+                continue
+            suggestion = self.get_suggested_segment(xml_file_name=labeled_data.xml_file_name, pdf_features=pdf_features)
             semantic_extraction_data.append(
                 SemanticExtractionData(
                     text=labeled_data.label_text,
@@ -102,37 +117,6 @@ class InformationExtraction:
             return
 
         self.semantic_information_extraction.create_model(semantic_extraction_data)
-
-    def run_light_gbm(self):
-        x_train, y_train = self.get_training_data()
-
-        if x_train is None:
-            return
-
-        parameters = dict()
-        parameters["num_leaves"] = 35
-        parameters["feature_fraction"] = 1
-        parameters["bagging_fraction"] = 1
-        parameters["bagging_freq"] = 0
-        parameters["objective"] = "binary"
-        parameters["learning_rate"] = 0.05
-        parameters["metric"] = "binary_logloss"
-        parameters["verbose"] = -1
-        parameters["boosting_type"] = "gbdt"
-
-        train_data = lgb.Dataset(x_train, y_train)
-        num_round = 3000
-        light_gbm_model = lgb.train(parameters, train_data, num_round)
-
-        if not light_gbm_model:
-            return
-
-        self.model = light_gbm_model
-        if not os.path.exists(Path(self.model_path).parents[0]):
-            os.makedirs(Path(self.model_path).parents[0])
-
-        self.model.save_model(self.model_path, num_iteration=self.model.best_iteration)
-        sleep(3)
 
     def get_suggestions(self) -> (bool, str):
         if not self.model:
@@ -165,8 +149,12 @@ class InformationExtraction:
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
-            self.segments = xml_file.get_segments(segmentation_data)
-            suggestions.append(self.get_suggested_segment(xml_file_name=prediction_data.xml_file_name))
+            pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+            if not pdf_features.pdf_segments:
+                continue
+            suggestions.append(
+                self.get_suggested_segment(xml_file_name=prediction_data.xml_file_name, pdf_features=pdf_features)
+            )
 
         segments_text = [x.segment_text for x in suggestions]
         texts = self.semantic_information_extraction.get_semantic_predictions(segments_text)
@@ -176,24 +164,13 @@ class InformationExtraction:
 
         return suggestions
 
-    def get_suggested_segment(self, xml_file_name: str):
-        if not self.segments:
-            return Suggestion(
-                tenant=self.tenant,
-                property_name=self.property_name,
-                xml_file_name=xml_file_name,
-                text="",
-                segment_text="",
-                page_number=1,
-                segments_boxes=list(),
-            )
-
-        x, y = self.get_training_data()
-        predictions = self.model.predict(x)
-        predicted_segments: List[Segment] = list()
-        for index, segment in enumerate(self.segments):
+    def get_suggested_segment(self, xml_file_name: str, pdf_features: PdfFeatures):
+        predictions = self.segment_selector.predict(self.model, [pdf_features])
+        predicted_segments: List[PdfSegment] = list()
+        for index, segment in enumerate(pdf_features.pdf_segments):
             if predictions[index] > 0.5:
                 predicted_segments.append(segment)
+
         segment_text = " ".join([x.text_content for x in predicted_segments])
         segment_boxes = [x.get_segment_box() for x in predicted_segments]
         segment_boxes = [x.correct_output_data_scale() for x in segment_boxes]
@@ -206,18 +183,6 @@ class InformationExtraction:
             page_number=predicted_segments[0].page_number if len(predicted_segments) else 1,
             segments_boxes=segment_boxes,
         )
-
-    def get_training_data(self):
-        X = None
-        y = np.array([])
-
-        for segment in self.segments:
-            features = segment.get_features_array()
-            features = features.reshape(1, len(features))
-            X = features if X is None else np.concatenate((X, features), axis=0)
-            y = np.append(y, segment.ml_class_label)
-
-        return X, y
 
     @staticmethod
     def calculate_task(

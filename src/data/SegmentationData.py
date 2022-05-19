@@ -30,3 +30,15 @@ class SegmentationData(BaseModel):
             xml_segments_boxes=prediction_data.xml_segments_boxes,
             label_segments_boxes=[],
         )
+
+    def rescale(self, page_width, page_height):
+        factor_width = page_width / self.page_width
+        factor_height = page_height / self.page_height
+        self.page_width = page_width
+        self.page_height = page_height
+        self.xml_segments_boxes = [
+            xml_segment_box.rescaled(factor_width, factor_height) for xml_segment_box in self.xml_segments_boxes
+        ]
+        self.label_segments_boxes = [
+            xml_segment_box.rescaled(factor_width, factor_height) for xml_segment_box in self.label_segments_boxes
+        ]

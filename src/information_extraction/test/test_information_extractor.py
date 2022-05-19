@@ -243,6 +243,28 @@ class TestInformationExtractor(TestCase):
             ignore_errors=True,
         )
 
+        labeled_data_json = {
+            "tenant": tenant,
+            "property_name": property_name,
+            "xml_file_name": "test.xml",
+            "language_iso": "en",
+            "label_text": "text",
+            "page_width": 612,
+            "page_height": 792,
+            "xml_segments_boxes": [],
+            "label_segments_boxes": [SegmentBox(left=400, top=115, width=74, height=9, page_number=1).dict()],
+        }
+
+        mongo_client.pdf_information_extraction.labeleddata.insert_one(labeled_data_json)
+
+        InformationExtraction.calculate_task(
+            InformationExtractionTask(
+                tenant=tenant,
+                task=InformationExtraction.CREATE_MODEL_TASK_NAME,
+                params=Params(property_name=property_name),
+            )
+        )
+
         to_predict_json = {
             "tenant": tenant,
             "property_name": property_name,
@@ -275,10 +297,10 @@ class TestInformationExtractor(TestCase):
         self.assertEqual(1, suggestion.page_number)
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertAlmostEqual(397.030 / 0.75, suggestion.segments_boxes[0].left)
-        self.assertAlmostEqual(115.517 / 0.75, suggestion.segments_boxes[0].top)
-        self.assertAlmostEqual(74.0426 / 0.75, suggestion.segments_boxes[0].width)
-        self.assertAlmostEqual(9.0536 / 0.75, suggestion.segments_boxes[0].height)
+        self.assertAlmostEqual(397 / 0.75, suggestion.segments_boxes[0].left)
+        self.assertAlmostEqual(115 / 0.75, suggestion.segments_boxes[0].top)
+        self.assertAlmostEqual(74 / 0.75, suggestion.segments_boxes[0].width)
+        self.assertAlmostEqual(9 / 0.75, suggestion.segments_boxes[0].height)
         self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
 
         self.assertIsNone(mongo_client.pdf_information_extraction.predictiondata.find_one())
@@ -354,10 +376,10 @@ class TestInformationExtractor(TestCase):
         self.assertFalse(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertAlmostEqual(130.700 / 0.75, suggestion.segments_boxes[0].left)
-        self.assertAlmostEqual(126.389 / 0.75, suggestion.segments_boxes[0].top)
-        self.assertAlmostEqual(476.70666666666665, suggestion.segments_boxes[0].width)
-        self.assertAlmostEqual(95.56093333333332, suggestion.segments_boxes[0].height)
+        self.assertAlmostEqual(173.33333333333331, suggestion.segments_boxes[0].left)
+        self.assertAlmostEqual(168, suggestion.segments_boxes[0].top)
+        self.assertAlmostEqual(476, suggestion.segments_boxes[0].width)
+        self.assertAlmostEqual(94.666666666, suggestion.segments_boxes[0].height)
         self.assertAlmostEqual(2, suggestion.segments_boxes[0].page_number)
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
@@ -438,10 +460,10 @@ class TestInformationExtractor(TestCase):
         self.assertEqual({"English"}, {x.text for x in suggestions})
 
         self.assertEqual({1}, set([len(x.segments_boxes) for x in suggestions]))
-        self.assertAlmostEqual(397.030 / 0.75, suggestions[0].segments_boxes[0].left)
-        self.assertAlmostEqual(115.517 / 0.75, suggestions[0].segments_boxes[0].top)
-        self.assertAlmostEqual(74.0426 / 0.75, suggestions[0].segments_boxes[0].width)
-        self.assertAlmostEqual(9.0536 / 0.75, suggestions[0].segments_boxes[0].height)
+        self.assertAlmostEqual(397 / 0.75, suggestions[0].segments_boxes[0].left)
+        self.assertAlmostEqual(115 / 0.75, suggestions[0].segments_boxes[0].top)
+        self.assertAlmostEqual(74 / 0.75, suggestions[0].segments_boxes[0].width)
+        self.assertAlmostEqual(9 / 0.75, suggestions[0].segments_boxes[0].height)
         self.assertAlmostEqual(1, suggestions[0].segments_boxes[0].page_number)
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)
@@ -691,6 +713,6 @@ class TestInformationExtractor(TestCase):
         )
         task_calculated, error = InformationExtraction.calculate_task(task)
 
-        self.assertTrue(task_calculated)
+        self.assertFalse(task_calculated)
 
         shutil.rmtree(f"{DOCKER_VOLUME_PATH}/{tenant}", ignore_errors=True)

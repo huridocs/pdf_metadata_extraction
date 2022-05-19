@@ -11,15 +11,14 @@ class SegmentBox(BaseModel):
     page_number: int
 
     def correct_input_data_scale(self):
-        self.left = self.left * SCALE_CONSTANT
-        self.top = self.top * SCALE_CONSTANT
-        self.width = self.width * SCALE_CONSTANT
-        self.height = self.height * SCALE_CONSTANT
-        return self
+        return self.rescaled(SCALE_CONSTANT, SCALE_CONSTANT)
 
     def correct_output_data_scale(self):
-        self.left = self.left / SCALE_CONSTANT
-        self.top = self.top / SCALE_CONSTANT
-        self.width = self.width / SCALE_CONSTANT
-        self.height = self.height / SCALE_CONSTANT
+        return self.rescaled(1/SCALE_CONSTANT, 1/SCALE_CONSTANT)
+
+    def rescaled(self, factor_width: float, factor_height: float):
+        self.left = self.left * factor_width
+        self.top = self.top * factor_height
+        self.width = self.width * factor_width
+        self.height = self.height * factor_height
         return self
