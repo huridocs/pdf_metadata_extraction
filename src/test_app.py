@@ -258,7 +258,8 @@ class TestApp(TestCase):
 
         suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
 
-        self.assertEqual(1, mongo_client.pdf_information_extraction.suggestions.count())
+        suggestions_collection = mongo_client.pdf_information_extraction.suggestions
+        self.assertEqual(1, suggestions_collection.count_documents({}))
         self.assertEqual(tenant + "2", suggestion.tenant)
         self.assertEqual(property_name, suggestion.property_name)
 

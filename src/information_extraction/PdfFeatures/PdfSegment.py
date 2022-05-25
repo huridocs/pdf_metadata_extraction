@@ -23,6 +23,7 @@ class PdfSegment:
         self.ml_label = 0
         self.segment_type = 6
         self.embeddings = []
+        self.multilingual_embeddings = []
 
     def is_selected(self, bounding_box: Rectangle):
         if bounding_box.bottom < self.bounding_box.top or self.bounding_box.bottom < bounding_box.top:

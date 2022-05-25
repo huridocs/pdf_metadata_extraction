@@ -1,5 +1,6 @@
 import os
 import shutil
+from os.path import exists
 from typing import List
 from unittest import TestCase
 
@@ -629,7 +630,9 @@ class TestInformationExtractor(TestCase):
 
         base_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}"
 
-        os.makedirs(f"{base_path}/segment_predictor_model")
+        if not exists(f"{base_path}/segment_predictor_model"):
+            os.makedirs(f"{base_path}/segment_predictor_model")
+
         shutil.copy(self.model_path, f"{base_path}/segment_predictor_model/")
 
         task = InformationExtractionTask(

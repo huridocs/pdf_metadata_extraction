@@ -25,7 +25,7 @@ SERVER_URL = "http://localhost:5052"
 class TestEndToEnd(TestCase):
     def setUp(self):
         subprocess.run("../run start:testing -d", shell=True)
-        time.sleep(10)
+        self.wait_for_the_service()
 
     def tearDown(self):
         subprocess.run("../run stop", shell=True)
@@ -199,3 +199,24 @@ class TestEndToEnd(TestCase):
             if message:
                 queue.deleteMessage(id=message["id"]).execute()
                 return ResultsMessage(**json.loads(message["message"]))
+
+    @staticmethod
+    def wait_for_the_service():
+        for i in range(13):
+            time.sleep(5)
+            if requests.get(f"{SERVER_URL}/info").status_code != 200:
+                continue
+            try:
+                queue = RedisSMQ(
+                    host=REDIS_HOST,
+                    port=REDIS_PORT,
+                    qname="information_extraction_tasks",
+                    quiet=False,
+                )
+
+                queue.sendMessage().message('{"try_queue":"true"}').execute()
+                break
+            except AttributeError:
+                print("waiting 5 second for the service to start")
+
+        TestEndToEnd.get_results_message()

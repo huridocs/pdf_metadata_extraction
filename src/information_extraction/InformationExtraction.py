@@ -1,5 +1,6 @@
 import os
 import shutil
+from os.path import exists
 from pathlib import Path
 from time import sleep
 from typing import List
@@ -18,8 +19,9 @@ import lightgbm as lgb
 from information_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from information_extraction.PdfFeatures.PdfSegment import PdfSegment
 from information_extraction.XmlFile import XmlFile
-from information_extraction.methods.lightgbm_stack_not_complementary_models.LightgbmStackNotComplementaryModels import (
-    LightgbmStackNotComplementaryModels,
+from information_extraction.methods.lightgbm_stack_4.LightgbmStack4 import LightgbmStack4
+from information_extraction.methods.lightgbm_stack_4_multilingual.LightgbmStack4Multilingual import (
+    LightgbmStack4Multilingual,
 )
 
 from semantic_information_extraction.SemanticInformationExtraction import (
@@ -34,28 +36,45 @@ class InformationExtraction:
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-        self.semantic_information_extraction = SemanticInformationExtraction(tenant, property_name)
+
         service_config = ServiceConfig()
-        self.pdf_features: List[PdfFeatures] = list()
-        self.model_path = f"{service_config.docker_volume_path}/{tenant}/{property_name}/segment_predictor_model/model.model"
-        self.model = None
-        self.load_model()
         client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
-        self.segment_selector = LightgbmStackNotComplementaryModels()
+
+        self.pdf_features: List[PdfFeatures] = list()
+
+        base_path = os.path.join(service_config.docker_volume_path, tenant, property_name)
+        self.model = None
+        self.multilingual: bool = False
+        self.model_path = os.path.join(base_path, "segment_predictor_model", "model.model")
+        self.multilingual_model_path = os.path.join(base_path, "multilingual_segment_predictor_model", "model.model")
+        self.load_model()
+
+        self.segment_selector = LightgbmStack4()
+        self.multilingual_segment_selector = LightgbmStack4Multilingual()
+        self.semantic_information_extraction = SemanticInformationExtraction(tenant, property_name)
 
     def load_model(self):
-        if os.path.exists(self.model_path):
+        if exists(self.model_path):
+            self.multilingual = False
             self.model = lgb.Booster(model_file=self.model_path)
+
+        if exists(self.multilingual_model_path):
+            self.multilingual = True
+            self.model = lgb.Booster(model_file=self.multilingual_model_path)
 
     def set_segments_for_training(self):
         client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         pdf_information_extraction_db = client["pdf_information_extraction"]
-
+        self.multilingual = False
         self.pdf_features = list()
         for document in pdf_information_extraction_db.labeleddata.find(self.mongo_filter, no_cursor_timeout=True):
             labeled_data = LabeledData(**document)
+
+            if labeled_data.language_iso != "en" and labeled_data.language_iso != "eng":
+                self.multilingual = True
+
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             xml_file = XmlFile(
                 tenant=labeled_data.tenant,
@@ -73,12 +92,21 @@ class InformationExtraction:
         if not len(self.pdf_features) or not sum([len(pdf_features.pdf_segments) for pdf_features in self.pdf_features]):
             return False, "No labeled data to create model"
 
-        self.model = self.segment_selector.create_model(self.pdf_features)
+        self.prepare_model_folder()
 
-        if not os.path.exists(Path(self.model_path).parents[0]):
-            os.makedirs(Path(self.model_path).parents[0])
+        if self.multilingual:
+            if not exists(Path(self.multilingual_model_path).parents[0]):
+                os.makedirs(Path(self.multilingual_model_path).parents[0])
 
-        self.model.save_model(self.model_path, num_iteration=self.model.best_iteration)
+            self.model = self.multilingual_segment_selector.create_model(self.pdf_features)
+            self.model.save_model(self.multilingual_model_path, num_iteration=self.model.best_iteration)
+        else:
+            if not exists(Path(self.model_path).parents[0]):
+                os.makedirs(Path(self.model_path).parents[0])
+
+            self.model = self.segment_selector.create_model(self.pdf_features)
+            self.model.save_model(self.model_path, num_iteration=self.model.best_iteration)
+
         sleep(3)
 
         self.create_semantic_model()
@@ -131,8 +159,9 @@ class InformationExtraction:
         xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.property_name, False)
         for suggestion in suggestions:
             self.pdf_information_extraction_db.predictiondata.delete_many({"xml_file_name": suggestion.xml_file_name})
-            if os.path.exists(f"{xml_folder_path}/{suggestion.xml_file_name}"):
-                os.remove(f"{xml_folder_path}/{suggestion.xml_file_name}")
+            suggestion_xml_path = os.path.join(xml_folder_path, suggestion.xml_file_name)
+            if exists(suggestion_xml_path):
+                os.remove(suggestion_xml_path)
 
         return True, ""
 
@@ -150,8 +179,10 @@ class InformationExtraction:
                 xml_file_name=prediction_data.xml_file_name,
             )
             pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+
             if not pdf_features.pdf_segments:
                 continue
+
             suggestions.append(
                 self.get_suggested_segment(xml_file_name=prediction_data.xml_file_name, pdf_features=pdf_features)
             )
@@ -165,7 +196,10 @@ class InformationExtraction:
         return suggestions
 
     def get_suggested_segment(self, xml_file_name: str, pdf_features: PdfFeatures):
-        predictions = self.segment_selector.predict(self.model, [pdf_features])
+        if self.multilingual:
+            predictions = self.multilingual_segment_selector.predict(self.model, [pdf_features])
+        else:
+            predictions = self.segment_selector.predict(self.model, [pdf_features])
         predicted_segments: List[PdfSegment] = list()
         for index, segment in enumerate(pdf_features.pdf_segments):
             if predictions[index] > 0.5:
@@ -203,3 +237,12 @@ class InformationExtraction:
             return information_extraction.get_suggestions()
 
         return False, "Error"
+
+    def prepare_model_folder(self):
+        shutil.rmtree(Path(self.multilingual_model_path).parent, ignore_errors=True)
+        shutil.rmtree(Path(self.model_path).parent, ignore_errors=True)
+
+        base_path = self.multilingual_model_path if self.multilingual else self.model_path
+
+        if not exists(Path(base_path).parent):
+            os.makedirs(Path(base_path).parent)

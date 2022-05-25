@@ -13,6 +13,7 @@ services:
       - ./docker_volume:/app/docker_volume
     depends_on:
       - mongo_information_extraction
+      - queue_processor_information_extraction
   queue_processor_information_extraction:
     init: true
     network_mode: host

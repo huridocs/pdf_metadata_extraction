@@ -71,8 +71,10 @@ class QueueProcessor:
     def subscribe_to_tasks_queue(self):
         while True:
             try:
+                self.logger.info("Creating queues")
                 self.task_queue.createQueue().exceptions(False).execute()
                 self.results_queue.createQueue().exceptions(False).execute()
+                self.logger.info("Queues have been created")
 
                 redis_smq_consumer = RedisSMQConsumer(
                     qname=self.config.tasks_queue_name,

@@ -69,6 +69,8 @@ class ServiceConfig:
             logger.addHandler(graylog_handler)
 
         file_handler = logging.FileHandler(f"{self.docker_volume_path}/{logger_name}.log")
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        file_handler.setFormatter(formatter)
 
         logger.addHandler(file_handler)
         return logger

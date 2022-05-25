@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from typing import List, Optional, Dict
 
 from data.SegmentationData import SegmentationData
+from information_extraction.LightGBM_30Features_OneHotOneLetter.predict import set_tag_types
 from information_extraction.PdfFeatures.PdfAnnotation import PdfAnnotation
 from information_extraction.PdfFeatures.PdfPage import PdfPage
 
@@ -18,6 +19,10 @@ from information_extraction.PdfFeatures.PdfFont import PdfFont
 from information_extraction.PdfFeatures.PdfSegment import PdfSegment
 from information_extraction.PdfFeatures.PdfTag import PdfTag
 from information_extraction.PdfFeatures.Rectangle import Rectangle
+from information_extraction.PdfFeatures.embeddings_models import (
+    multilingual_sentence_embeddings_model,
+    sentence_embeddings_model,
+)
 from information_extraction.XmlFile import XmlFile
 
 
@@ -135,6 +140,24 @@ class PdfFeatures:
         return PdfFeatures([], [], "", "")
 
     @staticmethod
+    def set_embeddings(pdf_features: "PdfFeatures") -> "PdfFeatures":
+        text_contents = [pdf_segment.text_content for pdf_segment in pdf_features.pdf_segments]
+
+        if not text_contents:
+            return pdf_features
+
+        sentence_embeddings = sentence_embeddings_model(text_contents)
+        embeddings_list = [list(x.numpy()) for x in sentence_embeddings]
+
+        sentence_embeddings = multilingual_sentence_embeddings_model(text_contents)
+        multilingual_embeddings_list = [list(x.numpy()) for x in sentence_embeddings]
+        for index, pdf_segment in enumerate(pdf_features.pdf_segments):
+            pdf_segment.embeddings = embeddings_list[index]
+            pdf_segment.multilingual_embeddings = multilingual_embeddings_list[index]
+
+        return pdf_features
+
+    @staticmethod
     def from_xml_file(xml_file: XmlFile, segmentation_data: SegmentationData) -> Optional["PdfFeatures"]:
         try:
             xml_file_content = pathlib.Path(xml_file.xml_file_path).read_bytes()
@@ -146,5 +169,6 @@ class PdfFeatures:
         segmentation_data.rescale(page_width=pdf_features.pages[0].page_width, page_height=pdf_features.pages[0].page_height)
         pdf_features.set_segments_from_segmentation_data(segmentation_data)
         pdf_features.set_ml_label_from_segmentation_data(segmentation_data)
-
+        set_tag_types(pdf_features)
+        pdf_features = PdfFeatures.set_embeddings(pdf_features)
         return pdf_features
