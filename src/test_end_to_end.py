@@ -1,23 +1,30 @@
 import json
-import os
 import subprocess
 import time
 from unittest import TestCase
 
-import docker
 from rsmq import RedisSMQ
 
 import requests
 
 from data.InformationExtractionTask import InformationExtractionTask
+from data.Option import Option
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
 from data.Suggestion import Suggestion
+from data.SuggestionMultiOption import SuggestionMultiOption
 
 DOCKER_VOLUME_PATH = f"../docker_volume"
 
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = "6379"
+
+QUEUE = RedisSMQ(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    qname="information_extraction_tasks",
+    quiet=False,
+)
 
 SERVER_URL = "http://localhost:5052"
 
@@ -30,21 +37,15 @@ class TestEndToEnd(TestCase):
     def tearDown(self):
         subprocess.run("../run stop", shell=True)
 
-    def test_end_to_end(self):
-        docker_client = docker.DockerClient(base_url="unix://var/run/docker.sock")
-        print(docker_client.containers.list())
+    def test_redis_message_to_ignore(self):
+        QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
 
-        if os.path.exists("docker_volume/redis_tasks.log"):
-            with open("docker_volume/redis_tasks.log", "r") as f:
-                print("\n".join([x for x in f.readlines()]))
-
+    def test_create_model(self):
         tenant = "end_to_end_test"
         property_name = "property_name"
 
-        with open(
-            f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml",
-            "rb",
-        ) as stream:
+        test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+        with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files)
 
@@ -62,20 +63,12 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
-        queue = RedisSMQ(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            qname="information_extraction_tasks",
-            quiet=False,
-        )
-        queue.sendMessage().message('{"message_to_avoid":"to_be_written_in_log_file"}').execute()
-
         task = InformationExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(property_name=property_name),
         )
-        queue.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
 
         results_message = self.get_results_message()
         expected_result = ResultsMessage(
@@ -89,10 +82,13 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(expected_result, results_message)
 
-        with open(
-            f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_predict/test.xml",
-            "rb",
-        ) as stream:
+    def test_get_suggestions(self):
+        tenant = "end_to_end_test"
+        property_name = "property_name"
+
+        test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+
+        with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{property_name}", files=files)
 
@@ -112,7 +108,7 @@ class TestEndToEnd(TestCase):
             task="suggestions",
             params=Params(property_name=property_name),
         )
-        queue.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
 
         results_message = self.get_results_message()
         expected_result = ResultsMessage(
@@ -147,12 +143,110 @@ class TestEndToEnd(TestCase):
         self.assertAlmostEqual(12 / 0.75, suggestion.segments_boxes[0].height)
         self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
 
+    def test_create_model_multi_select(self):
+        tenant = "end_to_end_test"
+        property_name = "multi_select_name"
+
+        test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+        with open(test_xml_path, mode="rb") as stream:
+            files = {"file": stream}
+            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files)
+
+        labeled_data_json = {
+            "property_name": property_name,
+            "tenant": tenant,
+            "xml_file_name": "test.xml",
+            "language_iso": "en",
+            "label_text": "text",
+            "page_width": 612,
+            "page_height": 792,
+            "xml_segments_boxes": [],
+            "label_segments_boxes": [{"left": 165, "top": 64, "width": 111, "height": 17, "page_number": 1}],
+        }
+
+        requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        options = [Option(id="id1", label="United Nations"), Option(id="id2", label="Other")]
+        task = InformationExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(property_name=property_name, options=[options], multi_value=True),
+        )
+
+        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+        results_message = self.get_results_message()
+        expected_result = ResultsMessage(
+            tenant=tenant,
+            task="create_model",
+            params=Params(property_name=property_name, options=[options], multi_value=True),
+            success=True,
+            error_message="",
+            data_url=None,
+        )
+
+        self.assertEqual(expected_result, results_message)
+
+    def test_get_suggestions_multi_select(self):
+        tenant = "end_to_end_test"
+        property_name = "multi_select_name"
+
+        test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+
+        with open(test_xml_path, mode="rb") as stream:
+            files = {"file": stream}
+            requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{property_name}", files=files)
+
+        predict_data_json = {
+            "tenant": tenant,
+            "property_name": property_name,
+            "xml_file_name": "test.xml",
+            "page_width": 612,
+            "page_height": 792,
+            "xml_segments_boxes": [],
+        }
+
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        task = InformationExtractionTask(
+            tenant=tenant,
+            task="suggestions",
+            params=Params(property_name=property_name),
+        )
+
+        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+
+        results_message = self.get_results_message()
+        response = requests.get(results_message.data_url)
+
+        suggestions = json.loads(response.json())
+        suggestion = SuggestionMultiOption(**suggestions[0])
+
+        self.assertEqual(1, len(suggestions))
+
+        self.assertEqual(tenant, suggestion.tenant)
+        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual("test.xml", suggestion.xml_file_name)
+        self.assertEqual([Option(id="id1", label="United Nations")], suggestion.options)
+        self.assertEqual("United Nations", suggestion.segment_text)
+        self.assertEqual(1, suggestion.page_number)
+
+        self.assertEqual(len(suggestion.segments_boxes), 1)
+        self.assertAlmostEqual(123 / 0.75, suggestion.segments_boxes[0].left)
+        self.assertAlmostEqual(48 / 0.75, suggestion.segments_boxes[0].top)
+        self.assertAlmostEqual(82 / 0.75, suggestion.segments_boxes[0].width)
+        self.assertAlmostEqual(12 / 0.75, suggestion.segments_boxes[0].height)
+        self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
+
+    def test_create_model_error(self):
+        tenant = "end_to_end_test"
+        property_name = "property_name"
         task = InformationExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(property_name=property_name),
         )
-        queue.sendMessage(delay=0).message(str(task.json())).execute()
+
+        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
 
         results_message = self.get_results_message()
         expected_result = ResultsMessage(
@@ -171,7 +265,7 @@ class TestEndToEnd(TestCase):
             task="suggestions",
             params=Params(property_name=property_name),
         )
-        queue.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
 
         results_message = self.get_results_message()
         expected_result = ResultsMessage(

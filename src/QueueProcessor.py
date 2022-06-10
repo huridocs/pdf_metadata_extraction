@@ -9,7 +9,7 @@ from rsmq import RedisSMQ
 from ServiceConfig import ServiceConfig
 from data.InformationExtractionTask import InformationExtractionTask
 from data.ResultsMessage import ResultsMessage
-from information_extraction.InformationExtraction import InformationExtraction
+from metadata_extraction.InformationExtraction import MetadataExtraction
 
 
 class QueueProcessor:
@@ -38,7 +38,7 @@ class QueueProcessor:
             return True
 
         self.logger.info(f"Valid message: {message}")
-        task_calculated, error_message = InformationExtraction.calculate_task(task)
+        task_calculated, error_message = MetadataExtraction.calculate_task(task)
         if error_message:
             self.logger.info(f"Error: {error_message}")
 
@@ -51,7 +51,7 @@ class QueueProcessor:
                 error_message=error_message,
             )
         else:
-            if task.task == InformationExtraction.SUGGESTIONS_TASK_NAME:
+            if task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
                 data_url = f"{self.config.service_url}/get_suggestions/{task.tenant}/{task.params.property_name}"
             else:
                 data_url = None

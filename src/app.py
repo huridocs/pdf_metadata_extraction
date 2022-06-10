@@ -8,9 +8,11 @@ from rsmq import RedisSMQ
 
 from ServiceConfig import ServiceConfig
 from data.LabeledData import LabeledData
+from data.LabeledDataMultiOption import LabeledDataMultiOption
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
-from information_extraction.XmlFile import XmlFile
+from data.SuggestionMultiOption import SuggestionMultiOption
+from metadata_extraction.XmlFile import XmlFile
 
 config = ServiceConfig()
 logger = config.get_logger("service")
@@ -90,9 +92,22 @@ async def delete_queues():
 async def labeled_data_post(labeled_data: LabeledData):
     try:
         client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-        pdf_information_extraction_db = client["pdf_information_extraction"]
+        pdf_metadata_extraction_db = client["pdf_information_extraction"]
         labeled_data = labeled_data.correct_data_scale()
-        pdf_information_extraction_db.labeleddata.insert_one(labeled_data.dict())
+        pdf_metadata_extraction_db.labeled_data.insert_one(labeled_data.dict())
+        return "labeled data saved"
+    except Exception:
+        logger.error("Error", exc_info=1)
+        raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
+
+
+@app.post("/labeled_data_multi_option")
+async def labeled_data_multi_option_post(labeled_data: LabeledDataMultiOption):
+    try:
+        client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+        pdf_metadata_extraction_db = client["pdf_information_extraction"]
+        labeled_data = labeled_data.correct_data_scale()
+        pdf_metadata_extraction_db.labeled_data_multi_option.insert_one(labeled_data.dict())
         return "labeled data saved"
     except Exception:
         logger.error("Error", exc_info=1)
@@ -103,8 +118,8 @@ async def labeled_data_post(labeled_data: LabeledData):
 async def prediction_data_post(prediction_data: PredictionData):
     try:
         client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-        pdf_information_extraction_db = client["pdf_information_extraction"]
-        pdf_information_extraction_db.predictiondata.insert_one(prediction_data.dict())
+        pdf_metadata_extraction_db = client["pdf_information_extraction"]
+        pdf_metadata_extraction_db.predictiondata.insert_one(prediction_data.dict())
         return "prediction data saved"
     except Exception:
         logger.error("Error", exc_info=1)
@@ -115,15 +130,34 @@ async def prediction_data_post(prediction_data: PredictionData):
 async def get_suggestions(tenant: str, property_name: str):
     try:
         client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-        pdf_information_extraction_db = client["pdf_information_extraction"]
+        pdf_metadata_extraction_db = client["pdf_information_extraction"]
         suggestions_filter = {"tenant": tenant, "property_name": property_name}
         suggestions_list: List[Dict[str, str]] = list()
 
-        for document in pdf_information_extraction_db.suggestions.find(suggestions_filter, no_cursor_timeout=True):
+        for document in pdf_metadata_extraction_db.suggestions.find(suggestions_filter, no_cursor_timeout=True):
             suggestions_list.append(Suggestion(**document).dict())
 
-        pdf_information_extraction_db.suggestions.delete_many(suggestions_filter)
+        pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
         logger.info(f"{len(suggestions_list)} suggestions created for {tenant} {property_name}")
+        return json.dumps(suggestions_list)
+    except Exception:
+        logger.error("Error", exc_info=1)
+        raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
+
+
+@app.get("/get_suggestions_multi_option/{tenant}/{property_name}")
+async def get_suggestions_multi_option(tenant: str, property_name: str):
+    try:
+        client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+        pdf_metadata_extraction_db = client["pdf_information_extraction"]
+        suggestions_filter = {"tenant": tenant, "property_name": property_name}
+        suggestions_list: List[Dict[str, str]] = list()
+
+        for document in pdf_metadata_extraction_db.suggestions_multi_option.find(suggestions_filter, no_cursor_timeout=True):
+            suggestions_list.append(SuggestionMultiOption(**document).dict())
+
+        pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
+        logger.info(f"{len(suggestions_list)} suggestions multi option created for {tenant} {property_name}")
         return json.dumps(suggestions_list)
     except Exception:
         logger.error("Error", exc_info=1)
