@@ -598,7 +598,7 @@ class TestMetadataExtractor(TestCase):
         self.assertFalse(task_calculated)
 
         self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, 'xml_to_train')))
+        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, "xml_to_train")))
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
@@ -659,9 +659,7 @@ class TestMetadataExtractor(TestCase):
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}
-        for document in mongo_client.pdf_information_extraction.suggestions.find(
-            find_filter, no_cursor_timeout=True
-        ):
+        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
@@ -673,6 +671,6 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual([{"id": "id15", "label": "15"}], suggestions[0].options)
 
         self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, 'xml_to_train')))
+        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, "xml_to_train")))
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)

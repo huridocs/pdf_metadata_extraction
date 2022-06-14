@@ -39,9 +39,10 @@ class TestMultiOptionExtractor(TestCase):
 
         multi_option_extractor.create_model(multi_option_extraction_data=multi_option_extraction_data)
 
-        self.assertTrue(MultiOptionExtractor.exist_model(TestMultiOptionExtractor.TENANT,
-                                                         TestMultiOptionExtractor.PROPERTY_NAME))
-        self.assertFalse(MultiOptionExtractor.exist_model('other_tenant', TestMultiOptionExtractor.PROPERTY_NAME))
+        self.assertTrue(
+            MultiOptionExtractor.exist_model(TestMultiOptionExtractor.TENANT, TestMultiOptionExtractor.PROPERTY_NAME)
+        )
+        self.assertFalse(MultiOptionExtractor.exist_model("other_tenant", TestMultiOptionExtractor.PROPERTY_NAME))
         self.assertFalse(MultiOptionExtractor.exist_model(TestMultiOptionExtractor.TENANT, "other_property_name"))
 
     def test_get_predictions(self):
