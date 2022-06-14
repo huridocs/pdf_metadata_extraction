@@ -12,7 +12,7 @@ from data.Suggestion import Suggestion
 
 client = TestClient(app)
 
-DOCKER_VOLUME_PATH = f"../docker_volume"
+DOCKER_VOLUME_PATH = "../docker_volume"
 
 
 class TestApp(TestCase):

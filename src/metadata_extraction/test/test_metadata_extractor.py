@@ -24,7 +24,7 @@ class TestMetadataExtractor(TestCase):
     test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
     model_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/segment_predictor_model/model.model"
 
-    @mongomock.patch(servers=[f"mongodb://127.0.0.1:29017"])
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_error_when_blank_document(self):
         tenant = "segment_test"
         property_name = "property_name"

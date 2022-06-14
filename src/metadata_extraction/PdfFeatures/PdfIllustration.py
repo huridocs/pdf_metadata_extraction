@@ -1,5 +1,3 @@
-from typing import List
-
 from bs4 import Tag
 
 from metadata_extraction.PdfFeatures.Rectangle import Rectangle

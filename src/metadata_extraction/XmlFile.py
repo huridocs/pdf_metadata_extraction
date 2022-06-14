@@ -26,8 +26,8 @@ class XmlFile:
         service_config = ServiceConfig()
         xml_folder_path = f"{service_config.docker_volume_path}/{tenant}/{property_name}"
         if to_train:
-            xml_folder_path += f"/xml_to_train"
+            xml_folder_path += "/xml_to_train"
         else:
-            xml_folder_path += f"/xml_to_predict"
+            xml_folder_path += "/xml_to_predict"
 
         return xml_folder_path

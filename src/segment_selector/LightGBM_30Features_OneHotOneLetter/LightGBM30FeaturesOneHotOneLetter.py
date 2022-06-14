@@ -1,6 +1,5 @@
 import numpy as np
 from typing import List, Dict
-from pathlib import Path
 
 from copy import deepcopy
 
@@ -82,13 +81,12 @@ class LightGBM30FeaturesOneHotOneLetter:
 
     @staticmethod
     def get_feature_matrix(pdf_features_list, model_configs: Dict):
-        X_train = None
         y_train = np.array([])
         x_rows = list()
         for pdf_features in pdf_features_list:
             X_sub, y_sub = LightGBM30FeaturesOneHotOneLetter.__get_training_data(pdf_features, model_configs)
             if X_sub is None:
-                print(f"File has no data")
+                print("File has no data")
                 continue
             x_rows.append(X_sub)
             y_train = np.append(y_train, y_sub)

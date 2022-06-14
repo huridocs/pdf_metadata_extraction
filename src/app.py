@@ -17,7 +17,7 @@ logger = config.get_logger("service")
 
 app = FastAPI()
 
-logger.info(f"PDF information extraction service has started")
+logger.info("PDF information extraction service has started")
 
 
 @app.get("/info")

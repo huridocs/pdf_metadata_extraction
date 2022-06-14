@@ -13,7 +13,7 @@ from data.Params import Params
 from data.ResultsMessage import ResultsMessage
 from data.Suggestion import Suggestion
 
-DOCKER_VOLUME_PATH = f"../docker_volume"
+DOCKER_VOLUME_PATH = "../docker_volume"
 
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = "6379"

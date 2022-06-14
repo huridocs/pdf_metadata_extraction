@@ -1,6 +1,5 @@
-import os
 import shutil
-from os.path import exists, join
+from os.path import join
 from pathlib import Path
 from typing import List
 
