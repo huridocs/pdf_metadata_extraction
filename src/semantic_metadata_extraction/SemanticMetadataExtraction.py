@@ -34,10 +34,7 @@ class SemanticMetadataExtraction:
 
     def create_model(self, semantic_extraction_data: List[SemanticExtractionData]):
         cache_path = f"{self.docker_volume}/model_cache"
-        try:
-            os.mkdir(cache_path)
-        except FileExistsError:
-            pass
+        os.makedirs(cache_path, exist_ok=True)
 
         self.semantic_extraction_data = semantic_extraction_data
         non_en_extractions = [x for x in semantic_extraction_data if x.language_iso != "en" and x.language_iso != "eng"]

@@ -63,6 +63,8 @@ Containers with `./run start:testing`
 ![Alt logo](readme_pictures/send_files.png?raw=true "Post xml files")
 
 3. Post labeled data
+    
+    Text, numeric or date cases:
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
                              "property_name": "property_name",
@@ -74,10 +76,23 @@ Containers with `./run start:testing`
                              "xml_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}],
                              "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
                              }' localhost:5052/labeled_data
+    
+    Multi-option case:
+
+    curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
+                             "property_name": "property_name",
+                             "tenant": "tenant_name",
+                             "language_iso": "en",
+                             "options": [{"id": "1", "label": "option 1"}, {"id": "2", "label": "option 2"}],
+                             "page_width": 612,
+                             "page_height": 792,
+                             "xml_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}],
+                             "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
+                             }' localhost:5052/labeled_data
 
 ![Alt logo](readme_pictures/send_json.png?raw=true "Post labeled data")
 
-5. Post data to predict
+4. Post data to predict
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
                              "property_name": "property_name",
@@ -89,20 +104,32 @@ Containers with `./run start:testing`
 
 ![Alt logo](readme_pictures/send_json.png?raw=true "Post data to predict")
 
-6. Create model and calculate suggestions
+5. Create model and calculate suggestions
 
 To create the model or calculate the suggestions, a message to redis should be sent. The name for the tasks queue is "
 information_extraction_tasks"
 
     queue = RedisSMQ(host='127.0.0.1', port='6579', qname='information_extraction_tasks', quiet=False)
+    
+    # Text, numeric or date cases:
+
     # Create model
     queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "create_model", "params": {"property_name": "property_name"}}').execute()
+    # Calculate suggestions
+    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "suggestions", "params": {"property_name": "property_name"}}').execute()
+    
+    # Multi-option case:
+
+    # Create model
+    # The options parameter are all the posible values for all the PDF
+    # The multi_value parameter tells if the algorithm can pick more than one option per PDF
+    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "create_model", "params": {"property_name": "property_name" , "options": [{"id": "1", "label": "option 1"}, {"id": "2", "label": "option 2"}, {"id": "3", "label": "option 3"}], "multi_value": false}}').execute()
     # Calculate suggestions
     queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "suggestions", "params": {"property_name": "property_name"}}').execute()
 
 ![Alt logo](readme_pictures/process.png?raw=true "Create model and calculate suggestions")
 
-7. Get results
+6. Get results
 
 There is a redis queue where it is possible to get notified when the different tasks finish
 
@@ -136,6 +163,8 @@ or in python
 
 The suggestions have the following format:
 
+Text, numeric or date cases:
+
 ```
         [{
         "tenant": "tenant", 
@@ -150,6 +179,28 @@ The suggestions have the following format:
         "property_name": "property_name", 
         "xml_file_name": "xml_file_name_2", 
         "text": "suggestion_text_2", 
+        "segment_text": "segment_text_2",
+        "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 2}]
+        }, ... ]
+
+```
+
+Multi-option case:
+
+```
+        [{
+        "tenant": "tenant", 
+        "property_name": "property_name", 
+        "xml_file_name": "xml_file_name_1", 
+        "options": [{"id": "1", "label": "option 1"}], 
+        "segment_text": "segment_text_1",
+        "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}]
+        }, 
+        {
+        "tenant": "tenant", 
+        "property_name": "property_name", 
+        "xml_file_name": "xml_file_name_2", 
+        "options": [{"id": "2", "label": "option 2"}], 
         "segment_text": "segment_text_2",
         "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 2}]
         }, ... ]

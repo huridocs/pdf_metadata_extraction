@@ -31,7 +31,6 @@ SERVER_URL = "http://localhost:5052"
 class TestEndToEnd(TestCase):
     @classmethod
     def setUpClass(cls):
-        print('hi')
         subprocess.run("../run start:testing -d", shell=True)
         cls.wait_for_the_service()
 
