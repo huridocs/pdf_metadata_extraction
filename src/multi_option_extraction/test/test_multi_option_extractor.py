@@ -93,7 +93,7 @@ class TestMultiOptionExtractor(TestCase):
         samples = [
             MultiOptionExtractionSample(text="Berlin", options=[options[0]]),
             MultiOptionExtractionSample(text="Paris", options=[options[1]]),
-        ] * 20
+        ] * 10
 
         multi_option_extraction_data = MultiOptionExtractionData(
             multilingual=True, multi_value=False, options=options, samples=samples
