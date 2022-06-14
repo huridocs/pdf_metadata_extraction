@@ -50,10 +50,9 @@ class QueueProcessor:
                 error_message=error_message,
             )
         else:
+            data_url = None
             if task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
                 data_url = f"{self.config.service_url}/get_suggestions/{task.tenant}/{task.params.property_name}"
-            else:
-                data_url = None
 
             model_results_message = ResultsMessage(
                 tenant=task.tenant,
