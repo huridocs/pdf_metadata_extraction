@@ -19,6 +19,15 @@ function install_venv {
   printf '\e[33m\n%s\n\n\e[0m' '"source ./venv/bin/activate" to activate venv (only needed if not running commands from the run script)'
 }
 
+function install_venv_dev {
+  python3 -m venv venv
+  source venv/bin/activate
+  python3 -m pip install --upgrade pip
+  python3 -m pip install -r requirements.txt
+  python3 -m pip install -r requirements_dev.txt
+  printf '\e[33m\n%s\n\n\e[0m' '"source ./venv/bin/activate" to activate venv (only needed if not running commands from the run script)'
+}
+
 function formatter {
   _source_venv
   # Format Python code with black
@@ -34,7 +43,7 @@ function check_format {
 function test {
   _source_venv
   command cd src
-  command pytest
+  command pytest .
 
 }
 

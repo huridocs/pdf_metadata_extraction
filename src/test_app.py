@@ -149,9 +149,9 @@ class TestApp(TestCase):
             "label_segments_boxes": [{"left": 8, "top": 12, "width": 16, "height": 20, "page_number": 10}],
         }
 
-        response = client.post("/labeled_data_multi_option", json=json_data)
+        response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = mongo_client.pdf_information_extraction.labeled_data_multi_option.find_one()
+        labeled_data_document = mongo_client.pdf_information_extraction.labeled_data.find_one()
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -314,9 +314,9 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client.pdf_information_extraction.suggestions_multi_option.insert_many(json_data)
+        mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
 
-        response = client.get(f"/get_suggestions_multi_option/{tenant}/{property_name}")
+        response = client.get(f"/get_suggestions/{tenant}/{property_name}")
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)

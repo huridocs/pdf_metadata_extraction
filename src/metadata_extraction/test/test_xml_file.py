@@ -1,5 +1,6 @@
 import os
 import shutil
+from os.path import join
 from unittest import TestCase
 
 from metadata_extraction.XmlFile import XmlFile

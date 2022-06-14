@@ -2,6 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
+from data.Option import Option
 from data.SegmentBox import SegmentBox
 
 
@@ -10,7 +11,8 @@ class LabeledData(BaseModel):
     property_name: str
     xml_file_name: str
     language_iso: str
-    label_text: str
+    label_text: str = ""
+    options: List[Option] = list()
     page_width: float
     page_height: float
     xml_segments_boxes: List[SegmentBox]

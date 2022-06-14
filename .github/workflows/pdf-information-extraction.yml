@@ -22,7 +22,7 @@ jobs:
         python-version: 3.9
 
     - name: Install venv
-      run: ./run install_venv
+      run: ./run install_venv_dev
 
     - name: Lint with flake8
       run: ./run check_format

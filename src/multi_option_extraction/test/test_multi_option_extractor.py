@@ -23,6 +23,27 @@ class TestMultiOptionExtractor(TestCase):
     def tearDown(self):
         shutil.rmtree(join(TestMultiOptionExtractor.DOCKER_VOLUME_PATH, TestMultiOptionExtractor.TENANT), ignore_errors=True)
 
+    def test_exist_model(self):
+        multi_option_extractor = MultiOptionExtractor(
+            tenant=TestMultiOptionExtractor.TENANT, property_name=TestMultiOptionExtractor.PROPERTY_NAME
+        )
+        options = [Option(id="id1", label="option 1"), Option(id="id2", label="option 2")]
+        samples = [
+            MultiOptionExtractionSample(text="option 1", options=[options[0]]),
+            MultiOptionExtractionSample(text="option 2", options=[options[1]]),
+        ]
+
+        multi_option_extraction_data = MultiOptionExtractionData(
+            multilingual=False, multi_value=False, options=options, samples=samples
+        )
+
+        multi_option_extractor.create_model(multi_option_extraction_data=multi_option_extraction_data)
+
+        self.assertTrue(MultiOptionExtractor.exist_model(TestMultiOptionExtractor.TENANT,
+                                                         TestMultiOptionExtractor.PROPERTY_NAME))
+        self.assertFalse(MultiOptionExtractor.exist_model('other_tenant', TestMultiOptionExtractor.PROPERTY_NAME))
+        self.assertFalse(MultiOptionExtractor.exist_model(TestMultiOptionExtractor.TENANT, "other_property_name"))
+
     def test_get_predictions(self):
         multi_option_extractor = MultiOptionExtractor(
             tenant=TestMultiOptionExtractor.TENANT, property_name=TestMultiOptionExtractor.PROPERTY_NAME
@@ -74,10 +95,7 @@ class TestMultiOptionExtractor(TestCase):
         ] * 15
 
         multi_option_extraction_data = MultiOptionExtractionData(
-            multilingual=True,
-            multi_value=False,
-            options=options,
-            samples=samples
+            multilingual=True, multi_value=False, options=options, samples=samples
         )
 
         model_created, error = multi_option_extractor.create_model(multi_option_extraction_data=multi_option_extraction_data)

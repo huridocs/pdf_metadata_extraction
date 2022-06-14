@@ -7,12 +7,11 @@ from rsmq import RedisSMQ
 
 import requests
 
-from data.InformationExtractionTask import InformationExtractionTask
+from data.MetadataExtractionTask import MetadataExtractionTask
 from data.Option import Option
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
 from data.Suggestion import Suggestion
-from data.SuggestionMultiOption import SuggestionMultiOption
 
 DOCKER_VOLUME_PATH = f"../docker_volume"
 
@@ -30,11 +29,14 @@ SERVER_URL = "http://localhost:5052"
 
 
 class TestEndToEnd(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        print('hi')
         subprocess.run("../run start:testing -d", shell=True)
-        self.wait_for_the_service()
+        cls.wait_for_the_service()
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         subprocess.run("../run stop", shell=True)
 
     def test_redis_message_to_ignore(self):
@@ -63,7 +65,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(property_name=property_name),
@@ -103,7 +105,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(property_name=property_name),
@@ -143,21 +145,24 @@ class TestEndToEnd(TestCase):
         self.assertAlmostEqual(12 / 0.75, suggestion.segments_boxes[0].height)
         self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
 
-    def test_create_model_multi_select(self):
+    def test_get_suggestions_multi_select(self):
         tenant = "end_to_end_test"
         property_name = "multi_select_name"
 
         test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files)
+
+        options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
 
         labeled_data_json = {
             "property_name": property_name,
             "tenant": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
-            "label_text": "text",
+            "options": [{"id": "1", "label": "United Nations"}],
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
@@ -165,32 +170,6 @@ class TestEndToEnd(TestCase):
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
-
-        options = [Option(id="id1", label="United Nations"), Option(id="id2", label="Other")]
-        task = InformationExtractionTask(
-            tenant=tenant,
-            task="create_model",
-            params=Params(property_name=property_name, options=[options], multi_value=True),
-        )
-
-        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
-        results_message = self.get_results_message()
-        expected_result = ResultsMessage(
-            tenant=tenant,
-            task="create_model",
-            params=Params(property_name=property_name, options=[options], multi_value=True),
-            success=True,
-            error_message="",
-            data_url=None,
-        )
-
-        self.assertEqual(expected_result, results_message)
-
-    def test_get_suggestions_multi_select(self):
-        tenant = "end_to_end_test"
-        property_name = "multi_select_name"
-
-        test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
 
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
@@ -207,7 +186,17 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(property_name=property_name, options=options, muti_value=False),
+        )
+
+        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+
+        self.get_results_message()
+
+        task = MetadataExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(property_name=property_name),
@@ -219,14 +208,14 @@ class TestEndToEnd(TestCase):
         response = requests.get(results_message.data_url)
 
         suggestions = json.loads(response.json())
-        suggestion = SuggestionMultiOption(**suggestions[0])
+        suggestion = Suggestion(**suggestions[0])
 
         self.assertEqual(1, len(suggestions))
 
         self.assertEqual(tenant, suggestion.tenant)
         self.assertEqual(property_name, suggestion.property_name)
         self.assertEqual("test.xml", suggestion.xml_file_name)
-        self.assertEqual([Option(id="id1", label="United Nations")], suggestion.options)
+        self.assertEqual([Option(id="1", label="United Nations")], suggestion.options)
         self.assertEqual("United Nations", suggestion.segment_text)
         self.assertEqual(1, suggestion.page_number)
 
@@ -240,7 +229,7 @@ class TestEndToEnd(TestCase):
     def test_create_model_error(self):
         tenant = "end_to_end_test"
         property_name = "property_name"
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(property_name=property_name),
@@ -260,7 +249,7 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(results_message, expected_result)
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(property_name=property_name),

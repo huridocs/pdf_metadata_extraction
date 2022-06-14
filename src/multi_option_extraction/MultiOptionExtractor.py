@@ -49,6 +49,9 @@ class MultiOptionExtractor:
         return [self.get_options_fuzzy_wuzzy(text) for text in texts]
 
     def load_options(self):
+        if not exists(self.options_path) or not exists(self.multi_value_path):
+            return
+
         with open(self.options_path, "r") as file:
             self.options = [Option(**x) for x in json.load(file)]
         with open(self.multi_value_path, "r") as file:
@@ -75,7 +78,7 @@ class MultiOptionExtractor:
         options = list()
         options_labels = [x.label for x in self.options]
 
-        for predicted_option in prediction_text.split(' ; '):
+        for predicted_option in prediction_text.split(" ; "):
             if predicted_option in options_labels:
                 options.append(self.options[options_labels.index(predicted_option)])
                 continue
@@ -88,3 +91,8 @@ class MultiOptionExtractor:
 
         return MultiOptionExtractionSample(text=text, options=options)
 
+    @staticmethod
+    def exist_model(tenant, property_name):
+        multi_option_extractor = MultiOptionExtractor(tenant, property_name)
+        multi_option_extractor.load_options()
+        return len(multi_option_extractor.options) > 0

@@ -7,9 +7,9 @@ from rsmq.consumer import RedisSMQConsumer
 from rsmq import RedisSMQ
 
 from ServiceConfig import ServiceConfig
-from data.InformationExtractionTask import InformationExtractionTask
+from data.MetadataExtractionTask import MetadataExtractionTask
 from data.ResultsMessage import ResultsMessage
-from metadata_extraction.InformationExtraction import MetadataExtraction
+from metadata_extraction.MetadataExtraction import MetadataExtraction
 
 
 class QueueProcessor:
@@ -32,7 +32,7 @@ class QueueProcessor:
 
     def process(self, id, message, rc, ts):
         try:
-            task = InformationExtractionTask(**message)
+            task = MetadataExtractionTask(**message)
         except ValidationError:
             self.logger.error(f"Not a valid message: {message}")
             return True

@@ -9,8 +9,7 @@ import mongomock
 import pymongo
 
 from ServiceConfig import ServiceConfig
-from data.InformationExtractionTask import InformationExtractionTask
-from data.Option import Option
+from data.MetadataExtractionTask import MetadataExtractionTask
 from data.Params import Params
 from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
@@ -52,7 +51,7 @@ class TestMetadataExtractor(TestCase):
         os.makedirs(f"{base_path}/xml_to_train")
         shutil.copy(self.test_xml_path, f"{base_path}/xml_to_train/test.xml")
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
             params=Params(property_name=property_name),
@@ -60,135 +59,6 @@ class TestMetadataExtractor(TestCase):
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
         self.assertFalse(task_calculated)
-
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant))
-
-    @mongomock.patch(servers=[f"mongodb://127.0.0.1:29017"])
-    def test_create_model(self):
-        tenant = "segment_test"
-        property_name = "property_name"
-
-        base_path = join(DOCKER_VOLUME_PATH, tenant, property_name)
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-
-        json_data = {
-            "tenant": tenant,
-            "property_name": property_name,
-            "xml_file_name": "test.xml",
-            "label_text": "text",
-            "language_iso": "en",
-            "page_width": 612,
-            "page_height": 792,
-            "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}],
-        }
-        mongo_client.pdf_information_extraction.labeled_data.insert_one(json_data)
-
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-
-        os.makedirs(f"{base_path}/xml_to_train")
-        shutil.copy(self.test_xml_path, f"{base_path}/xml_to_train/test.xml")
-
-        task = InformationExtractionTask(
-            tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name),
-        )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
-
-        self.assertTrue(task_calculated)
-        self.assertTrue(os.path.exists(f"{base_path}/segment_predictor_model/model.model"))
-        self.assertEqual(0, mongo_client.pdf_information_extraction.labeled_data.count_documents({}))
-        self.assertFalse(os.path.exists(f"{base_path}/xml_to_train/test.xml"))
-
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant))
-
-    @mongomock.patch(servers=[f"mongodb://127.0.0.1:29017"])
-    def test_create_model_multi_option(self):
-        tenant = "segment_test"
-        property_name = "property_name"
-
-        base_path = join(DOCKER_VOLUME_PATH, tenant, property_name)
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-
-        json_data = {
-            "tenant": tenant,
-            "property_name": property_name,
-            "xml_file_name": "test.xml",
-            "label_text": "text",
-            "language_iso": "en",
-            "page_width": 612,
-            "page_height": 792,
-            "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}],
-        }
-        mongo_client.pdf_information_extraction.labeled_data.insert_one(json_data)
-
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-
-        os.makedirs(f"{base_path}/xml_to_train")
-        shutil.copy(self.test_xml_path, f"{base_path}/xml_to_train/test.xml")
-
-        options = [Option(id="id1", label="United Nations"), Option(id="id2", label="Other")]
-
-        task = InformationExtractionTask(
-            tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name, options=[options], multi_value=True),
-        )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
-
-        self.assertTrue(task_calculated)
-        self.assertTrue(os.path.exists(f"{base_path}/segment_predictor_model/model.model"))
-        self.assertEqual(0, mongo_client.pdf_information_extraction.labeled_data.count_documents({}))
-        self.assertFalse(os.path.exists(f"{base_path}/xml_to_train/test.xml"))
-
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant))
-
-    # TODO: def test_create_model_multi_option_multi_value(self):
-    # TODO: def test_calculate_suggestions_multi_option(self):
-    # TODO: def test_calculate_suggestions_multi_option_multi_value(self):
-
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_create_model_different_tenant(self):
-        tenant = "different_segment_test"
-        property_name = "different_property_name"
-
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-
-        base_path = join(DOCKER_VOLUME_PATH, tenant, property_name)
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-
-        json_data = {
-            "tenant": tenant,
-            "property_name": property_name,
-            "xml_file_name": "test.xml",
-            "label_text": "text",
-            "language_iso": "en",
-            "page_width": 612,
-            "page_height": 792,
-            "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}],
-        }
-        mongo_client.pdf_information_extraction.labeled_data.insert_one(json_data)
-
-        os.makedirs(f"{base_path}/xml_to_train")
-        shutil.copy(self.test_xml_path, f"{base_path}/xml_to_train/test.xml")
-
-        task = InformationExtractionTask(
-            tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name),
-        )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
-
-        self.assertTrue(task_calculated)
-        self.assertTrue(os.path.exists(f"{base_path}/segment_predictor_model/model.model"))
-        self.assertEqual(0, mongo_client.pdf_information_extraction.labeled_data.count_documents({}))
-        self.assertFalse(os.path.exists(f"{base_path}/xml_to_train/test.xml"))
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant))
 
@@ -197,7 +67,7 @@ class TestMetadataExtractor(TestCase):
         tenant = "error_segment_test"
         property_name = "error_property_name"
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
             params=Params(property_name=property_name),
@@ -206,45 +76,6 @@ class TestMetadataExtractor(TestCase):
 
         self.assertFalse(task_calculated)
         self.assertEqual(error, "No labeled data to create model")
-
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_create_model_should_remove_previous_models(self):
-        tenant = "segment_test"
-        property_name = "property_name"
-
-        base_path = join(DOCKER_VOLUME_PATH, tenant, property_name)
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-        json_data = {
-            "tenant": tenant,
-            "property_name": property_name,
-            "xml_file_name": "test.xml",
-            "label_text": "text",
-            "language_iso": "en",
-            "page_width": 612,
-            "page_height": 792,
-            "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}],
-        }
-        mongo_client.pdf_information_extraction.labeled_data.insert_one(json_data)
-
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
-
-        task = InformationExtractionTask(
-            tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name),
-        )
-
-        task_calculated, error = MetadataExtraction.calculate_task(task)
-
-        self.assertTrue(task_calculated)
-        self.assertTrue(os.path.exists(f"{base_path}/segment_predictor_model/model.model"))
-        self.assertFalse(os.path.exists(f"{base_path}/xml_to_train/test.xml"))
-        self.assertFalse(os.path.exists(f"{base_path}/semantic_model/best_model"))
-
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_should_do_nothing_when_no_xml(self):
@@ -266,7 +97,7 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.labeled_data.insert_one(json_data)
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
             params=Params(property_name=property_name),
@@ -307,7 +138,7 @@ class TestMetadataExtractor(TestCase):
         mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -325,7 +156,7 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
             params=Params(property_name=property_name),
@@ -384,7 +215,7 @@ class TestMetadataExtractor(TestCase):
         mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -403,7 +234,7 @@ class TestMetadataExtractor(TestCase):
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
         task_calculated, error = MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -480,7 +311,7 @@ class TestMetadataExtractor(TestCase):
             mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -488,7 +319,7 @@ class TestMetadataExtractor(TestCase):
         )
 
         task_calculated, error = MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -556,7 +387,7 @@ class TestMetadataExtractor(TestCase):
             mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -564,7 +395,7 @@ class TestMetadataExtractor(TestCase):
         )
 
         task_calculated, error = MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -641,7 +472,7 @@ class TestMetadataExtractor(TestCase):
         mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
 
         MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -649,7 +480,7 @@ class TestMetadataExtractor(TestCase):
         )
 
         task_calculated, error = MetadataExtraction.calculate_task(
-            InformationExtractionTask(
+            MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
                 params=Params(property_name=property_name),
@@ -683,7 +514,7 @@ class TestMetadataExtractor(TestCase):
 
         shutil.copy(self.model_path, f"{base_path}/segment_predictor_model/")
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
             params=Params(property_name=property_name),
@@ -720,7 +551,7 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
             params=Params(property_name=property_name),
@@ -757,13 +588,91 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
 
-        task = InformationExtractionTask(
+        task = MetadataExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
             params=Params(property_name=property_name),
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
         self.assertFalse(task_calculated)
+
+        self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
+        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, 'xml_to_train')))
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+    def test_get_multi_option_suggestions(self):
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+
+        tenant = "tenant_to_be_removed"
+        property_name = "property_name"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+
+        to_predict_json = [
+            {
+                "xml_file_name": "test.xml",
+                "property_name": property_name,
+                "tenant": tenant,
+                "page_width": 612,
+                "page_height": 792,
+                "xml_segments_boxes": [],
+            }
+        ]
+
+        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
+
+        options = [{"id": f"id{n}", "label": str(n)} for n in range(16)]
+        for i in range(7):
+            labeled_data_json = {
+                "property_name": property_name,
+                "tenant": tenant,
+                "xml_file_name": "test.xml",
+                "language_iso": "en",
+                "options": [{"id": "id15", "label": "15"}],
+                "page_width": 612,
+                "page_height": 792,
+                "xml_segments_boxes": [],
+                "label_segments_boxes": [SegmentBox(left=397, top=91, width=10, height=9, page_number=1).dict()],
+            }
+
+            mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
+
+        MetadataExtraction.calculate_task(
+            MetadataExtractionTask(
+                tenant=tenant,
+                task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+                params=Params(property_name=property_name, options=options, multi_value=False),
+            )
+        )
+
+        task_calculated, error = MetadataExtraction.calculate_task(
+            MetadataExtractionTask(
+                tenant=tenant,
+                task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+                params=Params(property_name=property_name),
+            )
+        )
+
+        suggestions: List[Suggestion] = list()
+        find_filter = {"property_name": property_name, "tenant": tenant}
+        for document in mongo_client.pdf_information_extraction.suggestions.find(
+            find_filter, no_cursor_timeout=True
+        ):
+            suggestions.append(Suggestion(**document))
+
+        self.assertTrue(task_calculated)
+        self.assertEqual(1, len(suggestions))
+        self.assertEqual(tenant, suggestions[0].tenant)
+        self.assertEqual(property_name, suggestions[0].property_name)
+        self.assertEqual("test.xml", suggestions[0].xml_file_name)
+        self.assertEqual("15 February 2021", suggestions[0].segment_text)
+        self.assertEqual([{"id": "id15", "label": "15"}], suggestions[0].options)
+
+        self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
+        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, 'xml_to_train')))
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
