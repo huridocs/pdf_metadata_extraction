@@ -93,7 +93,7 @@ class TestMultiOptionExtractor(TestCase):
         samples = [
             MultiOptionExtractionSample(text="Berlin", options=[options[0]]),
             MultiOptionExtractionSample(text="Paris", options=[options[1]]),
-        ] * 10
+        ] * 30
 
         multi_option_extraction_data = MultiOptionExtractionData(
             multilingual=True, multi_value=False, options=options, samples=samples
@@ -104,8 +104,8 @@ class TestMultiOptionExtractor(TestCase):
         self.assertTrue(model_created)
         self.assertEqual("", error)
         self.assertTrue(2, len(predictions))
-        self.assertEqual([options[0]], predictions[1].options)
         self.assertEqual([options[1]], predictions[0].options)
+        self.assertEqual([options[0]], predictions[1].options)
 
     def test_get_predictions_semantics_multi_value(self):
         multi_option_extractor = MultiOptionExtractor(
