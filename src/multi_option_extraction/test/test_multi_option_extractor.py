@@ -93,10 +93,10 @@ class TestMultiOptionExtractor(TestCase):
         samples = [
             MultiOptionExtractionSample(text="Berlin", options=[options[0]]),
             MultiOptionExtractionSample(text="Paris", options=[options[1]]),
-        ] * 30
+        ] * 5
 
         multi_option_extraction_data = MultiOptionExtractionData(
-            multilingual=True, multi_value=False, options=options, samples=samples
+            multilingual=False, multi_value=False, options=options, samples=samples
         )
 
         model_created, error = multi_option_extractor.create_model(multi_option_extraction_data=multi_option_extraction_data)
