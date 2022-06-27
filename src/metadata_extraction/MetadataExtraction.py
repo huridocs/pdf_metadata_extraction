@@ -216,7 +216,7 @@ class MetadataExtraction:
         )
 
     @staticmethod
-    def calculate_task(information_extraction_task: MetadataExtractionTask, logger: logging.Logger) -> (bool, str):
+    def calculate_task(information_extraction_task: MetadataExtractionTask, logger: logging.Logger = None) -> (bool, str):
         tenant = information_extraction_task.tenant
         property_name = information_extraction_task.params.property_name
 
