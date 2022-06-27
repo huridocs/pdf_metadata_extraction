@@ -37,7 +37,7 @@ class QueueProcessor:
             return True
 
         self.logger.info(f"Valid message: {message}")
-        task_calculated, error_message = MetadataExtraction.calculate_task(task)
+        task_calculated, error_message = MetadataExtraction.calculate_task(task, self.logger)
         if error_message:
             self.logger.info(f"Error: {error_message}")
 
@@ -63,6 +63,7 @@ class QueueProcessor:
                 data_url=data_url,
             )
 
+        self.logger.info(f"Result message: {model_results_message}")
         self.results_queue.sendMessage().message(model_results_message.dict()).execute()
         return True
 

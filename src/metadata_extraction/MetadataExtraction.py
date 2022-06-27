@@ -1,3 +1,4 @@
+import logging
 import shutil
 from os.path import join
 from pathlib import Path
@@ -26,12 +27,15 @@ class MetadataExtraction:
     CREATE_MODEL_TASK_NAME = "create_model"
     SUGGESTIONS_TASK_NAME = "suggestions"
 
-    def __init__(self, tenant: str, property_name: str, multi_option: bool):
+    def __init__(self, tenant: str, property_name: str, multi_option: bool, logger: logging.Logger = None):
         self.tenant = tenant
         self.property_name = property_name
         self.multi_option = multi_option
 
         service_config = ServiceConfig()
+
+        self.logger = logger if logger else service_config.get_logger('redis_tasks')
+
         client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
@@ -72,12 +76,14 @@ class MetadataExtraction:
             self.pdf_features.append(pdf_features)
 
     def create_models(self, options: List[Option], multi_value: bool = False):
+        self.logger.info(f"Loading data to create model for {self.tenant} {self.property_name}")
         self.set_pdf_features_for_training()
 
         if not len(self.pdf_features) or not sum([len(pdf_features.pdf_segments) for pdf_features in self.pdf_features]):
             self.delete_training_data()
             return False, "No labeled data to create model"
 
+        self.logger.info(f"Creating model with {len(self.pdf_features)} documents for {self.tenant} {self.property_name}")
         segment_selector = SegmentSelector(tenant=self.tenant, property_name=self.property_name)
         segment_selector.create_model(pdfs_features=self.pdf_features, multilingual=self.multilingual)
 
@@ -155,8 +161,12 @@ class MetadataExtraction:
 
     def get_segment_selector_suggestions(self):
         suggestions: List[Suggestion] = list()
+        predictions_data = list()
         for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
-            prediction_data = PredictionData(**document)
+            predictions_data.append(PredictionData(**document))
+
+        self.logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
+        for prediction_data in predictions_data:
             segmentation_data = SegmentationData.from_prediction_data(prediction_data)
 
             xml_file = XmlFile(
@@ -206,21 +216,21 @@ class MetadataExtraction:
         )
 
     @staticmethod
-    def calculate_task(information_extraction_task: MetadataExtractionTask) -> (bool, str):
+    def calculate_task(information_extraction_task: MetadataExtractionTask, logger: logging.Logger) -> (bool, str):
         tenant = information_extraction_task.tenant
         property_name = information_extraction_task.params.property_name
 
         if information_extraction_task.task == MetadataExtraction.CREATE_MODEL_TASK_NAME:
             multi_option = True if information_extraction_task.params.options else False
-            information_extraction = MetadataExtraction(tenant, property_name, multi_option)
-            return information_extraction.create_models(
+            metadata_extraction = MetadataExtraction(tenant, property_name, multi_option, logger)
+            return metadata_extraction.create_models(
                 options=information_extraction_task.params.options,
                 multi_value=information_extraction_task.params.multi_value,
             )
 
         if information_extraction_task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
             multi_option = MultiOptionExtractor.exist_model(tenant, property_name)
-            information_extraction = MetadataExtraction(tenant, property_name, multi_option)
-            return information_extraction.insert_suggestions_in_db()
+            metadata_extraction = MetadataExtraction(tenant, property_name, multi_option, logger)
+            return metadata_extraction.insert_suggestions_in_db()
 
         return False, "Error"
