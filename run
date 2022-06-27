@@ -70,6 +70,16 @@ function stop {
   docker-compose --profile testing stop
 }
 
+function delete_queues {
+  _source_venv
+  python3 scripts/delete_queues.py
+}
+
+function queues_messages {
+  _source_venv
+  python3 scripts/queue_messages.py
+}
+
 function help {
   printf "%s <task> \n\nTasks:\n" "${0}"
   compgen -A function | grep -v "^_" | cat -n
