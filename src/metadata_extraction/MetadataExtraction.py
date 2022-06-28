@@ -164,7 +164,7 @@ class MetadataExtraction:
         predictions_data: List[PredictionData] = list()
         pdfs_features: List[PdfFeatures] = list()
 
-        self.logger.info(f"Loading data for calculating suggestions for {self.tenant} {self.property_name}")
+        self.logger.info(f"Loading data to calculate suggestions for {self.tenant} {self.property_name}")
 
         for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
             prediction_data = PredictionData(**document)

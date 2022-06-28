@@ -3,7 +3,7 @@ from time import sleep
 import redis
 from pydantic import ValidationError
 from rsmq.consumer import RedisSMQConsumer
-from rsmq import RedisSMQ
+from rsmq import RedisSMQ, cmd
 
 from ServiceConfig import ServiceConfig
 from data.MetadataExtractionTask import MetadataExtractionTask
@@ -15,7 +15,7 @@ class QueueProcessor:
     def __init__(self):
         self.config = ServiceConfig()
         self.logger = self.config.get_logger("redis_tasks")
-        self.logger.info("RedisTasksProcessor")
+        self.logger.info("The PDF Metadata Extractor has been started")
 
         self.task_queue = RedisSMQ(
             host=self.config.redis_host,
@@ -33,7 +33,7 @@ class QueueProcessor:
         try:
             task = MetadataExtractionTask(**message)
         except ValidationError:
-            self.logger.error(f"Not a valid message: {message}")
+            self.logger.error(f"Not a valid Redis message: {message}")
             return True
 
         self.log_process_information(message)
@@ -64,24 +64,22 @@ class QueueProcessor:
                 data_url=data_url,
             )
 
-        self.logger.info(f"Result message: {model_results_message}")
+        self.logger.info(f"Results Redis message: {model_results_message}")
         self.results_queue.sendMessage().message(model_results_message.dict()).execute()
         return True
 
     def log_process_information(self, message):
         try:
-            self.logger.info(f"Processing message: {message}")
+            self.logger.info(f"Processing Redis message: {message}")
             self.logger.info(f"Messages pending in queue: {self.task_queue.getQueueAttributes().exec_command()['msgs'] - 1}")
         except redis.exceptions.ConnectionError:
-            self.logger.info("No messages pending information")
+            self.logger.info("No Redis messages information available")
 
     def subscribe_to_tasks_queue(self):
         while True:
             try:
-                self.logger.info("Creating queues")
-                self.task_queue.createQueue().exceptions(False).execute()
-                self.results_queue.createQueue().exceptions(False).execute()
-                self.logger.info("Queues have been created")
+                self.task_queue.getQueueAttributes().exec_command()
+                self.results_queue.getQueueAttributes().exec_command()
 
                 redis_smq_consumer = RedisSMQConsumer(
                     qname=self.config.tasks_queue_name,
@@ -91,8 +89,13 @@ class QueueProcessor:
                 )
                 redis_smq_consumer.run()
             except redis.exceptions.ConnectionError:
-                self.logger.error(f"Error connecting to redis: {self.config.redis_host}:{self.config.redis_port}")
+                self.logger.error(f"Error connecting to Redis: {self.config.redis_host}:{self.config.redis_port}")
                 sleep(20)
+            except cmd.exceptions.QueueDoesNotExist:
+                self.logger.info("Creating queues")
+                self.task_queue.createQueue().exceptions(False).execute()
+                self.results_queue.createQueue().exceptions(False).execute()
+                self.logger.info("Queues have been created")
 
 
 if __name__ == "__main__":
