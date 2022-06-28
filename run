@@ -47,7 +47,7 @@ function test {
 
 function linter {
   _source_venv
-  command flake8
+  command flake8 src
 }
 
 function remove_docker_containers {

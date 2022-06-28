@@ -36,7 +36,8 @@ class QueueProcessor:
             self.logger.error(f"Not a valid message: {message}")
             return True
 
-        self.logger.info(f"Valid message: {message}")
+        self.log_process_information(message)
+
         task_calculated, error_message = MetadataExtraction.calculate_task(task, self.logger)
         if error_message:
             self.logger.info(f"Error: {error_message}")
@@ -66,6 +67,13 @@ class QueueProcessor:
         self.logger.info(f"Result message: {model_results_message}")
         self.results_queue.sendMessage().message(model_results_message.dict()).execute()
         return True
+
+    def log_process_information(self, message):
+        try:
+            self.logger.info(f"Processing message: {message}")
+            self.logger.info(f"Messages pending in queue: {self.task_queue.getQueueAttributes().exec_command()['msgs'] - 1}")
+        except redis.exceptions.ConnectionError:
+            self.logger.info("No messages pending information")
 
     def subscribe_to_tasks_queue(self):
         while True:

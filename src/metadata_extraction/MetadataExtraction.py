@@ -34,7 +34,7 @@ class MetadataExtraction:
 
         service_config = ServiceConfig()
 
-        self.logger = logger if logger else service_config.get_logger('redis_tasks')
+        self.logger = logger if logger else service_config.get_logger("redis_tasks")
 
         client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
@@ -161,12 +161,14 @@ class MetadataExtraction:
 
     def get_segment_selector_suggestions(self):
         suggestions: List[Suggestion] = list()
-        predictions_data = list()
-        for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
-            predictions_data.append(PredictionData(**document))
+        predictions_data: List[PredictionData] = list()
+        pdfs_features: List[PdfFeatures] = list()
 
-        self.logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
-        for prediction_data in predictions_data:
+        self.logger.info(f"Loading data for calculating suggestions for {self.tenant} {self.property_name}")
+
+        for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
+            prediction_data = PredictionData(**document)
+            predictions_data.append(prediction_data)
             segmentation_data = SegmentationData.from_prediction_data(prediction_data)
 
             xml_file = XmlFile(
@@ -175,17 +177,28 @@ class MetadataExtraction:
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
-            pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+            pdfs_features.append(PdfFeatures.from_xml_file(xml_file, segmentation_data))
 
-            if not pdf_features.pdf_segments:
-                continue
+        self.logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
 
+        for prediction_data, pdf_features in zip(predictions_data, pdfs_features):
             suggestion = self.get_suggested_segment(xml_file_name=prediction_data.xml_file_name, pdf_features=pdf_features)
             suggestions.append(suggestion)
 
         return suggestions
 
     def get_suggested_segment(self, xml_file_name: str, pdf_features: PdfFeatures):
+        if not pdf_features.pdf_segments:
+            return Suggestion(
+                tenant=self.tenant,
+                property_name=self.property_name,
+                xml_file_name=xml_file_name,
+                text="",
+                segment_text="",
+                page_number=1,
+                segments_boxes=[],
+            )
+
         segment_selector = SegmentSelector(self.tenant, self.property_name)
         segment_selector.set_extraction_segments(pdfs_features=[pdf_features])
 

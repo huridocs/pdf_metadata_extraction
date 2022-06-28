@@ -28,11 +28,11 @@ def delete_queues():
         queue.deleteQueue().exceptions(False).execute()
         queue.createQueue().exceptions(False).execute()
 
-        print('Queues properly deleted')
+        print("Queues properly deleted")
 
     except exceptions.ConnectionError:
-        print('No redis connection')
+        print("No redis connection")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     delete_queues()

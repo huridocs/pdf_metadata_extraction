@@ -16,11 +16,11 @@ def print_queue_messages():
 
     try:
         attributes = queue.getQueueAttributes().exec_command()
-        print('Messages in queue ', attributes['msgs'])
-        print('Messages executed ', attributes['totalrecv'])
+        print("Messages in queue ", attributes["msgs"])
+        print("Messages executed ", attributes["totalrecv"])
     except exceptions.ConnectionError:
-        print('No redis connection')
+        print("No redis connection")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print_queue_messages()
