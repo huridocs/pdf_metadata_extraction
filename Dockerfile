@@ -14,6 +14,7 @@ WORKDIR /app
 COPY ./src ./src
 
 ENV TRANSFORMERS_CACHE=/app/docker_volume/model_cache
+ENV TF_CPP_MIN_LOG_LEVEL="3"
 
 FROM base AS api
 CMD gunicorn -k uvicorn.workers.UvicornWorker --chdir ./src app:app --bind 0.0.0.0:5052
