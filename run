@@ -80,6 +80,10 @@ function queues_messages {
   python3 scripts/queue_messages.py
 }
 
+function logs {
+  tail -f docker_volume/redis_tasks.log
+}
+
 function help {
   printf "%s <task> \n\nTasks:\n" "${0}"
   compgen -A function | grep -v "^_" | cat -n
