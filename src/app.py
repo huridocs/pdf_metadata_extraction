@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict
 import json
 import pymongo
@@ -5,6 +6,8 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
 from rsmq import RedisSMQ
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+import sentry_sdk
 
 from ServiceConfig import ServiceConfig
 from data.LabeledData import LabeledData
@@ -18,6 +21,16 @@ logger = config.get_logger("service")
 app = FastAPI()
 
 logger.info("PDF information extraction service has started")
+
+try:
+    sentry_sdk.init(
+        os.environ.get("SENTRY_DSN"),
+        traces_sample_rate=0.1,
+        environment=os.environ.get("ENVIRONMENT", "development"),
+    )
+    app.add_middleware(SentryAsgiMiddleware)
+except Exception:
+    pass
 
 
 @app.get("/info")
