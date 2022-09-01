@@ -24,3 +24,6 @@ scikit-learn==1.1.1
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.12.2
 sentry-sdk
+
+mongomock~=4.0.0
+tdda~=2.0.1
