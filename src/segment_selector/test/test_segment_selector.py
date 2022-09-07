@@ -55,7 +55,7 @@ class TestSegmentSelector(TestCase):
     def test_create_model(self):
         start = time()
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
-        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
         model_created, error = segment_selector.create_model(pdfs_features=[pdf_features], multilingual=False)
@@ -70,14 +70,14 @@ class TestSegmentSelector(TestCase):
         start = time()
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
         for i in range(20):
-            pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+            pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
         print(time() - start, "create model")
 
     def test_create_model_multilingual(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
 
-        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
         model_created, error = segment_selector.create_model(pdfs_features=[pdf_features], multilingual=True)
 
@@ -89,7 +89,7 @@ class TestSegmentSelector(TestCase):
     def test_set_extraction_segments(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
 
-        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
         segment_selector.create_model(pdfs_features=[pdf_features], multilingual=False)
 
@@ -104,7 +104,7 @@ class TestSegmentSelector(TestCase):
     def test_set_extraction_segments_multilingual(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
 
-        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
         segment_selector.create_model(pdfs_features=[pdf_features], multilingual=True)
 
@@ -119,7 +119,7 @@ class TestSegmentSelector(TestCase):
     def test_remove_multilingual_model_when_new_model(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
 
-        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
 
         multilingual_model = join(TestSegmentSelector.BASE_PATH, "multilingual_segment_predictor_model", "model.model")
@@ -134,7 +134,7 @@ class TestSegmentSelector(TestCase):
     def test_remove_english_model_when_new_model(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
 
-        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
 
         english_model = join(TestSegmentSelector.BASE_PATH, "segment_predictor_model", "model.model")

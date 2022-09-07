@@ -68,7 +68,7 @@ class TestPdfFeatures(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(612, pdf_features.pages[0].page_width)
         self.assertEqual(792, pdf_features.pages[0].page_height)
@@ -106,7 +106,7 @@ class TestPdfFeatures(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(612, pdf_features.pages[0].page_width)
         self.assertEqual(792, pdf_features.pages[0].page_height)
@@ -145,7 +145,7 @@ class TestPdfFeatures(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data, [])
 
         labeled_segments = [segment for segment in pdf_features.pdf_segments if segment.ml_label == 1]
 
@@ -176,7 +176,7 @@ class TestPdfFeatures(TestCase):
             xml_file_name="test.xml",
         )
 
-        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(0, len(pdf_features.pdf_segments))
 
@@ -221,8 +221,38 @@ class TestPdfFeatures(TestCase):
             xml_file_name="test.xml",
         )
 
-        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(0, len(pdf_features.pdf_segments))
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+    def test_filter_valid_segment_pages(self):
+        tenant = "tenant_save"
+        property_name = "property_save"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+        segmentation_data = SegmentationData(
+            page_width=612,
+            page_height=792,
+            xml_segments_boxes=[SegmentBox(left=1, top=1, width=56.96199999999999, height=18.2164, page_number=1)],
+            label_segments_boxes=[SegmentBox(left=125, top=247, width=319, height=29, page_number=1)],
+        )
+
+        with open(self.test_file_path, "rb") as file:
+            xml_file = XmlFile(
+                tenant=tenant,
+                property_name=property_name,
+                to_train=True,
+                xml_file_name="test.xml",
+            )
+
+            xml_file.save(file=file.read())
+
+        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data, [1])
+
+        self.assertEqual(0, len([segment for segment in pdf_features.pdf_segments if segment.page_number > 1]))
+        self.assertEqual(0, len([page for page in pdf_features.pages if page.page_number > 1]))
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)

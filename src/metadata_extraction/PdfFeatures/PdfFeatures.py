@@ -158,7 +158,9 @@ class PdfFeatures:
         return pdf_features
 
     @staticmethod
-    def from_xml_file(xml_file: XmlFile, segmentation_data: SegmentationData) -> Optional["PdfFeatures"]:
+    def from_xml_file(
+        xml_file: XmlFile, segmentation_data: SegmentationData, pages_numbers: List[int]
+    ) -> Optional["PdfFeatures"]:
         try:
             xml_file_content = pathlib.Path(xml_file.xml_file_path).read_bytes()
         except FileNotFoundError:
@@ -170,6 +172,15 @@ class PdfFeatures:
         pdf_features.set_segments_from_segmentation_data(segmentation_data)
         pdf_features.set_ml_label_from_segmentation_data(segmentation_data)
 
+        pdf_features.filter_pages(pages_numbers)
+
         set_tag_types(pdf_features)
         pdf_features = PdfFeatures.set_embeddings(pdf_features)
         return pdf_features
+
+    def filter_pages(self, pages_numbers):
+        if pages_numbers:
+            self.pages = [page for page in self.pages if page.page_number in pages_numbers]
+            self.pdf_segments = [
+                pdf_segment for pdf_segment in self.pdf_segments if pdf_segment.page_number in pages_numbers
+            ]

@@ -14,6 +14,7 @@ from data.SegmentationData import SegmentationData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.Suggestion import Suggestion
 from data.MetadataExtractionTask import MetadataExtractionTask
+from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentPages
 
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from metadata_extraction.XmlFile import XmlFile
@@ -33,7 +34,7 @@ class MetadataExtraction:
         self.multi_option = multi_option
 
         service_config = ServiceConfig()
-
+        self.filter_valid_pages = FilterValidSegmentPages(tenant, property_name)
         self.logger = logger if logger else service_config.get_logger("redis_tasks")
 
         client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
@@ -53,9 +54,13 @@ class MetadataExtraction:
         self.labeled_data = list()
 
         collection = pdf_information_extraction_db.labeled_data
-
+        labeled_data_list = []
         for document in collection.find(self.mongo_filter, no_cursor_timeout=True):
-            labeled_data = LabeledData(**document)
+            labeled_data_list.append(LabeledData(**document))
+
+        page_numbers_list = self.filter_valid_pages.for_training(labeled_data_list)
+
+        for labeled_data, page_numbers in zip(labeled_data_list, page_numbers_list):
             if labeled_data.language_iso != "en" and labeled_data.language_iso != "eng":
                 self.multilingual = True
 
@@ -67,7 +72,7 @@ class MetadataExtraction:
                 xml_file_name=labeled_data.xml_file_name,
             )
 
-            pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data)
+            pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data, page_numbers)
 
             if not pdf_features:
                 continue
@@ -166,8 +171,14 @@ class MetadataExtraction:
 
         self.logger.info(f"Loading data to calculate suggestions for {self.tenant} {self.property_name}")
 
+        prediction_data_list = []
+
         for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
-            prediction_data = PredictionData(**document)
+            prediction_data_list.append(PredictionData(**document))
+
+        page_numbers_list = self.filter_valid_pages.for_prediction(prediction_data_list)
+
+        for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
             predictions_data.append(prediction_data)
             segmentation_data = SegmentationData.from_prediction_data(prediction_data)
 
@@ -177,7 +188,7 @@ class MetadataExtraction:
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
-            pdfs_features.append(PdfFeatures.from_xml_file(xml_file, segmentation_data))
+            pdfs_features.append(PdfFeatures.from_xml_file(xml_file, segmentation_data, page_numbers))
 
         self.logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
 
