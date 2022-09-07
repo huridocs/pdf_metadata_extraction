@@ -3,16 +3,19 @@ from os.path import dirname, realpath, join
 from typing import List, Type
 
 import pandas as pd
+from datetime import datetime
 
 from data.SemanticExtractionData import SemanticExtractionData
+from performance.Results import Results
 from semantic_metadata_extraction.Method import Method
 from semantic_metadata_extraction.RegexMethod import RegexMethod
+from semantic_metadata_extraction.SameInputOutputMethod import SameInputOutputMethod
+
+SCRIPT_PATH = dirname(realpath(__file__))
 
 TENANT = "check_performance"
-PROPERTY_NAME = "check_performance"
-DATASETS = []
-METHODS: List[Type[Method]] = [RegexMethod]
-SCRIPT_PATH = dirname(realpath(__file__))
+METHODS: List[Type[Method]] = [RegexMethod, SameInputOutputMethod]
+RESULTS_PREFIX = f"{datetime.now():%Y_%m_%d_%H_%M}"
 
 
 def get_semantic_extraction_data(file_name):
@@ -32,15 +35,28 @@ def dataset_name_to_property_name(dataset_name: str):
 
 
 def check_performance():
+    training_set_length = 30
+    all_results = Results(results_name="all_results____" + RESULTS_PREFIX, training_set_length=training_set_length)
+    best_results = Results(results_name="best_results____" + RESULTS_PREFIX, training_set_length=training_set_length)
+
     for dataset in listdir(join(SCRIPT_PATH, "datasets")):
         semantic_information_data_list = get_semantic_extraction_data(dataset)
-        performances = []
-        methods_names = []
+        best_results.set_start_time()
+
+        names = []
+        accuracies = []
+
         for method in METHODS:
+            all_results.set_start_time()
             method_instance = method(TENANT, dataset_name_to_property_name(dataset))
-            methods_names.append(method_instance.get_name())
-            performances.append(method_instance.performance(semantic_information_data_list))
-        print(dataset, max(performances), methods_names[performances.index(max(performances))])
+            accuracies.append(method_instance.performance(semantic_information_data_list, training_set_length))
+            names.append(method_instance.get_name())
+            all_results.save_result(dataset, names[-1], accuracies[-1])
+
+        best_results.save_result(dataset, names[accuracies.index(max(accuracies))], max(accuracies))
+
+    all_results.write_results()
+    best_results.write_results()
 
 
 if __name__ == "__main__":

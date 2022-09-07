@@ -17,7 +17,7 @@ class Method(ABC):
         self.base_path = join(self.service_config.docker_volume_path, tenant, property_name)
 
     @abstractmethod
-    def performance(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def performance(self, semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):
         pass
 
     @abstractmethod
@@ -39,13 +39,19 @@ class Method(ABC):
         with open(path, "w") as file:
             json.dump(data, file)
 
-    def load_json(self, file_name:str):
+    def load_json(self, file_name: str):
         path = join(self.base_path, file_name)
 
         with open(path, "r") as file:
             return json.load(file)
 
     @staticmethod
-    def get_train_test(semantic_extraction_data: List[SemanticExtractionData]):
-        train_amount = len(semantic_extraction_data) // 2
-        return semantic_extraction_data[:train_amount], semantic_extraction_data[train_amount:]
+    def get_train_test(semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):
+        if len(semantic_extraction_data) < 2 * training_set_length:
+            train_amount = len(semantic_extraction_data) // 2
+            training_set = semantic_extraction_data[:train_amount]
+            training_set = training_set[:training_set_length]
+            testing_set = semantic_extraction_data[train_amount:]
+            return training_set, testing_set
+
+        return semantic_extraction_data[:training_set_length], semantic_extraction_data[training_set_length:]

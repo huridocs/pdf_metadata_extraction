@@ -7,7 +7,7 @@ lxml==4.9.0
 pydantic==1.9.1
 uvicorn==0.18.2
 gunicorn
-torch==1.11.0
+torch==1.12.1
 pandas==1.4.3
 simpletransformers==0.63.7
 sentencepiece~=0.1.96
@@ -27,3 +27,5 @@ sentry-sdk
 
 mongomock~=4.0.0
 tdda~=2.0.1
+rich~=12.4.4
+pytest

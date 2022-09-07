@@ -9,11 +9,11 @@ from semantic_metadata_extraction.Method import Method
 
 
 class T5Method(Method):
-    def performance(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def performance(self, semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):
         if not semantic_extraction_data:
             return 0
 
-        performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data)
+        performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
 
         train_df = self.prepare_dataset()
         model_args = T5Args()
@@ -43,7 +43,7 @@ class T5Method(Method):
         model_args.manual_seed = 42
         model_args.overwrite_output_dir = True
         model_args.tensorboard_dir = f"{self.semantic_extraction_folder}/tensorboard_dir"
-        model_args.output_dir = join(self.base_path, 't5')
+        model_args.output_dir = join(self.base_path, "t5")
 
         model = T5Model("t5", "t5-small", args=model_args, use_cuda=torch.cuda.is_available())
 

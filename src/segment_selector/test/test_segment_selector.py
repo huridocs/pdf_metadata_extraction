@@ -2,6 +2,7 @@ import shutil
 from os import makedirs
 from os.path import exists, join
 from pathlib import Path
+from time import time
 from unittest import TestCase
 
 from data.LabeledData import LabeledData
@@ -52,9 +53,10 @@ class TestSegmentSelector(TestCase):
         shutil.rmtree(join(TestSegmentSelector.DOCKER_VOLUME_PATH, TestSegmentSelector.TENANT), ignore_errors=True)
 
     def test_create_model(self):
+        start = time()
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
-
         pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
         model_created, error = segment_selector.create_model(pdfs_features=[pdf_features], multilingual=False)
 
@@ -62,6 +64,15 @@ class TestSegmentSelector(TestCase):
         self.assertEqual("", error)
         self.assertTrue(exists(join(TestSegmentSelector.BASE_PATH, "segment_predictor_model", "model.model")))
         self.assertFalse(exists(join(TestSegmentSelector.BASE_PATH, "multilingual_segment_predictor_model", "model.model")))
+        print(time() - start, "create model")
+
+    def test_create_model_load_test(self):
+        start = time()
+        segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
+        for i in range(20):
+            pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data)
+
+        print(time() - start, "create model")
 
     def test_create_model_multilingual(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))

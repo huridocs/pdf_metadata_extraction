@@ -4,6 +4,7 @@ import pathlib
 from collections import defaultdict
 from os.path import exists
 from pathlib import Path
+from time import time
 
 from bs4 import BeautifulSoup
 
@@ -19,8 +20,8 @@ from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 from metadata_extraction.PdfFeatures.Rectangle import Rectangle
 from metadata_extraction.PdfFeatures.embeddings_models import (
-    multilingual_sentence_embeddings_model,
     sentence_embeddings_model,
+    multilingual_sentence_embeddings_model,
 )
 from metadata_extraction.XmlFile import XmlFile
 from segment_selector.LightGBM_30Features_OneHotOneLetter.predict import set_tag_types
@@ -154,7 +155,6 @@ class PdfFeatures:
         for index, pdf_segment in enumerate(pdf_features.pdf_segments):
             pdf_segment.embeddings = embeddings_list[index]
             pdf_segment.multilingual_embeddings = multilingual_embeddings_list[index]
-
         return pdf_features
 
     @staticmethod
@@ -169,6 +169,7 @@ class PdfFeatures:
         segmentation_data.rescale(page_width=pdf_features.pages[0].page_width, page_height=pdf_features.pages[0].page_height)
         pdf_features.set_segments_from_segmentation_data(segmentation_data)
         pdf_features.set_ml_label_from_segmentation_data(segmentation_data)
+
         set_tag_types(pdf_features)
         pdf_features = PdfFeatures.set_embeddings(pdf_features)
         return pdf_features
