@@ -28,9 +28,7 @@ class TestFilterValidSegmentPages(TestCase):
             label_text="",
             page_width=0,
             page_height=0,
-            xml_segments_boxes=[
-                SegmentBox(left=0, top=0, width=0, height=0, page_number=pages_number)
-            ],
+            xml_segments_boxes=[SegmentBox(left=0, top=0, width=0, height=0, page_number=pages_number)],
             label_segments_boxes=[
                 SegmentBox(left=0, top=0, width=0, height=0, page_number=label_number) for label_number in label_numbers
             ],
