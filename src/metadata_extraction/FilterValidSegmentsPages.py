@@ -21,13 +21,13 @@ class FilterValidSegmentPages:
     def get_valid_pages(self, number_pages_per_document):
         if min(self.start_gaps) <= min(self.end_gaps):
             start = min(self.start_gaps)
-            end = min(self.start_gaps) + max(self.valid_pages_ranges)
+            end = max(self.start_gaps) + max(self.valid_pages_ranges)
             return [self.get_range(start, end, number_of_pages) for number_of_pages in number_pages_per_document]
 
         valid_page_numbers_from_the_end = []
 
         for number_of_pages in number_pages_per_document:
-            start = number_of_pages - min(self.end_gaps) - max(self.valid_pages_ranges)
+            start = number_of_pages - max(self.end_gaps) - max(self.valid_pages_ranges)
             end = number_of_pages - min(self.end_gaps)
             valid_page_numbers_from_the_end.append(self.get_range(start, end, number_of_pages))
 
