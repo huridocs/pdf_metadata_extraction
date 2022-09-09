@@ -18,3 +18,4 @@ core
 config.yml
 **/*.pytest_cache
 src/.pytest_cache
+outputs

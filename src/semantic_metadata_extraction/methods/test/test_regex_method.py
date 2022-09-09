@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from data.SemanticExtractionData import SemanticExtractionData
-from semantic_metadata_extraction.RegexMethod import RegexMethod
+from semantic_metadata_extraction.methods.RegexMethod import RegexMethod
 
 
 class TestRegexMethod(TestCase):

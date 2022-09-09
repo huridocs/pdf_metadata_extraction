@@ -15,6 +15,19 @@ SCRIPT_PATH = dirname(realpath(__file__))
 TENANT = "check_performance"
 # METHODS: List[Type[Method]] = [SameInputOutputMethod, RegexMethod, DateParserMethod, DistilBertSpanishMethod, T5Method, T5Method5Epochs]
 METHODS: List[Type[Method]] = [T5MethodEarlyStopping]
+# DATASETS: List[str] = [
+#     "code_spanish.tsv",
+#     "country_spanish.tsv",
+#     "date_spanish.tsv",
+#     "document_code.tsv",
+#     "judge_name.tsv",
+#     "vote_english.tsv",
+#     "year_multilingual.tsv",
+# ]
+DATASETS: List[str] = [
+    "vote_english.tsv",
+]
+
 RESULTS_PREFIX = f"{datetime.now():%Y_%m_%d_%H_%M}"
 
 
@@ -39,7 +52,7 @@ def check_performance():
     all_results = Results(results_name="all_results____" + RESULTS_PREFIX, training_set_length=training_set_length)
     best_results = Results(results_name="best_results____" + RESULTS_PREFIX, training_set_length=training_set_length)
 
-    for dataset in listdir(join(SCRIPT_PATH, "datasets")):
+    for dataset in DATASETS:
         semantic_information_data_list = get_semantic_extraction_data(dataset)
         best_results.set_start_time()
 
