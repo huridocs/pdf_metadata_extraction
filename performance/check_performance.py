@@ -8,13 +8,13 @@ from datetime import datetime
 from data.SemanticExtractionData import SemanticExtractionData
 from performance.Results import Results
 from semantic_metadata_extraction.Method import Method
-from semantic_metadata_extraction.RegexMethod import RegexMethod
-from semantic_metadata_extraction.SameInputOutputMethod import SameInputOutputMethod
+from semantic_metadata_extraction.methods.T5MethodEarlyStopping import T5MethodEarlyStopping
 
 SCRIPT_PATH = dirname(realpath(__file__))
 
 TENANT = "check_performance"
-METHODS: List[Type[Method]] = [RegexMethod, SameInputOutputMethod]
+# METHODS: List[Type[Method]] = [SameInputOutputMethod, RegexMethod, DateParserMethod, DistilBertSpanishMethod, T5Method, T5Method5Epochs]
+METHODS: List[Type[Method]] = [T5MethodEarlyStopping]
 RESULTS_PREFIX = f"{datetime.now():%Y_%m_%d_%H_%M}"
 
 
@@ -46,6 +46,7 @@ def check_performance():
         names = []
         accuracies = []
 
+        print(dataset)
         for method in METHODS:
             all_results.set_start_time()
             method_instance = method(TENANT, dataset_name_to_property_name(dataset))
