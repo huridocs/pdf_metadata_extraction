@@ -15,6 +15,7 @@
 - [Get service logs](#get-service-logs)
 - [Set up environment for development](#set-up-environment-for-development)
 - [Execute tests](#execute-tests)
+- [Execute performance test](#execute-performance-test)
 - [Troubleshooting](#troubleshooting)
 
 ## Dependencies
@@ -276,6 +277,12 @@ It works with Python 3.9 [install] (https://runnable.com/docker/getting-started/
 ## Execute tests
 
     ./run test
+
+## Execute performance test
+
+    cd src && python check_performance.py
+
+And the results are stored in src/performance/results
 
 ## Troubleshooting
 
