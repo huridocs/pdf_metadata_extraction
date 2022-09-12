@@ -17,7 +17,14 @@ from semantic_metadata_extraction.methods.T5Method5Epochs import T5Method5Epochs
 SCRIPT_PATH = dirname(realpath(__file__))
 
 TENANT = "check_performance"
-METHODS: List[Type[Method]] = [SameInputOutputMethod, RegexMethod, DateParserMethod, DistilBertSpanishMethod, T5Method, T5Method5Epochs]
+METHODS: List[Type[Method]] = [
+    SameInputOutputMethod,
+    RegexMethod,
+    DateParserMethod,
+    DistilBertSpanishMethod,
+    T5Method,
+    T5Method5Epochs,
+]
 DATASETS: List[str] = [
     "code_spanish.tsv",
     "country_spanish.tsv",
@@ -59,7 +66,7 @@ def check_performance():
         names = []
         accuracies = []
 
-        print('Performance on', dataset)
+        print("Performance on", dataset)
         for method in METHODS:
             all_results.set_start_time()
             method_instance = method(TENANT, dataset_name_to_property_name(dataset))
