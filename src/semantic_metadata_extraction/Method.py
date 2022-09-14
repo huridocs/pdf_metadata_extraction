@@ -46,7 +46,9 @@ class Method(ABC):
             return json.load(file)
 
     @staticmethod
-    def get_train_test(semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):
+    def get_train_test(
+        semantic_extraction_data: List[SemanticExtractionData], training_set_length: int
+    ) -> (List[SemanticExtractionData], List[SemanticExtractionData]):
         if len(semantic_extraction_data) < 2 * training_set_length:
             train_amount = len(semantic_extraction_data) // 2
             training_set = semantic_extraction_data[:train_amount]

@@ -13,26 +13,28 @@ from semantic_metadata_extraction.methods.DistilBertSpanishMethod import DistilB
 from semantic_metadata_extraction.methods.RegexMethod import RegexMethod
 from semantic_metadata_extraction.methods.T5Method import T5Method
 from semantic_metadata_extraction.methods.T5Method5Epochs import T5Method5Epochs
+from semantic_metadata_extraction.methods.T5TransformersMethod import T5TransformersMethod
 
 SCRIPT_PATH = dirname(realpath(__file__))
 
 TENANT = "check_performance"
 METHODS: List[Type[Method]] = [
-    SameInputOutputMethod,
-    RegexMethod,
-    DateParserMethod,
-    DistilBertSpanishMethod,
+    # SameInputOutputMethod,
+    # RegexMethod,
+    # DateParserMethod,
+    # DistilBertSpanishMethod,
     T5Method,
-    T5Method5Epochs,
+    # T5Method5Epochs,
+    # T5TransformersMethod
 ]
 DATASETS: List[str] = [
     "code_spanish.tsv",
-    "country_spanish.tsv",
-    "date_spanish.tsv",
-    "document_code.tsv",
-    "judge_name.tsv",
-    "vote_english.tsv",
-    "year_multilingual.tsv",
+    # "country_spanish.tsv",
+    # "date_spanish.tsv",
+    # "document_code.tsv",
+    # "judge_name.tsv",
+    # "vote_english.tsv",
+    # "year_multilingual.tsv",
 ]
 
 RESULTS_PREFIX = f"{datetime.now():%Y_%m_%d_%H_%M}"

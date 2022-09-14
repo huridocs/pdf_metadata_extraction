@@ -46,7 +46,7 @@ class T5Method(Method):
 
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
         self.train(performance_train_set)
-        predictions = self.predict(performance_test_set)
+        predictions = self.predict([x.segment_text for x in performance_test_set])
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
         return 100 * len(correct) / len(performance_test_set)
 
@@ -94,7 +94,8 @@ class T5Method(Method):
             return texts
 
         model = T5Model("t5", self.get_model_path(), use_cuda=torch.cuda.is_available())
-        predictions = model.predict([f"{self.property_name}: {input_text}" for input_text in texts])
+        input_texts = [f"{self.property_name}: {input_text}" for input_text in texts]
+        predictions = model.predict(input_texts)
         return predictions
 
     def remove_model_if_exists(self):
