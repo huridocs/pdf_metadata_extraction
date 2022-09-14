@@ -41,8 +41,10 @@ class T5TransformersMethod(Method):
         if exists(data_path):
             os.remove(data_path)
 
-        data = [[str(index), f"{self.property_name}: {x.segment_text}", x.text] for index, x in
-                 enumerate(semantic_extraction_data)]
+        data = [
+            [str(index), f"{self.property_name}: {x.segment_text}", x.text]
+            for index, x in enumerate(semantic_extraction_data)
+        ]
         df = pd.DataFrame(data)
         df.columns = ["id", "input_with_prefix", "target"]
         df["not_used"] = ""
@@ -102,7 +104,9 @@ class T5TransformersMethod(Method):
         if not self.exists_model():
             return texts
 
-        semantic_extraction_data = [SemanticExtractionData(text="predict", segment_text=text, language_iso="en") for text in texts]
+        semantic_extraction_data = [
+            SemanticExtractionData(text="predict", segment_text=text, language_iso="en") for text in texts
+        ]
         predict_data_path = self.prepare_dataset(semantic_extraction_data)
 
         model_arguments = ModelArguments(self.get_model_path())

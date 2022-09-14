@@ -37,7 +37,8 @@ from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     DataCollatorForSeq2Seq,
-    set_seed, EarlyStoppingCallback,
+    set_seed,
+    EarlyStoppingCallback,
 )
 from transformers.trainer_utils import EvalLoopOutput, EvalPrediction, get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
@@ -571,11 +572,12 @@ def run(model_args, data_args, training_args):
         references = [
             {"id": str(label["id"]), "answers": [{"text": label["answers"], "answer_start": 0}]} for label in p.label_ids
         ]
-        predictions = [
-            {"id": str(pred["id"]), "prediction_text": pred["prediction_text"]} for pred in p.predictions
-        ]
+        predictions = [{"id": str(pred["id"]), "prediction_text": pred["prediction_text"]} for pred in p.predictions]
 
-        return metric.compute(predictions=predictions, references=references, )
+        return metric.compute(
+            predictions=predictions,
+            references=references,
+        )
 
     # Post-processing:
     def post_processing_function(
@@ -621,7 +623,7 @@ def run(model_args, data_args, training_args):
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         post_process_function=post_processing_function,
-        callbacks=[early_stopping]
+        callbacks=[early_stopping],
     )
 
     # Training

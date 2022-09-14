@@ -92,9 +92,7 @@ class QuestionAnsweringSeq2SeqTrainer(Seq2SeqTrainer):
         self.control = self.callback_handler.on_evaluate(self.args, self.state, self.control, metrics)
         return metrics
 
-    def predict(
-        self, predict_dataset, predict_examples, ignore_keys=None, metric_key_prefix: str = "test", **gen_kwargs
-    ):
+    def predict(self, predict_dataset, predict_examples, ignore_keys=None, metric_key_prefix: str = "test", **gen_kwargs):
         self._gen_kwargs = gen_kwargs.copy()
 
         predict_dataloader = self.get_test_dataloader(predict_dataset)
