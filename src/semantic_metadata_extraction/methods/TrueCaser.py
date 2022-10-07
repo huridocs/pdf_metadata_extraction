@@ -8,11 +8,7 @@ from nltk.tokenize.treebank import TreebankWordDetokenizer
 
 
 class TrueCaser(object):
-    def __init__(self, dist_file_path=None):
-        """ Initialize module with default data/english.dist file """
-        if dist_file_path is None:
-            dist_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/english.dist")
-
+    def __init__(self, dist_file_path):
         with open(dist_file_path, "rb") as distributions_file:
             pickle_dict = pickle.load(distributions_file)
             self.uni_dist = pickle_dict["uni_dist"]
@@ -36,10 +32,12 @@ class TrueCaser(object):
         # Get Backward Score
         bigram_backward_score = 1
         if prev_token is not None:
-            numerator = self.backward_bi_dist[prev_token + "_" + possible_token] + pseudo_count
+            key = prev_token + "_" + possible_token
+            numerator = self.backward_bi_dist[key] + pseudo_count
             denominator = 0
             for alternativeToken in self.word_casing_lookup[possible_token.lower()]:
-                denominator += self.backward_bi_dist[prev_token + "_" + alternativeToken] + pseudo_count
+                key = prev_token + "_" + alternativeToken
+                denominator += self.backward_bi_dist[key] + pseudo_count
 
             bigram_backward_score = numerator / denominator
 
@@ -47,10 +45,12 @@ class TrueCaser(object):
         bigram_forward_score = 1
         if next_token is not None:
             next_token = next_token.lower()  # Ensure it is lower case
-            numerator = self.forward_bi_dist[possible_token + "_" + next_token] + pseudo_count
+            key = possible_token + "_" + next_token
+            numerator = self.forward_bi_dist[key] + pseudo_count
             denominator = 0
             for alternativeToken in self.word_casing_lookup[possible_token.lower()]:
-                denominator += self.forward_bi_dist[alternativeToken + "_" + next_token] + pseudo_count
+                key = alternativeToken + "_" + next_token
+                denominator += self.forward_bi_dist[key] + pseudo_count
 
             bigram_forward_score = numerator / denominator
 
@@ -58,10 +58,12 @@ class TrueCaser(object):
         trigram_score = 1
         if prev_token is not None and next_token is not None:
             next_token = next_token.lower()  # Ensure it is lower case
-            numerator = self.trigram_dist[prev_token + "_" + possible_token + "_" + next_token] + pseudo_count
+            trigram_key = prev_token + "_" + possible_token + "_" + next_token
+            numerator = self.trigram_dist[trigram_key] + pseudo_count
             denominator = 0
             for alternativeToken in self.word_casing_lookup[possible_token.lower()]:
-                denominator += self.trigram_dist[prev_token + "_" + alternativeToken + "_" + next_token] + pseudo_count
+                trigram_key = prev_token + "_" + alternativeToken + "_" + next_token
+                denominator += self.trigram_dist[trigram_key] + pseudo_count
 
             trigram_score = numerator / denominator
 
@@ -74,37 +76,16 @@ class TrueCaser(object):
 
         return result
 
-    def first_token_case(self, raw):
+    @staticmethod
+    def first_token_case(raw):
         return raw.capitalize()
 
     def get_true_case(self, sentence, out_of_vocabulary_token_option="title"):
-        """Wrapper function for handling untokenized input.
-
-        @param sentence: a sentence string to be tokenized
-        @param outOfVocabularyTokenOption:
-            title: Returns out of vocabulary (OOV) tokens in 'title' format
-            lower: Returns OOV tokens in lower case
-            as-is: Returns OOV tokens as is
-
-        Returns (str): detokenized, truecased version of input sentence
-        """
         tokens = word_tokenize(sentence)
         tokens_true_case = self.get_true_case_from_tokens(tokens, out_of_vocabulary_token_option)
         return self.detknzr.detokenize(tokens_true_case)
 
     def get_true_case_from_tokens(self, tokens, out_of_vocabulary_token_option="title"):
-        """Returns the true case for the passed tokens.
-
-        @param tokens: List of tokens in a single sentence
-        @param pretokenised: set to true if input is alreay tokenised (e.g. string with whitespace between tokens)
-        @param outOfVocabularyTokenOption:
-            title: Returns out of vocabulary (OOV) tokens in 'title' format
-            lower: Returns OOV tokens in lower case
-            as-is: Returns OOV tokens as is
-
-        Returns (list[str]): truecased version of input list
-        of tokens
-        """
         tokens_true_case = []
 
         if not len(tokens):
