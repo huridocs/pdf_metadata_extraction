@@ -29,7 +29,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
     TRUE_CASE_SPANISH = TrueCaser(join(SERVICE_CONFIG.docker_volume_path, "spanish.dist"))
 
     def get_model_path(self):
-        return join(self.base_path, basename(__file__).split('.')[0])
+        return join(self.base_path, basename(__file__).split(".")[0])
 
     def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
         sentence_piece = sentencepiece.SentencePieceProcessor(self.ENGLISH_SENTENCE_PIECE)
@@ -52,7 +52,8 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             os.remove(data_path)
 
         true_case_inputs = [
-            self.get_true_case_segment_text(semantic_extraction_data) for semantic_extraction_data in semantic_extractions_data
+            self.get_true_case_segment_text(semantic_extraction_data)
+            for semantic_extraction_data in semantic_extractions_data
         ]
 
         data = [
@@ -157,10 +158,10 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             shutil.rmtree(self.get_model_path(), ignore_errors=True)
 
     def get_true_case_segment_text(self, semantic_extraction_data):
-        if semantic_extraction_data.language_iso == 'en':
+        if semantic_extraction_data.language_iso == "en":
             return self.TRUE_CASE_ENGLISH.get_true_case(semantic_extraction_data.segment_text)
 
-        if semantic_extraction_data.language_iso == 'es':
+        if semantic_extraction_data.language_iso == "es":
             return self.TRUE_CASE_SPANISH.get_true_case(semantic_extraction_data.segment_text)
 
         return semantic_extraction_data.segment_text

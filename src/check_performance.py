@@ -28,7 +28,7 @@ METHODS: List[Type[Method]] = [
     # T5TransformersMethod,
     # T5TransformersLowercaseMethod,
     # MT5EnglishSpanishMethod,
-    MT5TrueCaseEnglishSpanishMethod
+    MT5TrueCaseEnglishSpanishMethod,
 ]
 
 DATASETS: List[str] = [

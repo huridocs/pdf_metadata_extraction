@@ -22,7 +22,7 @@ class T5TransformersLowercaseMethod(Method):
     ENGLISH_SENTENCE_PIECE = f"{SCRIPT_PATH}/t5_small_spiece.model"
 
     def get_model_path(self):
-        return join(self.base_path, basename(__file__).split('.')[0])
+        return join(self.base_path, basename(__file__).split(".")[0])
 
     def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
         sentence_piece = sentencepiece.SentencePieceProcessor(self.ENGLISH_SENTENCE_PIECE)
@@ -70,7 +70,9 @@ class T5TransformersLowercaseMethod(Method):
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
         # self.train(performance_train_set)
         predictions = self.predict([x.segment_text for x in performance_test_set])
-        correct = [index for index, test in enumerate(performance_test_set) if test.text.lower() == predictions[index].lower()]
+        correct = [
+            index for index, test in enumerate(performance_test_set) if test.text.lower() == predictions[index].lower()
+        ]
         return 100 * len(correct) / len(performance_test_set)
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
@@ -110,7 +112,7 @@ class T5TransformersLowercaseMethod(Method):
             early_stopping=True,
             num_train_epochs=30,
             early_stopping_patience=4,
-            generation_max_length=self.get_max_output_length(semantic_extraction_data)
+            generation_max_length=self.get_max_output_length(semantic_extraction_data),
         )
 
         run(model_arguments, data_training_arguments, t5_training_arguments)
@@ -142,7 +144,7 @@ class T5TransformersLowercaseMethod(Method):
             do_train=False,
             do_eval=False,
             do_predict=True,
-            generation_max_length=self.get_max_output_length(semantic_extraction_data)
+            generation_max_length=self.get_max_output_length(semantic_extraction_data),
         )
 
         predictions = run(model_arguments, data_training_arguments, seq_seq_training_arguments)

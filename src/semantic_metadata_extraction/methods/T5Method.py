@@ -18,7 +18,7 @@ class T5Method(Method):
     ENGLISH_SENTENCE_PIECE = f"{SCRIPT_PATH}/t5_small_spiece.model"
 
     def get_model_path(self):
-        return join(self.base_path, basename(__file__).split('.')[0])
+        return join(self.base_path, basename(__file__).split(".")[0])
 
     def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
         sentence_piece = sentencepiece.SentencePieceProcessor(self.ENGLISH_SENTENCE_PIECE)
