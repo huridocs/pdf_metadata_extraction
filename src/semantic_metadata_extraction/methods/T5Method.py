@@ -1,6 +1,6 @@
 import os
 import shutil
-from os.path import join, exists
+from os.path import join, exists, basename
 from typing import List
 
 import pandas as pd
@@ -18,7 +18,7 @@ class T5Method(Method):
     ENGLISH_SENTENCE_PIECE = f"{SCRIPT_PATH}/t5_small_spiece.model"
 
     def get_model_path(self):
-        return join(self.base_path, "t5")
+        return join(self.base_path, basename(__file__).split('.')[0])
 
     def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
         sentence_piece = sentencepiece.SentencePieceProcessor(self.ENGLISH_SENTENCE_PIECE)
@@ -31,7 +31,7 @@ class T5Method(Method):
 
         sentence_piece = sentencepiece.SentencePieceProcessor(self.ENGLISH_SENTENCE_PIECE)
 
-        texts = [self.property_name + ": " + x.text for x in semantic_extraction_data]
+        texts = [x.text for x in semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
         return min(int((max(tokens_number) + 1) * 1.2), 250)
 
@@ -58,7 +58,7 @@ class T5Method(Method):
         model_args.max_length = self.get_max_output_length(semantic_extraction_data)
         model_args.train_batch_size = 1
         model_args.eval_batch_size = 1
-        model_args.num_train_epochs = 3
+        model_args.num_train_epochs = 4
         model_args.evaluate_during_training = False
         model_args.evaluate_during_training_verbose = False
         model_args.evaluate_during_training_steps = 5000000

@@ -18,7 +18,7 @@ class Results:
         self.training_set_length = str(training_set_length)
         self.start_time = None
         self.results_name = results_name
-        self.results_path = join(SCRIPT_PATH, "results", f"{results_name}.md")
+        self.results_path = join(SCRIPT_PATH, "..", "..", "performance_results", f"{results_name}.md")
         self.table = self.initiate_table()
         self.accuracies = list()
 

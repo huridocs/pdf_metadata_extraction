@@ -1,6 +1,6 @@
 import os
 import shutil
-from os.path import join, exists, basename
+from os.path import join, exists
 from typing import List
 
 import pandas as pd
@@ -17,7 +17,7 @@ from semantic_metadata_extraction.methods.run_seq_2_seq import (
 )
 
 
-class T5TransformersMethod(Method):
+class MT5EnglishSpanishMethod(Method):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
     ENGLISH_SENTENCE_PIECE = f"{SCRIPT_PATH}/t5_small_spiece.model"
 
@@ -37,13 +37,6 @@ class T5TransformersMethod(Method):
         texts = [x.text for x in semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
         return min(int((max(tokens_number) + 1) * 1.2), 256)
-
-    @staticmethod
-    def get_batch_size(semantic_extraction_data: List[SemanticExtractionData]):
-        if len(semantic_extraction_data) > 16:
-            return 8
-
-        return 1
 
     def prepare_dataset(self, semantic_extraction_data: List[SemanticExtractionData]):
         data_path = join(self.base_path, "t5_transformers_data.csv")
@@ -76,7 +69,7 @@ class T5TransformersMethod(Method):
         self.remove_model_if_exists()
         train_path = self.prepare_dataset(semantic_extraction_data)
 
-        model_arguments = ModelArguments("t5-small")
+        model_arguments = ModelArguments(join(self.service_config.docker_volume_path, "checkpoint-10500"))
         length = self.get_max_output_length(semantic_extraction_data)
         data_training_arguments = DataTrainingArguments(
             train_file=train_path,
@@ -95,13 +88,11 @@ class T5TransformersMethod(Method):
             overwrite_output_dir=True,
             output_dir=self.get_model_path(),
             per_device_train_batch_size=1,
-            weight_decay=0.1,
-            # learning_rate=3e-5,
             learning_rate=5e-4,
+            weight_decay=0.1,
             do_train=True,
             do_eval=True,
             do_predict=False,
-            eval_accumulation_steps=1,
             save_total_limit=2,
             save_strategy="epoch",
             evaluation_strategy="epoch",

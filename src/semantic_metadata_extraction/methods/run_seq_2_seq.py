@@ -39,6 +39,8 @@ from transformers import (
     DataCollatorForSeq2Seq,
     set_seed,
     EarlyStoppingCallback,
+    Seq2SeqTrainingArguments,
+    add_start_docstrings,
 )
 from transformers.trainer_utils import EvalLoopOutput, EvalPrediction, get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
@@ -247,12 +249,23 @@ class DataTrainingArguments:
             self.val_max_answer_length = self.max_answer_length
 
 
-question_answering_column_name_mapping = {
-    "squad_v2": ("question", "context", "answer"),
-}
+@dataclass
+@add_start_docstrings(Seq2SeqTrainingArguments.__doc__)
+class T5TrainingArguments(Seq2SeqTrainingArguments):
+    """
+    Args:
+       early_stopping (`bool`):
+            Whether early stopping is used or not.
+       early_stopping_patience (`int`):
+            Use with `metric_for_best_model` to stop training when the specified metric worsens for
+            `early_stopping_patience` evaluation calls.
+    """
+
+    early_stopping: bool = field(default=False, metadata={"help": "Whether early stopping is used or not"})
+    early_stopping_patience: int = field(default=0, metadata={"help": "List of TrainerCallback"})
 
 
-def run(model_args, data_args, training_args):
+def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_args: T5TrainingArguments):
     # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -365,31 +378,9 @@ def run(model_args, data_args, training_args):
         return
 
     # Get the column names for input/target.
-    dataset_columns = question_answering_column_name_mapping.get(data_args.dataset_name, None)
-    if data_args.question_column is None:
-        question_column = dataset_columns[0] if dataset_columns is not None else column_names[0]
-    else:
-        question_column = data_args.question_column
-        if question_column not in column_names:
-            raise ValueError(
-                f"--question_column' value '{data_args.question_column}' needs to be one of: {', '.join(column_names)}"
-            )
-    if data_args.context_column is None:
-        context_column = dataset_columns[1] if dataset_columns is not None else column_names[1]
-    else:
-        context_column = data_args.context_column
-        if context_column not in column_names:
-            raise ValueError(
-                f"--context_column' value '{data_args.context_column}' needs to be one of: {', '.join(column_names)}"
-            )
-    if data_args.answer_column is None:
-        answer_column = dataset_columns[2] if dataset_columns is not None else column_names[2]
-    else:
-        answer_column = data_args.answer_column
-        if answer_column not in column_names:
-            raise ValueError(
-                f"--answer_column' value '{data_args.answer_column}' needs to be one of: {', '.join(column_names)}"
-            )
+    question_column = data_args.question_column
+    context_column = data_args.context_column
+    answer_column = data_args.answer_column
 
     # Temporarily set max_answer_length for training.
     max_answer_length = data_args.max_answer_length
@@ -424,6 +415,10 @@ def run(model_args, data_args, training_args):
         inputs = [generate_input(question, context) for question, context in zip(questions, contexts)]
         # targets = [answer["text"][0] if len(answer["text"]) > 0 else "" for answer in answers]
         targets = answers
+
+        inputs = [str(x) for x in inputs]
+        targets = [str(x) for x in targets]
+
         return inputs, targets
 
     def preprocess_function(examples):
@@ -570,9 +565,10 @@ def run(model_args, data_args, training_args):
 
     def compute_metrics(p: EvalPrediction):
         references = [
-            {"id": str(label["id"]), "answers": [{"text": label["answers"], "answer_start": 0}]} for label in p.label_ids
+            {"id": str(label["id"]), "answers": [{"text": str(label["answers"]), "answer_start": 0}]}
+            for label in p.label_ids
         ]
-        predictions = [{"id": str(pred["id"]), "prediction_text": pred["prediction_text"]} for pred in p.predictions]
+        predictions = [{"id": str(pred["id"]), "prediction_text": str(pred["prediction_text"])} for pred in p.predictions]
 
         return metric.compute(
             predictions=predictions,
@@ -610,7 +606,10 @@ def run(model_args, data_args, training_args):
         references = [{"id": ex["id"], "answers": ex[answer_column]} for ex in examples]
         return EvalPrediction(predictions=formatted_predictions, label_ids=references)
 
-    early_stopping = EarlyStoppingCallback()
+    callbacks = []
+
+    if training_args.early_stopping:
+        callbacks.append(EarlyStoppingCallback(early_stopping_patience=training_args.early_stopping_patience))
 
     # Initialize our Trainer
     trainer = QuestionAnsweringSeq2SeqTrainer(
@@ -623,7 +622,7 @@ def run(model_args, data_args, training_args):
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         post_process_function=post_processing_function,
-        callbacks=[early_stopping],
+        callbacks=callbacks,
     )
 
     # Training

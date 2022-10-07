@@ -5,10 +5,13 @@ from typing import List
 
 import pandas as pd
 import csv
+
+from ServiceConfig import ServiceConfig
 from data.SemanticExtractionData import SemanticExtractionData
 from semantic_metadata_extraction.Method import Method
 import sentencepiece
 
+from semantic_metadata_extraction.methods.TrueCaser import TrueCaser
 from semantic_metadata_extraction.methods.run_seq_2_seq import (
     ModelArguments,
     DataTrainingArguments,
@@ -17,9 +20,13 @@ from semantic_metadata_extraction.methods.run_seq_2_seq import (
 )
 
 
-class T5TransformersMethod(Method):
+class MT5TrueCaseEnglishSpanishMethod(Method):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
     ENGLISH_SENTENCE_PIECE = f"{SCRIPT_PATH}/t5_small_spiece.model"
+
+    SERVICE_CONFIG = ServiceConfig()
+    TRUE_CASE_ENGLISH = TrueCaser(join(SERVICE_CONFIG.docker_volume_path, "english.dist"))
+    TRUE_CASE_SPANISH = TrueCaser(join(SERVICE_CONFIG.docker_volume_path, "spanish.dist"))
 
     def get_model_path(self):
         return join(self.base_path, basename(__file__).split('.')[0])
@@ -38,22 +45,21 @@ class T5TransformersMethod(Method):
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
         return min(int((max(tokens_number) + 1) * 1.2), 256)
 
-    @staticmethod
-    def get_batch_size(semantic_extraction_data: List[SemanticExtractionData]):
-        if len(semantic_extraction_data) > 16:
-            return 8
-
-        return 1
-
-    def prepare_dataset(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def prepare_dataset(self, semantic_extractions_data: List[SemanticExtractionData]):
         data_path = join(self.base_path, "t5_transformers_data.csv")
 
         if exists(data_path):
             os.remove(data_path)
 
+        true_case_inputs = [
+            self.get_true_case_segment_text(semantic_extraction_data) for semantic_extraction_data in semantic_extractions_data
+        ]
+
         data = [
-            [str(index), f"{self.property_name}: {x.segment_text}", x.text]
-            for index, x in enumerate(semantic_extraction_data)
+            [str(index), f"{self.property_name}: {segment_text}", semantic_data.text]
+            for index, segment_text, semantic_data in zip(
+                range(len(true_case_inputs)), true_case_inputs, semantic_extractions_data
+            )
         ]
         df = pd.DataFrame(data)
         df.columns = ["id", "input_with_prefix", "target"]
@@ -76,7 +82,7 @@ class T5TransformersMethod(Method):
         self.remove_model_if_exists()
         train_path = self.prepare_dataset(semantic_extraction_data)
 
-        model_arguments = ModelArguments("t5-small")
+        model_arguments = ModelArguments(join(self.service_config.docker_volume_path, "checkpoint-10500"))
         length = self.get_max_output_length(semantic_extraction_data)
         data_training_arguments = DataTrainingArguments(
             train_file=train_path,
@@ -95,13 +101,11 @@ class T5TransformersMethod(Method):
             overwrite_output_dir=True,
             output_dir=self.get_model_path(),
             per_device_train_batch_size=1,
-            weight_decay=0.1,
-            # learning_rate=3e-5,
             learning_rate=5e-4,
+            weight_decay=0.1,
             do_train=True,
             do_eval=True,
             do_predict=False,
-            eval_accumulation_steps=1,
             save_total_limit=2,
             save_strategy="epoch",
             evaluation_strategy="epoch",
@@ -110,7 +114,7 @@ class T5TransformersMethod(Method):
             early_stopping=True,
             num_train_epochs=30,
             early_stopping_patience=4,
-            generation_max_length=self.get_max_output_length(semantic_extraction_data)
+            generation_max_length=self.get_max_output_length(semantic_extraction_data),
         )
 
         run(model_arguments, data_training_arguments, t5_training_arguments)
@@ -142,7 +146,7 @@ class T5TransformersMethod(Method):
             do_train=False,
             do_eval=False,
             do_predict=True,
-            generation_max_length=self.get_max_output_length(semantic_extraction_data)
+            generation_max_length=self.get_max_output_length(semantic_extraction_data),
         )
 
         predictions = run(model_arguments, data_training_arguments, seq_seq_training_arguments)
@@ -151,3 +155,12 @@ class T5TransformersMethod(Method):
     def remove_model_if_exists(self):
         if self.exists_model():
             shutil.rmtree(self.get_model_path(), ignore_errors=True)
+
+    def get_true_case_segment_text(self, semantic_extraction_data):
+        if semantic_extraction_data.language_iso == 'en':
+            return self.TRUE_CASE_ENGLISH.get_true_case(semantic_extraction_data.segment_text)
+
+        if semantic_extraction_data.language_iso == 'es':
+            return self.TRUE_CASE_SPANISH.get_true_case(semantic_extraction_data.segment_text)
+
+        return semantic_extraction_data.segment_text

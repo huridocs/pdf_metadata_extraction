@@ -1,4 +1,5 @@
 import json
+import os
 from abc import ABC, abstractmethod
 from os import makedirs
 from os.path import exists, join
@@ -15,6 +16,9 @@ class Method(ABC):
         self.property_name = property_name
         self.service_config = ServiceConfig()
         self.base_path = join(self.service_config.docker_volume_path, tenant, property_name)
+
+        if not exists(self.base_path):
+            os.makedirs(self.base_path)
 
     @abstractmethod
     def performance(self, semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):

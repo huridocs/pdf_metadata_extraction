@@ -17,7 +17,7 @@ from semantic_metadata_extraction.methods.run_seq_2_seq import (
 )
 
 
-class T5TransformersMethod(Method):
+class T5TransformersLowercaseMethod(Method):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
     ENGLISH_SENTENCE_PIECE = f"{SCRIPT_PATH}/t5_small_spiece.model"
 
@@ -57,6 +57,7 @@ class T5TransformersMethod(Method):
         ]
         df = pd.DataFrame(data)
         df.columns = ["id", "input_with_prefix", "target"]
+        df["input_with_prefix"] = df["input_with_prefix"].str.lower()
         df["not_used"] = ""
 
         df.to_csv(data_path, quoting=csv.QUOTE_ALL)
@@ -67,9 +68,9 @@ class T5TransformersMethod(Method):
             return 0
 
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
-        self.train(performance_train_set)
+        # self.train(performance_train_set)
         predictions = self.predict([x.segment_text for x in performance_test_set])
-        correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
+        correct = [index for index, test in enumerate(performance_test_set) if test.text.lower() == predictions[index].lower()]
         return 100 * len(correct) / len(performance_test_set)
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
@@ -95,9 +96,8 @@ class T5TransformersMethod(Method):
             overwrite_output_dir=True,
             output_dir=self.get_model_path(),
             per_device_train_batch_size=1,
-            weight_decay=0.1,
-            # learning_rate=3e-5,
             learning_rate=5e-4,
+            weight_decay=0.1,
             do_train=True,
             do_eval=True,
             do_predict=False,

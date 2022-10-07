@@ -8,33 +8,37 @@ from data.SemanticExtractionData import SemanticExtractionData
 from performance.Results import Results
 from semantic_metadata_extraction.Method import Method
 from semantic_metadata_extraction.SameInputOutputMethod import SameInputOutputMethod
+from semantic_metadata_extraction.methods.MT5EnglishSpanishMethod import MT5EnglishSpanishMethod
 from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
-from semantic_metadata_extraction.methods.DistilBertSpanishMethod import DistilBertSpanishMethod
 from semantic_metadata_extraction.methods.RegexMethod import RegexMethod
 from semantic_metadata_extraction.methods.T5Method import T5Method
-from semantic_metadata_extraction.methods.T5Method5Epochs import T5Method5Epochs
+from semantic_metadata_extraction.methods.T5TransformersLowercaseMethod import T5TransformersLowercaseMethod
 from semantic_metadata_extraction.methods.T5TransformersMethod import T5TransformersMethod
+from semantic_metadata_extraction.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
 
 SCRIPT_PATH = dirname(realpath(__file__))
 
 TENANT = "check_performance"
+
 METHODS: List[Type[Method]] = [
     # SameInputOutputMethod,
-    # RegexMethod,
+    RegexMethod,
     # DateParserMethod,
-    # DistilBertSpanishMethod,
     T5Method,
-    # T5Method5Epochs,
-    # T5TransformersMethod
+    # T5TransformersMethod,
+    # T5TransformersLowercaseMethod,
+    # MT5EnglishSpanishMethod,
+    MT5TrueCaseEnglishSpanishMethod
 ]
+
 DATASETS: List[str] = [
     "code_spanish.tsv",
-    # "country_spanish.tsv",
-    # "date_spanish.tsv",
-    # "document_code.tsv",
-    # "judge_name.tsv",
-    # "vote_english.tsv",
-    # "year_multilingual.tsv",
+    "country_spanish.tsv",
+    "date_spanish.tsv",
+    "document_code.tsv",
+    "judge_name.tsv",
+    "vote_english.tsv",
+    "year_multilingual.tsv",
 ]
 
 RESULTS_PREFIX = f"{datetime.now():%Y_%m_%d_%H_%M}"
