@@ -19,3 +19,4 @@ config.yml
 **/*.pytest_cache
 src/.pytest_cache
 outputs
+/performance_results/mistakes/
