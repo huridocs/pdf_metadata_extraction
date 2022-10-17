@@ -10,14 +10,14 @@ class TestRegexMethod(TestCase):
             SemanticExtractionData(text="12", segment_text="one 12", language_iso="en") for _ in range(6)
         ]
         regex_method = RegexMethod("regex_test", "regex_test")
-        self.assertEqual(100, regex_method.performance(semantic_information_data, 3))
+        self.assertEqual(100, regex_method.performance(semantic_information_data, 3)[0])
 
     def test_performance_0(self):
         semantic_information_data = [
             SemanticExtractionData(text="12", segment_text="one two", language_iso="en") for _ in range(6)
         ]
         regex_method = RegexMethod("regex_test", "regex_test")
-        self.assertEqual(0, regex_method.performance(semantic_information_data, 3))
+        self.assertEqual(0, regex_method.performance(semantic_information_data, 3)[0])
 
     def test_performance_50(self):
         semantic_information_data = [
@@ -29,7 +29,7 @@ class TestRegexMethod(TestCase):
         ]
         regex_method = RegexMethod("regex_test", "regex_test")
 
-        self.assertEqual(50, regex_method.performance(semantic_information_data, 3))
+        self.assertEqual(50, regex_method.performance(semantic_information_data, 3)[0])
 
     def test_performance_no_samples(self):
         regex_method = RegexMethod("regex_test", "regex_test")
@@ -40,7 +40,7 @@ class TestRegexMethod(TestCase):
         semantic_information_data = [SemanticExtractionData(text="12", segment_text="one 12", language_iso="en")]
         regex_method = RegexMethod("regex_test", "regex_test")
 
-        self.assertEqual(0, regex_method.performance(semantic_information_data, 3))
+        self.assertEqual(0, regex_method.performance(semantic_information_data, 3)[0])
 
     def test_predict(self):
         semantic_information_data = [SemanticExtractionData(text="12", segment_text="", language_iso="")]
