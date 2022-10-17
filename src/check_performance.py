@@ -7,12 +7,11 @@ from datetime import datetime
 from data.SemanticExtractionData import SemanticExtractionData
 from performance.Results import Results
 from semantic_metadata_extraction.Method import Method
-from semantic_metadata_extraction.SameInputOutputMethod import SameInputOutputMethod
 from semantic_metadata_extraction.methods.MT5EnglishSpanishMethod import MT5EnglishSpanishMethod
 from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
 from semantic_metadata_extraction.methods.RegexMethod import RegexMethod
+from semantic_metadata_extraction.methods.SameInputOutputMethod import SameInputOutputMethod
 from semantic_metadata_extraction.methods.T5Method import T5Method
-from semantic_metadata_extraction.methods.T5TransformersLowercaseMethod import T5TransformersLowercaseMethod
 from semantic_metadata_extraction.methods.T5TransformersMethod import T5TransformersMethod
 from semantic_metadata_extraction.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
 from semantic_metadata_extraction.methods.T5ZeroShot import T5ZeroShot
@@ -24,15 +23,14 @@ class CheckPerformance:
     TENANT = "check_performance"
 
     METHODS: List[Type[Method]] = [
-        # SameInputOutputMethod,
+        # T5ZeroShot,
+        # MT5TrueCaseEnglishSpanishMethod,
+        # MT5EnglishSpanishMethod,
+        # T5TransformersMethod,
+        # T5Method,
+        SameInputOutputMethod,
         # RegexMethod,
         # DateParserMethod,
-        # T5Method,
-        # T5TransformersMethod,
-        # T5TransformersLowercaseMethod,
-        # MT5EnglishSpanishMethod,
-        # MT5TrueCaseEnglishSpanishMethod,
-        T5ZeroShot,
     ]
 
     DATASETS: List[str] = [
@@ -45,19 +43,19 @@ class CheckPerformance:
         "year_multilingual.tsv",
     ]
 
-    TRAINING_SET_LENGTH = 30
-
-    def __init__(self):
+    def __init__(self, training_length):
+        self.training_length = training_length
         self.semantic_information_data = None
         self.current_dataset = None
         self.current_method = None
+        self.current_method_name = None
         self.current_prediction = None
-        self.current_prediction = None
+        self.current_accuracy = None
 
         prefix = f"{datetime.now():%Y_%m_%d_%H_%M}"
 
-        self.all_results = Results(results_name=f"all_results____{prefix}", training_set_length=self.TRAINING_SET_LENGTH)
-        self.best_results = Results(results_name=f"best_results____{prefix}", training_set_length=self.TRAINING_SET_LENGTH)
+        self.all_results = Results(results_name=f"all_results_{training_length}____{prefix}")
+        self.best_results = Results(results_name=f"best_results_{training_length}____{prefix}")
 
     def dataset_name_to_property_name(self):
         return self.current_dataset.replace("_", "").replace(".tsv", "")
@@ -76,31 +74,51 @@ class CheckPerformance:
             self.get_semantic_extraction_data(self.current_dataset)
             self.best_results.set_start_time()
 
-            names = [list()]
             accuracies = list()
+            method_names = list()
+
+            train, test = Method.get_train_test(self.semantic_information_data, self.training_length)
 
             for self.current_method in self.METHODS:
-                self.all_results.set_start_time()
-                method_instance = self.current_method(self.TENANT, self.dataset_name_to_property_name())
-                accuracy, self.current_prediction = method_instance.performance(self.semantic_information_data, self.TRAINING_SET_LENGTH)
-                accuracies.append(accuracy)
-                names.append(method_instance.get_name())
-                self.all_results.save_result(self.current_dataset, names[-1], accuracies[-1])
-                self.write_mistakes()
+                self.run_method(accuracies)
+                method_names.append(self.current_method_name)
+                self.all_results.save_result(
+                    dataset=self.current_dataset,
+                    method=self.current_method_name,
+                    accuracy=self.current_accuracy,
+                    train_length=len(train),
+                    test_length=len(test)
+                )
 
-            self.best_results.save_result(self.current_dataset, names[accuracies.index(max(accuracies))], max(accuracies))
+            best_method = method_names[accuracies.index(max(accuracies))]
+            self.best_results.save_result(
+                dataset=self.current_dataset,
+                method=best_method,
+                accuracy=max(accuracies),
+                train_length=len(train),
+                test_length=len(test),
+            )
 
         self.write_results()
+
+    def run_method(self, accuracies):
+        self.all_results.set_start_time()
+        method_instance = self.current_method(self.TENANT, self.dataset_name_to_property_name())
+        self.current_accuracy, self.current_prediction = method_instance.performance(
+            self.semantic_information_data, self.training_length
+        )
+        self.write_mistakes()
+        self.current_method_name = method_instance.get_name()
+        accuracies.append(self.current_accuracy)
 
     def write_results(self):
         self.all_results.write_results()
         self.best_results.write_results()
 
     def write_mistakes(self):
-        performance_train_set, performance_test_set = Method.get_train_test(self.semantic_information_data,
-                                                                            self.TRAINING_SET_LENGTH)
-        correct_path = f"../performance_results/mistakes/{self.current_method}_{self.current_dataset}_correct.txt"
-        mistakes_path = f"../performance_results/mistakes/{self.current_method}_{self.current_dataset}_mistakes.txt"
+        _, performance_test_set = Method.get_train_test(self.semantic_information_data, self.training_length)
+        correct_path = f"../performance_results/mistakes/{self.training_length}_{self.current_method_name}_{self.current_dataset}_correct.txt"
+        mistakes_path = f"../performance_results/mistakes/{self.training_length}_{self.current_method_name}_{self.current_dataset}_mistakes.txt"
 
         with open(mistakes_path, "w") as input_file:
             input_file.write("Mistakes\n\n")
@@ -119,5 +137,6 @@ class CheckPerformance:
 
 
 if __name__ == "__main__":
-    check_performance = CheckPerformance()
-    check_performance.run()
+    for i in [5,10,20,30]:
+        check_performance = CheckPerformance(i)
+        check_performance.run()

@@ -13,9 +13,8 @@ class Results:
 
     RESULTS_PATH = "results"
 
-    def __init__(self, results_name: str, training_set_length: int):
+    def __init__(self, results_name: str):
         self.method = ""
-        self.training_set_length = str(training_set_length)
         self.start_time = None
         self.results_name = results_name
         self.results_path = join(SCRIPT_PATH, "..", "..", "performance_results", f"{results_name}.md")
@@ -27,7 +26,8 @@ class Results:
         table = Table(title="", box=box.MINIMAL_DOUBLE_HEAD)
         table.add_column("Dataset")
         table.add_column("Method")
-        table.add_column("Training size", justify="right")
+        table.add_column("Train size", justify="right")
+        table.add_column("Test size", justify="right")
         table.add_column("Time", justify="right")
         table.add_column("Accuracy", justify="right")
         return table
@@ -45,20 +45,21 @@ class Results:
     def format_dataset_name(name):
         return name.replace(".tsv", "").replace("_", " ")
 
-    def save_result(self, dataset: str, method: str, accuracy: float):
+    def save_result(self, dataset: str, method: str, accuracy: float, train_length: int, test_length: int):
         self.accuracies.append(accuracy)
         self.table.add_row(
             self.format_dataset_name(dataset),
             method,
-            self.training_set_length,
+            str(train_length),
+            str(test_length),
             self.get_total_time(),
             str(round(accuracy)) + "%",
         )
 
     def write_results(self):
         accuracies_average = round(sum(self.accuracies) / len(self.accuracies))
-        self.table.add_row("", "", "", "", "")
-        self.table.add_row("average", "", "", "", str(accuracies_average) + "%")
+        self.table.add_row("", "", "", "", "", "")
+        self.table.add_row("average", "", "", "", "", str(accuracies_average) + "%")
         console = Console(record=True)
         console.print(self.table)
         console.save_text(self.results_path)

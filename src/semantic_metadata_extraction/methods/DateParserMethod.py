@@ -32,7 +32,7 @@ class DateParserMethod(Method):
         predictions = self.predict([x.segment_text for x in performance_test_set])
 
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
-        return 100 * len(correct) / len(performance_test_set)
+        return 100 * len(correct) / len(performance_test_set), predictions
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
         languages = [x.language_iso for x in semantic_extraction_data]

@@ -12,7 +12,7 @@ class SameInputOutputMethod(Method):
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
 
         correct = [index for index, test in enumerate(performance_test_set) if test.text == test.segment_text]
-        return 100 * len(correct) / len(performance_test_set)
+        return 100 * len(correct) / len(performance_test_set), [x.text for x in performance_test_set]
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
         pass

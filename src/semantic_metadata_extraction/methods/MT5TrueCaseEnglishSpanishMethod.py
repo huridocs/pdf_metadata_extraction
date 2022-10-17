@@ -36,14 +36,14 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
 
         texts = [self.property_name + ": " + x.segment_text for x in semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
-        return min(int((max(tokens_number) + 1) * 1.2), 512)
+        return min(int((max(tokens_number) + 5) * 1.2), 512)
 
     def get_max_output_length(self, semantic_extraction_data: List[SemanticExtractionData]):
         sentence_piece = sentencepiece.SentencePieceProcessor(self.ENGLISH_SENTENCE_PIECE)
 
         texts = [x.text for x in semantic_extraction_data]
         tokens_number = [len(sentence_piece.encode(text)) for text in texts]
-        return min(int((max(tokens_number) + 1) * 1.2), 256)
+        return min(int((max(tokens_number) + 5) * 1.2), 256)
 
     def prepare_dataset(self, semantic_extractions_data: List[SemanticExtractionData]):
         data_path = join(self.base_path, "t5_transformers_data.csv")
@@ -77,13 +77,13 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         self.train(performance_train_set)
         predictions = self.predict([x.segment_text for x in performance_test_set])
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
-        return 100 * len(correct) / len(performance_test_set)
+        return 100 * len(correct) / len(performance_test_set), predictions
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
         self.remove_model_if_exists()
         train_path = self.prepare_dataset(semantic_extraction_data)
 
-        model_arguments = ModelArguments(join(self.service_config.docker_volume_path, "checkpoint-10500"))
+        model_arguments = ModelArguments(join(self.service_config.docker_volume_path, "jaume_checkpoint-11400"))
         length = self.get_max_output_length(semantic_extraction_data)
         data_training_arguments = DataTrainingArguments(
             train_file=train_path,
