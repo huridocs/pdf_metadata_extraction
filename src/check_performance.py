@@ -87,7 +87,7 @@ class CheckPerformance:
                     method=self.current_method_name,
                     accuracy=self.current_accuracy,
                     train_length=len(train),
-                    test_length=len(test)
+                    test_length=len(test),
                 )
 
             best_method = method_names[accuracies.index(max(accuracies))]
@@ -137,6 +137,6 @@ class CheckPerformance:
 
 
 if __name__ == "__main__":
-    for i in [5,10,20,30]:
+    for i in [5, 10, 20, 30]:
         check_performance = CheckPerformance(i)
         check_performance.run()
