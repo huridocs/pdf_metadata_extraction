@@ -7,6 +7,7 @@ from datetime import datetime
 from data.SemanticExtractionData import SemanticExtractionData
 from performance.Results import Results
 from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.methods.FlanT5TrueCaseEnglishSpanishMethod import FlanT5TrueCaseEnglishSpanishMethod
 from semantic_metadata_extraction.methods.MT5EnglishSpanishMethod import MT5EnglishSpanishMethod
 from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
 from semantic_metadata_extraction.methods.RegexMethod import RegexMethod
@@ -24,23 +25,25 @@ class CheckPerformance:
 
     METHODS: List[Type[Method]] = [
         # T5ZeroShot,
-        # MT5TrueCaseEnglishSpanishMethod,
+        MT5TrueCaseEnglishSpanishMethod,
         # MT5EnglishSpanishMethod,
         # T5TransformersMethod,
         # T5Method,
-        SameInputOutputMethod,
+        # SameInputOutputMethod,
         # RegexMethod,
         # DateParserMethod,
+        # DateParserMethod,
+        # FlanT5TrueCaseEnglishSpanishMethod
     ]
 
     DATASETS: List[str] = [
-        "code_spanish.tsv",
-        "country_spanish.tsv",
+        # "code_spanish.tsv",
+        # "country_spanish.tsv",
         "date_spanish.tsv",
-        "document_code.tsv",
-        "judge_name.tsv",
-        "vote_english.tsv",
-        "year_multilingual.tsv",
+        # "document_code.tsv",
+        # "judge_name.tsv",
+        # "vote_english.tsv",
+        # "year_multilingual.tsv",
     ]
 
     def __init__(self, training_length):
@@ -137,6 +140,9 @@ class CheckPerformance:
 
 
 if __name__ == "__main__":
-    for i in [5, 10, 20, 30]:
+    for i in [5]:
         check_performance = CheckPerformance(i)
         check_performance.run()
+    #
+    # check_performance = CheckPerformance(5)
+    # check_performance.run()

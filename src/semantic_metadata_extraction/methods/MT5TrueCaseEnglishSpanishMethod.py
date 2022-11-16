@@ -1,15 +1,16 @@
 import os
-import shutil
-from os.path import join, exists, basename
+from functools import lru_cache
+from os.path import join, exists, dirname
 from typing import List
-
+from huggingface_hub import hf_hub_download
 import pandas as pd
 import csv
+
+from transformers import AutoTokenizer
 
 from ServiceConfig import ServiceConfig
 from data.SemanticExtractionData import SemanticExtractionData
 from semantic_metadata_extraction.Method import Method
-import sentencepiece
 
 from semantic_metadata_extraction.methods.TrueCaser import TrueCaser
 from semantic_metadata_extraction.methods.run_seq_2_seq import (
@@ -22,31 +23,27 @@ from semantic_metadata_extraction.methods.run_seq_2_seq import (
 
 class MT5TrueCaseEnglishSpanishMethod(Method):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
-    ENGLISH_SENTENCE_PIECE = f"{SCRIPT_PATH}/t5_small_spiece.model"
-
     SERVICE_CONFIG = ServiceConfig()
-    TRUE_CASE_ENGLISH = TrueCaser(join(SERVICE_CONFIG.docker_volume_path, "english.dist"))
-    TRUE_CASE_SPANISH = TrueCaser(join(SERVICE_CONFIG.docker_volume_path, "spanish.dist"))
 
     def get_model_path(self):
-        return join(self.base_path, basename(__file__).split(".")[0])
+        return join(self.base_path, self.get_name(), "model")
 
     def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
-        sentence_piece = sentencepiece.SentencePieceProcessor(self.ENGLISH_SENTENCE_PIECE)
+        tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
 
         texts = [self.property_name + ": " + x.segment_text for x in semantic_extraction_data]
-        tokens_number = [len(sentence_piece.encode(text)) for text in texts]
+        tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
         return min(int((max(tokens_number) + 5) * 1.2), 512)
 
     def get_max_output_length(self, semantic_extraction_data: List[SemanticExtractionData]):
-        sentence_piece = sentencepiece.SentencePieceProcessor(self.ENGLISH_SENTENCE_PIECE)
+        tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
 
         texts = [x.text for x in semantic_extraction_data]
-        tokens_number = [len(sentence_piece.encode(text)) for text in texts]
+        tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
         return min(int((max(tokens_number) + 5) * 1.2), 256)
 
     def prepare_dataset(self, semantic_extractions_data: List[SemanticExtractionData]):
-        data_path = join(self.base_path, "t5_transformers_data.csv")
+        data_path = join(self.base_path, self.get_name(), "t5_transformers_data.csv")
 
         if exists(data_path):
             os.remove(data_path)
@@ -66,6 +63,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         df.columns = ["id", "input_with_prefix", "target"]
         df["not_used"] = ""
 
+        os.makedirs(dirname(data_path), exist_ok=True)
         df.to_csv(data_path, quoting=csv.QUOTE_ALL)
         return data_path
 
@@ -76,14 +74,17 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
         self.train(performance_train_set)
         predictions = self.predict([x.segment_text for x in performance_test_set])
+
+        self.remove_model()
+
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
         return 100 * len(correct) / len(performance_test_set), predictions
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
-        self.remove_model_if_exists()
+        self.remove_model()
         train_path = self.prepare_dataset(semantic_extraction_data)
 
-        model_arguments = ModelArguments(join(self.service_config.docker_volume_path, "jaume_checkpoint-11400"))
+        model_arguments = ModelArguments("HURIDOCS/mt5-small-spanish-es")
         length = self.get_max_output_length(semantic_extraction_data)
         data_training_arguments = DataTrainingArguments(
             train_file=train_path,
@@ -153,15 +154,31 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         predictions = run(model_arguments, data_training_arguments, seq_seq_training_arguments)
         return [prediction["prediction_text"] for prediction in predictions]
 
-    def remove_model_if_exists(self):
-        if self.exists_model():
-            shutil.rmtree(self.get_model_path(), ignore_errors=True)
+    @lru_cache(maxsize=1)
+    def get_true_case(self):
+        true_case_english_model_path = hf_hub_download(
+            repo_id="HURIDOCS/spanish-truecasing",
+            filename="english.dist",
+            revision="69558da13436cc2b29d7db92d704976e2a7ffe16",
+            cache_dir=self.service_config.docker_volume_path,
+        )
+
+        true_case_spanish_model_path = hf_hub_download(
+            repo_id="HURIDOCS/spanish-truecasing",
+            filename="spanish.dist",
+            revision="69558da13436cc2b29d7db92d704976e2a7ffe16",
+            cache_dir=self.service_config.docker_volume_path,
+        )
+
+        return TrueCaser(true_case_english_model_path), TrueCaser(true_case_spanish_model_path)
 
     def get_true_case_segment_text(self, semantic_extraction_data):
+        true_case_english, true_case_spanish = self.get_true_case()
+
         if semantic_extraction_data.language_iso == "en":
-            return self.TRUE_CASE_ENGLISH.get_true_case(semantic_extraction_data.segment_text)
+            return true_case_english.get_true_case(semantic_extraction_data.segment_text)
 
         if semantic_extraction_data.language_iso == "es":
-            return self.TRUE_CASE_SPANISH.get_true_case(semantic_extraction_data.segment_text)
+            return true_case_spanish.get_true_case(semantic_extraction_data.segment_text)
 
         return semantic_extraction_data.segment_text

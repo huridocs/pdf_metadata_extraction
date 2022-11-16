@@ -1,6 +1,6 @@
 import math
-import os
 import pickle
+import re
 import string
 
 from nltk.tokenize import word_tokenize
@@ -80,10 +80,16 @@ class TrueCaser(object):
     def first_token_case(raw):
         return raw.capitalize()
 
+    @staticmethod
+    def upper_replacement(match):
+        return ". " + match.group(0)[-1].upper()
+
     def get_true_case(self, sentence, out_of_vocabulary_token_option="title"):
         tokens = word_tokenize(sentence)
         tokens_true_case = self.get_true_case_from_tokens(tokens, out_of_vocabulary_token_option)
-        return self.detknzr.detokenize(tokens_true_case)
+        text = self.detknzr.detokenize(tokens_true_case)
+        text = re.sub(r" \. .", self.upper_replacement, text)
+        return text
 
     def get_true_case_from_tokens(self, tokens, out_of_vocabulary_token_option="title"):
         tokens_true_case = []

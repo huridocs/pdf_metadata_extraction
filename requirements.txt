@@ -32,4 +32,7 @@ evaluate~=0.2.2
 pandas~=1.4.4
 sklearn
 dateparser~=1.1.1
+langcodes
+huggingface_hub
+nltk
 git+https://github.com/huggingface/transformers

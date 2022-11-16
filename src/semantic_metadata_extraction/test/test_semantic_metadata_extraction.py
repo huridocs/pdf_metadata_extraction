@@ -11,7 +11,60 @@ DOCKER_VOLUME_PATH = join(Path(__file__).parent, "..", "..", "..", "docker_volum
 
 
 class TestSemanticMetadataExtraction(TestCase):
-    def test_create_model(self):
+    def test_predictions_one_sample(self):
+        tenant = "semantic_tenant_to_be_removed"
+        property_name = "property_name"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
+
+        semantic_information_data = [SemanticExtractionData(text="one", segment_text="two", language_iso="en")]
+        semantic_metadata_extraction.create_model(semantic_information_data)
+        predictions = semantic_metadata_extraction.get_semantic_predictions(["test 1", "test 2", "test 3"])
+
+        self.assertEqual(["test 1", "test 2", "test 3"], predictions)
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+    def test_predictions_two_samples(self):
+        tenant = "semantic_tenant_to_be_removed"
+        property_name = "property_name"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
+
+        semantic_information_data = [
+            SemanticExtractionData(text="one", segment_text="two", language_iso="en"),
+            SemanticExtractionData(text="one", segment_text="two", language_iso="en"),
+        ]
+        semantic_metadata_extraction.create_model(semantic_information_data)
+        predictions = semantic_metadata_extraction.get_semantic_predictions(["one"])
+
+        self.assertEqual(1, len(predictions))
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+    def test_predictions_same_input_output(self):
+        tenant = "semantic_tenant_to_be_removed"
+        property_name = "property_name"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
+
+        semantic_information_data = [
+            SemanticExtractionData(text="one", segment_text="one", language_iso="fr") for _ in range(2)
+        ]
+        semantic_metadata_extraction.create_model(semantic_information_data)
+        predictions = semantic_metadata_extraction.get_semantic_predictions(["test 1", "test 2", "test 3"])
+
+        self.assertEqual(["test 1", "test 2", "test 3"], predictions)
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+    def test_predictions_regex(self):
         tenant = "semantic_tenant_to_be_removed"
         property_name = "property_name"
 
@@ -23,56 +76,54 @@ class TestSemanticMetadataExtraction(TestCase):
             SemanticExtractionData(text="one", segment_text="one two", language_iso="en") for _ in range(5)
         ]
         semantic_metadata_extraction.create_model(semantic_information_data)
+        predictions = semantic_metadata_extraction.get_semantic_predictions(["one two", "one three", "four"])
 
-        self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/semantic_model/best_model"))
+        self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/RegexMethod"))
+        self.assertEqual(["one", "one", ""], predictions)
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-    def test_remove_model_if_it_is_not_good(self):
+    def test_predictions_t5(self):
         tenant = "semantic_tenant_to_be_removed"
-        property_name = "ex"
+        property_name = "other_property_name"
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
         semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
 
-        semantic_metadata_extraction.create_model(
-            [
-                SemanticExtractionData(
-                    text="Origin: English",
-                    segment_text="Origin: English",
-                    language_iso="en",
-                )
-            ]
-        )
-        predicted_texts = semantic_metadata_extraction.get_semantic_predictions(["Origin: English"])
+        semantic_information_data = [
+            SemanticExtractionData(text="Paris", segment_text="France", language_iso="en") for _ in range(3)
+        ]
+        semantic_metadata_extraction.create_model(semantic_information_data)
+        predictions = semantic_metadata_extraction.get_semantic_predictions(["France"])
 
-        self.assertEqual("Origin: English", predicted_texts[0])
-        self.assertFalse(os.path.exists(semantic_metadata_extraction.model_path))
-        self.assertFalse(os.path.exists(semantic_metadata_extraction.multilingual_model_path))
+        self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/MT5TrueCaseEnglishSpanishMethod"))
+        self.assertEqual(["Paris"], predictions)
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-    def test_remove_model_if_it_is_not_good_multilingual(self):
+    def test_remove_previous_model(self):
         tenant = "semantic_tenant_to_be_removed"
-        property_name = "ex"
+        property_name = "remove_property_name"
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
         semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
 
-        semantic_metadata_extraction.create_model(
-            [
-                SemanticExtractionData(
-                    text="Origin: English",
-                    segment_text="Origin: English",
-                    language_iso="spa",
-                )
-            ]
-        )
-        predicted_texts = semantic_metadata_extraction.get_semantic_predictions(["Origin: English"])
+        semantic_information_data = [
+            SemanticExtractionData(text="one", segment_text="one two", language_iso="en") for _ in range(3)
+        ]
+        semantic_metadata_extraction.create_model(semantic_information_data)
 
-        self.assertEqual("Origin: English", predicted_texts[0])
-        self.assertFalse(os.path.exists(semantic_metadata_extraction.model_path))
-        self.assertFalse(os.path.exists(semantic_metadata_extraction.multilingual_model_path))
+        semantic_information_data = [
+            SemanticExtractionData(text="three", segment_text="one two", language_iso="en") for _ in range(3)
+        ]
+
+        semantic_metadata_extraction.create_model(semantic_information_data)
+
+        predictions = semantic_metadata_extraction.get_semantic_predictions(["one two"])
+
+        self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/MT5TrueCaseEnglishSpanishMethod"))
+        self.assertEqual(["three"], predictions)
+
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)

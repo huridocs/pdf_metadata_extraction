@@ -34,6 +34,8 @@ class QueueProcessor:
 
     def process(self, id, message, rc, ts):
         try:
+            self.logger.error(f"Doing task")
+
             task = MetadataExtractionTask(**message)
         except ValidationError:
             self.logger.error(f"Not a valid Redis message: {message}")

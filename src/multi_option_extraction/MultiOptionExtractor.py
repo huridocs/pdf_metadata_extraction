@@ -29,6 +29,7 @@ class MultiOptionExtractor:
     def create_model(self, multi_option_extraction_data: MultiOptionExtractionData):
         self.save_json(self.options_path, [x.dict() for x in multi_option_extraction_data.options])
         self.save_json(self.multi_value_path, multi_option_extraction_data.multi_value)
+        self.semantic_metadata_extraction.remove_models()
         self.semantic_metadata_extraction.create_model(multi_option_extraction_data.to_semantic_extraction_data())
         return True, ""
 
@@ -42,11 +43,8 @@ class MultiOptionExtractor:
 
     def get_multi_option_predictions(self, texts: List[str]) -> List[MultiOptionExtractionSample]:
         self.load_options()
-        if self.semantic_metadata_extraction.exists_model():
-            semantic_predictions = self.semantic_metadata_extraction.get_semantic_predictions(texts)
-            return [self.get_options_semantics(text, prediction) for text, prediction in zip(texts, semantic_predictions)]
-
-        return [self.get_options_fuzzy_wuzzy(text) for text in texts]
+        semantic_predictions = self.semantic_metadata_extraction.get_semantic_predictions(texts)
+        return [self.get_options_semantics(text, prediction) for text, prediction in zip(texts, semantic_predictions)]
 
     def load_options(self):
         if not exists(self.options_path) or not exists(self.multi_value_path):

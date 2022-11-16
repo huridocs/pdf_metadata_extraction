@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List
 
 import pymongo
+from langcodes import standardize_tag
 
 from ServiceConfig import ServiceConfig
 from data.LabeledData import LabeledData
@@ -109,10 +110,6 @@ class MetadataExtraction:
     def create_semantic_model(self):
         semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)
         semantic_metadata_extraction.remove_models()
-
-        if len(self.pdf_features) < 7:
-            return
-
         semantic_extraction_data: List[SemanticExtractionData] = list()
         for pdf_features, labeled_data in zip(self.pdf_features, self.labeled_data):
             pdf_segments = [pdf_segment.text_content for pdf_segment in pdf_features.pdf_segments if pdf_segment.ml_label]
@@ -121,7 +118,7 @@ class MetadataExtraction:
                 SemanticExtractionData(
                     text=labeled_data.label_text,
                     segment_text=suggestion_text,
-                    language_iso="multilingual" if self.multilingual else "en",
+                    language_iso=standardize_tag(labeled_data.language_iso),
                 )
             )
 
