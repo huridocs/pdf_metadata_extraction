@@ -30,9 +30,10 @@ datasets==2.4.0
 torch >= 1.3.0
 evaluate~=0.2.2
 pandas~=1.4.4
-sklearn
+sklearn~=0.0
 dateparser~=1.1.1
-langcodes
+langcodes~=3.3.0
 huggingface_hub
-nltk
+nltk~=3.7
 git+https://github.com/huggingface/transformers
+

@@ -14,6 +14,7 @@ WORKDIR /app
 COPY ./src ./src
 
 ENV TRANSFORMERS_CACHE=/app/docker_volume/model_cache
+ENV NLTK_DATA=/app/docker_volume/nltk_data
 ENV TF_CPP_MIN_LOG_LEVEL="3"
 
 FROM base AS api

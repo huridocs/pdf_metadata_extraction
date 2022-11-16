@@ -1,14 +1,18 @@
 import math
+import os
 import pickle
 import re
 import string
+from os.path import join, dirname
 
+import nltk
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 
 
 class TrueCaser(object):
     def __init__(self, dist_file_path):
+        nltk.download("punkt")
         with open(dist_file_path, "rb") as distributions_file:
             pickle_dict = pickle.load(distributions_file)
             self.uni_dist = pickle_dict["uni_dist"]

@@ -170,6 +170,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             cache_dir=self.service_config.docker_volume_path,
         )
 
+        os.makedirs(join(self.service_config.docker_volume_path, "nltk_data"), exist_ok=True)
         return TrueCaser(true_case_english_model_path), TrueCaser(true_case_spanish_model_path)
 
     def get_true_case_segment_text(self, semantic_extraction_data):
