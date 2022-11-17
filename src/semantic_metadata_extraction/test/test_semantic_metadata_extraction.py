@@ -36,8 +36,8 @@ class TestSemanticMetadataExtraction(TestCase):
         semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
 
         semantic_information_data = [
-            SemanticExtractionData(text="one", segment_text="two", language_iso="en"),
-            SemanticExtractionData(text="one", segment_text="two", language_iso="en"),
+            SemanticExtractionData(text="one", segment_text="one two", language_iso="en"),
+            SemanticExtractionData(text="one", segment_text="one two", language_iso="en"),
         ]
         semantic_metadata_extraction.create_model(semantic_information_data)
         predictions = semantic_metadata_extraction.get_semantic_predictions(["one"])
