@@ -5,7 +5,7 @@ from semantic_metadata_extraction.Method import Method
 from dateparser.search import search_dates
 
 
-class DateParserMethod(Method):
+class DateParserPerformanceMethod(Method):
     @staticmethod
     def get_date(text, languages):
         try:
@@ -29,11 +29,6 @@ class DateParserMethod(Method):
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
 
         self.train(performance_train_set)
-
-        are_labels_dates = self.predict([x.text for x in semantic_extraction_data[:25]])
-        if len([x for x in are_labels_dates if not x]) > 0:
-            return 0, ["" for _ in performance_test_set]
-
         predictions = self.predict([x.segment_text for x in performance_test_set])
 
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
@@ -48,4 +43,4 @@ class DateParserMethod(Method):
         languages = self.load_json("languages.json")
         predictions_dates = [self.get_date(text, languages) for text in texts]
 
-        return [date.strftime("%-m/%-d/%Y") if date else "" for date in predictions_dates]
+        return [date.strftime("%d %b, %Y") if date else "" for date in predictions_dates]

@@ -29,14 +29,14 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         return join(self.base_path, self.get_name(), "model")
 
     def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
-        tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
+        tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
 
         texts = [self.property_name + ": " + x.segment_text for x in semantic_extraction_data]
         tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
         return min(int((max(tokens_number) + 5) * 1.2), 512)
 
     def get_max_output_length(self, semantic_extraction_data: List[SemanticExtractionData]):
-        tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
+        tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
 
         texts = [x.text for x in semantic_extraction_data]
         tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
@@ -83,8 +83,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
         self.remove_model()
         train_path = self.prepare_dataset(semantic_extraction_data)
-
-        model_arguments = ModelArguments("HURIDOCS/mt5-small-spanish-es")
+        model_arguments = ModelArguments("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
         length = self.get_max_output_length(semantic_extraction_data)
         data_training_arguments = DataTrainingArguments(
             train_file=train_path,
@@ -120,6 +119,10 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         )
 
         run(model_arguments, data_training_arguments, t5_training_arguments)
+
+    def get_cache_dir(self):
+        cache_dir = join(self.service_config.docker_volume_path, "HF_cache")
+        return cache_dir
 
     def exists_model(self):
         return exists(self.get_model_path())

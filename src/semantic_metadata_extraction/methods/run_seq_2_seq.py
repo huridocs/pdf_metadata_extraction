@@ -31,6 +31,7 @@ from datasets import load_dataset
 
 import evaluate
 import transformers
+from evaluate.utils.file_utils import DownloadConfig
 
 from transformers import (
     AutoConfig,
@@ -561,7 +562,11 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
     )
 
     # metric = evaluate.load("squad_v2" if data_args.version_2_with_negative else "squad")
-    metric = evaluate.load("squad")
+    metric = evaluate.load(
+        "squad",
+        cache_dir=model_args.cache_dir,
+        download_config=DownloadConfig(cache_dir=model_args.cache_dir),
+    )
 
     def compute_metrics(p: EvalPrediction):
         references = [
