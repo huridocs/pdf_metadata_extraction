@@ -19,6 +19,14 @@ class TestRegexMethod(TestCase):
         predictions = date_parser_method.predict(["5 Jun 1982"])
         self.assertEqual(["6/5/1982"], predictions)
 
+    def test_predict_multiple_dates_spanish(self):
+        text = "Informe no. 52/16 caso 12.521 fondo Maria Laura órdenes guerra y otros Chile 30 de noviembre de 2016"
+        semantic_information_data = [SemanticExtractionData(text="30/11/2016", segment_text=text, language_iso="es")]
+        date_parser_method = DateParserMethod("date_test", "date_test")
+        date_parser_method.train(semantic_information_data)
+        predictions = date_parser_method.predict([text])
+        self.assertEqual(["11/30/2016"], predictions)
+
     def test_performance_no_dates(self):
         semantic_information_data = [
             SemanticExtractionData(text="5/13/1981", segment_text="13 May 1981", language_iso="en"),

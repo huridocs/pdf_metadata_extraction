@@ -13,8 +13,10 @@ RUN mkdir /app/src
 WORKDIR /app
 COPY ./src ./src
 
-ENV NLTK_DATA=/app/docker_volume/nltk_data
-ENV HF_DATASETS_CACHE=/app/docker_volume/HF_cache
+ENV NLTK_DATA=/app/docker_volume/cache/nltk_data
+ENV HF_DATASETS_CACHE=/app/docker_volume/cache/HF
+ENV HF_HOME=/app/docker_volume/cache/HF_home
+ENV TRANSFORMERS_CACHE=/app/docker_volume/cache/Transformers
 
 FROM base AS api
 CMD gunicorn -k uvicorn.workers.UvicornWorker --chdir ./src app:app --bind 0.0.0.0:5052

@@ -30,7 +30,7 @@ class Method(ABC):
         pass
 
     @abstractmethod
-    def predict(self, semantic_extraction_data: List[str]) -> List[str]:
+    def predict(self, texts: List[str]) -> List[str]:
         pass
 
     def get_name(self):

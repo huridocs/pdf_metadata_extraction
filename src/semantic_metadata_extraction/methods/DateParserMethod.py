@@ -1,3 +1,4 @@
+import re
 from typing import List
 
 from data.SemanticExtractionData import SemanticExtractionData
@@ -7,6 +8,14 @@ from dateparser.search import search_dates
 
 class DateParserMethod(Method):
     @staticmethod
+    def get_best_date(dates):
+        not_numbers_dates = [x[1] for x in dates if re.search('[a-zA-Z]', x[0])]
+        if not_numbers_dates:
+            return not_numbers_dates[0]
+
+        return dates[0][1]
+
+    @staticmethod
     def get_date(text, languages):
         try:
             dates = search_dates(text, languages=languages)
@@ -15,7 +24,7 @@ class DateParserMethod(Method):
                 dates = search_dates(text)
 
             if dates:
-                return dates[0][1]
+                return DateParserMethod.get_best_date(dates)
 
         except TypeError:
             return None
@@ -28,7 +37,7 @@ class DateParserMethod(Method):
 
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
 
-        self.train(performance_train_set)
+        self.train(semantic_extraction_data)
 
         are_labels_dates = self.predict([x.text for x in semantic_extraction_data[:25]])
         if len([x for x in are_labels_dates if not x]) > 0:
@@ -42,7 +51,7 @@ class DateParserMethod(Method):
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
         languages = [x.language_iso for x in semantic_extraction_data]
-        self.save_json("languages.json", languages)
+        self.save_json("languages.json", list(set(languages)))
 
     def predict(self, texts: List[str]) -> List[str]:
         languages = self.load_json("languages.json")

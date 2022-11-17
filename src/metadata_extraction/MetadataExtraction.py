@@ -146,7 +146,6 @@ class MetadataExtraction:
         suggestions: List[Suggestion] = self.get_segment_selector_suggestions()
 
         segments_text = [x.segment_text for x in suggestions]
-
         if self.multi_option:
             multi_option_extraction = MultiOptionExtractor(self.tenant, self.property_name)
             multi_option_prediction = multi_option_extraction.get_multi_option_predictions(segments_text)

@@ -7,7 +7,6 @@ lxml==4.9.1
 pydantic==1.10.2
 uvicorn==0.18.3
 gunicorn
-simpletransformers==0.63.7
 sentencepiece==0.1.97
 pymongo==4.2.0
 numpy==1.23.3

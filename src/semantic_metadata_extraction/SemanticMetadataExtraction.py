@@ -24,7 +24,8 @@ class SemanticMetadataExtraction:
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-        self.docker_volume = ServiceConfig().docker_volume_path
+        service_config = ServiceConfig()
+        self.docker_volume = service_config.docker_volume_path
 
     def create_model(self, semantic_extraction_data: List[SemanticExtractionData]):
         if len(semantic_extraction_data) < 2:

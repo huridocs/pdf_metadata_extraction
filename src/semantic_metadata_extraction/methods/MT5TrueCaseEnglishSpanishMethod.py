@@ -121,8 +121,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         run(model_arguments, data_training_arguments, t5_training_arguments)
 
     def get_cache_dir(self):
-        cache_dir = join(self.service_config.docker_volume_path, "HF_cache")
-        return cache_dir
+        return join(self.service_config.docker_volume_path, "cache", "HF")
 
     def exists_model(self):
         return exists(self.get_model_path())
@@ -163,17 +162,17 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             repo_id="HURIDOCS/spanish-truecasing",
             filename="english.dist",
             revision="69558da13436cc2b29d7db92d704976e2a7ffe16",
-            cache_dir=self.service_config.docker_volume_path,
+            cache_dir=join(self.service_config.docker_volume_path, "cache"),
         )
 
         true_case_spanish_model_path = hf_hub_download(
             repo_id="HURIDOCS/spanish-truecasing",
             filename="spanish.dist",
             revision="69558da13436cc2b29d7db92d704976e2a7ffe16",
-            cache_dir=self.service_config.docker_volume_path,
+            cache_dir=join(self.service_config.docker_volume_path, "cache"),
         )
 
-        os.makedirs(join(self.service_config.docker_volume_path, "nltk_data"), exist_ok=True)
+        os.makedirs(join(self.service_config.docker_volume_path, "cache", "nltk_data"), exist_ok=True)
         return TrueCaser(true_case_english_model_path), TrueCaser(true_case_spanish_model_path)
 
     def get_true_case_segment_text(self, semantic_extraction_data):
