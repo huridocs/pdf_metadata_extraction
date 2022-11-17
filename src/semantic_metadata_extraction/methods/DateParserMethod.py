@@ -9,7 +9,7 @@ from dateparser.search import search_dates
 class DateParserMethod(Method):
     @staticmethod
     def get_best_date(dates):
-        not_numbers_dates = [x[1] for x in dates if re.search('[a-zA-Z]', x[0])]
+        not_numbers_dates = [x[1] for x in dates if re.search("[a-zA-Z]", x[0])]
         if not_numbers_dates:
             return not_numbers_dates[0]
 
