@@ -39,11 +39,8 @@ class DateParserMethod(Method):
 
         self.train(semantic_extraction_data)
 
-        are_labels_dates = self.predict([x.text for x in semantic_extraction_data[:25]])
-        if len([x for x in are_labels_dates if not x]) > 0:
-            return 0, ["" for _ in performance_test_set]
-
         predictions = self.predict([x.segment_text for x in performance_test_set])
+        self.save_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
 
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
         self.remove_model()
@@ -56,5 +53,5 @@ class DateParserMethod(Method):
     def predict(self, texts: List[str]) -> List[str]:
         languages = self.load_json("languages.json")
         predictions_dates = [self.get_date(text, languages) for text in texts]
-
-        return [date.strftime("%-m/%-d/%Y") if date else "" for date in predictions_dates]
+        predictions = [date.strftime("%-m/%-d/%Y") if date else "" for date in predictions_dates]
+        return predictions

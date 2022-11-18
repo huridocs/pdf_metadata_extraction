@@ -116,7 +116,7 @@ class MetadataExtraction:
             suggestion_text = " ".join(pdf_segments)
             semantic_extraction_data.append(
                 SemanticExtractionData(
-                    text=labeled_data.label_text,
+                    text=labeled_data.label_text.strip(),
                     segment_text=suggestion_text,
                     language_iso=standardize_tag(labeled_data.language_iso),
                 )

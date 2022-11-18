@@ -16,7 +16,7 @@ class RegexMethod(Method):
 
         self.train(performance_train_set)
         predictions = self.predict([x.segment_text for x in performance_test_set])
-
+        self.save_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
         self.remove_model()
         return 100 * len(correct) / len(performance_test_set), predictions

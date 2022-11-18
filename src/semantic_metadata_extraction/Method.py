@@ -44,6 +44,15 @@ class Method(ABC):
         with open(path, "w") as file:
             json.dump(data, file)
 
+    def save_performance_sample(self, semantic_extractions_data: List[SemanticExtractionData], predictions: List[str]):
+        path = join(self.base_path, 'sample_' + self.get_name() + '.txt')
+
+        with open(path, "w") as file:
+            for semantic_extraction_data, prediction in zip(semantic_extractions_data, predictions):
+                file.write('prediction: ' + prediction + '\n')
+                file.write('truth     : ' + semantic_extraction_data.text + '\n')
+                file.write('text      : ' + semantic_extraction_data.segment_text + '\n\n')
+
     def load_json(self, file_name: str):
         path = join(self.base_path, self.get_name(), file_name)
 
