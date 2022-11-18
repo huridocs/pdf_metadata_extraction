@@ -34,5 +34,5 @@ dateparser~=1.1.1
 langcodes~=3.3.0
 huggingface_hub
 nltk~=3.7
-git+https://github.com/huggingface/transformers
+transformers
 
