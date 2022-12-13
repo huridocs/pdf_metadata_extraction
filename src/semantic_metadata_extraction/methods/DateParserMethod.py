@@ -53,5 +53,5 @@ class DateParserMethod(Method):
     def predict(self, texts: List[str]) -> List[str]:
         languages = self.load_json("languages.json")
         predictions_dates = [self.get_date(text, languages) for text in texts]
-        predictions = [date.strftime("%-m/%-d/%Y") if date else "" for date in predictions_dates]
+        predictions = [date.strftime("%Y-%m-%d") if date else "" for date in predictions_dates]
         return predictions
