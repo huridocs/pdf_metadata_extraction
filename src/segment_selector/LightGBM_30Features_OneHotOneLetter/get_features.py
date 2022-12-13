@@ -11,7 +11,7 @@ from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 
 
 class PdfAltoXml:
-    def __init__(self, pdf_features: 'PdfFeatures'):
+    def __init__(self, pdf_features: "PdfFeatures"):
         self.pdf_features = pdf_features
         self.tuples_to_check: List[Tuple[PdfTag, PdfTag]] = list()
 

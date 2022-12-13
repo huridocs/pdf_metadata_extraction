@@ -8,15 +8,12 @@ from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 from metadata_extraction.PdfFeatures.TagType import TAG_TYPE_DICT
+from segment_selector.methods.Modes import Modes
 
 
 class SegmentLightgbmStack4Multilingual:
-    def __init__(
-        self,
-        segment_index: int,
-        pdf_segment: PdfSegment,
-        pdf_features: PdfFeatures,
-    ):
+    def __init__(self, segment_index: int, pdf_segment: PdfSegment, pdf_features: PdfFeatures, modes: Modes):
+        self.modes = modes
         self.previous_title_segment = None
         self.previous_segment = None
         self.next_segment = None
@@ -67,18 +64,10 @@ class SegmentLightgbmStack4Multilingual:
         self.fourth_word_type: int = 100
         self.last_word_type: int = 100
         self.dots_percentage: float = 0
-        self.font_family_mode_normalized = None
-        self.font_family_mode = None
-        self.font_size_mode = None
-        self.right_space_mode = None
-        self.left_space_mode = None
-        self.lines_space_mode = None
         self.font_sizes = [x.font.font_size for x in self.pdf_features.get_tags()]
-        self.get_modes()
         self.set_features()
 
     def initialize_features(self):
-        self.get_modes()
         self.page_width = self.pdf_features.pages[0].page_width
         self.page_height = self.pdf_features.pages[0].page_height
         self.text_content: str = ""
@@ -164,39 +153,6 @@ class SegmentLightgbmStack4Multilingual:
             self.starts_with_roman_numbers = True
         self.starts_with_square_brackets = self.text_content[0] == "["
 
-    def get_modes(self):
-        line_spaces, right_spaces, left_spaces = [0], [0], [0]
-
-        for segment_tag in self.pdf_features.get_tags():
-            right_spaces.append(self.page_width - segment_tag.bounding_box.right)
-            left_spaces.append(segment_tag.bounding_box.left)
-            bottom_tags_tops = [
-                bottom_tag.bounding_box.top
-                for bottom_tag in self.segment_tags
-                if bottom_tag.page_number == segment_tag.page_number
-                and bottom_tag.bounding_box.top > segment_tag.bounding_box.bottom
-            ]
-
-            if bottom_tags_tops:
-                line_spaces.append(max(bottom_tags_tops) - segment_tag.bounding_box.bottom)
-
-        self.lines_space_mode = mode(line_spaces)
-        self.left_space_mode = mode(left_spaces)
-        self.right_space_mode = mode(right_spaces)
-        self.font_size_mode = mode(
-            [segment_tag.font.font_size for segment_tag in self.pdf_features.get_tags() if segment_tag.font]
-        )
-        font_family_name_mode = mode(
-            [segment_tag.font.font_id for segment_tag in self.pdf_features.get_tags() if segment_tag.font]
-        )
-        self.font_family_mode = abs(
-            int(
-                str(hashlib.sha256(font_family_name_mode.encode("utf-8")).hexdigest())[:8],
-                16,
-            )
-        )
-        self.font_family_mode_normalized = float(f"{str(self.font_family_mode)[0]}.{str(self.font_family_mode)[1:]}")
-
     def get_last_title_features(self):
         if not self.previous_title_segment:
             return list(np.zeros(534))
@@ -261,18 +217,18 @@ class SegmentLightgbmStack4Multilingual:
         ]
 
     def get_features_array(self) -> np.array:
-        font_size_mode = sum(self.font_sizes) / len(self.font_sizes)
+        font_size_average = sum(self.font_sizes) / len(self.font_sizes)
 
         features = np.array(
             [
                 self.segment_index,
                 self.page_index,
-                font_size_mode,
-                self.lines_space_mode,
-                self.font_family_mode_normalized,
+                font_size_average,
+                self.modes.lines_space_mode,
+                self.modes.font_family_mode_normalized,
                 self.pdf_features.pages[0].page_width / 5000,
                 self.pdf_features.pages[0].page_height / 5000,
-                self.left_space_mode / self.page_width,
+                self.modes.left_space_mode / self.page_width,
                 self.bold,
                 self.italics,
                 self.text_len,
@@ -280,7 +236,7 @@ class SegmentLightgbmStack4Multilingual:
                 self.bottom,
                 self.height,
                 self.width,
-                self.font_size / font_size_mode,
+                self.font_size / self.modes.font_size_mode,
                 self.line_height,
                 self.numbers_percentage,
                 1 if self.starts_upper else 0,
@@ -336,11 +292,11 @@ class SegmentLightgbmStack4Multilingual:
 
     @staticmethod
     def from_pdf_features(pdf_features: PdfFeatures) -> List["SegmentLightgbmStack4Multilingual"]:
-
+        modes = Modes(pdf_features)
         segments: List["SegmentLightgbmStack4Multilingual"] = list()
         for index, pdf_segment in enumerate(pdf_features.pdf_segments):
 
-            segment_landmarks = SegmentLightgbmStack4Multilingual(index, pdf_segment, pdf_features)
+            segment_landmarks = SegmentLightgbmStack4Multilingual(index, pdf_segment, pdf_features, modes)
             segments.append(segment_landmarks)
 
         sorted_pdf_segments = sorted(segments, key=lambda x: (x.page_index, x.top))

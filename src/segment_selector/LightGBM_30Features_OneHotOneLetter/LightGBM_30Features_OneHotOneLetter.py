@@ -35,7 +35,7 @@ class LightGBM_30Features_OneHotOneLetter:
         self.wrong_prediction_counts = {}
 
     def get_predicted_tag_types(
-            self, pdfalto_xml, page_tags: List[PdfTag], predicted_tag_types: List[TagType] = list
+        self, pdfalto_xml, page_tags: List[PdfTag], predicted_tag_types: List[TagType] = list
     ) -> List[TagType]:
         x_rows = list()
         context_size: int = self.model_configs["context_size"]
@@ -95,7 +95,7 @@ class LightGBM_30Features_OneHotOneLetter:
 
         return predicted_tag_types
 
-    def predict(self, pdf_features: 'PdfFeatures') -> List[TagType]:
+    def predict(self, pdf_features: "PdfFeatures") -> List[TagType]:
 
         pdfalto_xml = PdfAltoXml(pdf_features)
         predicted_tag_types: List[TagType] = list()
@@ -103,6 +103,8 @@ class LightGBM_30Features_OneHotOneLetter:
             if len(page.tags) == 0:
                 continue
             # predicted_tag_types = self.get_predicted_tag_types(pdfalto_xml, deepcopy(page.tags), predicted_tag_types)
-            predicted_tag_types = self.get_predicted_tag_types(pdfalto_xml, page.tags, predicted_tag_types) # 4% faster execution time
+            predicted_tag_types = self.get_predicted_tag_types(
+                pdfalto_xml, page.tags, predicted_tag_types
+            )  # 4% faster execution time
 
         return predicted_tag_types
