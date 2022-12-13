@@ -1,1 +1,0 @@
-{'context_size': 4, 'num_boost_round': 1000, 'num_leaves': 31, 'lambda_l1': 1.82266, 'lambda_l2': 8.81926, 'feature_fraction': 0.4, 'bagging_fraction': 0.70923, 'bagging_freq': 6, 'min_data_in_leaf': 50, 'model_name': 'LightGBM_30Features_OneHotOneLetter__cs4_nbr1000_nl31_ll1.82266_ll8.81926_ff0.4_bf0.70923_bf6_mdil50__2022-04-20_20:24:30'}

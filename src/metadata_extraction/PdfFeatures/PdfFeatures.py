@@ -168,6 +168,7 @@ class PdfFeatures:
 
         xml = BeautifulSoup(xml_file_content, "lxml-xml")
         pdf_features = PdfFeatures.from_xml_content(xml, file_name=xml_file.xml_file)
+
         segmentation_data.rescale(page_width=pdf_features.pages[0].page_width, page_height=pdf_features.pages[0].page_height)
         pdf_features.set_segments_from_segmentation_data(segmentation_data)
         pdf_features.set_ml_label_from_segmentation_data(segmentation_data)

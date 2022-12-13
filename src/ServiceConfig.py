@@ -1,6 +1,6 @@
 import logging
 import os
-from os.path import realpath, dirname
+from os.path import realpath, dirname, join
 from typing import Dict
 
 import graypy
@@ -20,6 +20,7 @@ SERVICE_NAME = "information_extraction"
 class ServiceConfig:
     def __init__(self):
         self.docker_volume_path = f"{dirname(dirname(realpath(__file__)))}/docker_volume"
+        self.huggingface_path = join(self.docker_volume_path, "huggingface")
         self.tasks_queue_name = SERVICE_NAME + "_tasks"
         self.results_queue_name = SERVICE_NAME + "_results"
 

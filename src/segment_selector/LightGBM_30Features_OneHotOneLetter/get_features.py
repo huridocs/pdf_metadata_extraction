@@ -1,25 +1,34 @@
 from collections import Counter
-from pathlib import Path
-from typing import List, Dict
+from typing import List, Tuple, Dict
+
+from huggingface_hub import hf_hub_download
 from numpy import unique
 import string
 import ast
 
-
-THIS_SCRIPT_PATH = Path(__file__).parent
+from ServiceConfig import ServiceConfig
+from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 
 
 class PdfAltoXml:
-    def __init__(self, pdf_features):
+    def __init__(self, pdf_features: 'PdfFeatures'):
         self.pdf_features = pdf_features
-        self.tuples_to_check = list()
+        self.tuples_to_check: List[Tuple[PdfTag, PdfTag]] = list()
 
         self.lines_space_mode: float = 0
         self.right_space_mode: float = 0
         self.font_size_mode: float = 0
 
         self.letter_corpus: Dict[str, int] = dict()
-        with open(f"{THIS_SCRIPT_PATH}/letter_corpus.txt", "r") as corpus_file:
+        service_config = ServiceConfig()
+        letter_corpus_path = hf_hub_download(
+            repo_id="HURIDOCS/pdf-segmetation",
+            filename="letter_corpus.txt",
+            revision="da00a69c8d6a84493712e819580c0148757f466c",
+            cache_dir=service_config.huggingface_path,
+        )
+
+        with open(letter_corpus_path, "r") as corpus_file:
             corpus_contents = corpus_file.read()
             self.letter_corpus = ast.literal_eval(corpus_contents)
         self.len_letter_corpus = len(unique(list(self.letter_corpus.values())))
@@ -32,8 +41,8 @@ class PdfAltoXml:
 
         for page in self.pdf_features.pages:
             for tag in page.tags:
-                top, _ = tag.bounding_box.top, tag.bounding_box.height
-                left, _ = tag.bounding_box.left, tag.bounding_box.width
+                top, height = tag.bounding_box.top, tag.bounding_box.height
+                left, width = tag.bounding_box.left, tag.bounding_box.width
                 bottom, right = tag.bounding_box.bottom, tag.bounding_box.right
 
                 on_the_bottom = list(filter(lambda x: bottom < x.bounding_box.top, page.tags))
@@ -70,7 +79,7 @@ class PdfAltoXml:
         if len(font_mode_tag) == 1:
             self.font_size_mode: float = float(font_mode_tag[0].font_size)
 
-    def get_features_for_given_tags(self, tag_1, tag_2, tags_for_page):
+    def get_features_for_given_tags(self, tag_1: PdfTag, tag_2: PdfTag, tags_for_page):
 
         top_1 = tag_1.bounding_box.top
         left_1 = tag_1.bounding_box.left
@@ -197,7 +206,7 @@ class PdfAltoXml:
         return features
 
     @staticmethod
-    def get_on_the_right_block(tag, tags):
+    def get_on_the_right_block(tag: PdfTag, tags: List[PdfTag]):
         top = tag.bounding_box.top
         height = tag.bounding_box.height
         left = tag.bounding_box.left
