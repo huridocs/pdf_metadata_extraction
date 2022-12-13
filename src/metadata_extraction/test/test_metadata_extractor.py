@@ -603,6 +603,45 @@ class TestMetadataExtractor(TestCase):
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+    def test_get_suggestions_no_pages_document(self):
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+
+        tenant = "segment_test"
+        property_name = "property_name"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+        shutil.rmtree(
+            f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/semantic_model",
+            ignore_errors=True,
+        )
+
+        to_predict_json = {
+            "tenant": tenant,
+            "property_name": property_name,
+            "xml_file_name": "no_pages.xml",
+            "page_width": 612,
+            "page_height": 792,
+            "xml_segments_boxes": [],
+        }
+
+        mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
+
+        task = MetadataExtractionTask(
+            tenant=tenant,
+            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+            params=Params(property_name=property_name),
+        )
+        task_calculated, error = MetadataExtraction.calculate_task(task)
+
+        self.assertFalse(task_calculated)
+
+        self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
+        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, "xml_to_train")))
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_multi_option_suggestions(self):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 

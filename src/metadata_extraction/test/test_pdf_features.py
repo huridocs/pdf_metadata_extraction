@@ -15,6 +15,7 @@ DOCKER_VOLUME_PATH = (
 
 class TestPdfFeatures(TestCase):
     test_file_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+    no_pages_file_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/no_pages.xml"
 
     def test_get_pdf_features(self):
         tenant = "tenant_save"
@@ -154,6 +155,34 @@ class TestPdfFeatures(TestCase):
         self.assertEqual(1, len(labeled_segments))
         self.assertEqual("a In accordance with paragraph", labeled_segments[0].text_content[:30])
         self.assertEqual("every four years.", labeled_segments[0].text_content[-17:])
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+    def test_get_pdf_features_when_no_pages(self):
+        tenant = "tenant_save"
+        property_name = "property_save"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        segmentation_data = SegmentationData(
+            page_width=1,  # 612
+            page_height=2,  # 396
+            xml_segments_boxes=[],
+            label_segments_boxes=[],
+        )
+
+        with open(self.no_pages_file_path, "rb") as file:
+            xml_file = XmlFile(
+                tenant=tenant,
+                property_name=property_name,
+                to_train=True,
+                xml_file_name="no_pages.xml",
+            )
+
+            xml_file.save(file=file.read())
+
+        pdf_features = PdfFeatures.from_xml_file(xml_file, segmentation_data, [])
+
+        self.assertEqual(0, len(pdf_features.pdf_segments))
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
