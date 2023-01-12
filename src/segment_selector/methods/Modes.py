@@ -27,15 +27,10 @@ class Modes:
             left_spaces.append(segment_tag.bounding_box.left)
             line_spaces.append(segment_tag.bounding_box.bottom)
 
-        self.lines_space_mode = mode(line_spaces)
-        self.left_space_mode = mode(left_spaces)
-        self.right_space_mode = mode(right_spaces)
-        self.font_size_mode = mode(
-            [segment_tag.font.font_size for segment_tag in self.pdf_features.get_tags() if segment_tag.font]
-        )
-        self.font_family_name_mode = mode(
-            [segment_tag.font.font_id for segment_tag in self.pdf_features.get_tags() if segment_tag.font]
-        )
+        font_sizes = [segment_tag.font.font_size for segment_tag in self.pdf_features.get_tags() if segment_tag.font]
+        self.font_size_mode = mode(font_sizes) if font_sizes else 0
+        font_ids = [segment_tag.font.font_id for segment_tag in self.pdf_features.get_tags() if segment_tag.font]
+        self.font_family_name_mode = mode(font_ids) if font_ids else ""
         self.font_family_mode = abs(
             int(
                 str(hashlib.sha256(self.font_family_name_mode.encode("utf-8")).hexdigest())[:8],
@@ -43,3 +38,7 @@ class Modes:
             )
         )
         self.font_family_mode_normalized = float(f"{str(self.font_family_mode)[0]}.{str(self.font_family_mode)[1:]}")
+
+        self.lines_space_mode = mode(line_spaces)
+        self.left_space_mode = mode(left_spaces)
+        self.right_space_mode = mode(right_spaces)

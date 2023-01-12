@@ -60,7 +60,7 @@ class MetadataExtraction:
             labeled_data_list.append(LabeledData(**document))
 
         page_numbers_list = self.filter_valid_pages.for_training(labeled_data_list)
-
+        self.logger.info(f"for_training page_numbers_list {page_numbers_list}")
         for labeled_data, page_numbers in zip(labeled_data_list, page_numbers_list):
             if labeled_data.language_iso != "en" and labeled_data.language_iso != "eng":
                 self.multilingual = True
@@ -173,6 +173,7 @@ class MetadataExtraction:
             prediction_data_list.append(PredictionData(**document))
 
         page_numbers_list = self.filter_valid_pages.for_prediction(prediction_data_list)
+        self.logger.info(f"for_prediction page_numbers_list {page_numbers_list}")
 
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
             predictions_data.append(prediction_data)

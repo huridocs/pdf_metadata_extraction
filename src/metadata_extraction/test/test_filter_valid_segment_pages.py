@@ -59,6 +59,19 @@ class TestFilterValidSegmentPages(TestCase):
         pages_per_document = filter_valid_segment_pages.for_training([labeled_data])
         self.assertEqual([1, 2, 3, 4, 5, 6], pages_per_document[0])
 
+    def test_get_valid_pages_no_label(self):
+        tenant = "tenant_filter"
+        property_name = "property_filter"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+        filter_valid_segment_pages = FilterValidSegmentPages(tenant, property_name)
+        labeled_data_1 = self.get_labeled_data(label_numbers=[1], pages_number=10)
+        labeled_data_2 = self.get_labeled_data(label_numbers=[], pages_number=10)
+
+        pages_per_document = filter_valid_segment_pages.for_training([labeled_data_1, labeled_data_2])
+        self.assertEqual([1, 2], pages_per_document[1])
+
     def test_get_valid_pages_two_documents(self):
         tenant = "tenant_filter"
         property_name = "property_filter"
@@ -72,6 +85,20 @@ class TestFilterValidSegmentPages(TestCase):
         pages_per_document = filter_valid_segment_pages.for_training([labeled_data_1, labeled_data_2])
         self.assertEqual([1, 2, 3, 4, 5, 6], pages_per_document[0])
         self.assertEqual([1, 2, 3, 4], pages_per_document[1])
+
+    def test_get_valid_pages_only_first_page(self):
+        tenant = "tenant_filter"
+        property_name = "property_filter"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+        filter_valid_segment_pages = FilterValidSegmentPages(tenant, property_name)
+        labeled_data_1 = self.get_labeled_data(label_numbers=[1])
+        labeled_data_2 = self.get_labeled_data(label_numbers=[1])
+
+        pages_per_document = filter_valid_segment_pages.for_training([labeled_data_1, labeled_data_2])
+        self.assertEqual([1], pages_per_document[0])
+        self.assertEqual([1], pages_per_document[1])
 
     def test_get_valid_pages_two_documents_more_variability(self):
         tenant = "tenant_filter"
@@ -172,7 +199,7 @@ class TestFilterValidSegmentPages(TestCase):
         prediction_data = self.get_prediction_data(page_numbers=[2])
         pages_per_document = filter_valid_segment_pages.for_prediction([prediction_data])
         self.assertEqual(1, len(pages_per_document))
-        self.assertEqual([1, 2], pages_per_document[0])
+        self.assertEqual([1], pages_per_document[0])
 
     def test_get_valid_pages_only_prediction(self):
         tenant = "tenant_filter"
@@ -183,5 +210,19 @@ class TestFilterValidSegmentPages(TestCase):
         filter_valid_segment_pages = FilterValidSegmentPages(tenant, property_name)
         prediction_data = self.get_prediction_data(page_numbers=[2])
         pages_per_document = filter_valid_segment_pages.for_prediction([prediction_data])
+        self.assertEqual(1, len(pages_per_document))
+        self.assertEqual([1], pages_per_document[0])
+
+    def test_get_valid_pages_prediction_first_page(self):
+        tenant = "tenant_filter"
+        property_name = "property_filter"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+        filter_valid_segment_pages = FilterValidSegmentPages(tenant, property_name)
+        labeled_data = self.get_labeled_data(label_numbers=[1])
+        filter_valid_segment_pages.for_training([labeled_data])
+        prediction_data_1 = self.get_prediction_data(page_numbers=[20])
+        pages_per_document = filter_valid_segment_pages.for_prediction([prediction_data_1])
         self.assertEqual(1, len(pages_per_document))
         self.assertEqual([1, 2], pages_per_document[0])

@@ -137,6 +137,10 @@ async def get_suggestions(tenant: str, property_name: str):
 
         pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
         logger.info(f"{len(suggestions_list)} suggestions created for {tenant} {property_name}")
+        if len(suggestions_list) > 2:
+            logger.info(json.dumps(suggestions_list[0]))
+            logger.info(json.dumps(suggestions_list[1]))
+
         return json.dumps(suggestions_list)
     except Exception:
         logger.error("Error", exc_info=1)
