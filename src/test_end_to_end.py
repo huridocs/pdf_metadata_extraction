@@ -1,5 +1,4 @@
 import json
-import subprocess
 import time
 from unittest import TestCase
 
@@ -29,15 +28,6 @@ SERVER_URL = "http://localhost:5052"
 
 
 class TestEndToEnd(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        subprocess.run("../run start:testing -d", shell=True)
-        cls.wait_for_the_service()
-
-    @classmethod
-    def tearDownClass(cls):
-        subprocess.run("../run stop", shell=True)
-
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
 
@@ -281,24 +271,3 @@ class TestEndToEnd(TestCase):
             if message:
                 queue.deleteMessage(id=message["id"]).execute()
                 return ResultsMessage(**json.loads(message["message"]))
-
-    @staticmethod
-    def wait_for_the_service():
-        for i in range(13):
-            time.sleep(5)
-            if requests.get(f"{SERVER_URL}/info").status_code != 200:
-                continue
-            try:
-                queue = RedisSMQ(
-                    host=REDIS_HOST,
-                    port=REDIS_PORT,
-                    qname="information_extraction_tasks",
-                    quiet=False,
-                )
-
-                queue.sendMessage().message('{"try_queue":"true"}').execute()
-                break
-            except AttributeError:
-                print("waiting 5 second for the service to start")
-
-        TestEndToEnd.get_results_message()

@@ -67,7 +67,6 @@ class QueueProcessor:
                 data_url=data_url,
             )
 
-        self.logger.info(f"Results Redis message: {model_results_message}")
         self.results_queue.sendMessage().message(model_results_message.dict()).execute()
         return True
 

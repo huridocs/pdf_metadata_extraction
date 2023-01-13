@@ -27,5 +27,17 @@ jobs:
     - name: Lint with black
       run: ./run check_format
 
+    - name: Start service
+      run: ./run start:testing
+
+    - name: Check API ready
+      uses: emilioschepis/wait-for-endpoint@v1.0.3
+      with:
+        url: http://localhost:5052/info
+        method: GET
+        expected-status: 200
+        timeout: 60000
+        interval: 500
+
     - name: Test with unittest
       run: ./run test

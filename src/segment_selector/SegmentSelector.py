@@ -16,8 +16,8 @@ class SegmentSelector:
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-
         service_config = ServiceConfig()
+        self.logger = service_config.get_logger("redis_tasks")
         self.base_path = join(service_config.docker_volume_path, tenant, property_name)
 
         self.model_path = join(self.base_path, "segment_predictor_model", "model.model")
@@ -45,11 +45,12 @@ class SegmentSelector:
 
         return model_path
 
-    def create_model(self, pdfs_features: List[PdfFeatures], multilingual: bool) -> (bool, str):
+    def create_model(self, pdfs_features: List[PdfFeatures], multilingual: bool, logger=None) -> (bool, str):
         self.multilingual = multilingual
+
         model_path = self.prepare_model_folder()
 
-        self.model = self.get_lightgbm_stack().create_model(pdfs_features)
+        self.model = self.get_lightgbm_stack().create_model(pdfs_features, logger)
 
         if not self.model:
             return False, "No data to create model"

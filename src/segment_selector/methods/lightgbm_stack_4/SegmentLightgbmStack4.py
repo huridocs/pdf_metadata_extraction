@@ -253,7 +253,7 @@ class SegmentLightgbmStack4:
             ]
             + self.get_other_segment_features(self.previous_segment)
             + self.get_other_segment_features(self.next_segment)
-            + self.sentence_embeddings
+            # + self.sentence_embeddings
             + self.get_last_title_features()
             + self.get_last_illustration_features()
         )

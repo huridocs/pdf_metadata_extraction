@@ -19,10 +19,11 @@ from metadata_extraction.PdfFeatures.PdfFont import PdfFont
 from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 from metadata_extraction.PdfFeatures.Rectangle import Rectangle
-from metadata_extraction.PdfFeatures.embeddings_models import (
-    sentence_embeddings_model,
-    multilingual_sentence_embeddings_model,
-)
+
+# from metadata_extraction.PdfFeatures.embeddings_models import (
+#     sentence_embeddings_model,
+#     multilingual_sentence_embeddings_model,
+# )
 from metadata_extraction.XmlFile import XmlFile
 from segment_selector.LightGBM_30Features_OneHotOneLetter.predict import set_tag_types
 
@@ -147,11 +148,13 @@ class PdfFeatures:
         if not text_contents:
             return pdf_features
 
-        sentence_embeddings = sentence_embeddings_model(text_contents)
-        embeddings_list = [list(x.numpy()) for x in sentence_embeddings]
+        # sentence_embeddings = sentence_embeddings_model(text_contents)
+        # embeddings_list = [list(x.numpy()) for x in sentence_embeddings]
+        embeddings_list = [[0] * 512 for x in text_contents]
 
-        sentence_embeddings = multilingual_sentence_embeddings_model(text_contents)
-        multilingual_embeddings_list = [list(x.numpy()) for x in sentence_embeddings]
+        # sentence_embeddings = multilingual_sentence_embeddings_model(text_contents)
+        # multilingual_embeddings_list = [list(x.numpy()) for x in sentence_embeddings]
+        multilingual_embeddings_list = [[0] * 512 for x in text_contents]
         for index, pdf_segment in enumerate(pdf_features.pdf_segments):
             pdf_segment.embeddings = embeddings_list[index]
             pdf_segment.multilingual_embeddings = multilingual_embeddings_list[index]

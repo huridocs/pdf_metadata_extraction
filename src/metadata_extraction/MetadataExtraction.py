@@ -91,7 +91,9 @@ class MetadataExtraction:
 
         self.logger.info(f"Creating model with {len(self.pdf_features)} documents for {self.tenant} {self.property_name}")
         segment_selector = SegmentSelector(tenant=self.tenant, property_name=self.property_name)
-        segment_selector.create_model(pdfs_features=self.pdf_features, multilingual=self.multilingual)
+        segment_selector.create_model(pdfs_features=self.pdf_features, multilingual=self.multilingual, logger=self.logger)
+
+        self.logger.info(f"Finished creating model")
 
         if self.multi_option:
             multi_option_extractor = MultiOptionExtractor(tenant=self.tenant, property_name=self.property_name)

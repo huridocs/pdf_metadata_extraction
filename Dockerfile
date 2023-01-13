@@ -22,5 +22,4 @@ FROM base AS api
 CMD gunicorn -k uvicorn.workers.UvicornWorker --chdir ./src app:app --bind 0.0.0.0:5052
 
 FROM base AS queue_processor_information_extraction
-RUN python3 src/metadata_extraction/PdfFeatures/embeddings_models.py
 CMD python3 src/QueueProcessor.py

@@ -1,3 +1,4 @@
+from time import time
 from typing import List
 
 import numpy as np
@@ -19,13 +20,21 @@ class LightgbmStack4Multilingual:
         self.model = None
         self.best_cut = 0
 
-    def create_model(self, training_pdfs_features: List[PdfFeatures]):
+    def create_model(self, training_pdfs_features: List[PdfFeatures], logger=None):
+        if logger:
+            logger.info("Set segments")
+        start = time()
         self.set_segments(training_pdfs_features)
+        if logger:
+            logger.info(f"Set segments {int(time() - start)} seconds")
 
         if len(self.segments) == 0:
             return None
 
+        start = time()
         self.run_light_gbm()
+        if logger:
+            logger.info(f"Run lightGBM {int(time() - start)} seconds")
 
         return self.model
 
