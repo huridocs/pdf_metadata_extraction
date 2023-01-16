@@ -8,15 +8,14 @@ import pymongo
 from fastapi.testclient import TestClient
 from unittest import TestCase
 from app import app
+from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
 from data.Suggestion import Suggestion
 
 client = TestClient(app)
 
-DOCKER_VOLUME_PATH = "../docker_volume"
-
 
 class TestApp(TestCase):
-    test_file_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_predict/test.xml"
+    test_file_path = f"{APP_PATH}/tenant_test/property_name/xml_to_predict/test.xml"
 
     def test_info(self):
         response = client.get("/info")
@@ -26,33 +25,33 @@ class TestApp(TestCase):
         tenant = "endpoint_test"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
             response = client.post(f"/xml_to_train/{tenant}/{property_name}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_train/test.xml"
+        to_train_xml_path = f"{DATA_PATH}/{tenant}/{property_name}/xml_to_train/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_post_xml_to_predict(self):
         tenant = "endpoint_test"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
             response = client.post(f"/xml_to_predict/{tenant}/{property_name}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"
+        to_train_xml_path = f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data(self):
@@ -203,10 +202,11 @@ class TestApp(TestCase):
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions(self):
+        print(f"mongodb://{MONGO_HOST}:{MONGO_PORT}")
         tenant = "example_tenant_name"
         property_name = "prediction_property_name"
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+        mongo_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
 
         json_data = [
             {

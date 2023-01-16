@@ -40,7 +40,7 @@ class DateParserMethod(Method):
         self.train(semantic_extraction_data)
 
         predictions = self.predict([x.segment_text for x in performance_test_set])
-        self.save_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
+        self.log_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
 
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
         self.remove_model()

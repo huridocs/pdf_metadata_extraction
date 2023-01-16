@@ -1,50 +1,63 @@
-version: '3.2'
+version: "3.8"
 services:
-  api:
+  pdf_metadata_extraction_api:
+    container_name: pdf_metadata_extraction_api
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5052" ]
     init: true
-    network_mode: host
     restart: unless-stopped
-    user: "${USER_ID}:${GROUP_ID}"
     build:
       context: .
       dockerfile: Dockerfile
-      target: api
     volumes:
-      - ./docker_volume:/app/docker_volume
+      - data:/app/docker_volume
     depends_on:
-      - mongo_information_extraction
-      - queue_processor_information_extraction
+      - mongo_metadata_extraction
+      - pdf_metadata_extraction_worker
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-  queue_processor_information_extraction:
+    ports:
+      - "5052:5052"
+    env_file: .env
+    networks:
+      - pdf_metadata_extraction_network
+  pdf_metadata_extraction_worker:
+    container_name: pdf_metadata_extraction_worker
     init: true
-    network_mode: host
+    entrypoint: [ "python", "-m", "src.QueueProcessor" ]
     restart: unless-stopped
-    user: "${USER_ID}:${GROUP_ID}"
     build:
       context: .
       dockerfile: Dockerfile
-      target: queue_processor_information_extraction
+    volumes:
+      - data:/app/docker_volume
     shm_size: '11gb'
-    volumes:
-      - ./docker_volume:/app/docker_volume
     depends_on:
-      - mongo_information_extraction
+      - mongo_metadata_extraction
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-  mongo_information_extraction:
-    network_mode: host
+    networks:
+      - pdf_metadata_extraction_network
+    env_file: .env
+  mongo_metadata_extraction:
     restart: unless-stopped
     command: mongod --port 29017
     image: "mongo:4.0.1"
-  redis_information_extraction:
-    network_mode: host
+    networks:
+      - pdf_metadata_extraction_network
+  redis_metadata_extraction:
     restart: unless-stopped
     image: "redis:5.0.14"
     command: redis-server
     environment:
       - REDIS_REPLICATION_MODE=master
-    profiles:
-      - testing
+    networks:
+      - pdf_metadata_extraction_network
+    ports:
+      - "6379:6379"
+networks:
+  pdf_metadata_extraction_network:
+
+volumes:
+  data:

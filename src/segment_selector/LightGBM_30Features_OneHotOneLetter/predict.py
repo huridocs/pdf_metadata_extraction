@@ -5,7 +5,7 @@ from pathlib import Path
 import lightgbm as lgb
 from huggingface_hub import hf_hub_download
 
-from ServiceConfig import ServiceConfig
+from config import HUGGINGFACE_PATH
 from segment_selector.LightGBM_30Features_OneHotOneLetter.LightGBM_30Features_OneHotOneLetter import (
     LightGBM_30Features_OneHotOneLetter,
 )
@@ -21,13 +21,11 @@ def get_model_configs(config_path: str) -> Dict:
     return model_configs
 
 
-service_config = ServiceConfig()
-
 tag_type_finding_config_path = hf_hub_download(
     repo_id="HURIDOCS/pdf-segmetation",
     filename="tag_type_finding_model_config.txt",
     revision="7d98776dd34acb2fe3a06495c82e64b9c84bdc16",
-    cache_dir=service_config.huggingface_path,
+    cache_dir=HUGGINGFACE_PATH,
 )
 
 model_configs: {} = get_model_configs(tag_type_finding_config_path)
@@ -35,7 +33,7 @@ model_path = hf_hub_download(
     repo_id="HURIDOCS/pdf-segmetation",
     filename="tag_type_finding_model.txt",
     revision="c9e886597823a7995a1454f2de43b821bc930368",
-    cache_dir=service_config.huggingface_path,
+    cache_dir=HUGGINGFACE_PATH,
 )
 
 lightgbm_model = lgb.Booster(model_file=model_path)

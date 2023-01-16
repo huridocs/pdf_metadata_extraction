@@ -8,8 +8,7 @@ from typing import List
 import pymongo
 from langcodes import standardize_tag
 
-from ServiceConfig import ServiceConfig
-from config import config_logger
+from config import config_logger, MONGO_PORT, MONGO_HOST
 from data.LabeledData import LabeledData
 from data.Option import Option
 from data.PredictionData import PredictionData
@@ -36,10 +35,9 @@ class MetadataExtraction:
         self.property_name = property_name
         self.multi_option = multi_option
 
-        service_config = ServiceConfig()
         self.filter_valid_pages = FilterValidSegmentPages(tenant, property_name)
 
-        client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
+        client = pymongo.MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
 
@@ -48,7 +46,7 @@ class MetadataExtraction:
         self.multilingual: bool = False
 
     def set_pdf_features_for_training(self):
-        client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+        client = pymongo.MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}")
         pdf_information_extraction_db = client["pdf_information_extraction"]
 
         self.multilingual = False

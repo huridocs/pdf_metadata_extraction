@@ -69,7 +69,7 @@ class MT5EnglishSpanishMethod(Method):
         self.remove_model_if_exists()
         train_path = self.prepare_dataset(semantic_extraction_data)
 
-        model_arguments = ModelArguments(join(self.service_config.docker_volume_path, "jaume_checkpoint-11400"))
+        model_arguments = ModelArguments(join(DATA_PATH, "jaume_checkpoint-11400"))
         length = self.get_max_output_length(semantic_extraction_data)
         data_training_arguments = DataTrainingArguments(
             train_file=train_path,

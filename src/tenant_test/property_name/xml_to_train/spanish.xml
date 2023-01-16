@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v3#">
+    <Description>
+        <MeasurementUnit>pixel</MeasurementUnit>
+        <sourceImageInformation>
+            <fileName>/home/tv/Desktop/spanish.pdf</fileName>
+        </sourceImageInformation>
+        <OCRProcessing ID="IdOcr">
+            <ocrProcessingStep>
+                <processingDateTime>2021-08-18T15:37:47Z</processingDateTime>
+                <processingSoftware>
+                    <softwareCreator>CONTRIBUTORS</softwareCreator>
+                    <softwareName>pdfalto</softwareName>
+                    <softwareVersion>0.4</softwareVersion>
+                </processingSoftware>
+            </ocrProcessingStep>
+        </OCRProcessing>
+    </Description>
+    <Styles>
+        <TextStyle ID="font0" FONTFAMILY="arial" FONTSIZE="72.000" FONTTYPE="sans-serif" FONTWIDTH="proportional"
+                   FONTCOLOR="000000" FONTSTYLE="bold"/>
+        <TextStyle ID="font1" FONTFAMILY="arialmt" FONTSIZE="11.000" FONTTYPE="sans-serif" FONTWIDTH="proportional"
+                   FONTCOLOR="000000"/>
+    </Styles>
+    <Layout>
+        <Page ID="Page1" PHYSICAL_IMG_NR="1" WIDTH="612.000" HEIGHT="792.000">
+            <PrintSpace>
+                <TextBlock ID="p1_b1" HPOS="111.955" VPOS="87.9961" HEIGHT="66.7969" WIDTH="388.089">
+                    <TextLine WIDTH="388.089" HEIGHT="66.7969" ID="p1_t1" HPOS="111.955" VPOS="87.9961">
+                        <String ID="p1_w1" CONTENT="Resultados" HPOS="111.955" VPOS="87.9961" WIDTH="388.089"
+                                HEIGHT="66.7969" STYLEREFS="font0"/>
+                    </TextLine>
+                </TextBlock>
+                <TextBlock ID="p1_b2" HPOS="288.889" VPOS="206.682" HEIGHT="-206.68" WIDTH="-288.88">
+                    <TextLine WIDTH="34.2261" HEIGHT="10.2051" ID="p1_t2" HPOS="288.889" VPOS="206.682">
+                        <String ID="p1_w2" CONTENT="por" HPOS="288.889" VPOS="206.682" WIDTH="15.8897" HEIGHT="10.2051"
+                                STYLEREFS="font1"/>
+                        <SP WIDTH="3.0514" VPOS="206.682" HPOS="304.778"/>
+                        <String ID="p1_w3" CONTENT="día" HPOS="307.830" VPOS="206.682" WIDTH="15.2850" HEIGHT="10.2051"
+                                STYLEREFS="font1"/>
+                    </TextLine>
+                </TextBlock>
+                <Illustration ID="p1_s6" HPOS="0.0000" VPOS="0.0000" WIDTH="612.000" HEIGHT="792.000"
+                              ROTATION="0.000000" FILEID="/home/tv/Desktop/spanish.xml_data/image-1.svg" TYPE="svg"/>
+            </PrintSpace>
+        </Page>
+    </Layout>
+</alto>

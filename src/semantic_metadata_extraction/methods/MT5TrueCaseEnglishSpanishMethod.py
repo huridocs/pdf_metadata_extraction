@@ -8,7 +8,7 @@ import csv
 
 from transformers import AutoTokenizer
 
-from ServiceConfig import ServiceConfig
+from config import DATA_PATH
 from data.SemanticExtractionData import SemanticExtractionData
 from semantic_metadata_extraction.Method import Method
 
@@ -23,7 +23,6 @@ from semantic_metadata_extraction.methods.run_seq_2_seq import (
 
 class MT5TrueCaseEnglishSpanishMethod(Method):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
-    SERVICE_CONFIG = ServiceConfig()
 
     def get_model_path(self):
         return join(self.base_path, self.get_name(), "model")
@@ -74,7 +73,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
         self.train(performance_train_set)
         predictions = self.predict([x.segment_text for x in performance_test_set])
-        self.save_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
+        self.log_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
         self.remove_model()
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
         return 100 * len(correct) / len(performance_test_set), predictions
@@ -120,7 +119,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         run(model_arguments, data_training_arguments, t5_training_arguments)
 
     def get_cache_dir(self):
-        return join(self.service_config.docker_volume_path, "cache", "HF")
+        return join(DATA_PATH, "cache", "HF")
 
     def exists_model(self):
         return exists(self.get_model_path())
@@ -161,17 +160,17 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             repo_id="HURIDOCS/spanish-truecasing",
             filename="english.dist",
             revision="69558da13436cc2b29d7db92d704976e2a7ffe16",
-            cache_dir=join(self.service_config.docker_volume_path, "cache"),
+            cache_dir=join(DATA_PATH, "cache"),
         )
 
         true_case_spanish_model_path = hf_hub_download(
             repo_id="HURIDOCS/spanish-truecasing",
             filename="spanish.dist",
             revision="69558da13436cc2b29d7db92d704976e2a7ffe16",
-            cache_dir=join(self.service_config.docker_volume_path, "cache"),
+            cache_dir=join(DATA_PATH, "cache"),
         )
 
-        os.makedirs(join(self.service_config.docker_volume_path, "cache", "nltk_data"), exist_ok=True)
+        os.makedirs(join(DATA_PATH, "cache", "nltk_data"), exist_ok=True)
         return TrueCaser(true_case_english_model_path), TrueCaser(true_case_spanish_model_path)
 
     def get_true_case_segment_text(self, semantic_extraction_data):

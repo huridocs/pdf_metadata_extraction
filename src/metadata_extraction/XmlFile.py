@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from ServiceConfig import ServiceConfig
+from config import DATA_PATH
 
 
 class XmlFile:
@@ -23,8 +23,7 @@ class XmlFile:
 
     @staticmethod
     def get_xml_folder_path(tenant: str, property_name: str, to_train: bool) -> str:
-        service_config = ServiceConfig()
-        xml_folder_path = f"{service_config.docker_volume_path}/{tenant}/{property_name}"
+        xml_folder_path = f"{DATA_PATH}/{tenant}/{property_name}"
         if to_train:
             xml_folder_path += "/xml_to_train"
         else:

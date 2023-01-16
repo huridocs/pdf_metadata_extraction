@@ -6,7 +6,7 @@ from typing import List
 import pandas as pd
 import csv
 
-from ServiceConfig import ServiceConfig
+from config import DATA_PATH
 from data.SemanticExtractionData import SemanticExtractionData
 from semantic_metadata_extraction.Method import Method
 import sentencepiece
@@ -24,9 +24,8 @@ class FlanT5TrueCaseEnglishSpanishMethod(Method):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
     ENGLISH_SENTENCE_PIECE = f"{SCRIPT_PATH}/t5_small_spiece.model"
 
-    SERVICE_CONFIG = ServiceConfig()
-    TRUE_CASE_ENGLISH = TrueCaser(join(SERVICE_CONFIG.docker_volume_path, "english.dist"))
-    TRUE_CASE_SPANISH = TrueCaser(join(SERVICE_CONFIG.docker_volume_path, "spanish.dist"))
+    TRUE_CASE_ENGLISH = TrueCaser(join(DATA_PATH, "english.dist"))
+    TRUE_CASE_SPANISH = TrueCaser(join(DATA_PATH, "spanish.dist"))
 
     def get_model_path(self):
         return join(self.base_path, basename(__file__).split(".")[0])

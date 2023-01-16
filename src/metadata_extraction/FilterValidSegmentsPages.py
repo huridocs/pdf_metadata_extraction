@@ -3,17 +3,14 @@ import os
 from os.path import join, exists
 from typing import List
 
-from ServiceConfig import ServiceConfig
+from config import DATA_PATH
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 
 
 class FilterValidSegmentPages:
     def __init__(self, tenant: str, property_name: str):
-        self.service_config = ServiceConfig()
-        self.labeled_data_json_path = join(
-            self.service_config.docker_volume_path, tenant, property_name, "filter_pages.json"
-        )
+        self.labeled_data_json_path = join(DATA_PATH, tenant, property_name, "filter_pages.json")
         self.start_gaps = []
         self.end_gaps = []
         self.valid_pages_ranges = []

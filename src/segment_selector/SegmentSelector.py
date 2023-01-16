@@ -1,4 +1,3 @@
-import logging
 import shutil
 import lightgbm as lgb
 
@@ -7,8 +6,7 @@ from os.path import join, exists
 from pathlib import Path
 from typing import List
 
-from ServiceConfig import ServiceConfig
-from config import config_logger
+from config import DATA_PATH
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from segment_selector.methods.lightgbm_stack_4.LightgbmStack4 import LightgbmStack4
 from segment_selector.methods.lightgbm_stack_4_multilingual.LightgbmStack4Multilingual import LightgbmStack4Multilingual
@@ -18,9 +16,8 @@ class SegmentSelector:
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-        service_config = ServiceConfig()
 
-        self.base_path = join(service_config.docker_volume_path, tenant, property_name)
+        self.base_path = join(DATA_PATH, tenant, property_name)
 
         self.model_path = join(self.base_path, "segment_predictor_model", "model.model")
         self.multilingual_model_path = join(self.base_path, "multilingual_segment_predictor_model", "model.model")

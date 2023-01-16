@@ -3,6 +3,7 @@ import shutil
 from os.path import join
 from unittest import TestCase
 
+from config import APP_PATH
 from metadata_extraction.XmlFile import XmlFile
 
 DOCKER_VOLUME_PATH = (
@@ -11,7 +12,7 @@ DOCKER_VOLUME_PATH = (
 
 
 class TestXmlFile(TestCase):
-    test_file_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+    test_file_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
 
     def test_save_xml_to_train(self):
         tenant = "tenant_save"

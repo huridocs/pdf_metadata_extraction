@@ -2,12 +2,11 @@ fastapi==0.89.1
 beautifulsoup4==4.11.1
 graypy==2.1.0
 PyYAML==6.0
-python-multipart
+python-multipart==0.0.5
 lxml==4.9.2
 pydantic==1.10.4
 uvicorn==0.20.0
-gunicorn
-sentencepiece==0.1.97
+gunicorn==20.1.0
 pymongo==4.3.3
 numpy==1.24.1
 lightgbm==3.3.4
@@ -20,12 +19,10 @@ fuzzywuzzy==0.18.0
 python-Levenshtein==0.20.9
 sentry-sdk==1.13.0
 tdda==2.0.1
-rich==13.0.1
 datasets==2.8.0
 torch==1.13.1
 evaluate==0.4.0
 pandas==1.5.2
-sklearn~=0.0
 dateparser==1.1.6
 langcodes==3.3.0
 huggingface_hub

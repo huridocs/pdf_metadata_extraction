@@ -6,7 +6,7 @@ from numpy import unique
 import string
 import ast
 
-from ServiceConfig import ServiceConfig
+from config import HUGGINGFACE_PATH
 from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 
 
@@ -20,12 +20,11 @@ class PdfAltoXml:
         self.font_size_mode: float = 0
 
         self.letter_corpus: Dict[str, int] = dict()
-        service_config = ServiceConfig()
         letter_corpus_path = hf_hub_download(
             repo_id="HURIDOCS/pdf-segmetation",
             filename="letter_corpus.txt",
             revision="da00a69c8d6a84493712e819580c0148757f466c",
-            cache_dir=service_config.huggingface_path,
+            cache_dir=HUGGINGFACE_PATH,
         )
 
         with open(letter_corpus_path, "r") as corpus_file:

@@ -1,4 +1,3 @@
-import logging
 import os
 from time import sleep
 
@@ -9,8 +8,7 @@ from rsmq import RedisSMQ, cmd
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 
-from ServiceConfig import ServiceConfig
-from config import config_logger
+from config import config_logger, SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, TASK_QUEUE_NAME, RESULTS_QUEUE_NAME
 from data.MetadataExtractionTask import MetadataExtractionTask
 from data.ResultsMessage import ResultsMessage
 from metadata_extraction.MetadataExtraction import MetadataExtraction
@@ -18,20 +16,18 @@ from metadata_extraction.MetadataExtraction import MetadataExtraction
 
 class QueueProcessor:
     def __init__(self):
-        self.config = ServiceConfig()
-
         config_logger.info("The PDF Metadata Extractor has been started")
 
         self.task_queue = RedisSMQ(
-            host=self.config.redis_host,
-            port=self.config.redis_port,
-            qname=self.config.tasks_queue_name,
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            qname=TASK_QUEUE_NAME,
         )
 
         self.results_queue = RedisSMQ(
-            host=self.config.redis_host,
-            port=self.config.redis_port,
-            qname=self.config.results_queue_name,
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            qname=RESULTS_QUEUE_NAME,
         )
 
     def process(self, id, message, rc, ts):
@@ -58,7 +54,7 @@ class QueueProcessor:
         else:
             data_url = None
             if task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
-                data_url = f"{self.config.service_url}/get_suggestions/{task.tenant}/{task.params.property_name}"
+                data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.params.property_name}"
 
             model_results_message = ResultsMessage(
                 tenant=task.tenant,
@@ -88,14 +84,14 @@ class QueueProcessor:
                 self.results_queue.getQueueAttributes().exec_command()
 
                 redis_smq_consumer = RedisSMQConsumer(
-                    qname=self.config.tasks_queue_name,
+                    qname=TASK_QUEUE_NAME,
                     processor=self.process,
-                    host=self.config.redis_host,
-                    port=self.config.redis_port,
+                    host=REDIS_HOST,
+                    port=REDIS_PORT,
                 )
                 redis_smq_consumer.run()
             except redis.exceptions.ConnectionError:
-                config_logger.error(f"Error connecting to Redis: {self.config.redis_host}:{self.config.redis_port}")
+                config_logger.error(f"Error connecting to Redis: {REDIS_HOST}:{REDIS_PORT}")
                 sleep(20)
             except cmd.exceptions.QueueDoesNotExist:
                 config_logger.info("Creating queues")

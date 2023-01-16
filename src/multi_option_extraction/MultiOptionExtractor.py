@@ -6,7 +6,7 @@ from typing import List
 
 import fuzzywuzzy.fuzz
 
-from ServiceConfig import ServiceConfig
+from config import DATA_PATH
 from data.Option import Option
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from semantic_metadata_extraction.SemanticMetadataExtraction import SemanticMetadataExtraction
@@ -16,9 +16,8 @@ class MultiOptionExtractor:
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-        self.service_config = ServiceConfig()
 
-        self.base_path = join(self.service_config.docker_volume_path, tenant, property_name, "multi_option_extractor")
+        self.base_path = join(DATA_PATH, tenant, property_name, "multi_option_extractor")
         self.options_path = join(self.base_path, "options.json")
         self.multi_value_path = join(self.base_path, "multi_value.json")
         self.semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)

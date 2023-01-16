@@ -5,6 +5,7 @@ from pathlib import Path
 from time import time
 from unittest import TestCase
 
+from config import APP_PATH, DATA_PATH
 from data.LabeledData import LabeledData
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
@@ -18,10 +19,8 @@ class TestSegmentSelector(TestCase):
     PROPERTY_NAME = "property_name"
     TEST_XML_NAME = "test.xml"
 
-    DOCKER_VOLUME_PATH = join(Path(__file__).parent, "..", "..", "..", "docker_volume")
-
-    TEST_XML_PATH = join(DOCKER_VOLUME_PATH, "tenant_test", PROPERTY_NAME, "xml_to_train", TEST_XML_NAME)
-    BASE_PATH = join(DOCKER_VOLUME_PATH, TENANT, PROPERTY_NAME)
+    TEST_XML_PATH = join(APP_PATH, "tenant_test", PROPERTY_NAME, "xml_to_train", TEST_XML_NAME)
+    BASE_PATH = join(DATA_PATH, TENANT, PROPERTY_NAME)
 
     LABELED_DATA_JSON = {
         "tenant": TENANT,
@@ -43,14 +42,14 @@ class TestSegmentSelector(TestCase):
     )
 
     def setUp(self):
-        shutil.rmtree(join(TestSegmentSelector.DOCKER_VOLUME_PATH, TestSegmentSelector.TENANT), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, TestSegmentSelector.TENANT), ignore_errors=True)
 
         makedirs(join(TestSegmentSelector.BASE_PATH, "xml_to_train"))
         test_folder_path = join(TestSegmentSelector.BASE_PATH, "xml_to_train", TestSegmentSelector.TEST_XML_NAME)
         shutil.copy(self.TEST_XML_PATH, test_folder_path)
 
     def tearDown(self):
-        shutil.rmtree(join(TestSegmentSelector.DOCKER_VOLUME_PATH, TestSegmentSelector.TENANT), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, TestSegmentSelector.TENANT), ignore_errors=True)
 
     def test_create_model(self):
         start = time()

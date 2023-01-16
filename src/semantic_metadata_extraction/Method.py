@@ -7,7 +7,7 @@ from os.path import exists, join
 from pathlib import Path
 from typing import List
 
-from ServiceConfig import ServiceConfig
+from config import config_logger, DATA_PATH
 from data.SemanticExtractionData import SemanticExtractionData
 
 
@@ -15,8 +15,7 @@ class Method(ABC):
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-        self.service_config = ServiceConfig()
-        self.base_path = join(self.service_config.docker_volume_path, tenant, property_name)
+        self.base_path = join(DATA_PATH, tenant, property_name)
 
         if not exists(self.base_path):
             os.makedirs(self.base_path)
@@ -44,14 +43,12 @@ class Method(ABC):
         with open(path, "w") as file:
             json.dump(data, file)
 
-    def save_performance_sample(self, semantic_extractions_data: List[SemanticExtractionData], predictions: List[str]):
-        path = join(self.base_path, "sample_" + self.get_name() + ".txt")
-
-        with open(path, "w") as file:
-            for semantic_extraction_data, prediction in zip(semantic_extractions_data, predictions):
-                file.write("prediction: " + prediction + "\n")
-                file.write("truth     : " + semantic_extraction_data.text + "\n")
-                file.write("text      : " + semantic_extraction_data.segment_text + "\n\n")
+    def log_performance_sample(self, semantic_extractions_data: List[SemanticExtractionData], predictions: List[str]):
+        config_logger.info(f"Performance predictions for {self.get_name()}")
+        for semantic_extraction_data, prediction in zip(semantic_extractions_data, predictions):
+            config_logger.info("prediction: " + prediction + "\n")
+            config_logger.info("truth     : " + semantic_extraction_data.text + "\n")
+            config_logger.info("text      : " + semantic_extraction_data.segment_text + "\n\n")
 
     def load_json(self, file_name: str):
         path = join(self.base_path, self.get_name(), file_name)

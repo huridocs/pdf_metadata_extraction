@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v3#">
+    <Description>
+        <MeasurementUnit>pixel</MeasurementUnit>
+        <sourceImageInformation>
+            <fileName>/home/tv/Desktop/test.pdf</fileName>
+        </sourceImageInformation>
+        <OCRProcessing ID="IdOcr">
+            <ocrProcessingStep>
+                <processingDateTime>2021-08-06T10:24:36Z</processingDateTime>
+                <processingSoftware>
+                    <softwareCreator>CONTRIBUTORS</softwareCreator>
+                    <softwareName>pdfalto</softwareName>
+                    <softwareVersion>0.4</softwareVersion>
+                </processingSoftware>
+            </ocrProcessingStep>
+        </OCRProcessing>
+    </Description>
+    <Styles>
+        <TextStyle ID="font0" FONTFAMILY="timesnewromanpsmt" FONTSIZE="14.040" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000"/>
+        <TextStyle ID="font1" FONTFAMILY="timesnewromanpsmt" FONTSIZE="20.040" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000"/>
+        <TextStyle ID="font2" FONTFAMILY="timesnewromanps" FONTSIZE="20.040" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000" FONTSTYLE="bold"/>
+        <TextStyle ID="font3" FONTFAMILY="timesnewromanpsmt" FONTSIZE="9.960" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000"/>
+        <TextStyle ID="font4" FONTFAMILY="barcode 3 of 9 by request" FONTSIZE="12.000" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000"/>
+        <TextStyle ID="font5" FONTFAMILY="timesnewromanps" FONTSIZE="9.960" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000" FONTSTYLE="bold"/>
+        <TextStyle ID="font6" FONTFAMILY="timesnewromanps" FONTSIZE="14.040" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000" FONTSTYLE="bold"/>
+        <TextStyle ID="font7" FONTFAMILY="timesnewromanps" FONTSIZE="12.000" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000" FONTSTYLE="bold"/>
+        <TextStyle ID="font8" FONTFAMILY="timesnewromanpsmt" FONTSIZE="9.960" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="0000ff"/>
+        <TextStyle ID="font9" FONTFAMILY="timesnewromanps" FONTSIZE="6.960" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000" FONTSTYLE="italics"/>
+        <TextStyle ID="font10" FONTFAMILY="timesnewromanps" FONTSIZE="6.480" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000" FONTSTYLE="italics superscript"/>
+        <TextStyle ID="font11" FONTFAMILY="timesnewromanps" FONTSIZE="8.520" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000" FONTSTYLE="bold"/>
+        <TextStyle ID="font12" FONTFAMILY="timesnewromanpsmt" FONTSIZE="6.960" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000"/>
+        <TextStyle ID="font13" FONTFAMILY="timesnewromanps" FONTSIZE="5.520" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000" FONTSTYLE="italics superscript"/>
+        <TextStyle ID="font14" FONTFAMILY="timesnewromanpsmt" FONTSIZE="8.520" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="000000"/>
+        <TextStyle ID="font15" FONTFAMILY="timesnewromanpsmt" FONTSIZE="8.520" FONTTYPE="sans-serif"
+                   FONTWIDTH="proportional" FONTCOLOR="0000ff"/>
+    </Styles>
+    <Layout>
+        <Page ID="Page1" PHYSICAL_IMG_NR="1" WIDTH="612.000" HEIGHT="792.000">
+            <PrintSpace>
+                <TextBlock ID="p1_b1" HPOS="123.380" VPOS="48.1103" HEIGHT="12.7624" WIDTH="82.9812">
+                    <TextLine WIDTH="82.9812" HEIGHT="12.7624" ID="p1_t1" HPOS="123.380" VPOS="48.1103">
+                        <String ID="p1_w1" CONTENT="" HPOS="123.380" VPOS="48.1103" WIDTH="37.1419"
+                                HEIGHT="12.7624" STYLEREFS="font0"/>
+                        <SP WIDTH="3.4682" VPOS="48.1103" HPOS="160.521"/>
+                        <String ID="p1_w2" CONTENT="" HPOS="163.990" VPOS="48.1103" WIDTH="42.3711"
+                                HEIGHT="12.7624" STYLEREFS="font0"/>
+                    </TextLine>
+                </TextBlock>
+                <TextBlock ID="p1_b2" HPOS="495.100" VPOS="42.6323" HEIGHT="18.2164" WIDTH="56.9620">
+                    <TextLine WIDTH="56.9620" HEIGHT="18.2164" ID="p1_t2" HPOS="495.100" VPOS="42.6323">
+                        <String ID="p1_w3" CONTENT="A/INF/76/1" HPOS="495.100" VPOS="42.6323" WIDTH="56.9620"
+                                HEIGHT="18.2164" STYLEREFS="font1"/>
+                    </TextLine>
+                </TextBlock>
+            </PrintSpace>
+        </Page>
+    </Layout>
+</alto>

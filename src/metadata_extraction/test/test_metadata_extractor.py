@@ -1,35 +1,30 @@
 import os
 import shutil
 from os.path import exists, join
-from pathlib import Path
 from typing import List
 from unittest import TestCase
 
 import mongomock
 import pymongo
 
-from ServiceConfig import ServiceConfig
+from config import DATA_PATH, APP_PATH
 from data.MetadataExtractionTask import MetadataExtractionTask
 from data.Params import Params
 from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
 from metadata_extraction.MetadataExtraction import MetadataExtraction
 
-DOCKER_VOLUME_PATH = join(Path(__file__).parent, "..", "..", "..", "docker_volume")
-
-service_config = ServiceConfig()
-
 
 class TestMetadataExtractor(TestCase):
-    test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
-    model_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/segment_predictor_model/model.model"
+    test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+    model_path = f"{APP_PATH}/tenant_test/property_name/segment_predictor_model/model.model"
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_error_when_blank_document(self):
         tenant = "segment_test"
         property_name = "property_name"
 
-        base_path = join(DOCKER_VOLUME_PATH, tenant, property_name)
+        base_path = join(DATA_PATH, tenant, property_name)
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
@@ -46,7 +41,7 @@ class TestMetadataExtractor(TestCase):
         }
         mongo_client.pdf_information_extraction.labeled_data.insert_one(json_data)
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         os.makedirs(f"{base_path}/xml_to_train")
         shutil.copy(self.test_xml_path, f"{base_path}/xml_to_train/test.xml")
@@ -60,7 +55,7 @@ class TestMetadataExtractor(TestCase):
 
         self.assertFalse(task_calculated)
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant))
+        shutil.rmtree(join(DATA_PATH, tenant))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_error_when_no_files(self):
@@ -104,10 +99,8 @@ class TestMetadataExtractor(TestCase):
         )
         MetadataExtraction.calculate_task(task)
 
-        self.assertFalse(os.path.exists(f"{DOCKER_VOLUME_PATH}/segment_test/property_name/xml_to_train"))
-        self.assertFalse(
-            os.path.exists(f"{DOCKER_VOLUME_PATH}/segment_test/property_name/segment_predictor_model/model.model")
-        )
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/segment_test/property_name/xml_to_train"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/segment_test/property_name/segment_predictor_model/model.model"))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_calculate_suggestions(self):
@@ -116,12 +109,8 @@ class TestMetadataExtractor(TestCase):
         tenant = "segment_test"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
-        shutil.rmtree(
-            f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/semantic_model",
-            ignore_errors=True,
-        )
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
 
         labeled_data_json = {
             "tenant": tenant,
@@ -185,10 +174,10 @@ class TestMetadataExtractor(TestCase):
 
         self.assertIsNone(mongo_client.pdf_information_extraction.predictiondata.find_one())
 
-        self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/spanish.xml"))
-        self.assertFalse(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
+        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/spanish.xml"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_page_2(self):
@@ -197,8 +186,8 @@ class TestMetadataExtractor(TestCase):
         tenant = "segment_test"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
 
         labeled_data_json = {
             "tenant": tenant,
@@ -252,8 +241,8 @@ class TestMetadataExtractor(TestCase):
         self.assertTrue("In accordance with paragraph" in suggestion.segment_text)
         self.assertTrue("every four years" in suggestion.text)
         self.assertEqual(2, suggestion.page_number)
-        self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict"))
-        self.assertFalse(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
+        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
         self.assertAlmostEqual(173.33333333333331, suggestion.segments_boxes[0].left)
@@ -262,7 +251,7 @@ class TestMetadataExtractor(TestCase):
         self.assertAlmostEqual(94.666666666, suggestion.segments_boxes[0].height)
         self.assertAlmostEqual(2, suggestion.segments_boxes[0].page_number)
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_semantic_suggestions(self):
@@ -271,8 +260,8 @@ class TestMetadataExtractor(TestCase):
         tenant = "tenant_to_be_removed"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
 
         to_predict_json = [
             {
@@ -346,7 +335,7 @@ class TestMetadataExtractor(TestCase):
         self.assertAlmostEqual(9 / 0.75, suggestions[0].segments_boxes[0].height)
         self.assertAlmostEqual(1, suggestions[0].segments_boxes[0].page_number)
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_semantic_suggestions_numeric(self):
@@ -355,8 +344,8 @@ class TestMetadataExtractor(TestCase):
         tenant = "tenant_to_be_removed"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
 
         to_predict_json = [
             {
@@ -415,7 +404,7 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual({"15 February 2021"}, {x.segment_text for x in suggestions})
         self.assertEqual({"15"}, {x.text for x in suggestions})
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_semantic_suggestions_spanish(self):
@@ -424,15 +413,15 @@ class TestMetadataExtractor(TestCase):
         tenant = "tenant_to_be_removed"
         property_name = "spa"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
         shutil.copytree(
-            f"{DOCKER_VOLUME_PATH}/{tenant}/property_name/xml_to_train",
-            f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_train",
+            f"{DATA_PATH}/{tenant}/property_name/xml_to_train",
+            f"{DATA_PATH}/{tenant}/{property_name}/xml_to_train",
         )
         shutil.copytree(
-            f"{DOCKER_VOLUME_PATH}/{tenant}/property_name/xml_to_train",
-            f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/xml_to_predict",
+            f"{DATA_PATH}/{tenant}/property_name/xml_to_train",
+            f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict",
         )
 
         samples_number = 20
@@ -500,14 +489,14 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual({"por día"}, {x.segment_text for x in suggestions})
         self.assertEqual({"día"}, {x.text for x in suggestions})
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_no_files_error(self):
         tenant = "error_segment_test"
         property_name = "error_property_name"
 
-        base_path = join(DOCKER_VOLUME_PATH, tenant, property_name)
+        base_path = join(DATA_PATH, tenant, property_name)
 
         if not exists(f"{base_path}/segment_predictor_model"):
             os.makedirs(f"{base_path}/segment_predictor_model")
@@ -524,7 +513,7 @@ class TestMetadataExtractor(TestCase):
         self.assertFalse(task_calculated)
         self.assertEqual(error, "No data to calculate suggestions")
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant))
+        shutil.rmtree(join(DATA_PATH, tenant))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_no_model_error(self):
@@ -533,7 +522,7 @@ class TestMetadataExtractor(TestCase):
         tenant = "error_segment_test"
         property_name = "error_property_name"
 
-        base_path = join(DOCKER_VOLUME_PATH, tenant, property_name)
+        base_path = join(DATA_PATH, tenant, property_name)
 
         os.makedirs(f"{base_path}/xml_to_predict")
         shutil.copy(self.test_xml_path, f"{base_path}/xml_to_predict/test.xml")
@@ -561,7 +550,7 @@ class TestMetadataExtractor(TestCase):
         self.assertFalse(task_calculated)
         self.assertEqual(error, "No model")
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant))
+        shutil.rmtree(join(DATA_PATH, tenant))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_blank_document(self):
@@ -570,10 +559,10 @@ class TestMetadataExtractor(TestCase):
         tenant = "segment_test"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
         shutil.rmtree(
-            f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/semantic_model",
+            f"{DATA_PATH}/{tenant}/{property_name}/semantic_model",
             ignore_errors=True,
         )
 
@@ -598,9 +587,9 @@ class TestMetadataExtractor(TestCase):
         self.assertFalse(task_calculated)
 
         self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, "xml_to_train")))
+        self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_no_pages_document(self):
@@ -609,10 +598,10 @@ class TestMetadataExtractor(TestCase):
         tenant = "segment_test"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
         shutil.rmtree(
-            f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/semantic_model",
+            f"{DATA_PATH}/{tenant}/{property_name}/semantic_model",
             ignore_errors=True,
         )
 
@@ -637,9 +626,9 @@ class TestMetadataExtractor(TestCase):
         self.assertFalse(task_calculated)
 
         self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, "xml_to_train")))
+        self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_multi_option_suggestions(self):
@@ -648,8 +637,8 @@ class TestMetadataExtractor(TestCase):
         tenant = "tenant_to_be_removed"
         property_name = "property_name"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{DOCKER_VOLUME_PATH}/tenant_test", f"{DOCKER_VOLUME_PATH}/{tenant}")
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
 
         to_predict_json = [
             {
@@ -710,6 +699,6 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual([{"id": "id15", "label": "15"}], suggestions[0].options)
 
         self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DOCKER_VOLUME_PATH, tenant, property_name, "xml_to_train")))
+        self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)

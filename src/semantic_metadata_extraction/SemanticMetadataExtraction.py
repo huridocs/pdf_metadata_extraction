@@ -2,8 +2,7 @@ import os
 from os.path import exists, join
 from typing import List, Type
 
-from ServiceConfig import ServiceConfig
-from config import config_logger
+from config import config_logger, DATA_PATH
 from data.SemanticExtractionData import SemanticExtractionData
 from semantic_metadata_extraction.Method import Method
 from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
@@ -20,8 +19,6 @@ class SemanticMetadataExtraction:
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-        service_config = ServiceConfig()
-        self.docker_volume = service_config.docker_volume_path
 
     def create_model(self, semantic_extraction_data: List[SemanticExtractionData]):
         if len(semantic_extraction_data) < 2:
@@ -76,7 +73,7 @@ class SemanticMetadataExtraction:
     def get_semantic_predictions(self, segments_text: List[str]) -> List[str]:
         for method in self.METHODS:
             method_instance = method(self.tenant, self.property_name)
-            method_path = join(self.docker_volume, self.tenant, self.property_name, method_instance.get_name())
+            method_path = join(DATA_PATH, self.tenant, self.property_name, method_instance.get_name())
             config_logger.info(f"Checking {method_path}")
 
             if exists(method_path):

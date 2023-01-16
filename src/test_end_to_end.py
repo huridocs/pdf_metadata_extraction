@@ -6,13 +6,14 @@ from rsmq import RedisSMQ
 
 import requests
 
+from config import APP_PATH
 from data.MetadataExtractionTask import MetadataExtractionTask
 from data.Option import Option
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
 from data.Suggestion import Suggestion
 
-DOCKER_VOLUME_PATH = "../docker_volume"
+ROOT_PATH = "./"
 
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = "6379"
@@ -24,7 +25,7 @@ QUEUE = RedisSMQ(
     quiet=False,
 )
 
-SERVER_URL = "http://localhost:5052"
+SERVER_URL = "http://127.0.0.1:5052"
 
 
 class TestEndToEnd(TestCase):
@@ -35,7 +36,7 @@ class TestEndToEnd(TestCase):
         tenant = "end_to_end_test"
         property_name = "property_name"
 
-        test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+        test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files)
@@ -77,7 +78,7 @@ class TestEndToEnd(TestCase):
         tenant = "end_to_end_test"
         property_name = "property_name"
 
-        test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+        test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
 
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
@@ -138,7 +139,7 @@ class TestEndToEnd(TestCase):
         tenant = "end_to_end_test"
         property_name = "multi_select_name"
 
-        test_xml_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+        test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
 
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
