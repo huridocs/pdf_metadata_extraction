@@ -37,7 +37,7 @@ class MetadataExtraction:
 
         self.filter_valid_pages = FilterValidSegmentPages(tenant, property_name)
 
-        client = pymongo.MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}")
+        client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
 
@@ -46,7 +46,7 @@ class MetadataExtraction:
         self.multilingual: bool = False
 
     def set_pdf_features_for_training(self):
-        client = pymongo.MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}")
+        client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         pdf_information_extraction_db = client["pdf_information_extraction"]
 
         self.multilingual = False

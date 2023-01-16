@@ -7,7 +7,7 @@ from unittest import TestCase
 import mongomock
 import pymongo
 
-from config import DATA_PATH, APP_PATH
+from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
 from data.MetadataExtractionTask import MetadataExtractionTask
 from data.Params import Params
 from data.SegmentBox import SegmentBox
@@ -19,14 +19,14 @@ class TestMetadataExtractor(TestCase):
     test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
     model_path = f"{APP_PATH}/tenant_test/property_name/segment_predictor_model/model.model"
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+    @mongomock.patch(servers=[f"{MONGO_HOST}:{MONGO_PORT}"])
     def test_create_model_error_when_blank_document(self):
         tenant = "segment_test"
         property_name = "property_name"
 
         base_path = join(DATA_PATH, tenant, property_name)
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+        mongo_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
 
         json_data = {
             "tenant": tenant,

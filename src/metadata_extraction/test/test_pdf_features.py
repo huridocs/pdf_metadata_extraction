@@ -1,27 +1,23 @@
-import os
 import shutil
 from os.path import join
 from unittest import TestCase
 
+from config import DATA_PATH, APP_PATH
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from metadata_extraction.XmlFile import XmlFile
 
-DOCKER_VOLUME_PATH = (
-    f"{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))}/docker_volume"
-)
-
 
 class TestPdfFeatures(TestCase):
-    test_file_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test.xml"
-    no_pages_file_path = f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/no_pages.xml"
+    test_file_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+    no_pages_file_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/no_pages.xml"
 
     def test_get_pdf_features(self):
         tenant = "tenant_save"
         property_name = "property_save"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         segmentation_data = SegmentationData(
             page_width=612,
@@ -82,13 +78,13 @@ class TestPdfFeatures(TestCase):
             [segment for segment in pdf_features.pdf_segments if segment.ml_label == 1][0].text_content,
         )
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_get_pdf_features_when_empty_lines(self):
         tenant = "tenant_save"
         property_name = "property_save"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         segmentation_data = SegmentationData(
             page_width=612,
@@ -97,7 +93,7 @@ class TestPdfFeatures(TestCase):
             label_segments_boxes=[SegmentBox(left=125, top=247, width=319, height=29, page_number=1)],
         )
 
-        with open(f"{DOCKER_VOLUME_PATH}/tenant_test/property_name/xml_to_train/test_empty_strings.xml", "rb") as file:
+        with open(f"{APP_PATH}/tenant_test/property_name/xml_to_train/test_empty_strings.xml", "rb") as file:
             xml_file = XmlFile(
                 tenant=tenant,
                 property_name=property_name,
@@ -113,13 +109,13 @@ class TestPdfFeatures(TestCase):
         self.assertEqual(792, pdf_features.pages[0].page_height)
         self.assertEqual(1, len(pdf_features.pdf_segments))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_get_pdf_features_different_page_size_scale(self):
         tenant = "tenant_save"
         property_name = "property_save"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         segmentation_data = SegmentationData(
             page_width=1,  # 612
             page_height=2,  # 396
@@ -156,13 +152,13 @@ class TestPdfFeatures(TestCase):
         self.assertEqual("a In accordance with paragraph", labeled_segments[0].text_content[:30])
         self.assertEqual("every four years.", labeled_segments[0].text_content[-17:])
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_get_pdf_features_when_no_pages(self):
         tenant = "tenant_save"
         property_name = "property_save"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         segmentation_data = SegmentationData(
             page_width=1,  # 612
             page_height=2,  # 396
@@ -184,13 +180,13 @@ class TestPdfFeatures(TestCase):
 
         self.assertEqual(0, len(pdf_features.pdf_segments))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_get_pdf_features_when_no_file(self):
         tenant = "tenant_save"
         property_name = "property_save"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         segmentation_data = SegmentationData(
             page_width=1,  # 612
             page_height=2,  # 396
@@ -209,7 +205,7 @@ class TestPdfFeatures(TestCase):
 
         self.assertEqual(0, len(pdf_features.pdf_segments))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_get_pdf_features_should_be_empty_when_no_file_because_different_property_name(
         self,
@@ -217,7 +213,7 @@ class TestPdfFeatures(TestCase):
         tenant = "tenant_save"
         property_name = "property_save"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         segmentation_data = SegmentationData(
             page_width=1,  # 612
@@ -254,13 +250,13 @@ class TestPdfFeatures(TestCase):
 
         self.assertEqual(0, len(pdf_features.pdf_segments))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_filter_valid_segment_pages(self):
         tenant = "tenant_save"
         property_name = "property_save"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         segmentation_data = SegmentationData(
             page_width=612,
@@ -284,4 +280,4 @@ class TestPdfFeatures(TestCase):
         self.assertEqual(0, len([segment for segment in pdf_features.pdf_segments if segment.page_number > 1]))
         self.assertEqual(0, len([page for page in pdf_features.pages if page.page_number > 1]))
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
