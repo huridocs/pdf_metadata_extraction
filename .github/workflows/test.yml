@@ -22,7 +22,7 @@ jobs:
         python-version: 3.9
 
     - name: Install venv
-      run: make install_venv_dev
+      run: make install_venv
 
     - name: Lint with black
       run: make check_format
