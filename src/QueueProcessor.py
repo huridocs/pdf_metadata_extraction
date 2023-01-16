@@ -19,7 +19,7 @@ from metadata_extraction.MetadataExtraction import MetadataExtraction
 class QueueProcessor:
     def __init__(self):
         self.config = ServiceConfig()
-        
+
         config_logger.info("The PDF Metadata Extractor has been started")
 
         self.task_queue = RedisSMQ(
@@ -75,7 +75,9 @@ class QueueProcessor:
     def log_process_information(self, message):
         try:
             config_logger.info(f"Processing Redis message: {message}")
-            config_logger.info(f"Messages pending in queue: {self.task_queue.getQueueAttributes().exec_command()['msgs'] - 1}")
+            config_logger.info(
+                f"Messages pending in queue: {self.task_queue.getQueueAttributes().exec_command()['msgs'] - 1}"
+            )
         except redis.exceptions.ConnectionError:
             config_logger.info("No Redis messages information available")
 

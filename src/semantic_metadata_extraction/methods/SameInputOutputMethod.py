@@ -7,7 +7,7 @@ from semantic_metadata_extraction.Method import Method
 class SameInputOutputMethod(Method):
     @staticmethod
     def clean(text):
-        return ' '.join(text.replace('\n', ' ').strip().split())
+        return " ".join(text.replace("\n", " ").strip().split())
 
     def performance(self, semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):
         if not semantic_extraction_data:

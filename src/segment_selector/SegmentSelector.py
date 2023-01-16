@@ -19,7 +19,7 @@ class SegmentSelector:
         self.tenant = tenant
         self.property_name = property_name
         service_config = ServiceConfig()
-        
+
         self.base_path = join(service_config.docker_volume_path, tenant, property_name)
 
         self.model_path = join(self.base_path, "segment_predictor_model", "model.model")

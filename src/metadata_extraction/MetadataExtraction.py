@@ -38,7 +38,7 @@ class MetadataExtraction:
 
         service_config = ServiceConfig()
         self.filter_valid_pages = FilterValidSegmentPages(tenant, property_name)
-        
+
         client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}

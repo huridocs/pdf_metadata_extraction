@@ -19,7 +19,6 @@ class LightgbmStack4Multilingual:
         self.segments: List[SegmentLightgbmStack4Multilingual] = list()
         self.model = None
         self.best_cut = 0
-        
 
     def create_model(self, training_pdfs_features: List[PdfFeatures]):
         config_logger.info("Set segments")
