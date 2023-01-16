@@ -39,7 +39,7 @@ class TestMetadataExtractor(TestCase):
             "xml_segments_boxes": [],
             "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}],
         }
-        mongo_client.pdf_information_extraction.labeled_data.insert_one(json_data)
+        mongo_client.pdf_metadata_extraction.labeled_data.insert_one(json_data)
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -90,7 +90,7 @@ class TestMetadataExtractor(TestCase):
             "label_segments_boxes": [{"left": 125, "top": 247, "width": 319, "height": 29, "page_number": 1}],
         }
 
-        mongo_client.pdf_information_extraction.labeled_data.insert_one(json_data)
+        mongo_client.pdf_metadata_extraction.labeled_data.insert_one(json_data)
 
         task = MetadataExtractionTask(
             tenant=tenant,
@@ -124,7 +124,7 @@ class TestMetadataExtractor(TestCase):
             "label_segments_boxes": [SegmentBox(left=400, top=115, width=74, height=9, page_number=1).dict()],
         }
 
-        mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
+        mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
             MetadataExtractionTask(
@@ -143,7 +143,7 @@ class TestMetadataExtractor(TestCase):
             "xml_segments_boxes": [],
         }
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
 
         task = MetadataExtractionTask(
             tenant=tenant,
@@ -152,8 +152,8 @@ class TestMetadataExtractor(TestCase):
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
-        documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
-        suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
+        documents_count = mongo_client.pdf_metadata_extraction.suggestions.count_documents({})
+        suggestion = Suggestion(**mongo_client.pdf_metadata_extraction.suggestions.find_one())
 
         self.assertTrue(task_calculated)
         self.assertEqual(1, documents_count)
@@ -172,7 +172,7 @@ class TestMetadataExtractor(TestCase):
         self.assertAlmostEqual(9 / 0.75, suggestion.segments_boxes[0].height)
         self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
 
-        self.assertIsNone(mongo_client.pdf_information_extraction.predictiondata.find_one())
+        self.assertIsNone(mongo_client.pdf_metadata_extraction.prediction_data.find_one())
 
         self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/spanish.xml"))
         self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
@@ -201,7 +201,7 @@ class TestMetadataExtractor(TestCase):
             "label_segments_boxes": [SegmentBox(left=300, top=150, width=5, height=5, page_number=2).dict()],
         }
 
-        mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
+        mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
             MetadataExtractionTask(
@@ -220,7 +220,7 @@ class TestMetadataExtractor(TestCase):
             "xml_segments_boxes": [SegmentBox(left=0, top=130, width=612, height=70, page_number=2).dict()],
         }
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
 
         task_calculated, error = MetadataExtraction.calculate_task(
             MetadataExtractionTask(
@@ -230,8 +230,8 @@ class TestMetadataExtractor(TestCase):
             )
         )
 
-        documents_count = mongo_client.pdf_information_extraction.suggestions.count_documents({})
-        suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
+        documents_count = mongo_client.pdf_metadata_extraction.suggestions.count_documents({})
+        suggestion = Suggestion(**mongo_client.pdf_metadata_extraction.suggestions.find_one())
 
         self.assertTrue(task_calculated)
         self.assertEqual(1, documents_count)
@@ -282,7 +282,7 @@ class TestMetadataExtractor(TestCase):
             },
         ]
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
 
         for i in range(7):
             labeled_data_json = {
@@ -297,7 +297,7 @@ class TestMetadataExtractor(TestCase):
                 "label_segments_boxes": [SegmentBox(left=397, top=115, width=74, height=9, page_number=1).dict()],
             }
 
-            mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
+            mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
             MetadataExtractionTask(
@@ -317,7 +317,7 @@ class TestMetadataExtractor(TestCase):
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}
-        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
+        for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
@@ -358,7 +358,7 @@ class TestMetadataExtractor(TestCase):
             }
         ]
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
 
         for i in range(7):
             labeled_data_json = {
@@ -373,7 +373,7 @@ class TestMetadataExtractor(TestCase):
                 "label_segments_boxes": [SegmentBox(left=397, top=91, width=10, height=9, page_number=1).dict()],
             }
 
-            mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
+            mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
             MetadataExtractionTask(
@@ -393,7 +393,7 @@ class TestMetadataExtractor(TestCase):
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}
-        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
+        for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
@@ -438,7 +438,7 @@ class TestMetadataExtractor(TestCase):
                 "label_segments_boxes": [SegmentBox(left=289, top=206, width=34, height=10, page_number=1).dict()],
             }
 
-            mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
+            mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
         to_predict_json = [
             {
                 "tenant": tenant,
@@ -458,7 +458,7 @@ class TestMetadataExtractor(TestCase):
             },
         ]
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
 
         MetadataExtraction.calculate_task(
             MetadataExtractionTask(
@@ -478,7 +478,7 @@ class TestMetadataExtractor(TestCase):
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}
-        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
+        for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
@@ -538,7 +538,7 @@ class TestMetadataExtractor(TestCase):
             }
         ]
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
 
         task = MetadataExtractionTask(
             tenant=tenant,
@@ -575,7 +575,7 @@ class TestMetadataExtractor(TestCase):
             "xml_segments_boxes": [],
         }
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
 
         task = MetadataExtractionTask(
             tenant=tenant,
@@ -586,7 +586,7 @@ class TestMetadataExtractor(TestCase):
 
         self.assertFalse(task_calculated)
 
-        self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
+        self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
         self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
@@ -614,7 +614,7 @@ class TestMetadataExtractor(TestCase):
             "xml_segments_boxes": [],
         }
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_one(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
 
         task = MetadataExtractionTask(
             tenant=tenant,
@@ -625,7 +625,7 @@ class TestMetadataExtractor(TestCase):
 
         self.assertFalse(task_calculated)
 
-        self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
+        self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
         self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
@@ -651,7 +651,7 @@ class TestMetadataExtractor(TestCase):
             }
         ]
 
-        mongo_client.pdf_information_extraction.predictiondata.insert_many(to_predict_json)
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
 
         options = [{"id": f"id{n}", "label": str(n)} for n in range(16)]
         for i in range(7):
@@ -667,7 +667,7 @@ class TestMetadataExtractor(TestCase):
                 "label_segments_boxes": [SegmentBox(left=397, top=91, width=10, height=9, page_number=1).dict()],
             }
 
-            mongo_client.pdf_information_extraction.labeled_data.insert_one(labeled_data_json)
+            mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
         MetadataExtraction.calculate_task(
             MetadataExtractionTask(
@@ -687,7 +687,7 @@ class TestMetadataExtractor(TestCase):
 
         suggestions: List[Suggestion] = list()
         find_filter = {"property_name": property_name, "tenant": tenant}
-        for document in mongo_client.pdf_information_extraction.suggestions.find(find_filter, no_cursor_timeout=True):
+        for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
@@ -698,7 +698,7 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual("15 February 2021", suggestions[0].segment_text)
         self.assertEqual([{"id": "id15", "label": "15"}], suggestions[0].options)
 
-        self.assertIsNone(mongo_client.pdf_information_extraction.labeled_data.find_one({}))
+        self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
         self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)

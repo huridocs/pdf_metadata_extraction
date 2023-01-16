@@ -25,7 +25,7 @@ remove_docker_images:
 	docker compose config --images | xargs docker rmi
 
 start:
-	docker compose -f local-docker-compose.yml up
+	docker compose -f local-docker-compose.yml up --build
 
 start_detached:
 	docker compose up --build -d

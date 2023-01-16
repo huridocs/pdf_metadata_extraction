@@ -29,7 +29,9 @@ class SemanticMetadataExtraction:
         best_method_instance.train(semantic_extraction_data)
 
     def get_best_method(self, semantic_extraction_data: List[SemanticExtractionData]):
-        performance_semantic_extraction_data = [x for x in semantic_extraction_data if x.text]
+        performance_semantic_extraction_data = [x for x in semantic_extraction_data if x.segment_text.strip()]
+        config_logger.info([x.text for x in semantic_extraction_data if x.text.strip()])
+
         best_performance = 0
         best_method_instance = self.METHODS[0](self.tenant, self.property_name)
         for method in self.METHODS[:-1]:

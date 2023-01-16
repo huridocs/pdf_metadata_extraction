@@ -74,7 +74,7 @@ class TestApp(TestCase):
 
         response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = mongo_client.pdf_information_extraction.labeled_data.find_one()
+        labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -114,7 +114,7 @@ class TestApp(TestCase):
 
         response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = mongo_client.pdf_information_extraction.labeled_data.find_one()
+        labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -150,7 +150,7 @@ class TestApp(TestCase):
 
         response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = mongo_client.pdf_information_extraction.labeled_data.find_one()
+        labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -187,7 +187,7 @@ class TestApp(TestCase):
 
         response = client.post("/prediction_data", json=json_data)
 
-        prediction_data_document = mongo_client.pdf_information_extraction.predictiondata.find_one()
+        prediction_data_document = mongo_client.pdf_metadata_extraction.prediction_data.find_one()
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, prediction_data_document["tenant"])
@@ -247,7 +247,7 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
+        mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
         response = client.get(f"/get_suggestions/{tenant}/{property_name}")
         suggestions = json.loads(response.json())
@@ -314,7 +314,7 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
+        mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
         response = client.get(f"/get_suggestions/{tenant}/{property_name}")
         suggestions = json.loads(response.json())
@@ -366,13 +366,13 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client.pdf_information_extraction.suggestions.insert_many(json_data)
+        mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
         client.get(f"/get_suggestions/{tenant}1/{property_name}")
 
-        suggestion = Suggestion(**mongo_client.pdf_information_extraction.suggestions.find_one())
+        suggestion = Suggestion(**mongo_client.pdf_metadata_extraction.suggestions.find_one())
 
-        suggestions_collection = mongo_client.pdf_information_extraction.suggestions
+        suggestions_collection = mongo_client.pdf_metadata_extraction.suggestions
         self.assertEqual(1, suggestions_collection.count_documents({}))
         self.assertEqual(tenant + "2", suggestion.tenant)
         self.assertEqual(property_name, suggestion.property_name)

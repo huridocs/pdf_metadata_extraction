@@ -38,7 +38,7 @@ class MetadataExtraction:
         self.filter_valid_pages = FilterValidSegmentPages(tenant, property_name)
 
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
-        self.pdf_information_extraction_db = client["pdf_information_extraction"]
+        self.pdf_information_extraction_db = client["pdf_metadata_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
 
         self.pdf_features: List[PdfFeatures] = list()
@@ -47,7 +47,7 @@ class MetadataExtraction:
 
     def set_pdf_features_for_training(self):
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
-        pdf_information_extraction_db = client["pdf_information_extraction"]
+        pdf_information_extraction_db = client["pdf_metadata_extraction"]
 
         self.multilingual = False
         self.pdf_features = list()
@@ -55,7 +55,7 @@ class MetadataExtraction:
 
         collection = pdf_information_extraction_db.labeled_data
         labeled_data_list = []
-        for document in collection.find(self.mongo_filter, no_cursor_timeout=True):
+        for document in collection.find(self.mongo_filter):
             labeled_data_list.append(LabeledData(**document))
 
         page_numbers_list = self.filter_valid_pages.for_training(labeled_data_list)
@@ -142,10 +142,12 @@ class MetadataExtraction:
         if not suggestions:
             return False, "No data to calculate suggestions"
 
+        config_logger.info(f"Calculated and inserting {len(suggestions)} suggestions")
+
         self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
         xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.property_name, False)
         for suggestion in suggestions:
-            self.pdf_information_extraction_db.predictiondata.delete_many({"xml_file_name": suggestion.xml_file_name})
+            self.pdf_information_extraction_db.prediction_data.delete_many({"xml_file_name": suggestion.xml_file_name})
             Path(join(xml_folder_path, suggestion.xml_file_name)).unlink(missing_ok=True)
 
         return True, ""
@@ -177,7 +179,7 @@ class MetadataExtraction:
 
         prediction_data_list = []
 
-        for document in self.pdf_information_extraction_db.predictiondata.find(self.mongo_filter, no_cursor_timeout=True):
+        for document in self.pdf_information_extraction_db.prediction_data.find(self.mongo_filter):
             prediction_data_list.append(PredictionData(**document))
 
         page_numbers_list = self.filter_valid_pages.for_prediction(prediction_data_list)
@@ -259,6 +261,7 @@ class MetadataExtraction:
             )
 
         if information_extraction_task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
+            config_logger.info("Calculating suggestions")
             multi_option = MultiOptionExtractor.exist_model(tenant, property_name)
             metadata_extraction = MetadataExtraction(tenant, property_name, multi_option, logger)
             return metadata_extraction.insert_suggestions_in_db()
