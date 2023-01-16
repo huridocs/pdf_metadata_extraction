@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import List, Dict
 import json
@@ -16,8 +17,7 @@ from data.Suggestion import Suggestion
 from metadata_extraction.XmlFile import XmlFile
 
 config = ServiceConfig()
-logger = config.get_logger("service")
-
+logger = logging.getLogger(__name__)
 app = FastAPI()
 
 logger.info("PDF information extraction service has started")

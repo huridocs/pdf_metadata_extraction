@@ -1,3 +1,4 @@
+import logging
 import shutil
 import lightgbm as lgb
 
@@ -7,6 +8,7 @@ from pathlib import Path
 from typing import List
 
 from ServiceConfig import ServiceConfig
+from config import config_logger
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from segment_selector.methods.lightgbm_stack_4.LightgbmStack4 import LightgbmStack4
 from segment_selector.methods.lightgbm_stack_4_multilingual.LightgbmStack4Multilingual import LightgbmStack4Multilingual
@@ -17,7 +19,7 @@ class SegmentSelector:
         self.tenant = tenant
         self.property_name = property_name
         service_config = ServiceConfig()
-        self.logger = service_config.get_logger("redis_tasks")
+        
         self.base_path = join(service_config.docker_volume_path, tenant, property_name)
 
         self.model_path = join(self.base_path, "segment_predictor_model", "model.model")
@@ -45,12 +47,12 @@ class SegmentSelector:
 
         return model_path
 
-    def create_model(self, pdfs_features: List[PdfFeatures], multilingual: bool, logger=None) -> (bool, str):
+    def create_model(self, pdfs_features: List[PdfFeatures], multilingual: bool) -> (bool, str):
         self.multilingual = multilingual
 
         model_path = self.prepare_model_folder()
 
-        self.model = self.get_lightgbm_stack().create_model(pdfs_features, logger)
+        self.model = self.get_lightgbm_stack().create_model(pdfs_features)
 
         if not self.model:
             return False, "No data to create model"

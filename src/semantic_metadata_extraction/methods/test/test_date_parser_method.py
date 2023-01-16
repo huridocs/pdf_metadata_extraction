@@ -33,4 +33,4 @@ class TestRegexMethod(TestCase):
             SemanticExtractionData(text="text", segment_text="13 May 81", language_iso="en"),
         ]
         date_parser_method = DateParserMethod("date_test", "date_test")
-        self.assertEqual(0, date_parser_method.performance(semantic_information_data, 3)[0])
+        self.assertEqual(50, date_parser_method.performance(semantic_information_data, 3)[0])

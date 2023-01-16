@@ -2,12 +2,14 @@ import logging
 import shutil
 from os.path import join
 from pathlib import Path
+from time import time
 from typing import List
 
 import pymongo
 from langcodes import standardize_tag
 
 from ServiceConfig import ServiceConfig
+from config import config_logger
 from data.LabeledData import LabeledData
 from data.Option import Option
 from data.PredictionData import PredictionData
@@ -36,8 +38,7 @@ class MetadataExtraction:
 
         service_config = ServiceConfig()
         self.filter_valid_pages = FilterValidSegmentPages(tenant, property_name)
-        self.logger = logger if logger else service_config.get_logger("redis_tasks")
-
+        
         client = pymongo.MongoClient(f"mongodb://{service_config.mongo_host}:{service_config.mongo_port}")
         self.pdf_information_extraction_db = client["pdf_information_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
@@ -60,7 +61,9 @@ class MetadataExtraction:
             labeled_data_list.append(LabeledData(**document))
 
         page_numbers_list = self.filter_valid_pages.for_training(labeled_data_list)
-        self.logger.info(f"for_training page_numbers_list {page_numbers_list}")
+        config_logger.info(f"Filter pages for training: total {len(page_numbers_list)} documents.")
+        config_logger.info(f"Filter: {page_numbers_list}")
+
         for labeled_data, page_numbers in zip(labeled_data_list, page_numbers_list):
             if labeled_data.language_iso != "en" and labeled_data.language_iso != "eng":
                 self.multilingual = True
@@ -82,24 +85,29 @@ class MetadataExtraction:
             self.pdf_features.append(pdf_features)
 
     def create_models(self, options: List[Option], multi_value: bool = False):
-        self.logger.info(f"Loading data to create model for {self.tenant} {self.property_name}")
+        config_logger.info(f"Loading data to create model for {self.tenant} {self.property_name}")
         self.set_pdf_features_for_training()
 
         if not len(self.pdf_features) or not sum([len(pdf_features.pdf_segments) for pdf_features in self.pdf_features]):
             self.delete_training_data()
             return False, "No labeled data to create model"
 
-        self.logger.info(f"Creating model with {len(self.pdf_features)} documents for {self.tenant} {self.property_name}")
+        start = time()
+        config_logger.info(f"Creating model with {len(self.pdf_features)} documents for {self.tenant} {self.property_name}")
         segment_selector = SegmentSelector(tenant=self.tenant, property_name=self.property_name)
-        segment_selector.create_model(pdfs_features=self.pdf_features, multilingual=self.multilingual, logger=self.logger)
+        segment_selector.create_model(pdfs_features=self.pdf_features, multilingual=self.multilingual)
 
-        self.logger.info(f"Finished creating model")
+        config_logger.info(f"Finished creating model {int(time() - start)} seconds")
 
+        config_logger.info(f"Creating semantic model")
+        start = time()
         if self.multi_option:
             multi_option_extractor = MultiOptionExtractor(tenant=self.tenant, property_name=self.property_name)
             multi_option_extractor.create_model(self.get_multi_option_extraction_data(options, multi_value))
         else:
             self.create_semantic_model()
+
+        config_logger.info(f"Finished semantic model in {int(time() - start)} seconds")
 
         self.delete_training_data()
         return True, ""
@@ -167,7 +175,7 @@ class MetadataExtraction:
         predictions_data: List[PredictionData] = list()
         pdfs_features: List[PdfFeatures] = list()
 
-        self.logger.info(f"Loading data to calculate suggestions for {self.tenant} {self.property_name}")
+        config_logger.info(f"Loading data to calculate suggestions for {self.tenant} {self.property_name}")
 
         prediction_data_list = []
 
@@ -175,7 +183,8 @@ class MetadataExtraction:
             prediction_data_list.append(PredictionData(**document))
 
         page_numbers_list = self.filter_valid_pages.for_prediction(prediction_data_list)
-        self.logger.info(f"for_prediction page_numbers_list {page_numbers_list}")
+        config_logger.info(f"Filter pages for prediction: total {len(page_numbers_list)} documents.")
+        config_logger.info(f"Filter: {page_numbers_list}")
 
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
             predictions_data.append(prediction_data)
@@ -189,7 +198,7 @@ class MetadataExtraction:
             )
             pdfs_features.append(PdfFeatures.from_xml_file(xml_file, segmentation_data, page_numbers))
 
-        self.logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
+        config_logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
 
         for prediction_data, pdf_features in zip(predictions_data, pdfs_features):
             suggestion = self.get_suggested_segment(xml_file_name=prediction_data.xml_file_name, pdf_features=pdf_features)

@@ -16,6 +16,8 @@ OPTIONS = [
 ]
 SERVICE_NAME = "information_extraction"
 
+LOGGER = None
+
 
 class ServiceConfig:
     def __init__(self):
@@ -57,25 +59,6 @@ class ServiceConfig:
                 self.config_from_yml = config_from_yml
 
         return dict()
-
-    def get_logger(self, logger_name):
-        logger = logging.getLogger("graylog")
-        logger.setLevel(logging.INFO)
-
-        if self.graylog_ip:
-            graylog_handler = graypy.GELFUDPHandler(
-                self.graylog_ip,
-                12201,
-                localname=SERVICE_NAME,
-            )
-            logger.addHandler(graylog_handler)
-
-        file_handler = logging.FileHandler(f"{self.docker_volume_path}/{logger_name}.log")
-        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-        file_handler.setFormatter(formatter)
-
-        logger.addHandler(file_handler)
-        return logger
 
     def write_configuration(self, config_dict: Dict[str, str]):
         config_to_write = dict()

@@ -1,3 +1,4 @@
+import logging
 from time import time
 from typing import List
 
@@ -6,12 +7,11 @@ import numpy as np
 import lightgbm as lgb
 from sklearn.metrics import f1_score
 
+from config import config_logger
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from segment_selector.methods.lightgbm_stack_4_multilingual.SegmentLightgbmStack4Multilingual import (
     SegmentLightgbmStack4Multilingual,
 )
-
-TRAINING_CUTS = [16, 28, 72, 584, 1118, 10000]
 
 
 class LightgbmStack4Multilingual:
@@ -19,22 +19,20 @@ class LightgbmStack4Multilingual:
         self.segments: List[SegmentLightgbmStack4Multilingual] = list()
         self.model = None
         self.best_cut = 0
+        
 
-    def create_model(self, training_pdfs_features: List[PdfFeatures], logger=None):
-        if logger:
-            logger.info("Set segments")
+    def create_model(self, training_pdfs_features: List[PdfFeatures]):
+        config_logger.info("Set segments")
         start = time()
         self.set_segments(training_pdfs_features)
-        if logger:
-            logger.info(f"Set segments {int(time() - start)} seconds")
+        config_logger.info(f"Set segments {int(time() - start)} seconds")
 
         if len(self.segments) == 0:
             return None
 
         start = time()
         self.run_light_gbm()
-        if logger:
-            logger.info(f"Run lightGBM {int(time() - start)} seconds")
+        config_logger.info(f"Run lightGBM {int(time() - start)} seconds")
 
         return self.model
 
@@ -59,23 +57,7 @@ class LightgbmStack4Multilingual:
 
     def run_light_gbm(self):
         x_train, y_train = self.get_training_data()
-
-        best_performance = 0
-
-        if x_train.shape[0] < 200:
-            self.model = self.set_model(x_train[:, : TRAINING_CUTS[0]], y_train)
-            return
-
-        training_rows_number = int(x_train.shape[0] * 0.7)
-        for training_cut in TRAINING_CUTS:
-            model = self.set_model(x_train[:training_rows_number, :training_cut], y_train[:training_rows_number])
-            predictions = model.predict(x_train[training_rows_number:, :training_cut])
-            performance = self.get_performance(predictions, y_train[training_rows_number:])
-            if best_performance < performance:
-                best_performance = performance
-                self.best_cut = training_cut
-
-        self.model = self.set_model(x_train[:, : self.best_cut], y_train)
+        self.model = self.set_model(x_train, y_train)
 
     def get_training_data(self):
         y = np.array([])
