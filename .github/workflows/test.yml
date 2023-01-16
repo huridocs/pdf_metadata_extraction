@@ -22,13 +22,13 @@ jobs:
         python-version: 3.9
 
     - name: Install venv
-      run: ./run install_venv_dev
+      run: make install_venv_dev
 
     - name: Lint with black
-      run: ./run check_format
+      run: make check_format
 
     - name: Start service
-      run: ./run start:testing
+      run: make start_detached
 
     - name: Check API ready
       uses: emilioschepis/wait-for-endpoint@v1.0.3
@@ -40,4 +40,4 @@ jobs:
         interval: 500
 
     - name: Test with unittest
-      run: ./run test
+      run: make test
