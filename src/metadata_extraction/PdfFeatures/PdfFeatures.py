@@ -4,7 +4,6 @@ import pathlib
 from collections import defaultdict
 from os.path import exists
 from pathlib import Path
-from time import time
 
 from bs4 import BeautifulSoup
 
@@ -20,10 +19,6 @@ from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 from metadata_extraction.PdfFeatures.Rectangle import Rectangle
 
-# from metadata_extraction.PdfFeatures.embeddings_models import (
-#     sentence_embeddings_model,
-#     multilingual_sentence_embeddings_model,
-# )
 from metadata_extraction.XmlFile import XmlFile
 from segment_selector.LightGBM_30Features_OneHotOneLetter.predict import set_tag_types
 

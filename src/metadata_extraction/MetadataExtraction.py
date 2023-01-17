@@ -186,6 +186,7 @@ class MetadataExtraction:
         config_logger.info(f"Filter pages for prediction: total {len(page_numbers_list)} documents.")
         config_logger.info(f"Filter: {page_numbers_list}")
 
+        start = time()
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
             predictions_data.append(prediction_data)
             segmentation_data = SegmentationData.from_prediction_data(prediction_data)
@@ -197,6 +198,8 @@ class MetadataExtraction:
                 xml_file_name=prediction_data.xml_file_name,
             )
             pdfs_features.append(PdfFeatures.from_xml_file(xml_file, segmentation_data, page_numbers))
+
+        config_logger.info(f"Get all pdf features {round(time() - start, 2)} seconds")
 
         config_logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
 

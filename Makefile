@@ -25,7 +25,7 @@ remove_docker_images:
 	docker compose config --images | xargs docker rmi
 
 start:
-	docker compose -f local-docker-compose.yml up --build
+	docker compose -f local-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
 start_detached:
 	docker compose up --build -d

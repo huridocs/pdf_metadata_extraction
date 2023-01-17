@@ -45,10 +45,12 @@ class Method(ABC):
 
     def log_performance_sample(self, semantic_extractions_data: List[SemanticExtractionData], predictions: List[str]):
         config_logger.info(f"Performance predictions for {self.get_name()}")
-        for semantic_extraction_data, prediction in zip(semantic_extractions_data, predictions):
-            config_logger.info("prediction: " + prediction + "\n")
-            config_logger.info("truth     : " + semantic_extraction_data.text + "\n")
-            config_logger.info("text      : " + semantic_extraction_data.segment_text + "\n\n")
+        for i, semantic_extraction_data, prediction in zip(range(len(predictions)), semantic_extractions_data, predictions):
+            if i > 5:
+                break
+            config_logger.info("prediction: " + prediction)
+            config_logger.info("truth     : " + semantic_extraction_data.text)
+            config_logger.info("text      : " + semantic_extraction_data.segment_text)
 
     def load_json(self, file_name: str):
         path = join(self.base_path, self.get_name(), file_name)
