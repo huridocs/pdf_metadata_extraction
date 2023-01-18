@@ -2,6 +2,13 @@ version: "3.8"
 services:
   pdf_metadata_extraction_api:
     container_name: pdf_metadata_extraction_api
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5052" ]
     init: true
     restart: unless-stopped
@@ -23,8 +30,15 @@ services:
       - pdf_metadata_extraction_network
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     init: true
-    entrypoint: [ "python", "-m", "src.QueueProcessor" ]
+    entrypoint: [ "python3", "-m", "src.QueueProcessor" ]
     restart: unless-stopped
     build:
       context: .

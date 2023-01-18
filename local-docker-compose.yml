@@ -20,6 +20,13 @@ services:
     env_file: .env.local
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     init: true
     entrypoint: [ "python", "-m", "src.QueueProcessor" ]
     build:

@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bullseye
+FROM pytorch/pytorch
 
 RUN apt-get update && apt-get -y -q --no-install-recommends install libgomp1
 
