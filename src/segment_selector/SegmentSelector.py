@@ -8,7 +8,7 @@ from typing import List
 
 from config import DATA_PATH
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
-from segment_selector.methods.lightgbm_stack_4.LightgbmStack4 import LightgbmStack4
+from segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
 
 
 class SegmentSelector:
@@ -42,7 +42,7 @@ class SegmentSelector:
 
         model_path = self.prepare_model_folder()
 
-        self.model = LightgbmStack4().create_model(pdfs_features)
+        self.model = LightgbmFrequentWords().create_model(pdfs_features, model_path)
 
         if not self.model:
             return False, "No data to create model"
@@ -52,7 +52,7 @@ class SegmentSelector:
         return True, ""
 
     def set_extraction_segments(self, pdfs_features: List[PdfFeatures]):
-        predictions = LightgbmStack4().predict(self.model, pdfs_features)
+        predictions = LightgbmFrequentWords().predict(self.model, pdfs_features, self.model_path)
         index = 0
         for pdf_features in pdfs_features:
             for segment in pdf_features.pdf_segments:

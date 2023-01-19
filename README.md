@@ -36,14 +36,14 @@
 ## Docker containers
 
 A redis server is needed to use the service asynchronously. For that matter, it can be used the 
-command `./run start:testing` that has a built-in 
+command `make start:testing` that has a built-in 
 redis server.
 
-Containers with `./run start`
+Containers with `make start`
 
 ![Alt logo](readme_pictures/docker_compose_up.png?raw=true "docker-compose up")
 
-Containers with `./run start:testing`
+Containers with `make start:testing`
 
 ![Alt logo](readme_pictures/docker_compose_redis.png?raw=true "docker-compose -f docker-compose-service-with-redis.yml up")
 
@@ -51,7 +51,7 @@ Containers with `./run start:testing`
 
 1. Start the service with docker compose
 
-    `./run start`
+    `make start`
 
 2. Post xml files to train
 
@@ -210,7 +210,7 @@ Multi-option case:
 
 8. Stop the service
 
-    `./run stop`
+    `make stop`
 
 ## HTTP server
 
@@ -272,11 +272,11 @@ To use a graylog server, add the following line to the `config.yml` file:
 
 It works with Python 3.9 [install] (https://runnable.com/docker/getting-started/)
 
-    ./run install_venv
+    make install_venv
 
 ## Execute tests
 
-    ./run test
+    make test
 
 ## Execute performance test
 

@@ -51,7 +51,6 @@ class TestSegmentSelector(TestCase):
         shutil.rmtree(join(DATA_PATH, TestSegmentSelector.TENANT), ignore_errors=True)
 
     def test_create_model(self):
-        start = time()
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
         pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
@@ -62,7 +61,6 @@ class TestSegmentSelector(TestCase):
         self.assertEqual("", error)
         self.assertTrue(exists(join(TestSegmentSelector.BASE_PATH, "segment_predictor_model", "model.model")))
         self.assertFalse(exists(join(TestSegmentSelector.BASE_PATH, "multilingual_segment_predictor_model", "model.model")))
-        print(time() - start, "create model")
 
     def test_create_model_load_test(self):
         start = time()
