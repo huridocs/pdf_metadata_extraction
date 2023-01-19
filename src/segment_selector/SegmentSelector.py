@@ -5,7 +5,6 @@ from os import makedirs
 from os.path import join, exists
 from pathlib import Path
 from typing import List
-
 from config import DATA_PATH
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
 from segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords

@@ -1,5 +1,7 @@
 import re
 from typing import List, Optional
+
+import nltk
 import numpy as np
 
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
@@ -7,6 +9,8 @@ from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 from metadata_extraction.PdfFeatures.TagType import TAG_TYPE_DICT
 from segment_selector.methods.Modes import Modes
+
+nltk.download("punkt")
 
 
 class SegmentLightgbmFrequentWords:
