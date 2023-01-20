@@ -65,11 +65,11 @@ class Method(ABC):
     def get_train_test(
         semantic_extraction_data: List[SemanticExtractionData], training_set_length: int
     ) -> (List[SemanticExtractionData], List[SemanticExtractionData]):
-        if len(semantic_extraction_data) <= 10:
-            return semantic_extraction_data, semantic_extraction_data
-
         if len(semantic_extraction_data) >= 2 * training_set_length:
             return semantic_extraction_data[:training_set_length], semantic_extraction_data[training_set_length:]
+
+        if len(semantic_extraction_data) <= 10:
+            return semantic_extraction_data, semantic_extraction_data
 
         train_amount = len(semantic_extraction_data) // 2
         training_set = semantic_extraction_data[:train_amount]

@@ -8,13 +8,20 @@ from semantic_metadata_extraction.Method import Method
 from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
 from semantic_metadata_extraction.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
 from semantic_metadata_extraction.methods.RegexMethod import RegexMethod
+from semantic_metadata_extraction.methods.RegexSubtractionMethod import RegexSubtractionMethod
 from semantic_metadata_extraction.methods.SameInputOutputMethod import SameInputOutputMethod
 
 
 class SemanticMetadataExtraction:
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-    METHODS: List[Type[Method]] = [SameInputOutputMethod, RegexMethod, DateParserMethod, MT5TrueCaseEnglishSpanishMethod]
+    METHODS: List[Type[Method]] = [
+        SameInputOutputMethod,
+        RegexMethod,
+        RegexSubtractionMethod,
+        DateParserMethod,
+        MT5TrueCaseEnglishSpanishMethod,
+    ]
 
     def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant

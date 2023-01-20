@@ -34,6 +34,7 @@ services:
     shm_size: '11gb'
     depends_on:
       - mongo_metadata_extraction
+      - redis_metadata_extraction
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
