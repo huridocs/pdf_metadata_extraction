@@ -43,7 +43,7 @@ Containers with `make start`
 
 ![Alt logo](readme_pictures/docker_compose_up.png?raw=true "docker-compose up")
 
-Containers with `make start:testing`
+Containers with `make start_for_testing`
 
 ![Alt logo](readme_pictures/docker_compose_redis.png?raw=true "docker-compose -f docker-compose-service-with-redis.yml up")
 
@@ -239,34 +239,7 @@ queues.
 
 ## Service configuration
 
-A configuration file could be provided to set the redis server parameters and the `pdf-information-extraction` server
-hosts and ports. If a configuration is not provided, the defaults values uses the redis from the '
-docker-compose-service-with-redis.yml' file.
-
-The configuration could be manually created, or it can be used the following script:
-
-    python3 -m pip install graypy~=2.1.0 PyYAML~=5.4.1
-    python3 ServiceConfig.py
-
-Configuration file name: `config.yml`
-
-Default parameters:
-
-    service_host: localhost
-    service_port: 5052
-    redis_host: 127.0.0.1
-    redis_port: 6379
-    mongo_host: 127.0.0.1
-    mongo_port: 29017
-    graylog_ip: 
-
-## Get service logs
-
-The service logs are stored by default in the files `docker_volume/service.log` and `docker_volume/redis_tasks.log`
-
-To use a graylog server, add the following line to the `config.yml` file:
-
-    graylog_ip: [ip]
+See environment variables in the file .env
 
 ## Set up environment for development
 
@@ -276,6 +249,7 @@ It works with Python 3.9 [install] (https://runnable.com/docker/getting-started/
 
 ## Execute tests
 
+    make start_for_testing
     make test
 
 ## Execute performance test
