@@ -5,7 +5,6 @@ from semantic_metadata_extraction.methods.RegexSubtractionMethod import RegexSub
 
 
 class TestRegexMethod(TestCase):
-
     def test_performance_text_in_front(self):
         semantic_information_data = [SemanticExtractionData(text="two", segment_text="one two", language_iso="en")]
         semantic_information_data += [SemanticExtractionData(text="three", segment_text="one three", language_iso="en")]

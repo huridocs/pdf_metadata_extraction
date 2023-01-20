@@ -39,10 +39,10 @@ class RegexSubtractionMethod(Method):
             for regex in regex_list:
                 matches = re.search(regex, prediction)
                 if matches and not matches.start():
-                    prediction = prediction[matches.end():]
+                    prediction = prediction[matches.end() :]
                     continue
                 if matches and matches.end() == len(prediction):
-                    prediction = prediction[:matches.start()]
+                    prediction = prediction[: matches.start()]
 
             predictions[i] = prediction
 
