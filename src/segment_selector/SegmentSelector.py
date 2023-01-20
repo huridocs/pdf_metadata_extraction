@@ -5,11 +5,9 @@ from os import makedirs
 from os.path import join, exists
 from pathlib import Path
 from typing import List
-
 from config import DATA_PATH
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
-from segment_selector.methods.lightgbm_stack_4.LightgbmStack4 import LightgbmStack4
-from segment_selector.methods.lightgbm_stack_4_multilingual.LightgbmStack4Multilingual import LightgbmStack4Multilingual
+from segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
 
 
 class SegmentSelector:
@@ -20,36 +18,30 @@ class SegmentSelector:
         self.base_path = join(DATA_PATH, tenant, property_name)
 
         self.model_path = join(self.base_path, "segment_predictor_model", "model.model")
-        self.multilingual_model_path = join(self.base_path, "multilingual_segment_predictor_model", "model.model")
 
-        self.model, self.multilingual = self.load_model()
+        self.model = self.load_model()
 
     def load_model(self):
         if exists(self.model_path):
-            return lgb.Booster(model_file=self.model_path), False
+            return lgb.Booster(model_file=self.model_path)
 
-        if exists(self.multilingual_model_path):
-            return lgb.Booster(model_file=self.multilingual_model_path), True
-
-        return None, False
+        return None
 
     def prepare_model_folder(self):
-        shutil.rmtree(Path(self.multilingual_model_path).parent, ignore_errors=True)
         shutil.rmtree(Path(self.model_path).parent, ignore_errors=True)
 
-        model_path = self.multilingual_model_path if self.multilingual else self.model_path
+        model_path = self.model_path
 
         if not exists(Path(model_path).parent):
             makedirs(Path(model_path).parent)
 
         return model_path
 
-    def create_model(self, pdfs_features: List[PdfFeatures], multilingual: bool) -> (bool, str):
-        self.multilingual = multilingual
+    def create_model(self, pdfs_features: List[PdfFeatures]) -> (bool, str):
 
         model_path = self.prepare_model_folder()
 
-        self.model = self.get_lightgbm_stack().create_model(pdfs_features)
+        self.model = LightgbmFrequentWords().create_model(pdfs_features, model_path)
 
         if not self.model:
             return False, "No data to create model"
@@ -58,12 +50,8 @@ class SegmentSelector:
 
         return True, ""
 
-    def get_lightgbm_stack(self):
-        lightgbm_stack = LightgbmStack4Multilingual() if self.multilingual else LightgbmStack4()
-        return lightgbm_stack
-
     def set_extraction_segments(self, pdfs_features: List[PdfFeatures]):
-        predictions = self.get_lightgbm_stack().predict(self.model, pdfs_features)
+        predictions = LightgbmFrequentWords().predict(self.model, pdfs_features, self.model_path)
         index = 0
         for pdf_features in pdfs_features:
             for segment in pdf_features.pdf_segments:

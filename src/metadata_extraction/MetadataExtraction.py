@@ -93,7 +93,7 @@ class MetadataExtraction:
         start = time()
         config_logger.info(f"Creating model with {len(self.pdf_features)} documents for {self.tenant} {self.property_name}")
         segment_selector = SegmentSelector(tenant=self.tenant, property_name=self.property_name)
-        segment_selector.create_model(pdfs_features=self.pdf_features, multilingual=self.multilingual)
+        segment_selector.create_model(pdfs_features=self.pdf_features)
 
         config_logger.info(f"Finished creating model {int(time() - start)} seconds")
 

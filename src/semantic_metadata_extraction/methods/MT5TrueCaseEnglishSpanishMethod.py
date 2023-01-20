@@ -1,14 +1,17 @@
 import os
 from functools import lru_cache
 from os.path import join, exists, dirname
+from pathlib import Path
 from typing import List
+
+import transformers
 from huggingface_hub import hf_hub_download
 import pandas as pd
 import csv
 
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, MT5Tokenizer, MT5ForConditionalGeneration
 
-from config import DATA_PATH
+from config import DATA_PATH, config_logger
 from data.SemanticExtractionData import SemanticExtractionData
 from semantic_metadata_extraction.Method import Method
 
@@ -20,6 +23,8 @@ from semantic_metadata_extraction.methods.run_seq_2_seq import (
     T5TrainingArguments,
 )
 
+transformers.logging.set_verbosity_error()
+
 
 class MT5TrueCaseEnglishSpanishMethod(Method):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -27,19 +32,23 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
     def get_model_path(self):
         return join(self.base_path, self.get_name(), "model")
 
+    def get_max_length_path(self):
+        return Path(join(self.base_path, self.get_name(), "max_length_output"))
+
     def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
-
         texts = [self.property_name + ": " + x.segment_text for x in semantic_extraction_data]
         tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
-        return min(int((max(tokens_number) + 5) * 1.2), 512)
+        input_length = min(int((max(tokens_number) + 5) * 1.5), 512)
+        config_logger.info(f"Max input length: {str(input_length)}")
+        return input_length
 
     def get_max_output_length(self, semantic_extraction_data: List[SemanticExtractionData]):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
-
-        texts = [x.text for x in semantic_extraction_data]
-        tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
-        return min(int((max(tokens_number) + 5) * 1.2), 256)
+        tokens_number = [len(tokenizer(x.text)["input_ids"]) for x in semantic_extraction_data]
+        output_length = min(int((max(tokens_number) + 5) * 1.5), 256)
+        config_logger.info(f"Max output length: {str(output_length)}")
+        return output_length
 
     def prepare_dataset(self, semantic_extractions_data: List[SemanticExtractionData]):
         data_path = join(self.base_path, self.get_name(), "t5_transformers_data.csv")
@@ -47,16 +56,11 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         if exists(data_path):
             os.remove(data_path)
 
-        true_case_inputs = [
-            self.get_true_case_segment_text(semantic_extraction_data)
-            for semantic_extraction_data in semantic_extractions_data
-        ]
+        text_inputs = [semantic_extraction_data.segment_text for semantic_extraction_data in semantic_extractions_data]
 
         data = [
             [str(index), f"{self.property_name}: {segment_text}", semantic_data.text]
-            for index, segment_text, semantic_data in zip(
-                range(len(true_case_inputs)), true_case_inputs, semantic_extractions_data
-            )
+            for index, segment_text, semantic_data in zip(range(len(text_inputs)), text_inputs, semantic_extractions_data)
         ]
         df = pd.DataFrame(data)
         df.columns = ["id", "input_with_prefix", "target"]
@@ -82,12 +86,13 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         self.remove_model()
         train_path = self.prepare_dataset(semantic_extraction_data)
         model_arguments = ModelArguments("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
-        length = self.get_max_output_length(semantic_extraction_data)
+        output_length = self.get_max_output_length(semantic_extraction_data)
+        self.get_max_length_path().write_text(str(output_length))
         data_training_arguments = DataTrainingArguments(
             train_file=train_path,
             validation_file=train_path,
             max_seq_length=self.get_max_input_length(semantic_extraction_data),
-            max_answer_length=length,
+            max_answer_length=output_length,
             context_column="input_with_prefix",
             answer_column="target",
             question_column="not_used",
@@ -113,7 +118,8 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             early_stopping=True,
             num_train_epochs=30,
             early_stopping_patience=4,
-            generation_max_length=self.get_max_output_length(semantic_extraction_data),
+            log_level="error",
+            generation_max_length=output_length,
         )
 
         run(model_arguments, data_training_arguments, t5_training_arguments)
@@ -133,26 +139,18 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         ]
         predict_data_path = self.prepare_dataset(semantic_extraction_data)
 
-        model_arguments = ModelArguments(self.get_model_path())
-        data_training_arguments = DataTrainingArguments(
-            test_file=predict_data_path,
-            context_column="input_with_prefix",
-            answer_column="target",
-            question_column="not_used",
-            version_2_with_negative=False,
-        )
-        seq_seq_training_arguments = T5TrainingArguments(
-            report_to=[],
-            predict_with_generate=True,
-            output_dir=self.get_model_path(),
-            do_train=False,
-            do_eval=False,
-            do_predict=True,
-            generation_max_length=self.get_max_output_length(semantic_extraction_data),
-        )
+        predictions = list()
+        tokenizer = MT5Tokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
+        model = MT5ForConditionalGeneration.from_pretrained(self.get_model_path(), device_map="auto")
 
-        predictions = run(model_arguments, data_training_arguments, seq_seq_training_arguments)
-        return [prediction["prediction_text"] for prediction in predictions]
+        max_length_predictions = int(self.get_max_length_path().read_text())
+        config_logger.info(f"Max length predictions: {max_length_predictions}")
+        for input_text in pd.read_csv(predict_data_path)["input_with_prefix"].tolist():
+            input_ids = tokenizer(input_text, return_tensors="pt").input_ids
+            outputs = model.generate(input_ids, max_length=max_length_predictions)
+            predictions.append(tokenizer.decode(outputs[0])[6:-4])
+
+        return predictions
 
     @lru_cache(maxsize=1)
     def get_true_case(self):

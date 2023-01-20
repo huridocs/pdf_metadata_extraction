@@ -16,16 +16,19 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-    ports:
-      - "5052:5052"
-    env_file: .env
-    networks:
-      - pdf_metadata_extraction_network
+    network_mode: 'host'
+    env_file: .env.local
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     init: true
-    entrypoint: [ "python3", "-m", "src.QueueProcessor" ]
-    restart: unless-stopped
+    entrypoint: [ "python", "-m", "src.QueueProcessor" ]
     build:
       context: .
       dockerfile: Dockerfile
@@ -34,31 +37,16 @@ services:
     shm_size: '11gb'
     depends_on:
       - mongo_metadata_extraction
-      - redis_metadata_extraction
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-    networks:
-      - pdf_metadata_extraction_network
-    env_file: .env
+    network_mode: 'host'
+    env_file: .env.local
   mongo_metadata_extraction:
     restart: unless-stopped
     command: mongod --port 29017
     image: "mongo:4.0.1"
-    networks:
-      - pdf_metadata_extraction_network
-  redis_metadata_extraction:
-    restart: unless-stopped
-    image: "redis:5.0.14"
-    command: redis-server
-    environment:
-      - REDIS_REPLICATION_MODE=master
-    networks:
-      - pdf_metadata_extraction_network
-    ports:
-      - "6379:6379"
-networks:
-  pdf_metadata_extraction_network:
+    network_mode: 'host'
 
 volumes:
   data:

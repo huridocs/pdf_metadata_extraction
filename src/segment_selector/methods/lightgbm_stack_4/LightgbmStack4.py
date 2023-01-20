@@ -1,4 +1,3 @@
-import logging
 from time import time
 from typing import List
 
@@ -18,7 +17,7 @@ class LightgbmStack4:
         self.model = None
         self.best_cut = 0
 
-    def create_model(self, training_pdfs_features: List[PdfFeatures]):
+    def create_model(self, training_pdfs_features: List[PdfFeatures], model_path):
         start = time()
         self.set_segments(training_pdfs_features)
         config_logger.info(f"Set segments {int(time() - start)} seconds")
@@ -73,7 +72,7 @@ class LightgbmStack4:
         for pdf_features in pdfs_features:
             self.segments.extend(SegmentLightgbmStack4.from_pdf_features(pdf_features))
 
-    def predict(self, model, testing_pdfs_features: List[PdfFeatures]):
+    def predict(self, model, testing_pdfs_features: List[PdfFeatures], model_path):
         self.set_segments(testing_pdfs_features)
         x, y = self.get_training_data()
         x = x[:, : model.num_feature()]

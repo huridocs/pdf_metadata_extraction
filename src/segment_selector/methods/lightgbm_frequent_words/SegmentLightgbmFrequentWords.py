@@ -1,7 +1,7 @@
-import hashlib
 import re
-from statistics import mode
 from typing import List, Optional
+
+import nltk
 import numpy as np
 
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
@@ -10,14 +10,16 @@ from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 from metadata_extraction.PdfFeatures.TagType import TAG_TYPE_DICT
 from segment_selector.methods.Modes import Modes
 
+nltk.download("punkt")
 
-class SegmentLightgbmStack4Multilingual:
+
+class SegmentLightgbmFrequentWords:
     def __init__(self, segment_index: int, pdf_segment: PdfSegment, pdf_features: PdfFeatures, modes: Modes):
         self.modes = modes
         self.previous_title_segment = None
         self.previous_segment = None
         self.next_segment = None
-        self.sentence_embeddings = pdf_segment.multilingual_embeddings
+        self.sentence_embeddings = pdf_segment.embeddings
         self.segment_index: float = segment_index
         self.confidence: float = 0
         self.page_number = pdf_segment.page_number
@@ -65,9 +67,6 @@ class SegmentLightgbmStack4Multilingual:
         self.last_word_type: int = 100
         self.dots_percentage: float = 0
         self.font_sizes = [x.font.font_size for x in self.pdf_features.get_tags()]
-        self.set_features()
-
-    def initialize_features(self):
         self.page_width = self.pdf_features.pages[0].page_width
         self.page_height = self.pdf_features.pages[0].page_height
         self.text_content: str = ""
@@ -102,10 +101,10 @@ class SegmentLightgbmStack4Multilingual:
         self.fourth_word_type: int = 100
         self.last_word_type: int = 100
         self.dots_percentage: float = 0
+        self.most_frequent_words = list()
+        self.set_features()
 
     def set_features(self):
-        self.initialize_features()
-
         self.font_family = self.segment_tags[0].font.font_id
         self.font_color = self.segment_tags[0].font.color
         self.line_height = self.segment_tags[0].font.font_size
@@ -155,7 +154,7 @@ class SegmentLightgbmStack4Multilingual:
 
     def get_last_title_features(self):
         if not self.previous_title_segment:
-            return list(np.zeros(534))
+            return list(np.zeros(22))
 
         font_size_mode = sum(self.previous_title_segment.font_sizes) / len(self.previous_title_segment.font_sizes)
 
@@ -182,10 +181,10 @@ class SegmentLightgbmStack4Multilingual:
             self.previous_title_segment.starts_letter_dot,
             self.previous_title_segment.dots_percentage,
             1 if self.previous_title_segment.uppercase else 0,
-        ] + self.previous_title_segment.sentence_embeddings
+        ]
 
     @staticmethod
-    def get_other_segment_features(segment: "SegmentLightgbmStack4Multilingual"):
+    def get_other_segment_features(segment: "SegmentLightgbmFrequentWords"):
         if not segment:
             return list(np.zeros(22))
 
@@ -253,9 +252,8 @@ class SegmentLightgbmStack4Multilingual:
             ]
             + self.get_other_segment_features(self.previous_segment)
             + self.get_other_segment_features(self.next_segment)
-            + self.sentence_embeddings
             + self.get_last_title_features()
-            + self.get_last_illustration_features()
+            + self.most_frequent_words
         )
         return features
 
@@ -271,37 +269,18 @@ class SegmentLightgbmStack4Multilingual:
 
         return False
 
-    def get_last_illustration_features(self):
-        page = [x for x in self.pdf_features.pages if x.page_number == self.page_number][0]
-        top_illustrations = [i for i in page.illustrations if i.bounding_box.top < self.segment_tags[0].bounding_box.top]
-
-        if not top_illustrations:
-            return [0] * 7
-
-        top_illustration = top_illustrations[-1]
-
-        return [
-            top_illustration.bounding_box.top / self.page_height,
-            top_illustration.bounding_box.bottom / self.page_height,
-            top_illustration.bounding_box.height / self.page_height,
-            top_illustration.bounding_box.left / self.page_width,
-            top_illustration.bounding_box.right / self.page_height,
-            top_illustration.bounding_box.width / self.page_height,
-            abs(top_illustration.bounding_box.top / self.page_height - self.top),
-        ]
-
     @staticmethod
-    def from_pdf_features(pdf_features: PdfFeatures) -> List["SegmentLightgbmStack4Multilingual"]:
+    def from_pdf_features(pdf_features: PdfFeatures) -> List["SegmentLightgbmFrequentWords"]:
         modes = Modes(pdf_features)
-        segments: List["SegmentLightgbmStack4Multilingual"] = list()
+        segments: List["SegmentLightgbmFrequentWords"] = list()
         for index, pdf_segment in enumerate(pdf_features.pdf_segments):
 
-            segment_landmarks = SegmentLightgbmStack4Multilingual(index, pdf_segment, pdf_features, modes)
+            segment_landmarks = SegmentLightgbmFrequentWords(index, pdf_segment, pdf_features, modes)
             segments.append(segment_landmarks)
 
         sorted_pdf_segments = sorted(segments, key=lambda x: (x.page_index, x.top))
 
-        previous_title_segment: Optional["SegmentLightgbmStack4Multilingual"] = None
+        previous_title_segment: Optional["SegmentLightgbmFrequentWords"] = None
 
         for sorted_segment in sorted_pdf_segments:
             sorted_segment.previous_title_segment = previous_title_segment
@@ -316,3 +295,6 @@ class SegmentLightgbmStack4Multilingual:
                 sorted_segment.next_segment = sorted_pdf_segments[index + 1]
 
         return segments
+
+    def set_most_frequent_words(self, most_frequent_words: List[str]):
+        self.most_frequent_words = [1 if w in self.text_content else 0 for w in most_frequent_words]

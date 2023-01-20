@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bullseye
+FROM pytorch/pytorch
 
 RUN apt-get update && apt-get -y -q --no-install-recommends install libgomp1
 
@@ -24,3 +24,5 @@ ENV NLTK_DATA=/app/docker_volume/cache/nltk_data
 ENV HF_DATASETS_CACHE=/app/docker_volume/cache/HF
 ENV HF_HOME=/app/docker_volume/cache/HF_home
 ENV TRANSFORMERS_CACHE=/app/docker_volume/cache/Transformers
+ENV TRANSFORMERS_VERBOSITY=error
+ENV TRANSFORMERS_NO_ADVISORY_WARNINGS=1

@@ -2,6 +2,7 @@ import os
 from time import sleep
 
 import redis
+import torch
 from pydantic import ValidationError
 from rsmq.consumer import RedisSMQConsumer
 from rsmq import RedisSMQ, cmd
@@ -113,5 +114,7 @@ if __name__ == "__main__":
     except Exception:
         pass
 
+    config_logger.info("Is GPU used?")
+    config_logger.info(torch.cuda.is_available())
     queue_processor = QueueProcessor()
     queue_processor.subscribe_to_tasks_queue()
