@@ -49,7 +49,7 @@ services:
       - pdf_metadata_extraction_network
   redis_metadata_extraction:
     restart: unless-stopped
-    image: "redis:5.0.14"
+    image: "redis:7.0.8"
     command: redis-server
     environment:
       - REDIS_REPLICATION_MODE=master
