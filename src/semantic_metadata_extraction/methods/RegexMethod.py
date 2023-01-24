@@ -10,7 +10,7 @@ from tdda import *
 class RegexMethod(Method):
     def performance(self, semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):
         if not semantic_extraction_data:
-            return 0
+            return 0, []
 
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
 

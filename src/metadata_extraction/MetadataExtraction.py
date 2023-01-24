@@ -83,8 +83,10 @@ class MetadataExtraction:
             self.pdf_features.append(pdf_features)
 
     def create_models(self, options: List[Option], multi_value: bool = False):
+        start = time()
         config_logger.info(f"Loading data to create model for {self.tenant} {self.property_name}")
         self.set_pdf_features_for_training()
+        print(f"set pdf features {round(time() - start, 2)} seconds")
 
         if not len(self.pdf_features) or not sum([len(pdf_features.pdf_segments) for pdf_features in self.pdf_features]):
             self.delete_training_data()
@@ -95,7 +97,7 @@ class MetadataExtraction:
         segment_selector = SegmentSelector(tenant=self.tenant, property_name=self.property_name)
         segment_selector.create_model(pdfs_features=self.pdf_features)
 
-        config_logger.info(f"Finished creating model {int(time() - start)} seconds")
+        config_logger.info(f"Finished creating model {round(time() - start, 2)} seconds")
 
         config_logger.info(f"Creating semantic model")
         start = time()
@@ -105,7 +107,7 @@ class MetadataExtraction:
         else:
             self.create_semantic_model()
 
-        config_logger.info(f"Finished semantic model in {int(time() - start)} seconds")
+        config_logger.info(f"Finished semantic model in {round(time() - start, 2)} seconds")
 
         self.delete_training_data()
         return True, ""
@@ -153,8 +155,10 @@ class MetadataExtraction:
         return True, ""
 
     def get_suggestions(self):
+        start = time()
         suggestions: List[Suggestion] = self.get_segment_selector_suggestions()
-
+        config_logger.info(f"get_segment_selector_suggestions {round(time() - start, 2)} seconds")
+        start = time()
         segments_text = [x.segment_text for x in suggestions]
         if self.multi_option:
             multi_option_extraction = MultiOptionExtractor(self.tenant, self.property_name)
@@ -168,6 +172,7 @@ class MetadataExtraction:
             for index, suggestion in enumerate(suggestions):
                 suggestion.text = texts[index]
 
+        config_logger.info(f"get_semantic_predictions {round(time() - start, 2)} seconds")
         return suggestions
 
     def get_segment_selector_suggestions(self):

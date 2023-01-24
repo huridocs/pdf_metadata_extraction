@@ -1,3 +1,4 @@
+import logging
 import os
 from functools import lru_cache
 from os.path import join, exists, dirname
@@ -8,7 +9,7 @@ import transformers
 from huggingface_hub import hf_hub_download
 import pandas as pd
 import csv
-
+from transformers.utils import logging as logging_hf
 from transformers import AutoTokenizer, MT5Tokenizer, MT5ForConditionalGeneration
 
 from config import DATA_PATH, config_logger
@@ -24,6 +25,11 @@ from semantic_metadata_extraction.methods.run_seq_2_seq import (
 )
 
 transformers.logging.set_verbosity_error()
+logging.getLogger("pytorch_pretrained_bert.tokenization").setLevel(logging.ERROR)
+logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
+logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.ERROR)
+
+logging_hf.set_verbosity(40)
 
 
 class MT5TrueCaseEnglishSpanishMethod(Method):
@@ -72,7 +78,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
 
     def performance(self, semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):
         if not semantic_extraction_data:
-            return 0
+            return 0, []
 
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
         self.train(performance_train_set)

@@ -34,7 +34,7 @@ class TestRegexMethod(TestCase):
     def test_performance_no_samples(self):
         regex_method = RegexMethod("regex_test", "regex_test")
 
-        self.assertEqual(0, regex_method.performance([], 3))
+        self.assertEqual((0, []), regex_method.performance([], 3))
 
     def test_performance_one_sample(self):
         semantic_information_data = [SemanticExtractionData(text="12", segment_text="one 12", language_iso="en")]

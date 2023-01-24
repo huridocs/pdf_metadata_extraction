@@ -19,6 +19,19 @@ class TestRegexMethod(TestCase):
 
         self.assertEqual(100, regex_method.performance(semantic_information_data, 1)[0])
 
+    def test_performance(self):
+        semantic_information_data = [SemanticExtractionData(text="two", segment_text="two", language_iso="en")]
+        semantic_information_data += [SemanticExtractionData(text='''Angola, Argentina, Austria, Benin, Botswana, Brazil, Burkina Faso, Chile, Congo, Costa Rica, Côte d’Ivoire, Czech Republic, Ecuador, Estonia, Ethiopia, Gabon, Germany, Guatemala, India, Indonesia, Ireland, Italy, Japan, Kazakhstan, Kenya, Libya, Malaysia, Maldives, Montenegro, Pakistan, Peru, Philippines, Poland, Republic of Korea, Republic of Moldova, Romania, Sierra Leone, Spain, Switzerland, Thailand, Uganda, Venezuela (Bolivarian Republic of)''', segment_text='''Angola, Argentina, Austria, Benin, Botswana, Brazil, Burkina Faso, Chile,
+Congo, Costa Rica, Côte d’Ivoire, Czech Republic, Ecuador, Estonia,
+Ethiopia, Gabon, Germany, Guatemala, India, Indonesia, Ireland, Italy,
+Japan, Kazakhstan, Kenya, Libya, Malaysia, Maldives, Montenegro,
+Pakistan, Peru, Philippines, Poland, Republic of Korea, Republic of
+Moldova, Romania, Sierra Leone, Spain, Switzerland, Thailand, Uganda,
+Venezuela (Bolivarian Republic of)''', language_iso="en")]
+        regex_method = RegexSubtractionMethod("regex_subtraction_test", "regex_subtraction_test")
+
+        self.assertEqual(100, regex_method.performance(semantic_information_data, 1)[0])
+
     def test_performance_text_front_and_back(self):
         semantic_information_data = [SemanticExtractionData(text="two", segment_text="1/ two final", language_iso="en")]
         semantic_information_data += [SemanticExtractionData(text="three", segment_text="1/ three final", language_iso="en")]
