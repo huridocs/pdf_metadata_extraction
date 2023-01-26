@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from os.path import join, exists
 from typing import List
 
@@ -83,6 +84,38 @@ class FilterValidSegmentPages:
 
     @staticmethod
     def get_range(start: int, end: int, number_pages: int):
-        start = max(0, start - 1)
+        start = max(0, start -1)
         end = min(end + 1, number_pages)
         return list(range(start + 1, end + 1))
+
+    @staticmethod
+    def filter_xml_pages(xml_content: str, page_numbers_to_keep: list[int]):
+        if not page_numbers_to_keep:
+            return xml_content
+
+        pages_xml = re.findall('ID="Page[0-9]*"', xml_content)
+        page_numbers = [id_field.replace('"', "").replace("ID=Page", "") for id_field in pages_xml]
+        pages_xml = re.findall('PHYSICAL_IMG_NR="[0-9]*"', xml_content)
+        physical_page_numbers = [page_number.replace('"', "").replace("PHYSICAL_IMG_NR=", "") for page_number in pages_xml]
+        ends_of_pages = [x.end() for x in re.finditer("</Page>", xml_content)]
+
+        if len(ends_of_pages) != len(page_numbers) or len(ends_of_pages) != len(physical_page_numbers):
+            return xml_content
+
+        all_pages = [
+            (page_number, physical_page_number)
+            for page_number, physical_page_number in zip(page_numbers, physical_page_numbers)
+            if int(physical_page_number) not in page_numbers_to_keep
+        ]
+        for page_number, physical_page_number in reversed(all_pages):
+            page_tag = re.search(f'<Page\\s*ID="Page{page_number}"\\s*PHYSICAL_IMG_NR="{physical_page_number}"', xml_content)
+
+            if not page_tag:
+                page_tag = re.search(
+                    f'<Page\\s*PHYSICAL_IMG_NR="{physical_page_number}"\\s*ID="Page{page_number}"', xml_content
+                )
+
+            ends = [end_of_page for end_of_page in ends_of_pages if end_of_page > page_tag.start()]
+            xml_content = "".join([xml_content[: page_tag.start()], xml_content[ends[0] :]])
+
+        return xml_content

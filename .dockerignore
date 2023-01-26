@@ -1,3 +1,4 @@
 ./venv
 .git
 /docker_volume/
+/src/tenant_test/

@@ -1,7 +1,6 @@
 FROM pytorch/pytorch
 
 RUN apt-get update && apt-get -y -q --no-install-recommends install libgomp1
-
 RUN mkdir -p /app/src /app/docker_volume
 
 RUN addgroup --system python && adduser --system --group python

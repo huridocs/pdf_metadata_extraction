@@ -62,6 +62,7 @@ class MetadataExtraction:
         config_logger.info(f"Filter pages for training: total {len(page_numbers_list)} documents.")
         config_logger.info(f"Filter: {page_numbers_list}")
 
+        start = time()
         for labeled_data, page_numbers in zip(labeled_data_list, page_numbers_list):
             if labeled_data.language_iso != "en" and labeled_data.language_iso != "eng":
                 self.multilingual = True
@@ -81,6 +82,8 @@ class MetadataExtraction:
 
             self.labeled_data.append(labeled_data)
             self.pdf_features.append(pdf_features)
+
+        config_logger.info(f"PdfFeatures {round(time() - start, 2)} seconds")
 
     def create_models(self, options: List[Option], multi_value: bool = False):
         start = time()

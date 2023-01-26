@@ -117,7 +117,7 @@ class TestMetadataExtractor(TestCase):
             "property_name": property_name,
             "xml_file_name": "test.xml",
             "language_iso": "en",
-            "label_text": "text",
+            "label_text": "Original: English",
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],

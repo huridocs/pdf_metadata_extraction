@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from typing import List, Optional, Dict
 
 from data.SegmentationData import SegmentationData
+from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentPages
 from metadata_extraction.PdfFeatures.PdfAnnotation import PdfAnnotation
 from metadata_extraction.PdfFeatures.PdfPage import PdfPage
 
@@ -160,13 +161,14 @@ class PdfFeatures:
         xml_file: XmlFile, segmentation_data: SegmentationData, pages_numbers: List[int]
     ) -> Optional["PdfFeatures"]:
         try:
-            xml_file_content = pathlib.Path(xml_file.xml_file_path).read_bytes()
+            xml_file_content = pathlib.Path(xml_file.xml_file_path).read_text()
         except FileNotFoundError:
             return PdfFeatures.get_blank()
 
+        xml_file_content = FilterValidSegmentPages.filter_xml_pages(xml_file_content, pages_numbers)
+
         xml = BeautifulSoup(xml_file_content, "lxml-xml")
         pdf_features = PdfFeatures.from_xml_content(xml, file_name=xml_file.xml_file)
-
         if not len(pdf_features.pages):
             return pdf_features
 

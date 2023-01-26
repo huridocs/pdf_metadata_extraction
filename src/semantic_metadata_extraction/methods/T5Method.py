@@ -79,7 +79,6 @@ class T5Method(Method):
         model_args.use_early_stopping = False
         model_args.manual_seed = 42
         model_args.overwrite_output_dir = True
-        model_args.tensorboard_dir = f"{self.base_path}/tensorboard_dir"
         model_args.output_dir = self.get_model_path()
 
         model = T5Model("t5", "t5-small", args=model_args, use_cuda=torch.cuda.is_available())
