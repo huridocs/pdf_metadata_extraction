@@ -84,7 +84,7 @@ class FilterValidSegmentPages:
 
     @staticmethod
     def get_range(start: int, end: int, number_pages: int):
-        start = max(0, start -1)
+        start = max(0, start - 1)
         end = min(end + 1, number_pages)
         return list(range(start + 1, end + 1))
 

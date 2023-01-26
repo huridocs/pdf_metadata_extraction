@@ -35,7 +35,7 @@ class TestFilterXmlPages(TestCase):
         </Page>
         <foo />"""
 
-        xml_text = xml_text.replace('\n', ' ')
+        xml_text = xml_text.replace("\n", " ")
         xml_expect = """<foo />
         <Page ID="Page2" PHYSICAL_IMG_NR="2" >
             <bar>
