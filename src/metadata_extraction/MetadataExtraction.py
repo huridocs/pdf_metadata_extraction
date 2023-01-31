@@ -152,7 +152,8 @@ class MetadataExtraction:
         self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
         xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.property_name, False)
         for suggestion in suggestions:
-            self.pdf_information_extraction_db.prediction_data.delete_many({"xml_file_name": suggestion.xml_file_name})
+            xml_name = {"xml_file_name": suggestion.xml_file_name}
+            self.pdf_information_extraction_db.prediction_data.delete_many({**self.mongo_filter, **xml_name})
             Path(join(xml_folder_path, suggestion.xml_file_name)).unlink(missing_ok=True)
 
         return True, ""

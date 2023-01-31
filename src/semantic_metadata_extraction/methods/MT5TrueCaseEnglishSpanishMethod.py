@@ -149,6 +149,9 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         ]
         predict_data_path = self.prepare_dataset(semantic_extraction_data)
 
+        if not predict_data_path:
+            return []
+
         predictions = list()
         tokenizer = MT5Tokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
         model = MT5ForConditionalGeneration.from_pretrained(self.get_model_path(), device_map="auto")
