@@ -101,7 +101,9 @@ class LightgbmFrequentWords:
         for segment in self.segments:
             if segment.pdf_segment.ml_label:
                 text_tokens = word_tokenize(segment.text_content)
-                count.update([word for word in text_tokens if word not in stopwords.words() and word not in ".,"])
+                count.update(
+                    [word.lower() for word in text_tokens if word.lower() not in stopwords.words() and word not in ".,"]
+                )
         config_logger.info("Most repeated words")
         most_repeated_words = [x[0] for x in count.most_common()[:3]]
         config_logger.info(most_repeated_words)

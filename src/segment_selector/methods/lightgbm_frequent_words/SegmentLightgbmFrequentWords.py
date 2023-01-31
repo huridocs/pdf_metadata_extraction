@@ -297,4 +297,4 @@ class SegmentLightgbmFrequentWords:
         return segments
 
     def set_most_frequent_words(self, most_frequent_words: List[str]):
-        self.most_frequent_words = [1 if w in self.text_content else 0 for w in most_frequent_words]
+        self.most_frequent_words = [1 if w.lower() in self.text_content.lower() else 0 for w in most_frequent_words]

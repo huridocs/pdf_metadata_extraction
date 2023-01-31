@@ -9,6 +9,7 @@
 - [Requirements](#requirements)
 - [Docker containers](#docker-containers)
 - [How to use it](#how-to-use-it)
+- [How to use GPU](#how-to-use-gpu)
 - [HTTP server](#http-server)
 - [Queue processor](#queue-processor)
 - [Service configuration](#service-configuration)
@@ -211,6 +212,26 @@ Multi-option case:
 8. Stop the service
 
     `make stop`
+
+
+## How to use GPU
+
+To use the GPU in the docker containers
+
+1. Install the package:
+        
+    nvidia-container-toolkit
+
+
+2. Restart docker service
+
+    systemctl restart docker
+
+
+
+3. Start the service with
+    
+    make start_gpu
 
 ## HTTP server
 
