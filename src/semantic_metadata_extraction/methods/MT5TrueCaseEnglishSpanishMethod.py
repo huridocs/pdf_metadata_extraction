@@ -68,6 +68,8 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             [str(index), f"{self.property_name}: {segment_text}", semantic_data.text]
             for index, segment_text, semantic_data in zip(range(len(text_inputs)), text_inputs, semantic_extractions_data)
         ]
+        if not data:
+            return None
         df = pd.DataFrame(data)
         df.columns = ["id", "input_with_prefix", "target"]
         df["not_used"] = ""
@@ -91,6 +93,8 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
         self.remove_model()
         train_path = self.prepare_dataset(semantic_extraction_data)
+        if not train_path:
+            return
         model_arguments = ModelArguments("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
         output_length = self.get_max_output_length(semantic_extraction_data)
         self.get_max_length_path().write_text(str(output_length))
