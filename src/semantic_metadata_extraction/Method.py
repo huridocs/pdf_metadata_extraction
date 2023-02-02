@@ -46,7 +46,7 @@ class Method(ABC):
     def log_performance_sample(self, semantic_extractions_data: List[SemanticExtractionData], predictions: List[str]):
         config_logger.info(f"Performance predictions for {self.get_name()}")
         for i, semantic_extraction_data, prediction in zip(range(len(predictions)), semantic_extractions_data, predictions):
-            if i >= 1:
+            if i >= 5:
                 break
 
             config_logger.info("prediction: " + prediction)

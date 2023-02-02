@@ -61,7 +61,7 @@ class SemanticMetadataExtraction:
         best_method_instance: Method,
         semantic_extraction_data: List[SemanticExtractionData],
     ):
-        if best_performance > 85:
+        if best_performance > 75:
             config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
             return best_method_instance
 
