@@ -9,7 +9,8 @@ from rsmq import RedisSMQ, cmd
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 
-from config import config_logger, SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, TASK_QUEUE_NAME, RESULTS_QUEUE_NAME
+from config import config_logger, SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, TASK_QUEUE_NAME, RESULTS_QUEUE_NAME, \
+    RESULTS_QUEUE
 from data.MetadataExtractionTask import MetadataExtractionTask
 from data.ResultsMessage import ResultsMessage
 from metadata_extraction.MetadataExtraction import MetadataExtraction
@@ -23,12 +24,6 @@ class QueueProcessor:
             host=REDIS_HOST,
             port=REDIS_PORT,
             qname=TASK_QUEUE_NAME,
-        )
-
-        self.results_queue = RedisSMQ(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            qname=RESULTS_QUEUE_NAME,
         )
 
     def process(self, id, message, rc, ts):
@@ -68,7 +63,7 @@ class QueueProcessor:
                 data_url=data_url,
             )
         config_logger.info(model_results_message.dict())
-        self.results_queue.sendMessage().message(model_results_message.dict()).execute()
+        RESULTS_QUEUE.sendMessage().message(model_results_message.dict()).execute()
         return True
 
     def log_process_information(self, message):
@@ -84,7 +79,7 @@ class QueueProcessor:
         while True:
             try:
                 self.task_queue.getQueueAttributes().exec_command()
-                self.results_queue.getQueueAttributes().exec_command()
+                RESULTS_QUEUE.getQueueAttributes().exec_command()
 
                 redis_smq_consumer = RedisSMQConsumer(
                     qname=TASK_QUEUE_NAME,
@@ -99,7 +94,7 @@ class QueueProcessor:
             except cmd.exceptions.QueueDoesNotExist:
                 config_logger.info("Creating queues")
                 self.task_queue.createQueue().exceptions(False).execute()
-                self.results_queue.createQueue().exceptions(False).execute()
+                RESULTS_QUEUE.createQueue().exceptions(False).execute()
                 config_logger.info("Queues have been created")
 
 

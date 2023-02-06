@@ -4,7 +4,7 @@ from os.path import join
 from pathlib import Path
 
 import graypy
-
+from rsmq import RedisSMQ
 
 SERVICE_NAME = "information_extraction"
 TASK_QUEUE_NAME = SERVICE_NAME + "_tasks"
@@ -19,6 +19,13 @@ MONGO_HOST = os.environ.get("MONGO_HOST", "mongodb://127.0.0.1")
 MONGO_PORT = os.environ.get("MONGO_PORT", "29017")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
+
+
+RESULTS_QUEUE = RedisSMQ(
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            qname=RESULTS_QUEUE_NAME,
+        )
 
 APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()

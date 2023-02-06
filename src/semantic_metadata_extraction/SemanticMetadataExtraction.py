@@ -2,7 +2,9 @@ import os
 from os.path import exists, join
 from typing import List, Type
 
-from config import config_logger, DATA_PATH
+from config import config_logger, DATA_PATH, RESULTS_QUEUE
+from data.Params import Params
+from data.ResultsMessage import ResultsMessage
 from data.SemanticExtractionData import SemanticExtractionData
 from semantic_metadata_extraction.Method import Method
 from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
@@ -27,9 +29,22 @@ class SemanticMetadataExtraction:
         self.tenant = tenant
         self.property_name = property_name
 
+    def log_feedback(self, message: str):
+        config_logger.info(message)
+        model_results_message = ResultsMessage(
+            tenant=self.tenant,
+            task="Training_feedback",
+            params=Params(property_name=self.property_name),
+            success=True,
+            error_message="",
+            data_url="",
+        )
+        config_logger.info(model_results_message.dict())
+        RESULTS_QUEUE.sendMessage().message(model_results_message.dict()).execute()
+
     def create_model(self, semantic_extraction_data: List[SemanticExtractionData]):
         if len(semantic_extraction_data) < 2:
-            config_logger.info("\nBest method SameInputOutputMethod because no samples")
+            self.log_feedback("\nBest method SameInputOutputMethod because no samples")
             return
 
         best_method_instance = self.get_best_method(semantic_extraction_data)
@@ -46,7 +61,7 @@ class SemanticMetadataExtraction:
             performance, _ = method_instance.performance(performance_semantic_extraction_data, 30)
             config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
             if performance == 100:
-                config_logger.info(f"\nBest method {method_instance.get_name()} with {performance}%")
+                self.log_feedback(f"\nBest method {method_instance.get_name()} with {performance}%")
                 return method_instance
 
             if performance > best_performance:
@@ -62,23 +77,23 @@ class SemanticMetadataExtraction:
         semantic_extraction_data: List[SemanticExtractionData],
     ):
         if best_performance > 75:
-            config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
+            self.log_feedback(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
             return best_method_instance
 
         t5 = MT5TrueCaseEnglishSpanishMethod(self.tenant, self.property_name)
 
         if best_performance < 60:
-            config_logger.info(f"\nBest method {t5.get_name()} because the others were bad")
+            self.log_feedback(f"\nBest method {t5.get_name()} because the others were bad")
             return t5
 
         performance, _ = t5.performance(semantic_extraction_data, 30)
         config_logger.info(f"\nPerformance {t5.get_name()} with {performance}%")
 
         if performance > best_performance:
-            config_logger.info(f"\nBest method {t5.get_name()} with {performance}%")
+            self.log_feedback(f"\nBest method {t5.get_name()} with {performance}%")
             return t5
 
-        config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
+        self.log_feedback(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
         return best_method_instance
 
     def get_semantic_predictions(self, segments_text: List[str]) -> List[str]:
