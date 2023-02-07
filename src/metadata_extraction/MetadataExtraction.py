@@ -19,6 +19,7 @@ from data.MetadataExtractionTask import MetadataExtractionTask
 from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentPages
 
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
+from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 from metadata_extraction.XmlFile import XmlFile
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
@@ -123,19 +124,30 @@ class MetadataExtraction:
     def create_semantic_model(self):
         semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)
         semantic_metadata_extraction.remove_models()
-        semantic_extraction_data: List[SemanticExtractionData] = list()
+        semantic_extractions_data: List[SemanticExtractionData] = list()
         for pdf_features, labeled_data in zip(self.pdf_features, self.labeled_data):
-            pdf_segments = [pdf_segment.text_content for pdf_segment in pdf_features.pdf_segments if pdf_segment.ml_label]
-            suggestion_text = " ".join(pdf_segments)
-            semantic_extraction_data.append(
-                SemanticExtractionData(
-                    text=labeled_data.label_text.strip(),
-                    segment_text=suggestion_text,
-                    language_iso=standardize_tag(labeled_data.language_iso),
-                )
+            selected_pdf_segments = [pdf_segment for pdf_segment in pdf_features.pdf_segments if pdf_segment.ml_label]
+
+            semantic_extraction_data = SemanticExtractionData(
+                text=labeled_data.label_text.strip(),
+                pdf_tags=(self.get_tags_from_segments(pdf_features, selected_pdf_segments)),
+                language_iso=standardize_tag(labeled_data.language_iso),
             )
 
-        semantic_metadata_extraction.create_model(semantic_extraction_data)
+            semantic_extractions_data.append(semantic_extraction_data)
+
+        semantic_metadata_extraction.create_model(semantic_extractions_data)
+
+    @staticmethod
+    def get_tags_from_segments(pdf_features: PdfFeatures, pdf_segments: List[PdfSegment]):
+        all_tags = pdf_features.get_tags()
+        pdf_tags = list()
+        for pdf_segment in pdf_segments:
+            for pdf_tag in [x for x in all_tags if x.page_number == pdf_segment.page_number]:
+                if pdf_segment.is_selected(pdf_tag.bounding_box):
+                    pdf_tags.append(pdf_tag)
+
+        return pdf_tags
 
     def insert_suggestions_in_db(self) -> (bool, str):
         segment_selector = SegmentSelector(self.tenant, self.property_name)
