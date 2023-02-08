@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import List
 
 from config import config_logger, DATA_PATH
+from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
+from data.SemanticPredictionData import SemanticPredictionData
 
 
 class Method(ABC):
@@ -29,7 +31,7 @@ class Method(ABC):
         pass
 
     @abstractmethod
-    def predict(self, texts: List[str]) -> List[str]:
+    def predict(self, pdf_tags: List[SemanticPredictionData]) -> List[str]:
         pass
 
     def get_name(self):
@@ -51,7 +53,7 @@ class Method(ABC):
 
             config_logger.info("prediction: " + prediction)
             config_logger.info("truth     : " + semantic_extraction_data.text)
-            config_logger.info("text      : " + semantic_extraction_data.segment_text)
+            config_logger.info("text      : " + self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags))
 
     def load_json(self, file_name: str):
         path = join(self.base_path, self.get_name(), file_name)
@@ -67,31 +69,28 @@ class Method(ABC):
         semantic_extraction_data: List[SemanticExtractionData], training_set_length: int
     ) -> (List[SemanticExtractionData], List[SemanticExtractionData]):
         if len(semantic_extraction_data) >= 2 * training_set_length:
-            train = Method.clean_semantic_extraction_data(semantic_extraction_data[:training_set_length])
-            test = Method.clean_semantic_extraction_data(semantic_extraction_data[training_set_length:])
+            train = semantic_extraction_data[:training_set_length]
+            test = semantic_extraction_data[training_set_length:]
             return train, test
 
         if len(semantic_extraction_data) <= 10:
-            cleaned_semantic_data = Method.clean_semantic_extraction_data(semantic_extraction_data)
-            return cleaned_semantic_data, cleaned_semantic_data
+            return semantic_extraction_data, semantic_extraction_data
 
         train_amount = len(semantic_extraction_data) // 2
         training_set = semantic_extraction_data[:train_amount]
         training_set = training_set[:training_set_length]
-        training_set = Method.clean_semantic_extraction_data(training_set)
 
         testing_set = semantic_extraction_data[train_amount:]
-        testing_set = Method.clean_semantic_extraction_data(testing_set)
         return training_set, testing_set
+
+    @staticmethod
+    def get_segments_texts_without_breaks(semantic_data: List[SemanticExtractionData]) -> List[str]:
+        return [Method.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_data]
+
+    @staticmethod
+    def get_text_from_pdf_tags(pdf_tags_data: List[PdfTagData]) -> str:
+        return " ".join([pdf_tag_data.text for pdf_tag_data in pdf_tags_data])
 
     @staticmethod
     def clean(text):
         return " ".join(text.replace("\n", " ").strip().split())
-
-    @staticmethod
-    def clean_semantic_extraction_data(semantic_extraction_data: List[SemanticExtractionData]):
-        for semantic_extraction in semantic_extraction_data:
-            semantic_extraction.segment_text = Method.clean(semantic_extraction.segment_text)
-            semantic_extraction.text = Method.clean(semantic_extraction.text)
-
-        return semantic_extraction_data
