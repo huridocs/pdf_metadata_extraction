@@ -2,6 +2,7 @@ from typing import List
 
 from bs4 import Tag, NavigableString
 
+from data.PdfTagData import PdfTagData
 from metadata_extraction.PdfFeatures.PdfFont import PdfFont
 
 from metadata_extraction.PdfFeatures.Rectangle import Rectangle
@@ -56,3 +57,6 @@ class PdfTag:
             segment_no,
             bounding_box,
         )
+
+    def to_pdf_tag_data(self):
+        return PdfTagData(text=self.content)
