@@ -77,6 +77,9 @@ class Rectangle:
 
         return True
 
+    def to_segment_box(self, page_number: int):
+        return SegmentBox(left=self.left, top=self.top, width=self.width, height=self.height, page_number=page_number)
+
     @staticmethod
     def from_segment_box(segment_box: SegmentBox):
         return Rectangle(

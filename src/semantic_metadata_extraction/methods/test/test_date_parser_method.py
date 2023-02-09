@@ -43,10 +43,7 @@ class TestDateParserMethod(TestCase):
         self.assertEqual(50, date_parser_method.performance(semantic_information_data, 3)[0])
 
     def test_performance_multiple_tags(self):
-        pdf_tags_data = [
-            PdfTagData.from_text("13 May"),
-            PdfTagData.from_text("1981"),
-        ]
+        pdf_tags_data = PdfTagData.from_texts(["13 May", "1981"])
         semantic_information_data = [
             SemanticExtractionData(text="1981-05-13", pdf_tags=pdf_tags_data, language_iso="en") for _ in range(6)
         ]

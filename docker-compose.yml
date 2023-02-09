@@ -47,6 +47,8 @@ services:
     image: "mongo:4.0.1"
     networks:
       - pdf_metadata_extraction_network
+    ports:
+      - "29017:29017"
   redis_metadata_extraction:
     restart: unless-stopped
     image: "redis:7.0.8"

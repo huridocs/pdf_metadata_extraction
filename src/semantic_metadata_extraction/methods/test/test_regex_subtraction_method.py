@@ -74,9 +74,7 @@ class TestRegexSubtractionMethod(TestCase):
         regex_method = RegexSubtractionMethod("regex_subtraction_test", "regex_subtraction_test")
 
         regex_method.train(semantic_information_data)
-        predictions = regex_method.predict(
-            [SemanticPredictionData.from_text("3/ one end"), SemanticPredictionData.from_text("4/ two end")]
-        )
+        predictions = regex_method.predict(SemanticPredictionData.from_texts(["3/ one end", "4/ two end"]))
         self.assertEqual(2, len(predictions))
         self.assertEqual("one", predictions[0])
         self.assertEqual("two", predictions[1])

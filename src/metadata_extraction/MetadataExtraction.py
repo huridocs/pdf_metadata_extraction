@@ -47,6 +47,8 @@ class MetadataExtraction:
         self.labeled_data: list[LabeledData] = list()
         self.multilingual: bool = False
 
+        self.segment_selector = SegmentSelector(self.tenant, self.property_name)
+
     def set_pdf_features_for_training(self):
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         pdf_information_extraction_db = client["pdf_metadata_extraction"]
@@ -99,8 +101,7 @@ class MetadataExtraction:
 
         start = time()
         config_logger.info(f"Creating model with {len(self.pdf_features)} documents for {self.tenant} {self.property_name}")
-        segment_selector = SegmentSelector(tenant=self.tenant, property_name=self.property_name)
-        segment_selector.create_model(pdfs_features=self.pdf_features)
+        self.segment_selector.create_model(pdfs_features=self.pdf_features)
 
         config_logger.info(f"Finished creating model {round(time() - start, 2)} seconds")
 
@@ -148,8 +149,7 @@ class MetadataExtraction:
         return [x.to_pdf_tag_data() for x in pdf_tags]
 
     def insert_suggestions_in_db(self) -> (bool, str):
-        segment_selector = SegmentSelector(self.tenant, self.property_name)
-        if not segment_selector.model:
+        if not self.segment_selector.model:
             return False, "No model"
 
         suggestions = self.get_suggestions()
@@ -170,41 +170,40 @@ class MetadataExtraction:
 
     def get_suggestions(self) -> list[Suggestion]:
         start = time()
-        semantic_predictions_data: list[SemanticPredictionData] = self.get_segment_selector_prediction_data()
+        semantic_predictions_data, suggestions = self.get_segment_selector_prediction_data()
         config_logger.info(f"get_segment_selector_suggestions {round(time() - start, 2)} seconds")
-        start = time()
 
+        start = time()
         semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)
         semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
 
-        suggestions: list[Suggestion] = list()
-        for semantic_prediction_data, semantic_prediction_text in zip(semantic_predictions_data, semantic_predictions_texts):
-            suggestion = Suggestion.from_prediction_data(
-                self.tenant, self.property_name, semantic_prediction_data, semantic_prediction_text
-            )
-            suggestions.append(suggestion)
+        for semantic_prediction_text, suggestion in zip(semantic_predictions_texts, suggestions):
+            suggestion.add_prediction(semantic_prediction_text)
 
         config_logger.info(f"get_semantic_predictions {round(time() - start, 2)} seconds")
         return suggestions
 
-    def get_segment_selector_prediction_data(self) -> list[SemanticPredictionData]:
-        pdfs_features, predictions_data = self.get_pdf_features()
+    def get_segment_selector_prediction_data(self) -> (list[SemanticPredictionData], list[Suggestion]):
+        predictions_data, pdfs_features = self.get_pdf_features()
 
         config_logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
 
         semantic_predictions_data: list[SemanticPredictionData] = list()
+        suggestions: list[Suggestion] = list()
+
         for prediction_data, pdf_features in zip(predictions_data, pdfs_features):
+            suggestion = Suggestion.get_empty(self.tenant, self.property_name, prediction_data.xml_file_name)
+
             if not pdf_features.pdf_segments:
                 semantic_predictions_data.append(SemanticPredictionData.from_text(""))
+                suggestions.append(suggestion)
                 continue
 
-            segment_selector = SegmentSelector(self.tenant, self.property_name)
-            segment_selector.set_extraction_segments(pdfs_features=[pdf_features])
-            pdf_tags = self.get_predicted_tags_data(pdf_features)
-            semantic_prediction_data = SemanticPredictionData(pdf_tags=pdf_tags, xml_file_name=prediction_data.xml_file_name)
-            semantic_predictions_data.append(semantic_prediction_data)
+            self.segment_selector.set_extraction_segments(pdfs_features=[pdf_features])
+            semantic_predictions_data.append(SemanticPredictionData(pdf_tags=self.get_predicted_tags_data(pdf_features)))
+            suggestions.append(suggestion.add_segments(pdf_features))
 
-        return semantic_predictions_data
+        return semantic_predictions_data, suggestions
 
     def get_pdf_features(self):
         pdfs_features: list[PdfFeatures] = list()
@@ -230,7 +229,7 @@ class MetadataExtraction:
             )
             pdfs_features.append(PdfFeatures.from_xml_file(xml_file, segmentation_data, page_numbers))
 
-        return pdfs_features, predictions_data
+        return predictions_data, pdfs_features
 
     def get_multi_option_extraction_data(self, options, multi_value):
         samples: list[MultiOptionExtractionSample] = list()

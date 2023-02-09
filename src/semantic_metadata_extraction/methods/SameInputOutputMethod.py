@@ -12,11 +12,11 @@ class SameInputOutputMethod(Method):
 
         performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
 
-        correct = [test for test in performance_test_set if test.text == Method.get_text_from_pdf_tags(test.pdf_tags)]
+        correct = [test for test in performance_test_set if test.text == self.get_text_from_pdf_tags(test.pdf_tags)]
         return 100 * len(correct) / len(performance_test_set), [x.text for x in performance_test_set]
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
         pass
 
     def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
-        return [self.clean(Method.get_text_from_pdf_tags(x.pdf_tags)) for x in semantic_predictions_data]
+        return [self.clean(self.get_text_from_pdf_tags(x.pdf_tags)) for x in semantic_predictions_data]

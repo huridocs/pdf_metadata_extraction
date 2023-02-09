@@ -89,7 +89,7 @@ class Method(ABC):
 
     @staticmethod
     def get_text_from_pdf_tags(pdf_tags_data: List[PdfTagData]) -> str:
-        return " ".join([pdf_tag_data.text for pdf_tag_data in pdf_tags_data])
+        return " ".join([pdf_tag_data.text.strip() for pdf_tag_data in pdf_tags_data])
 
     @staticmethod
     def clean(text):

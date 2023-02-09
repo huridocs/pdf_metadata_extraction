@@ -24,14 +24,14 @@ class RegexSubtractionMethod(Method):
 
     def train(self, semantic_extraction_data: List[SemanticExtractionData]):
         front_subtraction = [
-            self.get_first_subtraction_characters(Method.get_text_from_pdf_tags(x.pdf_tags), x.text)
+            self.get_first_subtraction_characters(self.get_text_from_pdf_tags(x.pdf_tags), x.text)
             for x in semantic_extraction_data
         ]
         front_regex_list = rexpy.extract([x for x in front_subtraction if x])
         front_regex_list = [regex[:-1] for regex in front_regex_list]
 
         back_subtraction = [
-            self.get_last_subtraction_characters(Method.get_text_from_pdf_tags(x.pdf_tags), x.text)
+            self.get_last_subtraction_characters(self.get_text_from_pdf_tags(x.pdf_tags), x.text)
             for x in semantic_extraction_data
         ]
         back_regex_list = rexpy.extract([x for x in back_subtraction if x])
@@ -41,7 +41,7 @@ class RegexSubtractionMethod(Method):
 
     def predict(self, semantic_predictions_data: List[SemanticPredictionData]) -> List[str]:
         regex_list = self.load_json("regex_subtraction_list.json")
-        predictions = [Method.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_predictions_data]
+        predictions = [self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_predictions_data]
         for i, prediction in enumerate(predictions):
             for regex in regex_list:
                 matches = re.search(regex, prediction)

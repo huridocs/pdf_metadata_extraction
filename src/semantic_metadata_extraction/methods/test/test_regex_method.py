@@ -54,13 +54,7 @@ class TestRegexMethod(TestCase):
         regex_method = RegexMethod("regex_test", "regex_test")
 
         regex_method.train(semantic_information_data)
-        predictions = regex_method.predict(
-            [
-                SemanticPredictionData.from_text("one 12"),
-                SemanticPredictionData.from_text("13"),
-                SemanticPredictionData.from_text("14 foo"),
-            ]
-        )
+        predictions = regex_method.predict(SemanticPredictionData.from_texts(["one 12", "13", "14 foo"]))
         self.assertEqual(3, len(predictions))
         self.assertEqual("12", predictions[0])
         self.assertEqual("13", predictions[1])

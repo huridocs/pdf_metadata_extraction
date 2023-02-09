@@ -32,7 +32,7 @@ class RegexMethod(Method):
         regex_list = self.load_json("regex_list.json")
         for regex in regex_list:
             for index, semantic_prediction_data in enumerate(semantic_predictions_data):
-                text = Method.get_text_from_pdf_tags(semantic_prediction_data.pdf_tags)
+                text = self.get_text_from_pdf_tags(semantic_prediction_data.pdf_tags)
                 if predictions[index]:
                     break
 
