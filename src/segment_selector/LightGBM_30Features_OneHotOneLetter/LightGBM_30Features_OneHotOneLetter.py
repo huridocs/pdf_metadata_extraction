@@ -96,7 +96,6 @@ class LightGBM_30Features_OneHotOneLetter:
         return predicted_tag_types
 
     def predict(self, pdf_features: "PdfFeatures") -> List[TagType]:
-
         pdfalto_xml = PdfAltoXml(pdf_features)
         predicted_tag_types: List[TagType] = list()
         for page in pdf_features.pages:

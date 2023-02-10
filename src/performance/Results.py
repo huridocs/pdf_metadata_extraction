@@ -10,7 +10,6 @@ SCRIPT_PATH = dirname(realpath(__file__))
 
 
 class Results:
-
     RESULTS_PATH = "results"
 
     def __init__(self, results_name: str):

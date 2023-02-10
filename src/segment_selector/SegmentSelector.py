@@ -38,7 +38,6 @@ class SegmentSelector:
         return model_path
 
     def create_model(self, pdfs_features: List[PdfFeatures]) -> (bool, str):
-
         model_path = self.prepare_model_folder()
 
         self.model = LightgbmFrequentWords().create_model(pdfs_features, model_path)
