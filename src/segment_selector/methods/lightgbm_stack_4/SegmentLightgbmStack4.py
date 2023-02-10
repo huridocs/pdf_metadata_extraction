@@ -293,7 +293,6 @@ class SegmentLightgbmStack4:
         modes = Modes(pdf_features)
         segments: List["SegmentLightgbmStack4"] = list()
         for index, pdf_segment in enumerate(pdf_features.pdf_segments):
-
             segment_landmarks = SegmentLightgbmStack4(index, pdf_segment, pdf_features, modes)
             segments.append(segment_landmarks)
 
