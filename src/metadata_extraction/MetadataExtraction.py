@@ -1,4 +1,3 @@
-import logging
 import shutil
 from os.path import join
 from pathlib import Path
@@ -9,8 +8,8 @@ from langcodes import standardize_tag
 
 from config import config_logger, MONGO_PORT, MONGO_HOST
 from data.LabeledData import LabeledData
-from data.Option import Option
 from data.PdfTagData import PdfTagData
+
 from data.PredictionData import PredictionData
 from data.SegmentationData import SegmentationData
 from data.SemanticExtractionData import SemanticExtractionData
@@ -20,7 +19,6 @@ from data.MetadataExtractionTask import MetadataExtractionTask
 from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentPages
 
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
-from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 from metadata_extraction.XmlFile import XmlFile
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
@@ -32,7 +30,7 @@ class MetadataExtraction:
     CREATE_MODEL_TASK_NAME = "create_model"
     SUGGESTIONS_TASK_NAME = "suggestions"
 
-    def __init__(self, tenant: str, property_name: str, multi_option: bool, logger: logging.Logger = None):
+    def __init__(self, tenant: str, property_name: str, multi_option: bool):
         self.tenant = tenant
         self.property_name = property_name
         self.multi_option = multi_option
@@ -105,7 +103,7 @@ class MetadataExtraction:
 
         config_logger.info(f"Finished creating model {round(time() - start, 2)} seconds")
 
-        config_logger.info(f"Creating semantic model")
+        config_logger.info("Creating semantic model")
         start = time()
         self.create_semantic_model()
 
@@ -243,19 +241,19 @@ class MetadataExtraction:
         )
 
     @staticmethod
-    def calculate_task(information_extraction_task: MetadataExtractionTask, logger: logging.Logger = None) -> (bool, str):
+    def calculate_task(information_extraction_task: MetadataExtractionTask) -> (bool, str):
         tenant = information_extraction_task.tenant
         property_name = information_extraction_task.params.property_name
 
         if information_extraction_task.task == MetadataExtraction.CREATE_MODEL_TASK_NAME:
             multi_option = True if information_extraction_task.params.options else False
-            metadata_extraction = MetadataExtraction(tenant, property_name, multi_option, logger)
+            metadata_extraction = MetadataExtraction(tenant, property_name, multi_option)
             return metadata_extraction.create_models()
 
         if information_extraction_task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
             config_logger.info("Calculating suggestions")
             multi_option = MultiOptionExtractor.exist_model(tenant, property_name)
-            metadata_extraction = MetadataExtraction(tenant, property_name, multi_option, logger)
+            metadata_extraction = MetadataExtraction(tenant, property_name, multi_option)
             return metadata_extraction.insert_suggestions_in_db()
 
         return False, "Error"
