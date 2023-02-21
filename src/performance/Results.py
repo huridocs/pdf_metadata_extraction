@@ -1,5 +1,4 @@
-from os.path import exists, dirname, realpath, join
-from typing import List
+from os.path import dirname, realpath, join
 import time
 from datetime import datetime
 from rich import box

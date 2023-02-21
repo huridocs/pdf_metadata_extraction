@@ -44,7 +44,7 @@ from transformers import (
     add_start_docstrings,
 )
 from transformers.trainer_utils import EvalLoopOutput, EvalPrediction, get_last_checkpoint
-from transformers.utils import check_min_version, send_example_telemetry
+from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 
 from semantic_metadata_extraction.methods.trainer_seq2seq_qa import QuestionAnsweringSeq2SeqTrainer
@@ -433,7 +433,8 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
         # padding in the loss.
         if padding == "max_length" and data_args.ignore_pad_token_for_loss:
             labels["input_ids"] = [
-                [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
+                [(a_label if a_label != tokenizer.pad_token_id else -100) for a_label in label]
+                for label in labels["input_ids"]
             ]
 
         model_inputs["labels"] = labels["input_ids"]

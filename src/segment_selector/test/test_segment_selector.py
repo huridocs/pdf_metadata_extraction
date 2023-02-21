@@ -66,7 +66,7 @@ class TestSegmentSelector(TestCase):
         start = time()
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
         for i in range(20):
-            pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
+            PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
         print(time() - start, "create model")
 
