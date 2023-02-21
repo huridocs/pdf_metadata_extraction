@@ -2,8 +2,6 @@ import numpy as np
 from typing import List, Dict
 
 
-from copy import deepcopy
-
 from metadata_extraction.PdfFeatures.PdfFont import PdfFont
 from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 from metadata_extraction.PdfFeatures.Rectangle import Rectangle

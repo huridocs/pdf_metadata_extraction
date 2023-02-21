@@ -16,3 +16,4 @@ outputs
 /performance_results/mistakes/
 /docker_volume/
 /huggingface/
+/.ruff_cache/

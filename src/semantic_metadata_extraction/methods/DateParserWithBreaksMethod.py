@@ -1,5 +1,3 @@
-import re
-
 from data.PdfTagData import PdfTagData
 from semantic_metadata_extraction.Method import Method
 from dateparser.search import search_dates

@@ -33,9 +33,16 @@ class TestRegexSubtractionMethod(TestCase):
         semantic_information_data = [
             SemanticExtractionData(text="two", pdf_tags=[PdfTagData.from_text("two")], language_iso="en")
         ]
+
+        text = "Angola, Argentina, Austria, Benin, Botswana, Brazil, Burkina Faso, Chile, Congo, Costa Rica, "
+        text += "Côte d’Ivoire, Czech Republic, Ecuador, Estonia, Ethiopia, Gabon, Germany, Guatemala, India, "
+        text += "Indonesia, Ireland, Italy, Japan, Kazakhstan, Kenya, Libya, Malaysia, Maldives, "
+        text += "Montenegro, Pakistan, Peru, Philippines, Poland, Republic of Korea, Republic of Moldova, "
+        text += "Romania, Sierra Leone, Spain, Switzerland, Thailand, Uganda, Venezuela (Bolivarian Republic of)"
+
         semantic_information_data += [
             SemanticExtractionData(
-                text="""Angola, Argentina, Austria, Benin, Botswana, Brazil, Burkina Faso, Chile, Congo, Costa Rica, Côte d’Ivoire, Czech Republic, Ecuador, Estonia, Ethiopia, Gabon, Germany, Guatemala, India, Indonesia, Ireland, Italy, Japan, Kazakhstan, Kenya, Libya, Malaysia, Maldives, Montenegro, Pakistan, Peru, Philippines, Poland, Republic of Korea, Republic of Moldova, Romania, Sierra Leone, Spain, Switzerland, Thailand, Uganda, Venezuela (Bolivarian Republic of)""",
+                text=text,
                 pdf_tags=[
                     PdfTagData.from_text("Angola, Argentina, Austria, Benin, Botswana, Brazil, Burkina Faso, Chile,"),
                     PdfTagData.from_text("Congo, Costa Rica, Côte d’Ivoire, Czech Republic, Ecuador, Estonia,"),

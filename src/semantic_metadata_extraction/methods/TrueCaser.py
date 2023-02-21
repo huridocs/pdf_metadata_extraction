@@ -1,9 +1,7 @@
 import math
-import os
 import pickle
 import re
 import string
-from os.path import join, dirname
 
 import nltk
 from nltk.tokenize import word_tokenize

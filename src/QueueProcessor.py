@@ -41,7 +41,7 @@ class QueueProcessor:
 
         self.log_process_information(message)
 
-        task_calculated, error_message = MetadataExtraction.calculate_task(task, config_logger)
+        task_calculated, error_message = MetadataExtraction.calculate_task(task)
         if error_message:
             config_logger.info(f"Error: {error_message}")
 

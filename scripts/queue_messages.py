@@ -1,4 +1,3 @@
-import redis
 from redis import exceptions
 from rsmq import RedisSMQ
 

@@ -7,15 +7,7 @@ from datetime import datetime
 from data.SemanticExtractionData import SemanticExtractionData
 from performance.Results import Results
 from semantic_metadata_extraction.Method import Method
-from semantic_metadata_extraction.methods.FlanT5TrueCaseEnglishSpanishMethod import FlanT5TrueCaseEnglishSpanishMethod
-from semantic_metadata_extraction.methods.MT5EnglishSpanishMethod import MT5EnglishSpanishMethod
-from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
-from semantic_metadata_extraction.methods.RegexMethod import RegexMethod
-from semantic_metadata_extraction.methods.SameInputOutputMethod import SameInputOutputMethod
-from semantic_metadata_extraction.methods.T5Method import T5Method
-from semantic_metadata_extraction.methods.T5TransformersMethod import T5TransformersMethod
 from semantic_metadata_extraction.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
-from semantic_metadata_extraction.methods.T5ZeroShot import T5ZeroShot
 
 
 class CheckPerformance:
@@ -120,8 +112,10 @@ class CheckPerformance:
 
     def write_mistakes(self):
         _, performance_test_set = Method.get_train_test(self.semantic_information_data, self.training_length)
-        correct_path = f"../performance_results/mistakes/{self.training_length}_{self.current_method_name}_{self.current_dataset}_correct.txt"
-        mistakes_path = f"../performance_results/mistakes/{self.training_length}_{self.current_method_name}_{self.current_dataset}_mistakes.txt"
+        correct_path = "../performance_results/mistakes/"
+        correct_path += f"{self.training_length}_{self.current_method_name}_{self.current_dataset}_correct.txt"
+        mistakes_path = "../performance_results/mistakes/"
+        mistakes_path += f"{self.training_length}_{self.current_method_name}_{self.current_dataset}_mistakes.txt"
 
         with open(mistakes_path, "w") as input_file:
             input_file.write("Mistakes\n\n")

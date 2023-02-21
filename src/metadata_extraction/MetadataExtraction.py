@@ -1,4 +1,3 @@
-import logging
 import shutil
 from os.path import join
 from pathlib import Path
@@ -11,6 +10,7 @@ from config import config_logger, MONGO_PORT, MONGO_HOST
 from data.LabeledData import LabeledData
 from data.Option import Option
 from data.PdfTagData import PdfTagData
+
 from data.PredictionData import PredictionData
 from data.SegmentationData import SegmentationData
 from data.SemanticExtractionData import SemanticExtractionData
@@ -20,7 +20,6 @@ from data.MetadataExtractionTask import MetadataExtractionTask
 from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentPages
 
 from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
-from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 from metadata_extraction.XmlFile import XmlFile
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
@@ -32,10 +31,9 @@ class MetadataExtraction:
     CREATE_MODEL_TASK_NAME = "create_model"
     SUGGESTIONS_TASK_NAME = "suggestions"
 
-    def __init__(self, tenant: str, property_name: str, multi_option: bool, logger: logging.Logger = None):
+    def __init__(self, tenant: str, property_name: str):
         self.tenant = tenant
         self.property_name = property_name
-        self.multi_option = multi_option
 
         self.filter_valid_pages = FilterValidSegmentPages(tenant, property_name)
 
@@ -45,7 +43,6 @@ class MetadataExtraction:
 
         self.pdf_features: list[PdfFeatures] = list()
         self.labeled_data: list[LabeledData] = list()
-        self.multilingual: bool = False
 
         self.segment_selector = SegmentSelector(self.tenant, self.property_name)
 
@@ -53,7 +50,6 @@ class MetadataExtraction:
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         pdf_information_extraction_db = client["pdf_metadata_extraction"]
 
-        self.multilingual = False
         self.pdf_features = list()
         self.labeled_data = list()
 
@@ -68,9 +64,6 @@ class MetadataExtraction:
 
         start = time()
         for labeled_data, page_numbers in zip(labeled_data_list, page_numbers_list):
-            if labeled_data.language_iso != "en" and labeled_data.language_iso != "eng":
-                self.multilingual = True
-
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             xml_file = XmlFile(
                 tenant=labeled_data.tenant,
@@ -89,7 +82,7 @@ class MetadataExtraction:
 
         config_logger.info(f"PdfFeatures {round(time() - start, 2)} seconds")
 
-    def create_models(self):
+    def create_models(self, options: list[Option], multi_value: bool):
         start = time()
         config_logger.info(f"Loading data to create model for {self.tenant} {self.property_name}")
         self.set_pdf_features_for_training()
@@ -105,9 +98,14 @@ class MetadataExtraction:
 
         config_logger.info(f"Finished creating model {round(time() - start, 2)} seconds")
 
-        config_logger.info(f"Creating semantic model")
+        config_logger.info("Creating semantic model")
         start = time()
-        self.create_semantic_model()
+
+        if options:
+            multi_option_extractor = MultiOptionExtractor(tenant=self.tenant, property_name=self.property_name)
+            multi_option_extractor.create_model(self.get_multi_option_extraction_data(options, multi_value))
+        else:
+            self.create_semantic_model()
 
         config_logger.info(f"Finished semantic model in {round(time() - start, 2)} seconds")
 
@@ -174,11 +172,17 @@ class MetadataExtraction:
         config_logger.info(f"get_segment_selector_suggestions {round(time() - start, 2)} seconds")
 
         start = time()
-        semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)
-        semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
+        if MultiOptionExtractor.exist_model(self.tenant, self.property_name):
+            multi_option_extractor = MultiOptionExtractor(self.tenant, self.property_name)
+            multi_option_predictions = multi_option_extractor.get_multi_option_predictions(semantic_predictions_data)
+            for multi_option_extraction_sample, suggestion in zip(multi_option_predictions, suggestions):
+                suggestion.add_prediction_multi_option(multi_option_extraction_sample.options)
+        else:
+            semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)
+            semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
 
-        for semantic_prediction_text, suggestion in zip(semantic_predictions_texts, suggestions):
-            suggestion.add_prediction(semantic_prediction_text)
+            for semantic_prediction_text, suggestion in zip(semantic_predictions_texts, suggestions):
+                suggestion.add_prediction(semantic_prediction_text)
 
         config_logger.info(f"get_semantic_predictions {round(time() - start, 2)} seconds")
         return suggestions
@@ -232,30 +236,31 @@ class MetadataExtraction:
         return predictions_data, pdfs_features
 
     def get_multi_option_extraction_data(self, options, multi_value):
-        samples: list[MultiOptionExtractionSample] = list()
+        multi_option_samples: list[MultiOptionExtractionSample] = list()
         for pdf_features, labeled_data in zip(self.pdf_features, self.labeled_data):
-            pdf_segments = [pdf_segment.text_content for pdf_segment in pdf_features.pdf_segments if pdf_segment.ml_label]
-            suggestion_text = " ".join(pdf_segments)
-            samples.append(MultiOptionExtractionSample(text=suggestion_text, options=labeled_data.options))
+            multi_option_sample = MultiOptionExtractionSample(
+                pdf_tags=(self.get_predicted_tags_data(pdf_features)),
+                options=labeled_data.options,
+                language_iso=standardize_tag(labeled_data.language_iso),
+            )
+            multi_option_samples.append(multi_option_sample)
 
-        return MultiOptionExtractionData(
-            multilingual=self.multilingual, multi_value=multi_value, options=options, samples=samples
-        )
+        return MultiOptionExtractionData(multi_value=multi_value, options=options, samples=multi_option_samples)
 
     @staticmethod
-    def calculate_task(information_extraction_task: MetadataExtractionTask, logger: logging.Logger = None) -> (bool, str):
+    def calculate_task(information_extraction_task: MetadataExtractionTask) -> (bool, str):
         tenant = information_extraction_task.tenant
         property_name = information_extraction_task.params.property_name
 
         if information_extraction_task.task == MetadataExtraction.CREATE_MODEL_TASK_NAME:
-            multi_option = True if information_extraction_task.params.options else False
-            metadata_extraction = MetadataExtraction(tenant, property_name, multi_option, logger)
-            return metadata_extraction.create_models()
+            metadata_extraction = MetadataExtraction(tenant, property_name)
+            options = information_extraction_task.params.options
+            multi_value = information_extraction_task.params.multi_value
+            return metadata_extraction.create_models(options, multi_value)
 
         if information_extraction_task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
             config_logger.info("Calculating suggestions")
-            multi_option = MultiOptionExtractor.exist_model(tenant, property_name)
-            metadata_extraction = MetadataExtraction(tenant, property_name, multi_option, logger)
+            metadata_extraction = MetadataExtraction(tenant, property_name)
             return metadata_extraction.insert_suggestions_in_db()
 
         return False, "Error"

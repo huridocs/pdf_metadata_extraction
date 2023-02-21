@@ -60,6 +60,10 @@ class Suggestion(BaseModel):
         self.text = text
         return self
 
+    def add_prediction_multi_option(self, options: list[Option]):
+        self.options = options
+        return self
+
     def add_segments(self, pdf_features):
         segments: list[PdfSegment] = [x for x in pdf_features.pdf_segments if x.ml_label]
 
