@@ -16,21 +16,21 @@ from metadata_extraction.MetadataExtraction import MetadataExtraction
 
 
 class TestMetadataExtractor(TestCase):
-    test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
-    model_path = f"{APP_PATH}/tenant_test/property_name/segment_predictor_model/model.model"
+    test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
+    model_path = f"{APP_PATH}/tenant_test/extraction_id/segment_predictor_model/model.model"
 
     @mongomock.patch(servers=[f"{MONGO_HOST}:{MONGO_PORT}"])
     def test_create_model_error_when_blank_document(self):
         tenant = "segment_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
-        base_path = join(DATA_PATH, tenant, property_name)
+        base_path = join(DATA_PATH, tenant, extraction_id)
 
         mongo_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
 
         json_data = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "blank.xml",
             "label_text": "text",
             "language_iso": "en",
@@ -49,7 +49,7 @@ class TestMetadataExtractor(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
@@ -60,12 +60,12 @@ class TestMetadataExtractor(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_error_when_no_files(self):
         tenant = "error_segment_test"
-        property_name = "error_property_name"
+        extraction_id = "error_extraction_id"
 
         task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
@@ -75,12 +75,12 @@ class TestMetadataExtractor(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_should_do_nothing_when_no_xml(self):
         tenant = "segment_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         json_data = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "not_found.xml_to_train",
             "language_iso": "en",
             "label_text": "text",
@@ -95,26 +95,26 @@ class TestMetadataExtractor(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         MetadataExtraction.calculate_task(task)
 
-        self.assertFalse(os.path.exists(f"{DATA_PATH}/segment_test/property_name/xml_to_train"))
-        self.assertFalse(os.path.exists(f"{DATA_PATH}/segment_test/property_name/segment_predictor_model/model.model"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/segment_test/extraction_id/xml_to_train"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/segment_test/extraction_id/segment_predictor_model/model.model"))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_calculate_suggestions(self):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "segment_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
 
         labeled_data_json = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "test.xml",
             "language_iso": "en",
             "label_text": "Original: English",
@@ -130,13 +130,13 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
         to_predict_json = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -148,7 +148,7 @@ class TestMetadataExtractor(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
@@ -159,7 +159,7 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual(1, documents_count)
 
         self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual(extraction_id, suggestion.extraction_id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual("Original: English", suggestion.segment_text)
         self.assertEqual("Original: English", suggestion.text)
@@ -174,8 +174,8 @@ class TestMetadataExtractor(TestCase):
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.prediction_data.find_one())
 
-        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/spanish.xml"))
-        self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
+        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/spanish.xml"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -184,14 +184,14 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "segment_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
 
         labeled_data_json = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "test.xml",
             "language_iso": "en",
             "label_text": "text",
@@ -207,13 +207,13 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
         to_predict_json = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -226,7 +226,7 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
@@ -236,13 +236,13 @@ class TestMetadataExtractor(TestCase):
         self.assertTrue(task_calculated)
         self.assertEqual(1, documents_count)
         self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual(extraction_id, suggestion.extraction_id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertTrue("In accordance with paragraph" in suggestion.segment_text)
         self.assertTrue("every four years" in suggestion.text)
         self.assertEqual(2, suggestion.page_number)
-        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict"))
-        self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"))
+        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"))
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
         self.assertAlmostEqual(173.33333333333331, suggestion.segments_boxes[0].left)
@@ -258,7 +258,7 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "tenant_to_be_removed"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
@@ -266,7 +266,7 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
@@ -274,7 +274,7 @@ class TestMetadataExtractor(TestCase):
             },
             {
                 "xml_file_name": "test.xml",
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
@@ -286,7 +286,7 @@ class TestMetadataExtractor(TestCase):
 
         for i in range(7):
             labeled_data_json = {
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "test.xml",
                 "language_iso": "en",
@@ -303,7 +303,7 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
@@ -311,19 +311,19 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"property_name": property_name, "tenant": tenant}
+        find_filter = {"extraction_id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
         self.assertEqual(2, len(suggestions))
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({property_name}, {x.property_name for x in suggestions})
+        self.assertEqual({extraction_id}, {x.extraction_id for x in suggestions})
         self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"Original: English"}, {x.segment_text for x in suggestions})
         self.assertEqual({"English"}, {x.text for x in suggestions})
@@ -342,7 +342,7 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "tenant_to_be_removed"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
@@ -350,7 +350,7 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
@@ -362,7 +362,7 @@ class TestMetadataExtractor(TestCase):
 
         for i in range(7):
             labeled_data_json = {
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "test.xml",
                 "language_iso": "en",
@@ -379,7 +379,7 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
@@ -387,19 +387,19 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"property_name": property_name, "tenant": tenant}
+        find_filter = {"extraction_id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
         self.assertEqual(1, len(suggestions))
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({property_name}, {x.property_name for x in suggestions})
+        self.assertEqual({extraction_id}, {x.extraction_id for x in suggestions})
         self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"15 February 2021"}, {x.segment_text for x in suggestions})
         self.assertEqual({"15"}, {x.text for x in suggestions})
@@ -411,24 +411,24 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "tenant_to_be_removed"
-        property_name = "spa"
+        extraction_id = "spa"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
         shutil.copytree(
-            f"{DATA_PATH}/{tenant}/property_name/xml_to_train",
-            f"{DATA_PATH}/{tenant}/{property_name}/xml_to_train",
+            f"{DATA_PATH}/{tenant}/extraction_id/xml_to_train",
+            f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_train",
         )
         shutil.copytree(
-            f"{DATA_PATH}/{tenant}/property_name/xml_to_train",
-            f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict",
+            f"{DATA_PATH}/{tenant}/extraction_id/xml_to_train",
+            f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict",
         )
 
         samples_number = 20
         for i in range(samples_number):
             labeled_data_json = {
                 "tenant": tenant,
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "spanish.xml",
                 "language_iso": "spa",
                 "label_text": "día",
@@ -442,14 +442,14 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "tenant": tenant,
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "spanish.xml",
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
             },
             {
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "spanish.xml",
                 "page_width": 612,
@@ -464,7 +464,7 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
@@ -472,19 +472,19 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"property_name": property_name, "tenant": tenant}
+        find_filter = {"extraction_id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
         self.assertEqual(2, len(suggestions))
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({property_name}, {x.property_name for x in suggestions})
+        self.assertEqual({extraction_id}, {x.extraction_id for x in suggestions})
         self.assertEqual({"spanish.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"por día"}, {x.segment_text for x in suggestions})
         self.assertEqual({"día"}, {x.text for x in suggestions})
@@ -494,9 +494,9 @@ class TestMetadataExtractor(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_no_files_error(self):
         tenant = "error_segment_test"
-        property_name = "error_property_name"
+        extraction_id = "error_extraction_id"
 
-        base_path = join(DATA_PATH, tenant, property_name)
+        base_path = join(DATA_PATH, tenant, extraction_id)
 
         if not exists(f"{base_path}/segment_predictor_model"):
             os.makedirs(f"{base_path}/segment_predictor_model")
@@ -506,7 +506,7 @@ class TestMetadataExtractor(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
@@ -520,9 +520,9 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "error_segment_test"
-        property_name = "error_property_name"
+        extraction_id = "error_extraction_id"
 
-        base_path = join(DATA_PATH, tenant, property_name)
+        base_path = join(DATA_PATH, tenant, extraction_id)
 
         os.makedirs(f"{base_path}/xml_to_predict")
         shutil.copy(self.test_xml_path, f"{base_path}/xml_to_predict/test.xml")
@@ -530,7 +530,7 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "tenant": tenant,
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "test.xml",
                 "page_width": 612,
                 "page_height": 792,
@@ -543,7 +543,7 @@ class TestMetadataExtractor(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
@@ -557,18 +557,18 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "segment_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
         shutil.rmtree(
-            f"{DATA_PATH}/{tenant}/{property_name}/semantic_model",
+            f"{DATA_PATH}/{tenant}/{extraction_id}/semantic_model",
             ignore_errors=True,
         )
 
         to_predict_json = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "blank.xml",
             "page_width": 612,
             "page_height": 792,
@@ -580,14 +580,14 @@ class TestMetadataExtractor(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
         self.assertFalse(task_calculated)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
+        self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -596,18 +596,18 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "segment_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
         shutil.rmtree(
-            f"{DATA_PATH}/{tenant}/{property_name}/semantic_model",
+            f"{DATA_PATH}/{tenant}/{extraction_id}/semantic_model",
             ignore_errors=True,
         )
 
         to_predict_json = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "no_pages.xml",
             "page_width": 612,
             "page_height": 792,
@@ -619,14 +619,14 @@ class TestMetadataExtractor(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         task_calculated, error = MetadataExtraction.calculate_task(task)
 
         self.assertFalse(task_calculated)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
+        self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -635,7 +635,7 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         tenant = "tenant_to_be_removed"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
@@ -643,7 +643,7 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
@@ -656,7 +656,7 @@ class TestMetadataExtractor(TestCase):
         options = [{"id": f"id{n}", "label": str(n)} for n in range(16)]
         for i in range(7):
             labeled_data_json = {
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "test.xml",
                 "language_iso": "en",
@@ -673,7 +673,7 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
-                params=Params(property_name=property_name, options=options, multi_value=False),
+                params=Params(id=extraction_id, options=options, multi_value=False),
             )
         )
 
@@ -681,24 +681,24 @@ class TestMetadataExtractor(TestCase):
             MetadataExtractionTask(
                 tenant=tenant,
                 task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
-                params=Params(property_name=property_name),
+                params=Params(id=extraction_id),
             )
         )
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"property_name": property_name, "tenant": tenant}
+        find_filter = {"extraction_id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
         self.assertEqual(1, len(suggestions))
         self.assertEqual(tenant, suggestions[0].tenant)
-        self.assertEqual(property_name, suggestions[0].property_name)
+        self.assertEqual(extraction_id, suggestions[0].extraction_id)
         self.assertEqual("test.xml", suggestions[0].xml_file_name)
         self.assertEqual("15 February 2021", suggestions[0].segment_text)
         self.assertEqual([{"id": "id15", "label": "15"}], suggestions[0].options)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DATA_PATH, tenant, property_name, "xml_to_train")))
+        self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)

@@ -10,8 +10,8 @@ from data.PredictionData import PredictionData
 
 
 class FilterValidSegmentPages:
-    def __init__(self, tenant: str, property_name: str):
-        self.labeled_data_json_path = join(DATA_PATH, tenant, property_name, "filter_pages.json")
+    def __init__(self, tenant: str, extraction_id: str):
+        self.labeled_data_json_path = join(DATA_PATH, tenant, extraction_id, "filter_pages.json")
         self.start_gaps = []
         self.end_gaps = []
         self.valid_pages_ranges = []

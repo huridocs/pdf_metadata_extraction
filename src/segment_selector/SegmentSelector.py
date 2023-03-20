@@ -11,11 +11,11 @@ from segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords impo
 
 
 class SegmentSelector:
-    def __init__(self, tenant: str, property_name: str):
+    def __init__(self, tenant: str, extraction_id: str):
         self.tenant = tenant
-        self.property_name = property_name
+        self.extraction_id = extraction_id
 
-        self.base_path = join(DATA_PATH, tenant, property_name)
+        self.base_path = join(DATA_PATH, tenant, extraction_id)
 
         self.model_path = join(self.base_path, "segment_predictor_model", "model.model")
 

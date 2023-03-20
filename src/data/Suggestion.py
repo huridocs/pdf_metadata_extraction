@@ -11,7 +11,7 @@ from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
 
 class Suggestion(BaseModel):
     tenant: str
-    property_name: str
+    extraction_id: str
     xml_file_name: str
     text: str = ""
     options: List[Option] = list()
@@ -22,7 +22,7 @@ class Suggestion(BaseModel):
     @staticmethod
     def from_prediction_data(
         tenant: str,
-        property_name: str,
+        extraction_id: str,
         semantic_prediction_data: SemanticPredictionData,
         prediction: str,
         pdf_features: PdfFeatures,
@@ -36,7 +36,7 @@ class Suggestion(BaseModel):
 
         return Suggestion(
             tenant=tenant,
-            property_name=property_name,
+            extraction_id=extraction_id,
             xml_file_name=semantic_prediction_data.xml_file_name,
             text=prediction,
             segment_text=" ".join([x.text for x in semantic_prediction_data.pdf_tags]),
@@ -45,10 +45,10 @@ class Suggestion(BaseModel):
         )
 
     @staticmethod
-    def get_empty(tenant: str, property_name: str, xml_file_name: str) -> "Suggestion":
+    def get_empty(tenant: str, extraction_id: str, xml_file_name: str) -> "Suggestion":
         return Suggestion(
             tenant=tenant,
-            property_name=property_name,
+            extraction_id=extraction_id,
             xml_file_name=xml_file_name,
             text="",
             segment_text=" ",

@@ -15,7 +15,7 @@ client = TestClient(app)
 
 
 class TestApp(TestCase):
-    test_file_path = f"{APP_PATH}/tenant_test/property_name/xml_to_predict/test.xml"
+    test_file_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_predict/test.xml"
 
     def test_info(self):
         response = client.get("/info")
@@ -23,32 +23,32 @@ class TestApp(TestCase):
 
     def test_post_train_xml_file(self):
         tenant = "endpoint_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
-            response = client.post(f"/xml_to_train/{tenant}/{property_name}", files=files)
+            response = client.post(f"/xml_to_train/{tenant}/{extraction_id}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f"{DATA_PATH}/{tenant}/{property_name}/xml_to_train/test.xml"
+        to_train_xml_path = f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_train/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_post_xml_to_predict(self):
         tenant = "endpoint_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
-            response = client.post(f"/xml_to_predict/{tenant}/{property_name}", files=files)
+            response = client.post(f"/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f"{DATA_PATH}/{tenant}/{property_name}/xml_to_predict/test.xml"
+        to_train_xml_path = f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
@@ -56,13 +56,13 @@ class TestApp(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data(self):
         tenant = "endpoint_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "xml_file_name",
             "language_iso": "en",
             "label_text": "text",
@@ -78,7 +78,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
-        self.assertEqual(property_name, labeled_data_document["property_name"])
+        self.assertEqual(extraction_id, labeled_data_document["extraction_id"])
         self.assertEqual("text", labeled_data_document["label_text"])
         self.assertEqual("en", labeled_data_document["language_iso"])
         self.assertEqual(1.1, labeled_data_document["page_width"])
@@ -96,13 +96,13 @@ class TestApp(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data_different_values(self):
         tenant = "different_endpoint_test"
-        property_name = "different_property_name"
+        extraction_id = "different_extraction_id"
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "different_xml_file_name",
             "language_iso": "spa",
             "label_text": "other_text",
@@ -118,7 +118,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
-        self.assertEqual(property_name, labeled_data_document["property_name"])
+        self.assertEqual(extraction_id, labeled_data_document["extraction_id"])
         self.assertEqual("other_text", labeled_data_document["label_text"])
         self.assertEqual("spa", labeled_data_document["language_iso"])
         self.assertEqual(3.1, labeled_data_document["page_width"])
@@ -130,7 +130,7 @@ class TestApp(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data_multi_option(self):
         tenant = "endpoint_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
@@ -138,7 +138,7 @@ class TestApp(TestCase):
 
         json_data = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "xml_file_name",
             "language_iso": "en",
             "options": options_json,
@@ -154,7 +154,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
-        self.assertEqual(property_name, labeled_data_document["property_name"])
+        self.assertEqual(extraction_id, labeled_data_document["extraction_id"])
         self.assertEqual(options_json, labeled_data_document["options"])
         self.assertEqual("en", labeled_data_document["language_iso"])
         self.assertEqual(1.1, labeled_data_document["page_width"])
@@ -172,13 +172,13 @@ class TestApp(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_prediction_data(self):
         tenant = "endpoint_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
-            "property_name": property_name,
+            "extraction_id": extraction_id,
             "xml_file_name": "xml_file_name",
             "page_width": 612,
             "page_height": 792,
@@ -191,7 +191,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, prediction_data_document["tenant"])
-        self.assertEqual(property_name, prediction_data_document["property_name"])
+        self.assertEqual(extraction_id, prediction_data_document["extraction_id"])
         self.assertEqual(612, prediction_data_document["page_width"])
         self.assertEqual(792, prediction_data_document["page_height"])
         self.assertEqual("xml_file_name", prediction_data_document["xml_file_name"])
@@ -204,14 +204,14 @@ class TestApp(TestCase):
     def test_get_suggestions(self):
         print(f"mongodb://{MONGO_HOST}:{MONGO_PORT}")
         tenant = "example_tenant_name"
-        property_name = "prediction_property_name"
+        extraction_id = "prediction_extraction_id"
 
         mongo_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
 
         json_data = [
             {
                 "tenant": "wrong tenant",
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -220,7 +220,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -229,7 +229,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "other_file_name",
                 "text": "other_text_predicted",
                 "segment_text": "other_segment_text",
@@ -238,7 +238,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "property_name": "wrong extraction name",
+                "extraction_id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
                 "text": "other_text_predicted",
                 "segment_text": "other_segment_text",
@@ -249,14 +249,14 @@ class TestApp(TestCase):
 
         mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
-        response = client.get(f"/get_suggestions/{tenant}/{property_name}")
+        response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, len(suggestions))
 
         self.assertEqual({tenant}, {x["tenant"] for x in suggestions})
-        self.assertEqual({property_name}, {x["property_name"] for x in suggestions})
+        self.assertEqual({extraction_id}, {x["extraction_id"] for x in suggestions})
 
         self.assertEqual("one_file_name", suggestions[0]["xml_file_name"])
         self.assertEqual("one_segment_text", suggestions[0]["segment_text"])
@@ -271,14 +271,14 @@ class TestApp(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_multi_option(self):
         tenant = "example_tenant_name"
-        property_name = "prediction_property_name"
+        extraction_id = "prediction_extraction_id"
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = [
             {
                 "tenant": "wrong tenant",
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "options": [{"id": "one_id", "label": "one_label"}],
                 "segment_text": "one_segment_text",
@@ -287,7 +287,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "options": [{"id": "one_id", "label": "one_label"}],
                 "segment_text": "one_segment_text",
@@ -296,7 +296,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "other_file_name",
                 "options": [{"id": "other_id", "label": "other_label"}, {"id": "other_id_2", "label": "other_label_2"}],
                 "segment_text": "other_segment_text",
@@ -305,7 +305,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "property_name": "wrong extraction name",
+                "extraction_id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
                 "options": [{"id": "other_id", "label": "other_label"}],
                 "segment_text": "other_segment_text",
@@ -316,14 +316,14 @@ class TestApp(TestCase):
 
         mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
-        response = client.get(f"/get_suggestions/{tenant}/{property_name}")
+        response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, len(suggestions))
 
         self.assertEqual({tenant}, {x["tenant"] for x in suggestions})
-        self.assertEqual({property_name}, {x["property_name"] for x in suggestions})
+        self.assertEqual({extraction_id}, {x["extraction_id"] for x in suggestions})
 
         self.assertEqual("one_file_name", suggestions[0]["xml_file_name"])
         self.assertEqual("one_segment_text", suggestions[0]["segment_text"])
@@ -341,14 +341,14 @@ class TestApp(TestCase):
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_should_remove_suggestions_when_returned(self):
         tenant = "example_tenant_name"
-        property_name = "prediction_property_name"
+        extraction_id = "prediction_extraction_id"
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = [
             {
                 "tenant": tenant + "1",
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -357,7 +357,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant + "2",
-                "property_name": property_name,
+                "extraction_id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -368,14 +368,14 @@ class TestApp(TestCase):
 
         mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
-        client.get(f"/get_suggestions/{tenant}1/{property_name}")
+        client.get(f"/get_suggestions/{tenant}1/{extraction_id}")
 
         suggestion = Suggestion(**mongo_client.pdf_metadata_extraction.suggestions.find_one())
 
         suggestions_collection = mongo_client.pdf_metadata_extraction.suggestions
         self.assertEqual(1, suggestions_collection.count_documents({}))
         self.assertEqual(tenant + "2", suggestion.tenant)
-        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual(extraction_id, suggestion.extraction_id)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_when_no_suggestions(self):

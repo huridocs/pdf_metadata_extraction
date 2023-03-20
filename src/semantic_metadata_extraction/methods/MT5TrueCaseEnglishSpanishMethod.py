@@ -45,7 +45,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
 
     def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
-        texts = [self.property_name + ": " + self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_extraction_data]
+        texts = [self.extraction_id + ": " + self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_extraction_data]
         tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
         input_length = min(int((max(tokens_number) + 5) * 1.5), 512)
         config_logger.info(f"Max input length: {str(input_length)}")
@@ -67,7 +67,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         text_inputs = [self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_extractions_data]
 
         data = [
-            [str(index), f"{self.property_name}: {segment_text}", semantic_data.text]
+            [str(index), f"{self.extraction_id}: {segment_text}", semantic_data.text]
             for index, segment_text, semantic_data in zip(range(len(text_inputs)), text_inputs, semantic_extractions_data)
         ]
         if not data:

@@ -31,20 +31,20 @@ class MetadataExtraction:
     CREATE_MODEL_TASK_NAME = "create_model"
     SUGGESTIONS_TASK_NAME = "suggestions"
 
-    def __init__(self, tenant: str, property_name: str):
+    def __init__(self, tenant: str, extraction_id: str):
         self.tenant = tenant
-        self.property_name = property_name
+        self.extraction_id = extraction_id
 
-        self.filter_valid_pages = FilterValidSegmentPages(tenant, property_name)
+        self.filter_valid_pages = FilterValidSegmentPages(tenant, extraction_id)
 
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         self.pdf_information_extraction_db = client["pdf_metadata_extraction"]
-        self.mongo_filter = {"tenant": self.tenant, "property_name": self.property_name}
+        self.mongo_filter = {"tenant": self.tenant, "extraction_id": self.extraction_id}
 
         self.pdf_features: list[PdfFeatures] = list()
         self.labeled_data: list[LabeledData] = list()
 
-        self.segment_selector = SegmentSelector(self.tenant, self.property_name)
+        self.segment_selector = SegmentSelector(self.tenant, self.extraction_id)
 
     def set_pdf_features_for_training(self):
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
@@ -67,7 +67,7 @@ class MetadataExtraction:
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             xml_file = XmlFile(
                 tenant=labeled_data.tenant,
-                property_name=labeled_data.property_name,
+                extraction_id=labeled_data.extraction_id,
                 to_train=True,
                 xml_file_name=labeled_data.xml_file_name,
             )
@@ -84,7 +84,7 @@ class MetadataExtraction:
 
     def create_models(self, options: list[Option], multi_value: bool):
         start = time()
-        config_logger.info(f"Loading data to create model for {self.tenant} {self.property_name}")
+        config_logger.info(f"Loading data to create model for {self.tenant} {self.extraction_id}")
         self.set_pdf_features_for_training()
         print(f"set pdf features {round(time() - start, 2)} seconds")
 
@@ -93,7 +93,7 @@ class MetadataExtraction:
             return False, "No labeled data to create model"
 
         start = time()
-        config_logger.info(f"Creating model with {len(self.pdf_features)} documents for {self.tenant} {self.property_name}")
+        config_logger.info(f"Creating model with {len(self.pdf_features)} documents for {self.tenant} {self.extraction_id}")
         self.segment_selector.create_model(pdfs_features=self.pdf_features)
 
         config_logger.info(f"Finished creating model {round(time() - start, 2)} seconds")
@@ -102,7 +102,7 @@ class MetadataExtraction:
         start = time()
 
         if options:
-            multi_option_extractor = MultiOptionExtractor(tenant=self.tenant, property_name=self.property_name)
+            multi_option_extractor = MultiOptionExtractor(tenant=self.tenant, extraction_id=self.extraction_id)
             multi_option_extractor.create_model(self.get_multi_option_extraction_data(options, multi_value))
         else:
             self.create_semantic_model()
@@ -113,12 +113,12 @@ class MetadataExtraction:
         return True, ""
 
     def delete_training_data(self):
-        training_xml_path = XmlFile.get_xml_folder_path(tenant=self.tenant, property_name=self.property_name, to_train=True)
+        training_xml_path = XmlFile.get_xml_folder_path(tenant=self.tenant, extraction_id=self.extraction_id, to_train=True)
         shutil.rmtree(training_xml_path, ignore_errors=True)
         self.pdf_information_extraction_db.labeled_data.delete_many(self.mongo_filter)
 
     def create_semantic_model(self):
-        semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)
+        semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
         semantic_metadata_extraction.remove_models()
         semantic_extractions_data: list[SemanticExtractionData] = list()
         for pdf_features, labeled_data in zip(self.pdf_features, self.labeled_data):
@@ -158,7 +158,7 @@ class MetadataExtraction:
         config_logger.info(f"Calculated and inserting {len(suggestions)} suggestions")
 
         self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
-        xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.property_name, False)
+        xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.extraction_id, False)
         for suggestion in suggestions:
             xml_name = {"xml_file_name": suggestion.xml_file_name}
             self.pdf_information_extraction_db.prediction_data.delete_many({**self.mongo_filter, **xml_name})
@@ -172,13 +172,13 @@ class MetadataExtraction:
         config_logger.info(f"get_segment_selector_suggestions {round(time() - start, 2)} seconds")
 
         start = time()
-        if MultiOptionExtractor.exist_model(self.tenant, self.property_name):
-            multi_option_extractor = MultiOptionExtractor(self.tenant, self.property_name)
+        if MultiOptionExtractor.exist_model(self.tenant, self.extraction_id):
+            multi_option_extractor = MultiOptionExtractor(self.tenant, self.extraction_id)
             multi_option_predictions = multi_option_extractor.get_multi_option_predictions(semantic_predictions_data)
             for multi_option_extraction_sample, suggestion in zip(multi_option_predictions, suggestions):
                 suggestion.add_prediction_multi_option(multi_option_extraction_sample.options)
         else:
-            semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)
+            semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
             semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
 
             for semantic_prediction_text, suggestion in zip(semantic_predictions_texts, suggestions):
@@ -190,13 +190,13 @@ class MetadataExtraction:
     def get_segment_selector_prediction_data(self) -> (list[SemanticPredictionData], list[Suggestion]):
         predictions_data, pdfs_features = self.get_pdf_features()
 
-        config_logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.property_name}")
+        config_logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.extraction_id}")
 
         semantic_predictions_data: list[SemanticPredictionData] = list()
         suggestions: list[Suggestion] = list()
 
         for prediction_data, pdf_features in zip(predictions_data, pdfs_features):
-            suggestion = Suggestion.get_empty(self.tenant, self.property_name, prediction_data.xml_file_name)
+            suggestion = Suggestion.get_empty(self.tenant, self.extraction_id, prediction_data.xml_file_name)
 
             if not pdf_features.pdf_segments:
                 semantic_predictions_data.append(SemanticPredictionData.from_text(""))
@@ -211,7 +211,7 @@ class MetadataExtraction:
 
     def get_pdf_features(self):
         pdfs_features: list[PdfFeatures] = list()
-        config_logger.info(f"Loading data to calculate suggestions for {self.tenant} {self.property_name}")
+        config_logger.info(f"Loading data to calculate suggestions for {self.tenant} {self.extraction_id}")
         prediction_data_list = []
         for document in self.pdf_information_extraction_db.prediction_data.find(self.mongo_filter):
             prediction_data_list.append(PredictionData(**document))
@@ -227,7 +227,7 @@ class MetadataExtraction:
 
             xml_file = XmlFile(
                 tenant=self.tenant,
-                property_name=self.property_name,
+                extraction_id=self.extraction_id,
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
@@ -250,17 +250,17 @@ class MetadataExtraction:
     @staticmethod
     def calculate_task(information_extraction_task: MetadataExtractionTask) -> (bool, str):
         tenant = information_extraction_task.tenant
-        property_name = information_extraction_task.params.property_name
+        extraction_id = information_extraction_task.params.id
 
         if information_extraction_task.task == MetadataExtraction.CREATE_MODEL_TASK_NAME:
-            metadata_extraction = MetadataExtraction(tenant, property_name)
+            metadata_extraction = MetadataExtraction(tenant, extraction_id)
             options = information_extraction_task.params.options
             multi_value = information_extraction_task.params.multi_value
             return metadata_extraction.create_models(options, multi_value)
 
         if information_extraction_task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
             config_logger.info("Calculating suggestions")
-            metadata_extraction = MetadataExtraction(tenant, property_name)
+            metadata_extraction = MetadataExtraction(tenant, extraction_id)
             return metadata_extraction.insert_suggestions_in_db()
 
         return False, "Error"

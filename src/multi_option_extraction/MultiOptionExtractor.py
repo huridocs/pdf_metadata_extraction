@@ -13,14 +13,14 @@ from semantic_metadata_extraction.SemanticMetadataExtraction import SemanticMeta
 
 
 class MultiOptionExtractor:
-    def __init__(self, tenant: str, property_name: str):
+    def __init__(self, tenant: str, extraction_id: str):
         self.tenant = tenant
-        self.property_name = property_name
+        self.extraction_id = extraction_id
 
-        self.base_path = join(DATA_PATH, tenant, property_name, "multi_option_extractor")
+        self.base_path = join(DATA_PATH, tenant, extraction_id, "multi_option_extractor")
         self.options_path = join(self.base_path, "options.json")
         self.multi_value_path = join(self.base_path, "multi_value.json")
-        self.semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.property_name)
+        self.semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
 
         self.options: list[Option] = list()
         self.multi_value = False
@@ -97,7 +97,7 @@ class MultiOptionExtractor:
         return MultiOptionExtractionSample(pdf_tags=semantic_prediction_data.pdf_tags, options=options)
 
     @staticmethod
-    def exist_model(tenant, property_name):
-        multi_option_extractor = MultiOptionExtractor(tenant, property_name)
+    def exist_model(tenant, extraction_id):
+        multi_option_extractor = MultiOptionExtractor(tenant, extraction_id)
         multi_option_extractor.load_options()
         return len(multi_option_extractor.options) > 0

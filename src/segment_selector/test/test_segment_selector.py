@@ -15,15 +15,15 @@ from segment_selector.SegmentSelector import SegmentSelector
 
 class TestSegmentSelector(TestCase):
     TENANT = "segment_selector_test"
-    PROPERTY_NAME = "property_name"
+    extraction_id = "extraction_id"
     TEST_XML_NAME = "test.xml"
 
-    TEST_XML_PATH = join(APP_PATH, "tenant_test", PROPERTY_NAME, "xml_to_train", TEST_XML_NAME)
-    BASE_PATH = join(DATA_PATH, TENANT, PROPERTY_NAME)
+    TEST_XML_PATH = join(APP_PATH, "tenant_test", extraction_id, "xml_to_train", TEST_XML_NAME)
+    BASE_PATH = join(DATA_PATH, TENANT, extraction_id)
 
     LABELED_DATA_JSON = {
         "tenant": TENANT,
-        "property_name": PROPERTY_NAME,
+        "extraction_id": extraction_id,
         "xml_file_name": TEST_XML_NAME,
         "language_iso": "en",
         "label_text": "text",
@@ -35,7 +35,7 @@ class TestSegmentSelector(TestCase):
 
     XML_FILE = XmlFile(
         tenant=TENANT,
-        property_name=PROPERTY_NAME,
+        extraction_id=extraction_id,
         to_train=True,
         xml_file_name=TEST_XML_NAME,
     )
@@ -54,7 +54,7 @@ class TestSegmentSelector(TestCase):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
         pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
-        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
+        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
         model_created, error = segment_selector.create_model(pdfs_features=[pdf_features])
 
         self.assertTrue(model_created)
@@ -74,10 +74,10 @@ class TestSegmentSelector(TestCase):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
 
         pdf_features = PdfFeatures.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
-        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
+        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
         segment_selector.create_model(pdfs_features=[pdf_features])
 
-        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.PROPERTY_NAME)
+        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
         segment_selector.set_extraction_segments(pdfs_features=[pdf_features])
 
         extraction_segments = [x for x in pdf_features.pdf_segments if x.ml_label]

@@ -14,10 +14,10 @@ from data.SemanticPredictionData import SemanticPredictionData
 
 
 class Method(ABC):
-    def __init__(self, tenant: str, property_name: str):
+    def __init__(self, tenant: str, extraction_id: str):
         self.tenant = tenant
-        self.property_name = property_name
-        self.base_path = join(DATA_PATH, tenant, property_name)
+        self.extraction_id = extraction_id
+        self.base_path = join(DATA_PATH, tenant, extraction_id)
 
         if not exists(self.base_path):
             os.makedirs(self.base_path)
