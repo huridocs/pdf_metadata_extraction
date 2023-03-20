@@ -34,15 +34,15 @@ class TestEndToEnd(TestCase):
 
     def test_create_model(self):
         tenant = "end_to_end_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
-        test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+        test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
-            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files)
+            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
 
         labeled_data_json = {
-            "property_name": property_name,
+            "id": extraction_id,
             "tenant": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
@@ -58,7 +58,7 @@ class TestEndToEnd(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
 
@@ -66,7 +66,7 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="create_model",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
             success=True,
             error_message="",
             data_url=None,
@@ -76,17 +76,17 @@ class TestEndToEnd(TestCase):
 
     def test_get_suggestions(self):
         tenant = "end_to_end_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
-        test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+        test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
 
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
-            requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{property_name}", files=files)
+            requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         predict_data_json = {
             "tenant": tenant,
-            "property_name": property_name,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -98,7 +98,7 @@ class TestEndToEnd(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task="suggestions",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
 
@@ -106,10 +106,10 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="suggestions",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
             success=True,
             error_message="",
-            data_url=f"{SERVER_URL}/get_suggestions/{tenant}/{property_name}",
+            data_url=f"{SERVER_URL}/get_suggestions/{tenant}/{extraction_id}",
         )
 
         self.assertEqual(results_message, expected_result)
@@ -122,7 +122,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(1, len(suggestions))
 
         self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual("United Nations", suggestion.text)
         self.assertEqual("United Nations", suggestion.segment_text)
@@ -137,11 +137,11 @@ class TestEndToEnd(TestCase):
 
     def test_create_model_error(self):
         tenant = "end_to_end_test"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
         task = MetadataExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
 
         QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
@@ -150,7 +150,7 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="create_model",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
             success=False,
             error_message="No labeled data to create model",
             data_url=None,
@@ -161,7 +161,7 @@ class TestEndToEnd(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task="suggestions",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
         QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
 
@@ -169,7 +169,7 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="suggestions",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
             success=False,
             error_message="No data to calculate suggestions",
             data_url=None,
@@ -179,18 +179,18 @@ class TestEndToEnd(TestCase):
 
     def test_get_suggestions_multi_select(self):
         tenant = "end_to_end_test"
-        property_name = "multi_select_name"
+        extraction_id = "multi_select_name"
 
-        test_xml_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+        test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
 
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
-            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{property_name}", files=files)
+            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
 
         options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
 
         labeled_data_json = {
-            "property_name": property_name,
+            "id": extraction_id,
             "tenant": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
@@ -205,11 +205,11 @@ class TestEndToEnd(TestCase):
 
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
-            requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{property_name}", files=files)
+            requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         predict_data_json = {
             "tenant": tenant,
-            "property_name": property_name,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -221,7 +221,7 @@ class TestEndToEnd(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(property_name=property_name, options=options, muti_value=False),
+            params=Params(id=extraction_id, options=options, muti_value=False),
         )
 
         QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
@@ -231,7 +231,7 @@ class TestEndToEnd(TestCase):
         task = MetadataExtractionTask(
             tenant=tenant,
             task="suggestions",
-            params=Params(property_name=property_name),
+            params=Params(id=extraction_id),
         )
 
         QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
@@ -245,7 +245,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(1, len(suggestions))
 
         self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(property_name, suggestion.property_name)
+        self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual([Option(id="1", label="United Nations")], suggestion.options)
         self.assertEqual("United Nations", suggestion.segment_text)

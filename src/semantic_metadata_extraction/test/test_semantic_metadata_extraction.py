@@ -15,11 +15,11 @@ DOCKER_VOLUME_PATH = join(Path(__file__).parent, "..", "..", "..", "docker_volum
 class TestSemanticMetadataExtraction(TestCase):
     def test_predictions_one_sample(self):
         tenant = "semantic_tenant_to_be_removed"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
+        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, extraction_id=extraction_id)
 
         pdf_tags = [PdfTagData.from_text("two")]
         semantic_information_data = [SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="en")]
@@ -33,11 +33,11 @@ class TestSemanticMetadataExtraction(TestCase):
 
     def test_predictions_two_samples(self):
         tenant = "semantic_tenant_to_be_removed"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
+        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, extraction_id=extraction_id)
         pdf_tags = [PdfTagData.from_text("one two")]
         semantic_information_data = [
             SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="en"),
@@ -52,11 +52,11 @@ class TestSemanticMetadataExtraction(TestCase):
 
     def test_predictions_same_input_output(self):
         tenant = "semantic_tenant_to_be_removed"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
+        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, extraction_id=extraction_id)
 
         pdf_tags = [PdfTagData.from_text("one")]
 
@@ -73,11 +73,11 @@ class TestSemanticMetadataExtraction(TestCase):
 
     def test_predictions_regex(self):
         tenant = "semantic_tenant_to_be_removed"
-        property_name = "property_name"
+        extraction_id = "extraction_id"
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, property_name=property_name)
+        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, extraction_id=extraction_id)
 
         pdf_tags = [PdfTagData.from_text("one two")]
         semantic_information_data = [
@@ -88,7 +88,7 @@ class TestSemanticMetadataExtraction(TestCase):
 
         predictions = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
 
-        self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}/RegexMethod"))
+        self.assertTrue(os.path.exists(f"{DOCKER_VOLUME_PATH}/{tenant}/{extraction_id}/RegexMethod"))
         self.assertEqual(["one", "one", ""], predictions)
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)

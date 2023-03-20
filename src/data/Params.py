@@ -6,6 +6,6 @@ from data.Option import Option
 
 
 class Params(BaseModel):
-    property_name: str
+    id: str
     options: List[Option] = list()
     multi_value: bool = False

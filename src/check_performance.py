@@ -52,7 +52,7 @@ class CheckPerformance:
         self.all_results = Results(results_name=f"all_results_{training_length}____{prefix}")
         self.best_results = Results(results_name=f"best_results_{training_length}____{prefix}")
 
-    def dataset_name_to_property_name(self):
+    def dataset_name_to_extraction_id(self):
         return self.current_dataset.replace("_", "").replace(".tsv", "")
 
     def get_semantic_extraction_data(self, file_name):
@@ -98,7 +98,7 @@ class CheckPerformance:
 
     def run_method(self, accuracies):
         self.all_results.set_start_time()
-        method_instance = self.current_method(self.TENANT, self.dataset_name_to_property_name())
+        method_instance = self.current_method(self.TENANT, self.dataset_name_to_extraction_id())
         self.current_accuracy, self.current_prediction = method_instance.performance(
             self.semantic_information_data, self.training_length
         )

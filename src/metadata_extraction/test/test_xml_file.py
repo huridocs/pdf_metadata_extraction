@@ -12,19 +12,19 @@ DOCKER_VOLUME_PATH = (
 
 
 class TestXmlFile(TestCase):
-    test_file_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
+    test_file_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
 
     def test_save_xml_to_train(self):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
-        base_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}"
+        base_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{extraction_id}"
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
                 tenant=tenant,
-                property_name=property_name,
+                extraction_id=extraction_id,
                 to_train=True,
                 xml_file_name="test.xml",
             )
@@ -37,15 +37,15 @@ class TestXmlFile(TestCase):
 
     def test_save_xml_to_predict(self):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
-        base_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{property_name}"
+        base_path = f"{DOCKER_VOLUME_PATH}/{tenant}/{extraction_id}"
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
                 tenant=tenant,
-                property_name=property_name,
+                extraction_id=extraction_id,
                 to_train=False,
                 xml_file_name="test.xml",
             )

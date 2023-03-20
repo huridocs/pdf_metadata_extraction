@@ -10,12 +10,12 @@ from metadata_extraction.XmlFile import XmlFile
 
 
 class TestPdfFeatures(TestCase):
-    test_file_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/test.xml"
-    no_pages_file_path = f"{APP_PATH}/tenant_test/property_name/xml_to_train/no_pages.xml"
+    test_file_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
+    no_pages_file_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/no_pages.xml"
 
     def test_get_pdf_features(self):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -58,7 +58,7 @@ class TestPdfFeatures(TestCase):
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
                 tenant=tenant,
-                property_name=property_name,
+                extraction_id=extraction_id,
                 to_train=True,
                 xml_file_name="test.xml",
             )
@@ -82,7 +82,7 @@ class TestPdfFeatures(TestCase):
 
     def test_get_pdf_features_when_empty_lines(self):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -93,10 +93,10 @@ class TestPdfFeatures(TestCase):
             label_segments_boxes=[SegmentBox(left=125, top=247, width=319, height=29, page_number=1)],
         )
 
-        with open(f"{APP_PATH}/tenant_test/property_name/xml_to_train/test_empty_strings.xml", "rb") as file:
+        with open(f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test_empty_strings.xml", "rb") as file:
             xml_file = XmlFile(
                 tenant=tenant,
-                property_name=property_name,
+                extraction_id=extraction_id,
                 to_train=True,
                 xml_file_name="test_empty_strings.xml",
             )
@@ -113,7 +113,7 @@ class TestPdfFeatures(TestCase):
 
     def test_get_pdf_features_different_page_size_scale(self):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         segmentation_data = SegmentationData(
@@ -135,7 +135,7 @@ class TestPdfFeatures(TestCase):
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
                 tenant=tenant,
-                property_name=property_name,
+                extraction_id=extraction_id,
                 to_train=False,
                 xml_file_name="test.xml",
             )
@@ -156,7 +156,7 @@ class TestPdfFeatures(TestCase):
 
     def test_get_pdf_features_when_no_pages(self):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         segmentation_data = SegmentationData(
@@ -169,7 +169,7 @@ class TestPdfFeatures(TestCase):
         with open(self.no_pages_file_path, "rb") as file:
             xml_file = XmlFile(
                 tenant=tenant,
-                property_name=property_name,
+                extraction_id=extraction_id,
                 to_train=True,
                 xml_file_name="no_pages.xml",
             )
@@ -184,7 +184,7 @@ class TestPdfFeatures(TestCase):
 
     def test_get_pdf_features_when_no_file(self):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
         segmentation_data = SegmentationData(
@@ -196,7 +196,7 @@ class TestPdfFeatures(TestCase):
 
         xml_file = XmlFile(
             tenant=tenant,
-            property_name=property_name,
+            extraction_id=extraction_id,
             to_train=True,
             xml_file_name="test.xml",
         )
@@ -207,11 +207,11 @@ class TestPdfFeatures(TestCase):
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
-    def test_get_pdf_features_should_be_empty_when_no_file_because_different_property_name(
+    def test_get_pdf_features_should_be_empty_when_no_file_because_different_extraction_id(
         self,
     ):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -234,14 +234,14 @@ class TestPdfFeatures(TestCase):
         with open(self.test_file_path, "rb") as file:
             XmlFile(
                 tenant=tenant,
-                property_name="different_property_name",
+                extraction_id="different_extraction_id",
                 to_train=False,
                 xml_file_name="test.xml",
             ).save(file=file.read())
 
         xml_file = XmlFile(
             tenant=tenant,
-            property_name=property_name,
+            extraction_id=extraction_id,
             to_train=False,
             xml_file_name="test.xml",
         )
@@ -254,7 +254,7 @@ class TestPdfFeatures(TestCase):
 
     def test_filter_valid_segment_pages(self):
         tenant = "tenant_save"
-        property_name = "property_save"
+        extraction_id = "property_save"
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -268,7 +268,7 @@ class TestPdfFeatures(TestCase):
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
                 tenant=tenant,
-                property_name=property_name,
+                extraction_id=extraction_id,
                 to_train=True,
                 xml_file_name="test.xml",
             )
