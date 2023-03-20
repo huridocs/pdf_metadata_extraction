@@ -30,7 +30,7 @@ class TestMetadataExtractor(TestCase):
 
         json_data = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "blank.xml",
             "label_text": "text",
             "language_iso": "en",
@@ -80,7 +80,7 @@ class TestMetadataExtractor(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
         json_data = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "not_found.xml_to_train",
             "language_iso": "en",
             "label_text": "text",
@@ -114,7 +114,7 @@ class TestMetadataExtractor(TestCase):
 
         labeled_data_json = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "language_iso": "en",
             "label_text": "Original: English",
@@ -136,7 +136,7 @@ class TestMetadataExtractor(TestCase):
 
         to_predict_json = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -159,7 +159,7 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual(1, documents_count)
 
         self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(extraction_id, suggestion.extraction_id)
+        self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual("Original: English", suggestion.segment_text)
         self.assertEqual("Original: English", suggestion.text)
@@ -191,7 +191,7 @@ class TestMetadataExtractor(TestCase):
 
         labeled_data_json = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "language_iso": "en",
             "label_text": "text",
@@ -213,7 +213,7 @@ class TestMetadataExtractor(TestCase):
 
         to_predict_json = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -236,7 +236,7 @@ class TestMetadataExtractor(TestCase):
         self.assertTrue(task_calculated)
         self.assertEqual(1, documents_count)
         self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(extraction_id, suggestion.extraction_id)
+        self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertTrue("In accordance with paragraph" in suggestion.segment_text)
         self.assertTrue("every four years" in suggestion.text)
@@ -266,7 +266,7 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
@@ -274,7 +274,7 @@ class TestMetadataExtractor(TestCase):
             },
             {
                 "xml_file_name": "test.xml",
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
@@ -286,7 +286,7 @@ class TestMetadataExtractor(TestCase):
 
         for i in range(7):
             labeled_data_json = {
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "test.xml",
                 "language_iso": "en",
@@ -316,14 +316,14 @@ class TestMetadataExtractor(TestCase):
         )
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"extraction_id": extraction_id, "tenant": tenant}
+        find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
         self.assertEqual(2, len(suggestions))
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({extraction_id}, {x.extraction_id for x in suggestions})
+        self.assertEqual({extraction_id}, {x.id for x in suggestions})
         self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"Original: English"}, {x.segment_text for x in suggestions})
         self.assertEqual({"English"}, {x.text for x in suggestions})
@@ -350,7 +350,7 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
@@ -362,7 +362,7 @@ class TestMetadataExtractor(TestCase):
 
         for i in range(7):
             labeled_data_json = {
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "test.xml",
                 "language_iso": "en",
@@ -392,14 +392,14 @@ class TestMetadataExtractor(TestCase):
         )
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"extraction_id": extraction_id, "tenant": tenant}
+        find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
         self.assertEqual(1, len(suggestions))
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({extraction_id}, {x.extraction_id for x in suggestions})
+        self.assertEqual({extraction_id}, {x.id for x in suggestions})
         self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"15 February 2021"}, {x.segment_text for x in suggestions})
         self.assertEqual({"15"}, {x.text for x in suggestions})
@@ -428,7 +428,7 @@ class TestMetadataExtractor(TestCase):
         for i in range(samples_number):
             labeled_data_json = {
                 "tenant": tenant,
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "spanish.xml",
                 "language_iso": "spa",
                 "label_text": "día",
@@ -442,14 +442,14 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "tenant": tenant,
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "spanish.xml",
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
             },
             {
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "spanish.xml",
                 "page_width": 612,
@@ -477,14 +477,14 @@ class TestMetadataExtractor(TestCase):
         )
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"extraction_id": extraction_id, "tenant": tenant}
+        find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
         self.assertEqual(2, len(suggestions))
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({extraction_id}, {x.extraction_id for x in suggestions})
+        self.assertEqual({extraction_id}, {x.id for x in suggestions})
         self.assertEqual({"spanish.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"por día"}, {x.segment_text for x in suggestions})
         self.assertEqual({"día"}, {x.text for x in suggestions})
@@ -530,7 +530,7 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "tenant": tenant,
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "test.xml",
                 "page_width": 612,
                 "page_height": 792,
@@ -568,7 +568,7 @@ class TestMetadataExtractor(TestCase):
 
         to_predict_json = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "blank.xml",
             "page_width": 612,
             "page_height": 792,
@@ -607,7 +607,7 @@ class TestMetadataExtractor(TestCase):
 
         to_predict_json = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "no_pages.xml",
             "page_width": 612,
             "page_height": 792,
@@ -643,7 +643,7 @@ class TestMetadataExtractor(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
@@ -656,7 +656,7 @@ class TestMetadataExtractor(TestCase):
         options = [{"id": f"id{n}", "label": str(n)} for n in range(16)]
         for i in range(7):
             labeled_data_json = {
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "test.xml",
                 "language_iso": "en",
@@ -686,14 +686,14 @@ class TestMetadataExtractor(TestCase):
         )
 
         suggestions: List[Suggestion] = list()
-        find_filter = {"extraction_id": extraction_id, "tenant": tenant}
+        find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
         self.assertTrue(task_calculated)
         self.assertEqual(1, len(suggestions))
         self.assertEqual(tenant, suggestions[0].tenant)
-        self.assertEqual(extraction_id, suggestions[0].extraction_id)
+        self.assertEqual(extraction_id, suggestions[0].id)
         self.assertEqual("test.xml", suggestions[0].xml_file_name)
         self.assertEqual("15 February 2021", suggestions[0].segment_text)
         self.assertEqual([{"id": "id15", "label": "15"}], suggestions[0].options)

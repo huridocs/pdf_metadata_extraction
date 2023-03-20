@@ -127,7 +127,7 @@ async def get_suggestions(tenant: str, extraction_id: str):
         config_logger.info(f"get_suggestions {tenant} {extraction_id}")
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         pdf_metadata_extraction_db = client["pdf_metadata_extraction"]
-        suggestions_filter = {"tenant": tenant, "extraction_id": extraction_id}
+        suggestions_filter = {"tenant": tenant, "id": extraction_id}
         suggestions_list: List[Dict[str, str]] = list()
 
         for document in pdf_metadata_extraction_db.suggestions.find(suggestions_filter):

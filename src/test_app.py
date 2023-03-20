@@ -62,7 +62,7 @@ class TestApp(TestCase):
 
         json_data = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "xml_file_name",
             "language_iso": "en",
             "label_text": "text",
@@ -78,7 +78,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
-        self.assertEqual(extraction_id, labeled_data_document["extraction_id"])
+        self.assertEqual(extraction_id, labeled_data_document["id"])
         self.assertEqual("text", labeled_data_document["label_text"])
         self.assertEqual("en", labeled_data_document["language_iso"])
         self.assertEqual(1.1, labeled_data_document["page_width"])
@@ -102,7 +102,7 @@ class TestApp(TestCase):
 
         json_data = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "different_xml_file_name",
             "language_iso": "spa",
             "label_text": "other_text",
@@ -118,7 +118,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
-        self.assertEqual(extraction_id, labeled_data_document["extraction_id"])
+        self.assertEqual(extraction_id, labeled_data_document["id"])
         self.assertEqual("other_text", labeled_data_document["label_text"])
         self.assertEqual("spa", labeled_data_document["language_iso"])
         self.assertEqual(3.1, labeled_data_document["page_width"])
@@ -138,7 +138,7 @@ class TestApp(TestCase):
 
         json_data = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "xml_file_name",
             "language_iso": "en",
             "options": options_json,
@@ -154,7 +154,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
-        self.assertEqual(extraction_id, labeled_data_document["extraction_id"])
+        self.assertEqual(extraction_id, labeled_data_document["id"])
         self.assertEqual(options_json, labeled_data_document["options"])
         self.assertEqual("en", labeled_data_document["language_iso"])
         self.assertEqual(1.1, labeled_data_document["page_width"])
@@ -178,7 +178,7 @@ class TestApp(TestCase):
 
         json_data = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "xml_file_name",
             "page_width": 612,
             "page_height": 792,
@@ -191,7 +191,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, prediction_data_document["tenant"])
-        self.assertEqual(extraction_id, prediction_data_document["extraction_id"])
+        self.assertEqual(extraction_id, prediction_data_document["id"])
         self.assertEqual(612, prediction_data_document["page_width"])
         self.assertEqual(792, prediction_data_document["page_height"])
         self.assertEqual("xml_file_name", prediction_data_document["xml_file_name"])
@@ -211,7 +211,7 @@ class TestApp(TestCase):
         json_data = [
             {
                 "tenant": "wrong tenant",
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -220,7 +220,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -229,7 +229,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "other_file_name",
                 "text": "other_text_predicted",
                 "segment_text": "other_segment_text",
@@ -238,7 +238,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "extraction_id": "wrong extraction name",
+                "id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
                 "text": "other_text_predicted",
                 "segment_text": "other_segment_text",
@@ -256,7 +256,7 @@ class TestApp(TestCase):
         self.assertEqual(2, len(suggestions))
 
         self.assertEqual({tenant}, {x["tenant"] for x in suggestions})
-        self.assertEqual({extraction_id}, {x["extraction_id"] for x in suggestions})
+        self.assertEqual({extraction_id}, {x["id"] for x in suggestions})
 
         self.assertEqual("one_file_name", suggestions[0]["xml_file_name"])
         self.assertEqual("one_segment_text", suggestions[0]["segment_text"])
@@ -278,7 +278,7 @@ class TestApp(TestCase):
         json_data = [
             {
                 "tenant": "wrong tenant",
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "options": [{"id": "one_id", "label": "one_label"}],
                 "segment_text": "one_segment_text",
@@ -287,7 +287,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "options": [{"id": "one_id", "label": "one_label"}],
                 "segment_text": "one_segment_text",
@@ -296,7 +296,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "other_file_name",
                 "options": [{"id": "other_id", "label": "other_label"}, {"id": "other_id_2", "label": "other_label_2"}],
                 "segment_text": "other_segment_text",
@@ -305,7 +305,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant,
-                "extraction_id": "wrong extraction name",
+                "id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
                 "options": [{"id": "other_id", "label": "other_label"}],
                 "segment_text": "other_segment_text",
@@ -323,7 +323,7 @@ class TestApp(TestCase):
         self.assertEqual(2, len(suggestions))
 
         self.assertEqual({tenant}, {x["tenant"] for x in suggestions})
-        self.assertEqual({extraction_id}, {x["extraction_id"] for x in suggestions})
+        self.assertEqual({extraction_id}, {x["id"] for x in suggestions})
 
         self.assertEqual("one_file_name", suggestions[0]["xml_file_name"])
         self.assertEqual("one_segment_text", suggestions[0]["segment_text"])
@@ -348,7 +348,7 @@ class TestApp(TestCase):
         json_data = [
             {
                 "tenant": tenant + "1",
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -357,7 +357,7 @@ class TestApp(TestCase):
             },
             {
                 "tenant": tenant + "2",
-                "extraction_id": extraction_id,
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -375,7 +375,7 @@ class TestApp(TestCase):
         suggestions_collection = mongo_client.pdf_metadata_extraction.suggestions
         self.assertEqual(1, suggestions_collection.count_documents({}))
         self.assertEqual(tenant + "2", suggestion.tenant)
-        self.assertEqual(extraction_id, suggestion.extraction_id)
+        self.assertEqual(extraction_id, suggestion.id)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_when_no_suggestions(self):

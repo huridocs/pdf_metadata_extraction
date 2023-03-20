@@ -42,7 +42,7 @@ class TestEndToEnd(TestCase):
             requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
 
         labeled_data_json = {
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "tenant": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
@@ -86,7 +86,7 @@ class TestEndToEnd(TestCase):
 
         predict_data_json = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -122,7 +122,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(1, len(suggestions))
 
         self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(extraction_id, suggestion.extraction_id)
+        self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual("United Nations", suggestion.text)
         self.assertEqual("United Nations", suggestion.segment_text)
@@ -190,7 +190,7 @@ class TestEndToEnd(TestCase):
         options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
 
         labeled_data_json = {
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "tenant": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
@@ -209,7 +209,7 @@ class TestEndToEnd(TestCase):
 
         predict_data_json = {
             "tenant": tenant,
-            "extraction_id": extraction_id,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -245,7 +245,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(1, len(suggestions))
 
         self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(extraction_id, suggestion.extraction_id)
+        self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual([Option(id="1", label="United Nations")], suggestion.options)
         self.assertEqual("United Nations", suggestion.segment_text)

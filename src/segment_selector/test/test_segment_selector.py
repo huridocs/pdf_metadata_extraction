@@ -23,7 +23,7 @@ class TestSegmentSelector(TestCase):
 
     LABELED_DATA_JSON = {
         "tenant": TENANT,
-        "extraction_id": extraction_id,
+        "id": extraction_id,
         "xml_file_name": TEST_XML_NAME,
         "language_iso": "en",
         "label_text": "text",

@@ -8,7 +8,7 @@ from data.SegmentBox import SegmentBox
 
 class LabeledData(BaseModel):
     tenant: str
-    extraction_id: str
+    id: str
     xml_file_name: str
     language_iso: str
     label_text: str = ""

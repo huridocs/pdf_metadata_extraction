@@ -22,7 +22,7 @@ class TestFilterValidSegmentPages(TestCase):
 
         return LabeledData(
             tenant="",
-            extraction_id="",
+            id="",
             xml_file_name="",
             language_iso="",
             label_text="",
@@ -38,7 +38,7 @@ class TestFilterValidSegmentPages(TestCase):
     def get_prediction_data(page_numbers: List[int]):
         return PredictionData(
             tenant="",
-            extraction_id="",
+            id="",
             xml_file_name="",
             page_width=0,
             page_height=0,

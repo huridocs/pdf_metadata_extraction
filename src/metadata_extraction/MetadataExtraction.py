@@ -39,7 +39,7 @@ class MetadataExtraction:
 
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         self.pdf_information_extraction_db = client["pdf_metadata_extraction"]
-        self.mongo_filter = {"tenant": self.tenant, "extraction_id": self.extraction_id}
+        self.mongo_filter = {"tenant": self.tenant, "id": self.extraction_id}
 
         self.pdf_features: list[PdfFeatures] = list()
         self.labeled_data: list[LabeledData] = list()
@@ -67,7 +67,7 @@ class MetadataExtraction:
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             xml_file = XmlFile(
                 tenant=labeled_data.tenant,
-                extraction_id=labeled_data.extraction_id,
+                extraction_id=labeled_data.id,
                 to_train=True,
                 xml_file_name=labeled_data.xml_file_name,
             )
