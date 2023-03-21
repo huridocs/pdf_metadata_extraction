@@ -14,7 +14,7 @@ slugify==0.0.1
 requests==2.28.2
 PyRSMQ==0.4.5
 redis==4.5.1
-scikit-learn==1.2.1
+scikit-learn==1.2.2
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.20.9
 sentry-sdk==1.17.0
