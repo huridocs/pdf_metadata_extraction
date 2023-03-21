@@ -27,7 +27,7 @@ dateparser==1.1.7
 langcodes==3.3.0
 huggingface_hub==0.12.1
 nltk==3.8.1
-transformers==4.26.1
+transformers==4.27.2
 httpx==0.23.3
 sentencepiece==0.1.97
 accelerate==0.16.0
