@@ -13,7 +13,7 @@ lightgbm==3.3.5
 slugify==0.0.1
 requests==2.28.2
 PyRSMQ==0.4.5
-redis==4.5.1
+redis==4.5.3
 scikit-learn==1.2.1
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.20.9
