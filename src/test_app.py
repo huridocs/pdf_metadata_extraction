@@ -11,14 +11,14 @@ from app import app
 from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
 from data.Suggestion import Suggestion
 
-client = TestClient(app)
-
 
 class TestApp(TestCase):
     test_file_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_predict/test.xml"
 
     def test_info(self):
-        response = client.get("/info")
+        with TestClient(app) as client:
+            response = client.get("/info")
+
         self.assertEqual(200, response.status_code)
 
     def test_post_train_xml_file(self):
@@ -29,7 +29,8 @@ class TestApp(TestCase):
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
-            response = client.post(f"/xml_to_train/{tenant}/{extraction_id}", files=files)
+            with TestClient(app) as client:
+                response = client.post(f"/xml_to_train/{tenant}/{extraction_id}", files=files)
 
         self.assertEqual(200, response.status_code)
         to_train_xml_path = f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_train/test.xml"
@@ -45,7 +46,8 @@ class TestApp(TestCase):
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
-            response = client.post(f"/xml_to_predict/{tenant}/{extraction_id}", files=files)
+            with TestClient(app) as client:
+                response = client.post(f"/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         self.assertEqual(200, response.status_code)
         to_train_xml_path = f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"
@@ -72,7 +74,8 @@ class TestApp(TestCase):
             "label_segments_boxes": [{"left": 8, "top": 12, "width": 16, "height": 20, "page_number": 10}],
         }
 
-        response = client.post("/labeled_data", json=json_data)
+        with TestClient(app) as client:
+            response = client.post("/labeled_data", json=json_data)
 
         labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
@@ -111,8 +114,8 @@ class TestApp(TestCase):
             "xml_segments_boxes": [],
             "label_segments_boxes": [],
         }
-
-        response = client.post("/labeled_data", json=json_data)
+        with TestClient(app) as client:
+            response = client.post("/labeled_data", json=json_data)
 
         labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
@@ -148,7 +151,8 @@ class TestApp(TestCase):
             "label_segments_boxes": [{"left": 8, "top": 12, "width": 16, "height": 20, "page_number": 10}],
         }
 
-        response = client.post("/labeled_data", json=json_data)
+        with TestClient(app) as client:
+            response = client.post("/labeled_data", json=json_data)
 
         labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
@@ -185,7 +189,8 @@ class TestApp(TestCase):
             "xml_segments_boxes": [{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10}],
         }
 
-        response = client.post("/prediction_data", json=json_data)
+        with TestClient(app) as client:
+            response = client.post("/prediction_data", json=json_data)
 
         prediction_data_document = mongo_client.pdf_metadata_extraction.prediction_data.find_one()
 
@@ -249,7 +254,9 @@ class TestApp(TestCase):
 
         mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
-        response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
+        with TestClient(app) as client:
+            response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
+
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)
@@ -316,7 +323,9 @@ class TestApp(TestCase):
 
         mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
-        response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
+        with TestClient(app) as client:
+            response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
+
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)
@@ -368,7 +377,8 @@ class TestApp(TestCase):
 
         mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
 
-        client.get(f"/get_suggestions/{tenant}1/{extraction_id}")
+        with TestClient(app) as client:
+            client.get(f"/get_suggestions/{tenant}1/{extraction_id}")
 
         suggestion = Suggestion(**mongo_client.pdf_metadata_extraction.suggestions.find_one())
 
@@ -379,7 +389,8 @@ class TestApp(TestCase):
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_when_no_suggestions(self):
-        response = client.get("/get_suggestions/tenant/property")
+        with TestClient(app) as client:
+            response = client.get("/get_suggestions/tenant/property")
         suggestions = json.loads(response.json())
 
         self.assertEqual(200, response.status_code)

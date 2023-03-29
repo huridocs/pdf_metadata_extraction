@@ -1,6 +1,8 @@
 import os
+from contextlib import asynccontextmanager
 from typing import List, Dict
 import json
+
 import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
@@ -15,7 +17,15 @@ from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
 from metadata_extraction.XmlFile import XmlFile
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.mongodb_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
+    yield
+    app.mongodb_client.close()
+
+
+app = FastAPI(lifespan=lifespan)
 
 config_logger.info("PDF information extraction service has started")
 
@@ -99,8 +109,7 @@ async def delete_queues():
 @app.post("/labeled_data")
 async def labeled_data_post(labeled_data: LabeledData):
     try:
-        client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
-        pdf_metadata_extraction_db = client["pdf_metadata_extraction"]
+        pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
         labeled_data = labeled_data.correct_data_scale()
         pdf_metadata_extraction_db.labeled_data.insert_one(labeled_data.dict())
         return "labeled data saved"
@@ -112,8 +121,7 @@ async def labeled_data_post(labeled_data: LabeledData):
 @app.post("/prediction_data")
 async def prediction_data_post(prediction_data: PredictionData):
     try:
-        client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
-        pdf_metadata_extraction_db = client["pdf_metadata_extraction"]
+        pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
         pdf_metadata_extraction_db.prediction_data.insert_one(prediction_data.dict())
         return "prediction data saved"
     except Exception:
@@ -125,8 +133,7 @@ async def prediction_data_post(prediction_data: PredictionData):
 async def get_suggestions(tenant: str, extraction_id: str):
     try:
         config_logger.info(f"get_suggestions {tenant} {extraction_id}")
-        client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
-        pdf_metadata_extraction_db = client["pdf_metadata_extraction"]
+        pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
         suggestions_filter = {"tenant": tenant, "id": extraction_id}
         suggestions_list: List[Dict[str, str]] = list()
 
