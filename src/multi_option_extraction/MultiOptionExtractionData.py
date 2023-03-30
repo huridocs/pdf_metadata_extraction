@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 from data.Option import Option
 from data.PdfTagData import PdfTagData
@@ -9,18 +8,18 @@ from data.SemanticExtractionData import SemanticExtractionData
 @dataclass
 class MultiOptionExtractionSample:
     pdf_tags: list[PdfTagData]
-    options: List[Option]
+    options: list[Option]
     language_iso: str = ""
 
 
 @dataclass
 class MultiOptionExtractionData:
     multi_value: bool
-    options: List[Option]
-    samples: List[MultiOptionExtractionSample]
+    options: list[Option]
+    samples: list[MultiOptionExtractionSample]
 
-    def to_semantic_extraction_data(self) -> List[SemanticExtractionData]:
-        semantic_extraction_data_list: List[SemanticExtractionData] = list()
+    def to_semantic_extraction_data(self) -> list[SemanticExtractionData]:
+        semantic_extraction_data_list: list[SemanticExtractionData] = list()
 
         for sample in self.samples:
             text = " ; ".join([option.label for option in sample.options])
