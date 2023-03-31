@@ -6,6 +6,8 @@ from os import makedirs
 from os.path import exists, join
 from pathlib import Path
 
+from sklearn.metrics import f1_score
+
 from config import DATA_PATH
 from data.Option import Option
 from data.PdfTagData import PdfTagData
@@ -24,6 +26,30 @@ class MultiOptionMethod(ABC):
         if not exists(self.base_path):
             os.makedirs(self.base_path)
 
+    @abstractmethod
+    def performance(self, multi_option_extraction_data: MultiOptionExtractionData, training_set_length: int):
+        pass
+
+    def get_one_hot_encoding(self, multi_option_extraction_data: MultiOptionExtractionData):
+        options_ids = [option.id for option in self.options]
+        one_hot_encoding = list()
+        for sample in multi_option_extraction_data.samples:
+            one_hot_encoding.append([0] * len(options_ids))
+            for option in sample.options:
+                one_hot_encoding[options_ids.index(option.id)] = 1
+        return one_hot_encoding
+
+    def performance_f1_score(self, multi_option_extraction_data: MultiOptionExtractionData, predictions: list[list[Option]]):
+        truth_one_hot = self.get_one_hot_encoding(multi_option_extraction_data)
+
+        predictions_one_hot = list()
+        options_ids = [option.id for option in self.options]
+        for prediction in predictions:
+            predictions_one_hot.append([0] * len(options_ids))
+            for option in prediction:
+                predictions_one_hot[options_ids.index(option.id)] = 1
+
+        return 100*f1_score(truth_one_hot, predictions_one_hot, average="macro")
 
     @abstractmethod
     def train(self, multi_option_extraction_data: MultiOptionExtractionData):
@@ -56,3 +82,22 @@ class MultiOptionMethod(ABC):
     @staticmethod
     def get_text_from_pdf_tags(pdf_tags_data: list[PdfTagData]) -> str:
         return " ".join([pdf_tag_data.text.strip() for pdf_tag_data in pdf_tags_data])
+
+    @staticmethod
+    def get_train_test(
+        multi_option_extraction_data: MultiOptionExtractionData, training_set_length: int
+    ) -> (list[MultiOptionExtractionData], list[MultiOptionExtractionData]):
+        if len(multi_option_extraction_data.samples) >= 2 * training_set_length:
+            train = MultiOptionExtractionData(False, [], samples=multi_option_extraction_data.samples[:training_set_length])
+            test = MultiOptionExtractionData(False, [], samples=multi_option_extraction_data.samples[training_set_length:])
+            return train, test
+
+        if len(multi_option_extraction_data.samples) <= 10:
+            return multi_option_extraction_data, multi_option_extraction_data
+
+        train_amount = len(multi_option_extraction_data.samples) // 2
+        training_set = MultiOptionExtractionData(False, [], samples=multi_option_extraction_data.samples[:train_amount])
+        training_set.samples = training_set.samples[:training_set_length]
+
+        testing_set = MultiOptionExtractionData(False, [], samples=multi_option_extraction_data.samples[train_amount:])
+        return training_set, testing_set

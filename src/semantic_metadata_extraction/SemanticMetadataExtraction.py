@@ -1,6 +1,6 @@
 import os
 from os.path import exists, join
-from typing import List, Type
+from typing import Type
 
 from config import config_logger, DATA_PATH
 from data.SemanticExtractionData import SemanticExtractionData
@@ -17,7 +17,7 @@ from semantic_metadata_extraction.methods.SameInputOutputMethod import SameInput
 class SemanticMetadataExtraction:
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-    METHODS: List[Type[Method]] = [
+    METHODS: list[Type[Method]] = [
         SameInputOutputMethod,
         RegexMethod,
         RegexSubtractionMethod,
@@ -30,7 +30,7 @@ class SemanticMetadataExtraction:
         self.tenant = tenant
         self.extraction_id = extraction_id
 
-    def create_model(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def create_model(self, semantic_extraction_data: list[SemanticExtractionData]):
         if len(semantic_extraction_data) < 2:
             config_logger.info("\nBest method SameInputOutputMethod because no samples")
             return
@@ -38,7 +38,7 @@ class SemanticMetadataExtraction:
         best_method_instance = self.get_best_method(semantic_extraction_data)
         best_method_instance.train(semantic_extraction_data)
 
-    def get_best_method(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def get_best_method(self, semantic_extraction_data: list[SemanticExtractionData]):
         performance_semantic_extraction_data = [x for x in semantic_extraction_data if x.pdf_tags]
 
         best_performance = 0
@@ -62,7 +62,7 @@ class SemanticMetadataExtraction:
         self,
         best_performance: float,
         best_method_instance: Method,
-        semantic_extraction_data: List[SemanticExtractionData],
+        semantic_extraction_data: list[SemanticExtractionData],
     ):
         if best_performance > 85:
             config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
@@ -84,7 +84,7 @@ class SemanticMetadataExtraction:
         config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
         return best_method_instance
 
-    def get_semantic_predictions(self, semantic_predictions_data: list[SemanticPredictionData]) -> List[str]:
+    def get_semantic_predictions(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
         for method in self.METHODS:
             method_instance = method(self.tenant, self.extraction_id)
             method_path = join(DATA_PATH, self.tenant, self.extraction_id, method_instance.get_name())
