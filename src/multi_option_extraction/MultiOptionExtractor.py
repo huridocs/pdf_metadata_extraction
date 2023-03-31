@@ -10,12 +10,11 @@ from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
 from multi_option_extraction.methods.FastTextMethod import FastTextMethod
+from multi_option_extraction.methods.TfIdfMethod import TfIdfMethod
 
 
 class MultiOptionExtractor:
-    METHODS: list[Type[MultiOptionMethod]] = [
-        FastTextMethod,
-    ]
+    METHODS: list[Type[MultiOptionMethod]] = [FastTextMethod, TfIdfMethod]
 
     def __init__(self, tenant: str, extraction_id: str):
         self.tenant = tenant

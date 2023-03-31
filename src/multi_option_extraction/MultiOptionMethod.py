@@ -36,7 +36,7 @@ class MultiOptionMethod(ABC):
         for sample in multi_option_extraction_data.samples:
             one_hot_encoding.append([0] * len(options_ids))
             for option in sample.options:
-                one_hot_encoding[options_ids.index(option.id)] = 1
+                one_hot_encoding[-1][options_ids.index(option.id)] = 1
         return one_hot_encoding
 
     def performance_f1_score(self, multi_option_extraction_data: MultiOptionExtractionData, predictions: list[list[Option]]):
@@ -47,9 +47,9 @@ class MultiOptionMethod(ABC):
         for prediction in predictions:
             predictions_one_hot.append([0] * len(options_ids))
             for option in prediction:
-                predictions_one_hot[options_ids.index(option.id)] = 1
+                predictions_one_hot[-1][options_ids.index(option.id)] = 1
 
-        return 100*f1_score(truth_one_hot, predictions_one_hot, average="macro")
+        return 100 * f1_score(truth_one_hot, predictions_one_hot, average="macro")
 
     @abstractmethod
     def train(self, multi_option_extraction_data: MultiOptionExtractionData):

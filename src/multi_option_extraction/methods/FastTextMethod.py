@@ -82,7 +82,7 @@ class FastTextMethod(MultiOptionMethod):
             prediction_labels_scores = model.predict(texts, k=len(labels))
         else:
             prediction_labels_scores = model.predict(texts, k=1)
-            
+
         predictions: list[list[Option]] = list()
         for prediction_labels, scores in zip(prediction_labels_scores[0], prediction_labels_scores[1]):
             predictions.append(list())
