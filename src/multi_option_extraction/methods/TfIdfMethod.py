@@ -17,6 +17,7 @@ from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtract
 from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
 
 nltk.download("wordnet")
+nltk.download("stopwords")
 
 lemmatizer = WordNetLemmatizer()
 stop_words = stopwords.words("english")

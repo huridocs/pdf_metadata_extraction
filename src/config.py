@@ -11,7 +11,7 @@ TASK_QUEUE_NAME = SERVICE_NAME + "_tasks"
 RESULTS_QUEUE_NAME = SERVICE_NAME + "_results"
 
 SERVICE_HOST = os.environ.get("SERVICE_HOST", "http://127.0.0.1")
-SERVICE_PORT = os.environ.get("SERVICE_PORT", "5052")
+SERVICE_PORT = os.environ.get("SERVICE_PORT", "5056")
 GRAYLOG_IP = os.environ.get("GRAYLOG_IP")
 REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
 REDIS_PORT = os.environ.get("REDIS_PORT", "6739")
