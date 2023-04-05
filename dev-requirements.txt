@@ -2,4 +2,3 @@
 mongomock==4.1.2
 pytest==7.2.2
 black==23.3.0
-rich==13.3.3

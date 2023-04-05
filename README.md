@@ -53,11 +53,11 @@ Containers with `make start_for_testing`
 
 2. Post xml files to train
 
-    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5052/xml_to_train/tenant_name/property_name
+    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5056/xml_to_train/tenant_name/property_name
 
 3. Post xml files to get suggestions
 
-    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5052/xml_to_predict/tenant_name/property_name
+    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5056/xml_to_predict/tenant_name/property_name
 
 ![Alt logo](readme_pictures/send_files.png?raw=true "Post xml files")
 
@@ -74,7 +74,7 @@ Containers with `make start_for_testing`
                              "page_height": 792,
                              "xml_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}],
                              "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
-                             }' localhost:5052/labeled_data
+                             }' localhost:5056/labeled_data
     
     Multi-option case:
 
@@ -87,7 +87,7 @@ Containers with `make start_for_testing`
                              "page_height": 792,
                              "xml_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}],
                              "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
-                             }' localhost:5052/labeled_data
+                             }' localhost:5056/labeled_data
 
 ![Alt logo](readme_pictures/send_json.png?raw=true "Post labeled data")
 
@@ -99,7 +99,7 @@ Containers with `make start_for_testing`
                              "page_width": 612,
                              "page_height": 792,
                              "xml_segments_boxes": []
-                             }' localhost:5052/prediction_data
+                             }' localhost:5056/prediction_data
 
 ![Alt logo](readme_pictures/send_json.png?raw=true "Post data to predict")
 
@@ -152,7 +152,7 @@ There is a redis queue where it is possible to get notified when the different t
 
 Get suggestions
 
-    curl -X GET  localhost:5052/get_suggestions/tenant_name/property_name
+    curl -X GET  localhost:5056/get_suggestions/tenant_name/property_name
 
 or in python
 
@@ -239,7 +239,7 @@ framework.
 
 If the service is running, the end point definitions can be founded in the following url:
 
-    http://localhost:5052/docs
+    http://localhost:5056/docs
 
 The end points code can be founded inside the file `app.py`.
 

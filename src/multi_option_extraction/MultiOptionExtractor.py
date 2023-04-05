@@ -2,17 +2,20 @@ import json
 from os import makedirs
 from os.path import join, exists
 from pathlib import Path
+from typing import Type
 
-import fuzzywuzzy.fuzz
-
-from config import DATA_PATH
+from config import DATA_PATH, config_logger
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
-from semantic_metadata_extraction.SemanticMetadataExtraction import SemanticMetadataExtraction
+from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
+from multi_option_extraction.methods.FastTextMethod import FastTextMethod
+from multi_option_extraction.methods.TfIdfMethod import TfIdfMethod
 
 
 class MultiOptionExtractor:
+    METHODS: list[Type[MultiOptionMethod]] = [FastTextMethod, TfIdfMethod]
+
     def __init__(self, tenant: str, extraction_id: str):
         self.tenant = tenant
         self.extraction_id = extraction_id
@@ -20,16 +23,21 @@ class MultiOptionExtractor:
         self.base_path = join(DATA_PATH, tenant, extraction_id, "multi_option_extractor")
         self.options_path = join(self.base_path, "options.json")
         self.multi_value_path = join(self.base_path, "multi_value.json")
-        self.semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
 
         self.options: list[Option] = list()
         self.multi_value = False
 
     def create_model(self, multi_option_extraction_data: MultiOptionExtractionData):
+        self.options = multi_option_extraction_data.options
+        self.multi_value = multi_option_extraction_data.multi_value
+
         self.save_json(self.options_path, [x.dict() for x in multi_option_extraction_data.options])
         self.save_json(self.multi_value_path, multi_option_extraction_data.multi_value)
-        self.semantic_metadata_extraction.remove_models()
-        self.semantic_metadata_extraction.create_model(multi_option_extraction_data.to_semantic_extraction_data())
+
+        method = self.get_best_method(multi_option_extraction_data)
+
+        method.train(multi_option_extraction_data)
+
         return True, ""
 
     @staticmethod
@@ -44,11 +52,15 @@ class MultiOptionExtractor:
         self, semantic_predictions_data: list[SemanticPredictionData]
     ) -> list[MultiOptionExtractionSample]:
         self.load_options()
-        semantic_predictions = self.semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
 
         multi_option_extraction_samples = list()
-        for semantic_prediction_data, prediction in zip(semantic_predictions_data, semantic_predictions):
-            multi_option_extraction_samples.append(self.get_options_semantics(semantic_prediction_data, prediction))
+        method = self.get_predictions_method()
+        options_predictions = method.predict(semantic_predictions_data)
+        for semantic_prediction_data, prediction in zip(semantic_predictions_data, options_predictions):
+            multi_option_extraction_sample = MultiOptionExtractionSample(
+                pdf_tags=semantic_prediction_data.pdf_tags, options=prediction
+            )
+            multi_option_extraction_samples.append(multi_option_extraction_sample)
 
         return multi_option_extraction_samples
 
@@ -62,42 +74,46 @@ class MultiOptionExtractor:
         with open(self.multi_value_path, "r") as file:
             self.multi_value = json.load(file)
 
-    def get_options_fuzzy(self, predicted_text: str):
-        ratios = [fuzzywuzzy.fuzz.partial_ratio(predicted_text.lower(), x.label.lower()) for x in self.options]
+    def get_best_method(self, multi_option_extraction_data: MultiOptionExtractionData):
+        samples = [sample for sample in multi_option_extraction_data.samples if sample.pdf_tags]
+        performance_multi_option_extraction_data = MultiOptionExtractionData(
+            multi_value=self.multi_value, options=self.options, samples=samples
+        )
 
-        if max(ratios) < 95:
-            return []
+        best_performance = 0
+        best_method_instance = self.METHODS[0](self.tenant, self.extraction_id, self.options, self.multi_value)
+        for method in self.METHODS:
+            method_instance = method(self.tenant, self.extraction_id, self.options, self.multi_value)
+            config_logger.info(f"\nChecking {method_instance.get_name()}")
+            performance = method_instance.performance(performance_multi_option_extraction_data, 30)
+            config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
+            if performance == 100:
+                config_logger.info(f"\nBest method {method_instance.get_name()} with {performance}%")
+                return method_instance
 
-        if not self.multi_value:
-            best_ratio_index = ratios.index(max(ratios))
-            return [self.options[best_ratio_index]]
+            if performance > best_performance:
+                best_performance = performance
+                best_method_instance = method_instance
 
-        options: list[Option] = list()
-        for index, ratio in enumerate(ratios):
-            if ratio > 95:
-                options.append(self.options[index])
-
-        return options
-
-    def get_options_semantics(self, semantic_prediction_data: SemanticPredictionData, prediction_text: str):
-        options = list()
-        options_labels = [x.label for x in self.options]
-
-        for predicted_option in prediction_text.split(" ; "):
-            if predicted_option in options_labels:
-                options.append(self.options[options_labels.index(predicted_option)])
-                continue
-
-        if prediction_text and not options:
-            options = self.get_options_fuzzy(prediction_text)
-
-        if not self.multi_value and options:
-            return MultiOptionExtractionSample(pdf_tags=semantic_prediction_data.pdf_tags, options=[options[0]])
-
-        return MultiOptionExtractionSample(pdf_tags=semantic_prediction_data.pdf_tags, options=options)
+        return best_method_instance
 
     @staticmethod
     def exist_model(tenant, extraction_id):
         multi_option_extractor = MultiOptionExtractor(tenant, extraction_id)
         multi_option_extractor.load_options()
         return len(multi_option_extractor.options) > 0
+
+    def get_predictions_method(self):
+        for method in self.METHODS:
+            method_instance = method(self.tenant, self.extraction_id, self.options, self.multi_value)
+            method_path = join(DATA_PATH, self.tenant, self.extraction_id, method_instance.get_name())
+            config_logger.info(f"Checking {method_path}")
+
+            if exists(method_path):
+                config_logger.info(f"Predicting with {method_instance.get_name()}")
+
+                return method_instance
+
+        default_method = self.METHODS[0](self.tenant, self.extraction_id, self.options, self.multi_value)
+        config_logger.info(f"Predicting with {default_method.get_name()}")
+        return default_method

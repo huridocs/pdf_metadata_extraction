@@ -2,7 +2,7 @@ version: "3.8"
 services:
   pdf_metadata_extraction_api:
     container_name: pdf_metadata_extraction_api
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5052" ]
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5056" ]
     init: true
     restart: unless-stopped
     build:
@@ -17,7 +17,7 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
     ports:
-      - "5052:5052"
+      - "5056:5056"
     env_file: .env
     networks:
       - pdf_metadata_extraction_network
