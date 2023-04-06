@@ -11,18 +11,6 @@ from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
 
 
 class FastTextMethod(MultiOptionMethod):
-    def performance(self, multi_option_extraction_data: MultiOptionExtractionData, training_set_length: int):
-        if not multi_option_extraction_data.samples:
-            return 0
-
-        performance_train_set, performance_test_set = self.get_train_test(multi_option_extraction_data, training_set_length)
-
-        self.train(performance_train_set)
-        prediction_options = self.predict(performance_test_set.to_semantic_prediction_data())
-
-        self.remove_model()
-        return self.performance_f1_score(performance_test_set, prediction_options)
-
     @staticmethod
     def clean_label(label: str):
         return "_".join(label.split()).lower().replace(",", "")

@@ -26,9 +26,17 @@ class MultiOptionMethod(ABC):
         if not exists(self.base_path):
             os.makedirs(self.base_path)
 
-    @abstractmethod
     def performance(self, multi_option_extraction_data: MultiOptionExtractionData, training_set_length: int):
-        pass
+        if not multi_option_extraction_data.samples:
+            return 0
+
+        performance_train_set, performance_test_set = self.get_train_test(multi_option_extraction_data, training_set_length)
+
+        self.train(performance_train_set)
+        prediction_options = self.predict(performance_test_set.to_semantic_prediction_data())
+
+        self.remove_model()
+        return self.performance_f1_score(performance_test_set, prediction_options)
 
     def get_one_hot_encoding(self, multi_option_extraction_data: MultiOptionExtractionData):
         options_ids = [option.id for option in self.options]
@@ -101,3 +109,13 @@ class MultiOptionMethod(ABC):
 
         testing_set = MultiOptionExtractionData(False, [], samples=multi_option_extraction_data.samples[train_amount:])
         return training_set, testing_set
+
+    def one_hot_to_options_list(self, predictions):
+        prediction_options: list[list[Option]] = list()
+        for prediction in predictions:
+            prediction_options.append(list())
+            for i, value in enumerate(prediction):
+                if value > 0.5:
+                    prediction_options[-1].append(self.options[i])
+
+        return prediction_options
