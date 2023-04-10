@@ -1,5 +1,5 @@
 fastapi==0.95.0
-beautifulsoup4==4.12.1
+beautifulsoup4==4.12.2
 graypy==2.1.0
 PyYAML==6.0
 python-multipart==0.0.6
