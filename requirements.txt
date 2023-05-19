@@ -28,7 +28,7 @@ langcodes==3.3.0
 huggingface_hub==0.13.3
 nltk==3.8.1
 transformers==4.27.4
-httpx==0.23.3
+httpx==0.24.1
 sentencepiece==0.1.97
 accelerate==0.18.0
 mongomock==4.1.2
