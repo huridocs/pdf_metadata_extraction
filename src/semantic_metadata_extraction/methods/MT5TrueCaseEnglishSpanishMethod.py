@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from functools import lru_cache
 from os.path import join, exists, dirname
 from pathlib import Path
@@ -135,6 +136,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         )
 
         run(model_arguments, data_training_arguments, t5_training_arguments)
+        self.delete_checkpoints()
 
     @staticmethod
     def get_cache_dir():
@@ -199,3 +201,10 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             return true_case_spanish.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags))
 
         return self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags)
+
+    def delete_checkpoints(self):
+        for file_name in os.listdir(self.get_model_path()):
+            if "checkpoint-" not in file_name:
+                continue
+
+            shutil.rmtree(join(self.get_model_path(), file_name), ignore_errors=True)
