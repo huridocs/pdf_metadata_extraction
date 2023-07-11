@@ -15,29 +15,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: true
 
-    - name: Install venv
-      run: make install_venv
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
 
-    - name: Lint with black
-      run: make check_format
+      - name: Install venv
+        run: make install_venv
 
-    - name: Start service
-      run: make start_detached
+      - name: Lint with black
+        run: make check_format
 
-    - name: Check API ready
-      uses: emilioschepis/wait-for-endpoint@v1.0.3
-      with:
-        url: http://localhost:5056/info
-        method: GET
-        expected-status: 200
-        timeout: 60000
-        interval: 500
+      - name: Start service
+        run: make start_detached
 
-    - name: Test with unittest
-      run: make test
+      - name: Check API ready
+        uses: emilioschepis/wait-for-endpoint@v1.0.3
+        with:
+          url: http://localhost:5056/info
+          method: GET
+          expected-status: 200
+          timeout: 60000
+          interval: 500
+
+      - name: Test with unittest
+        run: make test
