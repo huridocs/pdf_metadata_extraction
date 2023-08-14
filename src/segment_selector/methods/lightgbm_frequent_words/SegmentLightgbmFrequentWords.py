@@ -4,8 +4,8 @@ from typing import List, Optional
 import nltk
 import numpy as np
 
-from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
-from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
+from metadata_extraction.PdfFeatures.PdfFeatures import PdfSegments
+from metadata_extraction.PdfSegment import PdfSegment
 from metadata_extraction.PdfFeatures.PdfTag import PdfTag
 from metadata_extraction.PdfFeatures.TagType import TAG_TYPE_DICT
 from segment_selector.methods.Modes import Modes
@@ -14,7 +14,7 @@ nltk.download("punkt")
 
 
 class SegmentLightgbmFrequentWords:
-    def __init__(self, segment_index: int, pdf_segment: PdfSegment, pdf_features: PdfFeatures, modes: Modes):
+    def __init__(self, segment_index: int, pdf_segment: PdfSegment, pdf_features: PdfSegments, modes: Modes):
         self.modes = modes
         self.previous_title_segment = None
         self.previous_segment = None
@@ -160,9 +160,9 @@ class SegmentLightgbmFrequentWords:
 
         return [
             self.previous_title_segment.segment_index,
-            len(self.previous_title_segment.pdf_features.pdf_segments) - self.previous_title_segment.segment_index,
+            len(self.previous_title_segment.pdf_segments.pdf_segments) - self.previous_title_segment.segment_index,
             self.previous_title_segment.page_index,
-            len(self.previous_title_segment.pdf_features.pages) - self.previous_title_segment.page_index,
+            len(self.previous_title_segment.pdf_segments.pages) - self.previous_title_segment.page_index,
             self.previous_title_segment.bold,
             self.previous_title_segment.italics,
             self.previous_title_segment.text_len,
@@ -270,7 +270,7 @@ class SegmentLightgbmFrequentWords:
         return False
 
     @staticmethod
-    def from_pdf_features(pdf_features: PdfFeatures) -> List["SegmentLightgbmFrequentWords"]:
+    def from_pdf_features(pdf_features: PdfSegments) -> list["SegmentLightgbmFrequentWords"]:
         modes = Modes(pdf_features)
         segments: List["SegmentLightgbmFrequentWords"] = list()
         for index, pdf_segment in enumerate(pdf_features.pdf_segments):
@@ -279,7 +279,7 @@ class SegmentLightgbmFrequentWords:
 
         sorted_pdf_segments = sorted(segments, key=lambda x: (x.page_index, x.top))
 
-        previous_title_segment: Optional["SegmentLightgbmFrequentWords"] = None
+        previous_title_segment: Optional[SegmentLightgbmFrequentWords] = None
 
         for sorted_segment in sorted_pdf_segments:
             sorted_segment.previous_title_segment = previous_title_segment

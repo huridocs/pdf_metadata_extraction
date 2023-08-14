@@ -11,7 +11,7 @@ import lightgbm as lgb
 from sklearn.metrics import f1_score
 
 from config import config_logger
-from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
+from metadata_extraction.PdfFeatures.PdfFeatures import PdfSegments
 from segment_selector.methods.lightgbm_frequent_words.SegmentLightgbmFrequentWords import SegmentLightgbmFrequentWords
 
 from nltk.tokenize import word_tokenize
@@ -26,7 +26,7 @@ class LightgbmFrequentWords:
         self.model = None
         self.best_cut = 0
 
-    def create_model(self, training_pdfs_features: List[PdfFeatures], model_path):
+    def create_model(self, training_pdfs_features: List[PdfSegments], model_path):
         start = time()
         self.set_segments(pdfs_features=training_pdfs_features)
 
@@ -79,12 +79,12 @@ class LightgbmFrequentWords:
 
         return X, y
 
-    def set_segments(self, pdfs_features: List[PdfFeatures]):
+    def set_segments(self, pdfs_features: List[PdfSegments]):
         self.segments = list()
         for pdf_features in pdfs_features:
             self.segments.extend(SegmentLightgbmFrequentWords.from_pdf_features(pdf_features))
 
-    def predict(self, model, testing_pdfs_features: List[PdfFeatures], model_path):
+    def predict(self, model, testing_pdfs_features: List[PdfSegments], model_path):
         self.set_segments(testing_pdfs_features)
         self.set_most_frequent_words_to_segments(model_path)
         x, y = self.get_training_data()

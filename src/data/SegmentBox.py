@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-
-SCALE_CONSTANT = 0.75
+from pdf_token_type_labels.TokenType import TokenType
+from pdf_features.Rectangle import Rectangle
 
 
 class SegmentBox(BaseModel):
@@ -9,16 +9,10 @@ class SegmentBox(BaseModel):
     width: float
     height: float
     page_number: int
+    segment_type: TokenType = TokenType.TEXT
 
-    def correct_input_data_scale(self):
-        return self.rescaled(SCALE_CONSTANT, SCALE_CONSTANT)
-
-    def correct_output_data_scale(self):
-        return self.rescaled(1 / SCALE_CONSTANT, 1 / SCALE_CONSTANT)
-
-    def rescaled(self, factor_width: float, factor_height: float):
-        self.left = self.left * factor_width
-        self.top = self.top * factor_height
-        self.width = self.width * factor_width
-        self.height = self.height * factor_height
-        return self
+    def get_bounding_box(self) -> Rectangle:
+        return Rectangle.from_width_height(left=int(self.left),
+                                           top=int(self.top),
+                                           width=int(self.width),
+                                           height=int(self.height))

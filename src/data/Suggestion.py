@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from data.Option import Option
 from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
-from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
-from metadata_extraction.PdfFeatures.PdfSegment import PdfSegment
+from metadata_extraction.PdfFeatures.PdfFeatures import PdfSegments
+from metadata_extraction.PdfSegment import PdfSegment
 
 
 class Suggestion(BaseModel):
@@ -25,7 +25,7 @@ class Suggestion(BaseModel):
         extraction_id: str,
         semantic_prediction_data: SemanticPredictionData,
         prediction: str,
-        pdf_features: PdfFeatures,
+        pdf_features: PdfSegments,
     ):
         segments = [x for x in pdf_features.pdf_segments if x.ml_label]
 
