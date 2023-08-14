@@ -235,7 +235,7 @@ class SegmentLightgbmFrequentWords:
                 self.bottom,
                 self.height,
                 self.width,
-                self.font_size / self.modes.font_size_mode,
+                self.font_size / self.modes.font_size_mode if self.modes.font_size_mode else 0,
                 self.line_height,
                 self.numbers_percentage,
                 1 if self.starts_upper else 0,
