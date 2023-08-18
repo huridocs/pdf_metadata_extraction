@@ -1,5 +1,5 @@
 import re
-from typing import List
+
 
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
@@ -9,7 +9,7 @@ from tdda import *
 
 
 class RegexMethod(Method):
-    def performance(self, semantic_extraction_data: List[SemanticExtractionData], training_set_length: int):
+    def performance(self, semantic_extraction_data: list[SemanticExtractionData], training_set_length: int):
         if not semantic_extraction_data:
             return 0, []
 
@@ -22,12 +22,12 @@ class RegexMethod(Method):
         self.remove_model()
         return 100 * len(correct) / len(performance_test_set), predictions
 
-    def train(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def train(self, semantic_extraction_data: list[SemanticExtractionData]):
         regex_list = rexpy.extract([x.text for x in semantic_extraction_data])
         regex_list = [regex[1:-1] for regex in regex_list]
         self.save_json("regex_list.json", regex_list)
 
-    def predict(self, semantic_predictions_data: List[SemanticPredictionData]) -> List[str]:
+    def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
         predictions = ["" for _ in semantic_predictions_data]
         regex_list = self.load_json("regex_list.json")
         for regex in regex_list:

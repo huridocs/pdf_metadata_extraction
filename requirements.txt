@@ -1,4 +1,4 @@
-fastapi==0.101.0
+fastapi==0.101.1
 graypy==2.1.0
 PyYAML==6.0.1
 python-multipart==0.0.6
@@ -12,7 +12,7 @@ lightgbm==4.0.0
 slugify==0.0.1
 requests==2.31.0
 PyRSMQ==0.4.5
-redis==4.6.0
+redis==5.0.0
 scikit-learn==1.3.0
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.21.1
@@ -36,4 +36,4 @@ rich==13.5.2
 joblib==1.3.2
 sentence_transformers==2.2.2
 git+https://github.com/huggingface/setfit.git@fa86337d5e26ef22e48c20f0d2339e1f1d76b992
-git+https://github.com/huridocs/pdf-tokens-type-labeler@b4a10cfb74d83f10c71f092511e457dd7fb3cf22
+git+https://github.com/huridocs/pdf-tokens-type-labeler@26fdfff637373363a9e1a7859f5cde4f2db4d4c9

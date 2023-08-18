@@ -50,7 +50,7 @@ class TestEndToEnd(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 165, "top": 64, "width": 111, "height": 17, "page_number": 1}],
+            "label_segments_boxes": [{"left": 123, "top": 45, "width": 87, "height": 16, "page_number": 1}],
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
@@ -60,7 +60,7 @@ class TestEndToEnd(TestCase):
             task="create_model",
             params=Params(id=extraction_id),
         )
-        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
         results_message = self.get_results_message()
         expected_result = ResultsMessage(
@@ -100,7 +100,7 @@ class TestEndToEnd(TestCase):
             task="suggestions",
             params=Params(id=extraction_id),
         )
-        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(str(task.model_dump_json())).execute()
 
         results_message = self.get_results_message()
         expected_result = ResultsMessage(
@@ -129,11 +129,11 @@ class TestEndToEnd(TestCase):
         self.assertEqual(1, suggestion.page_number)
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertAlmostEqual(123 / 0.75, suggestion.segments_boxes[0].left)
-        self.assertAlmostEqual(48 / 0.75, suggestion.segments_boxes[0].top)
-        self.assertAlmostEqual(82 / 0.75, suggestion.segments_boxes[0].width)
-        self.assertAlmostEqual(12 / 0.75, suggestion.segments_boxes[0].height)
-        self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
+        self.assertEqual(123, suggestion.segments_boxes[0].left)
+        self.assertEqual(45, suggestion.segments_boxes[0].top)
+        self.assertEqual(87, suggestion.segments_boxes[0].width)
+        self.assertEqual(16, suggestion.segments_boxes[0].height)
+        self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
     def test_create_model_error(self):
         tenant = "end_to_end_test"
@@ -144,7 +144,7 @@ class TestEndToEnd(TestCase):
             params=Params(id=extraction_id),
         )
 
-        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
         results_message = self.get_results_message()
         expected_result = ResultsMessage(
@@ -163,7 +163,7 @@ class TestEndToEnd(TestCase):
             task="suggestions",
             params=Params(id=extraction_id),
         )
-        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
         results_message = self.get_results_message()
         expected_result = ResultsMessage(
@@ -198,7 +198,7 @@ class TestEndToEnd(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 165, "top": 64, "width": 111, "height": 17, "page_number": 1}],
+            "label_segments_boxes": [{"left": 123, "top": 45, "width": 87, "height": 16, "page_number": 1}],
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
@@ -224,7 +224,7 @@ class TestEndToEnd(TestCase):
             params=Params(id=extraction_id, options=options, muti_value=False),
         )
 
-        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
         self.get_results_message()
 
@@ -234,7 +234,7 @@ class TestEndToEnd(TestCase):
             params=Params(id=extraction_id),
         )
 
-        QUEUE.sendMessage(delay=0).message(str(task.json())).execute()
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
         results_message = self.get_results_message()
         response = requests.get(results_message.data_url)
@@ -252,11 +252,11 @@ class TestEndToEnd(TestCase):
         self.assertEqual(1, suggestion.page_number)
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertAlmostEqual(123 / 0.75, suggestion.segments_boxes[0].left)
-        self.assertAlmostEqual(48 / 0.75, suggestion.segments_boxes[0].top)
-        self.assertAlmostEqual(82 / 0.75, suggestion.segments_boxes[0].width)
-        self.assertAlmostEqual(12 / 0.75, suggestion.segments_boxes[0].height)
-        self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
+        self.assertEqual(123, suggestion.segments_boxes[0].left)
+        self.assertEqual(45, suggestion.segments_boxes[0].top)
+        self.assertEqual(87, suggestion.segments_boxes[0].width)
+        self.assertEqual(16, suggestion.segments_boxes[0].height)
+        self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
     @staticmethod
     def get_results_message() -> ResultsMessage:

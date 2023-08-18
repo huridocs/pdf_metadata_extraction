@@ -38,7 +38,7 @@ class QuestionAnsweringSeq2SeqTrainer(Seq2SeqTrainer):
         self,
         eval_dataset: Optional[Dataset] = None,
         eval_examples=None,
-        ignore_keys: Optional[List[str]] = None,
+        ignore_keys: Optional[list[str]] = None,
         metric_key_prefix: str = "eval",
         **gen_kwargs,
     ) -> Dict[str, float]:

@@ -25,37 +25,13 @@ class TestPdfSegments(TestCase):
             page_height=792,
             xml_segments_boxes=[
                 SegmentBox(
-                    left=495.1,
-                    top=42.6323,
-                    width=56.96199999999999,
-                    height=18.2164,
-                    page_number=1,
-                    type=TokenType.TEXT
+                    left=495.1, top=42.6323, width=56.96199999999999, height=18.2164, page_number=1, type=TokenType.TEXT
                 ),
+                SegmentBox(left=123.38, top=48.1103, width=82.9812, height=12.7624, page_number=1, type=TokenType.TEXT),
                 SegmentBox(
-                    left=123.38,
-                    top=48.1103,
-                    width=82.9812,
-                    height=12.7624,
-                    page_number=1,
-                    type=TokenType.TEXT
+                    left=123.38, top=72.8529, width=148.656, height=17.895700000000005, page_number=1, type=TokenType.TEXT
                 ),
-                SegmentBox(
-                    left=123.38,
-                    top=72.8529,
-                    width=148.656,
-                    height=17.895700000000005,
-                    page_number=1,
-                    type=TokenType.TEXT
-                ),
-                SegmentBox(
-                    left=123.38,
-                    top=245.184,
-                    width=317.406,
-                    height=27.5377,
-                    page_number=1,
-                    type=TokenType.TEXT
-                ),
+                SegmentBox(left=123.38, top=245.184, width=317.406, height=27.5377, page_number=1, type=TokenType.TEXT),
             ],
             label_segments_boxes=[SegmentBox(left=125, top=247, width=319, height=29, page_number=1, type=TokenType.TEXT)],
         )
@@ -132,9 +108,9 @@ class TestPdfSegments(TestCase):
             xml_file_name="test.xml",
         )
 
-        pdf_features = PdfSegments.from_xml_file(xml_file, segmentation_data, [])
+        pdf_segments = PdfSegments.from_xml_file(xml_file, segmentation_data, [])
 
-        self.assertEqual(0, len(pdf_features.pdf_segments))
+        self.assertEqual(0, len(pdf_segments.pdf_segments))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -206,9 +182,8 @@ class TestPdfSegments(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_features = PdfSegments.from_xml_file(xml_file, segmentation_data, [1])
+        pdf_segments = PdfSegments.from_xml_file(xml_file, segmentation_data, [1])
 
-        self.assertEqual(0, len([segment for segment in pdf_features.pdf_segments if segment.page_number > 1]))
-        self.assertEqual(0, len([page for page in pdf_features.pages if page.page_number > 1]))
+        self.assertEqual(0, len([segment for segment in pdf_segments.pdf_segments if segment.page_number > 1]))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)

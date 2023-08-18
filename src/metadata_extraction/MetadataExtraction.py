@@ -1,3 +1,4 @@
+import json
 import shutil
 from os.path import join
 from pathlib import Path
@@ -42,7 +43,7 @@ class MetadataExtraction:
         self.pdf_information_extraction_db = client["pdf_metadata_extraction"]
         self.mongo_filter = {"tenant": self.tenant, "id": self.extraction_id}
 
-        self.pdf_segments: PdfSegments = PdfSegments.get_blank()
+        self.pdf_segments: list[PdfSegments] = list()
         self.labeled_data: list[LabeledData] = list()
 
         self.segment_selector = SegmentSelector(self.tenant, self.extraction_id)
@@ -73,13 +74,13 @@ class MetadataExtraction:
                 xml_file_name=labeled_data.xml_file_name,
             )
 
-            pdf_features = PdfSegments.from_xml_file(xml_file, segmentation_data, page_numbers)
+            pdf_segments = PdfSegments.from_xml_file(xml_file, segmentation_data, page_numbers)
 
-            if not pdf_features:
+            if not pdf_segments:
                 continue
 
             self.labeled_data.append(labeled_data)
-            self.pdf_segments.append(pdf_features)
+            self.pdf_segments.append(pdf_segments)
 
         config_logger.info(f"PdfFeatures {round(time() - start, 2)} seconds")
 
@@ -89,13 +90,14 @@ class MetadataExtraction:
         self.set_pdf_features_for_training()
         print(f"set pdf features {round(time() - start, 2)} seconds")
 
-        if not len(self.pdf_segments.pdf_segments):
+        all_pdf_segments = [pdf_segment for pdf_segments in self.pdf_segments for pdf_segment in pdf_segments.pdf_segments]
+        if not all_pdf_segments:
             self.delete_training_data()
             return False, "No labeled data to create model"
 
         start = time()
-        config_logger.info(f"Creating model with {len(self.pdf_segments.pdf_segments)} documents for {self.tenant} {self.extraction_id}")
-        self.segment_selector.create_model(pdfs_features=self.pdf_segments.pdf_segments)
+        config_logger.info(f"Creating model with {len(self.pdf_segments)} documents for {self.tenant} {self.extraction_id}")
+        self.segment_selector.create_model(pdfs_segments=self.pdf_segments)
 
         config_logger.info(f"Finished creating model {round(time() - start, 2)} seconds")
 
@@ -156,7 +158,7 @@ class MetadataExtraction:
 
         config_logger.info(f"Calculated and inserting {len(suggestions)} suggestions")
 
-        self.pdf_information_extraction_db.suggestions.insert_many([x.dict() for x in suggestions])
+        self.pdf_information_extraction_db.suggestions.insert_many([x.to_dict() for x in suggestions])
         xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.extraction_id, False)
         for suggestion in suggestions:
             xml_name = {"xml_file_name": suggestion.xml_file_name}
@@ -202,7 +204,7 @@ class MetadataExtraction:
                 suggestions.append(suggestion)
                 continue
 
-            self.segment_selector.set_extraction_segments(pdfs_features=[pdf_features])
+            self.segment_selector.set_extraction_segments(pdfs_segments=[pdf_features])
             semantic_predictions_data.append(SemanticPredictionData(pdf_tags=self.get_predicted_tags_data(pdf_features)))
             suggestions.append(suggestion.add_segments(pdf_features))
 

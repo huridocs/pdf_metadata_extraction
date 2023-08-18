@@ -4,6 +4,7 @@ from typing import Optional
 from data.SegmentationData import SegmentationData
 from pdf_features.PdfFeatures import PdfFeatures
 
+from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentPages
 from metadata_extraction.PdfSegment import PdfSegment
 from metadata_extraction.XmlFile import XmlFile
 
@@ -25,8 +26,9 @@ class PdfSegments:
             segment_from_tag = PdfSegment.from_pdf_token(token)
 
             intersects_segmentation = [
-                segmentation_segment for segmentation_segment in pdf_segments_from_segmentation if
-                segmentation_segment.intersects(segment_from_tag)
+                segmentation_segment
+                for segmentation_segment in pdf_segments_from_segmentation
+                if segmentation_segment.intersects(segment_from_tag)
             ]
 
             if not intersects_segmentation:
@@ -55,16 +57,15 @@ class PdfSegments:
     def get_blank():
         return PdfSegments(None)
 
-    def filter_pages(self, pages_numbers):
-        if pages_numbers:
-            self.pages = [page for page in self.pages if page.page_number in pages_numbers]
-            self.pdf_segments = [
-                pdf_segment for pdf_segment in self.pdf_segments if pdf_segment.page_number in pages_numbers
-            ]
-
     @staticmethod
     def from_xml_file(xml_file: XmlFile, segmentation_data: SegmentationData, pages_numbers: list[int]) -> "PdfSegments":
-        pdf_features = PdfFeatures.from_poppler_etree(xml_file.xml_file_path)
+        try:
+            file_content: str = open(xml_file.xml_file_path).read()
+        except FileNotFoundError:
+            return PdfSegments.get_blank()
+
+        xml_file_content = FilterValidSegmentPages.filter_xml_pages(file_content, pages_numbers)
+        pdf_features = PdfFeatures.from_poppler_etree_content(xml_file.xml_file_path, xml_file_content)
 
         if not pdf_features:
             return PdfSegments.get_blank()

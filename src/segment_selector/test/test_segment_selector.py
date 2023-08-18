@@ -1,3 +1,4 @@
+import json
 import shutil
 from os import makedirs
 from os.path import exists, join
@@ -8,7 +9,7 @@ from config import APP_PATH, DATA_PATH
 from data.LabeledData import LabeledData
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
-from metadata_extraction.PdfFeatures.PdfFeatures import PdfSegments
+from metadata_extraction.PdfSegments import PdfSegments
 from metadata_extraction.XmlFile import XmlFile
 from segment_selector.SegmentSelector import SegmentSelector
 from pdf_token_type_labels.TokenType import TokenType
@@ -32,7 +33,7 @@ class TestSegmentSelector(TestCase):
         "page_width": 612,
         "page_height": 792,
         "xml_segments_boxes": [],
-        "label_segments_boxes": [labels.model_dump()],
+        "label_segments_boxes": [json.loads(labels.model_dump_json())],
     }
 
     XML_FILE = XmlFile(
@@ -54,10 +55,10 @@ class TestSegmentSelector(TestCase):
 
     def test_create_model(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
-        pdf_features = PdfSegments.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
+        pdf_segments = PdfSegments.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        model_created, error = segment_selector.create_model(pdfs_features=[pdf_features])
+        model_created, error = segment_selector.create_model(pdfs_segments=[pdf_segments])
 
         self.assertTrue(model_created)
         self.assertEqual("", error)
@@ -77,10 +78,10 @@ class TestSegmentSelector(TestCase):
 
         pdf_features = PdfSegments.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        segment_selector.create_model(pdfs_features=[pdf_features])
+        segment_selector.create_model(pdfs_segments=[pdf_features])
 
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        segment_selector.set_extraction_segments(pdfs_features=[pdf_features])
+        segment_selector.set_extraction_segments(pdfs_segments=[pdf_features])
 
         extraction_segments = [x for x in pdf_features.pdf_segments if x.ml_label]
         self.assertEqual(1, len(extraction_segments))
