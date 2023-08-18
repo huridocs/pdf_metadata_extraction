@@ -78,3 +78,9 @@ class Suggestion(BaseModel):
         self.segments_boxes = [pdf_segment.get_segment_box() for pdf_segment in segments]
         self.segment_text = " ".join([pdf_segment.text_content for pdf_segment in segments])
         return self
+
+    def scale_up(self):
+        for segment_box in self.segments_boxes:
+            segment_box.scale_up()
+
+        return self

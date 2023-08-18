@@ -129,10 +129,10 @@ class TestEndToEnd(TestCase):
         self.assertEqual(1, suggestion.page_number)
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertEqual(123, suggestion.segments_boxes[0].left)
-        self.assertEqual(45, suggestion.segments_boxes[0].top)
-        self.assertEqual(87, suggestion.segments_boxes[0].width)
-        self.assertEqual(16, suggestion.segments_boxes[0].height)
+        self.assertEqual(round(123 / 0.75, 0), suggestion.segments_boxes[0].left)
+        self.assertEqual(round(45 / 0.75, 0), suggestion.segments_boxes[0].top)
+        self.assertEqual(round(87 / 0.75, 0), suggestion.segments_boxes[0].width)
+        self.assertEqual(round(16 / 0.75, 0), suggestion.segments_boxes[0].height)
         self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
     def test_create_model_error(self):
@@ -198,7 +198,10 @@ class TestEndToEnd(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 123, "top": 45, "width": 87, "height": 16, "page_number": 1}],
+            "label_segments_boxes": [{"left": round(123 / 0.75, 0),
+                                      "top": round(45 / 0.75, 0),
+                                      "width": round(87 / 0.75, 0),
+                                      "height": round(16 / 0.75, 0), "page_number": 1}],
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
@@ -252,10 +255,10 @@ class TestEndToEnd(TestCase):
         self.assertEqual(1, suggestion.page_number)
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertEqual(123, suggestion.segments_boxes[0].left)
-        self.assertEqual(45, suggestion.segments_boxes[0].top)
-        self.assertEqual(87, suggestion.segments_boxes[0].width)
-        self.assertEqual(16, suggestion.segments_boxes[0].height)
+        self.assertEqual(round(123 / 0.75, 0), suggestion.segments_boxes[0].left)
+        self.assertEqual(round(45 / 0.75, 0), suggestion.segments_boxes[0].top)
+        self.assertEqual(round(87 / 0.75, 0), suggestion.segments_boxes[0].width)
+        self.assertEqual(round(16 / 0.75, 0), suggestion.segments_boxes[0].height)
         self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
     @staticmethod

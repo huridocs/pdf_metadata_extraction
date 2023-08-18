@@ -1,6 +1,5 @@
 import os
 from contextlib import asynccontextmanager
-from typing import Dict
 import json
 
 import pymongo
@@ -110,7 +109,7 @@ async def delete_queues():
 async def labeled_data_post(labeled_data: LabeledData):
     try:
         pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-        pdf_metadata_extraction_db.labeled_data.insert_one(labeled_data.to_dict())
+        pdf_metadata_extraction_db.labeled_data.insert_one(labeled_data.scale_down_labels().to_dict())
         return "labeled data saved"
     except Exception:
         config_logger.error("Error", exc_info=1)
@@ -137,7 +136,7 @@ async def get_suggestions(tenant: str, extraction_id: str):
         suggestions_list: list[str] = list()
 
         for document in pdf_metadata_extraction_db.suggestions.find(suggestions_filter):
-            suggestions_list.append(Suggestion(**document).to_dict())
+            suggestions_list.append(Suggestion(**document).scale_up().to_dict())
 
         pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
         config_logger.info(f"{len(suggestions_list)} suggestions created for {tenant} {extraction_id}")
