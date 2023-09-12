@@ -198,10 +198,15 @@ class TestEndToEnd(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": round(123 / 0.75, 0),
-                                      "top": round(45 / 0.75, 0),
-                                      "width": round(87 / 0.75, 0),
-                                      "height": round(16 / 0.75, 0), "page_number": 1}],
+            "label_segments_boxes": [
+                {
+                    "left": round(123 / 0.75, 0),
+                    "top": round(45 / 0.75, 0),
+                    "width": round(87 / 0.75, 0),
+                    "height": round(16 / 0.75, 0),
+                    "page_number": 1,
+                }
+            ],
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
