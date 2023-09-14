@@ -13,14 +13,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Free up space
-        run: make free_up_space
-
       - uses: actions/checkout@v3
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
+
+      - name: Free up space
+        run: make free_up_space
 
       - name: Install venv
         run: make install_venv
