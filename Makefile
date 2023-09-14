@@ -46,6 +46,7 @@ download_models:
 	. venv/bin/activate; command cd src; python download_models.py
 
 free_up_space:
+	df -h
 	sudo rm -rf /usr/share/dotnet
 	sudo rm -rf /opt/ghc
 	sudo rm -rf "/usr/local/share/boost"
