@@ -44,3 +44,17 @@ delete_queues:
 
 download_models:
 	. venv/bin/activate; command cd src; python download_models.py
+
+free_up_space:
+	sudo rm -rf /usr/share/dotnet
+	sudo rm -rf /opt/ghc
+	sudo rm -rf "/usr/local/share/boost"
+	sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+	sudo apt-get remove -y '^ghc-8.*'
+	sudo apt-get remove -y '^llvm-.*'
+	sudo apt-get remove -y 'php.*'
+	sudo apt-get remove -y google-cloud-sdk hhvm google-chrome-stable firefox mono-devel
+	sudo apt-get autoremove -y
+	sudo apt-get clean
+	df -h
+
