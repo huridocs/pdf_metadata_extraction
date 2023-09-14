@@ -50,10 +50,9 @@ free_up_space:
 	sudo rm -rf /opt/ghc
 	sudo rm -rf "/usr/local/share/boost"
 	sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-	sudo apt-get remove -y '^ghc-8.*'
-	sudo apt-get remove -y '^llvm-.*'
-	sudo apt-get remove -y 'php.*'
-	sudo apt-get remove -y google-cloud-sdk hhvm google-chrome-stable firefox mono-devel
+	sudo apt-get remove -y '^llvm-.*' || true
+	sudo apt-get remove -y 'php.*' || true
+	sudo apt-get remove -y google-cloud-sdk hhvm google-chrome-stable firefox mono-devel || true
 	sudo apt-get autoremove -y
 	sudo apt-get clean
 	df -h
