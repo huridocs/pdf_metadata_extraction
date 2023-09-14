@@ -1,6 +1,10 @@
-from pydantic import BaseModel
+import json
 
-SCALE_CONSTANT = 0.75
+from pydantic import BaseModel
+from pdf_token_type_labels.TokenType import TokenType
+from pdf_features.Rectangle import Rectangle
+
+SCALE_RATIO = 0.75
 
 
 class SegmentBox(BaseModel):
@@ -9,16 +13,24 @@ class SegmentBox(BaseModel):
     width: float
     height: float
     page_number: int
+    segment_type: TokenType = TokenType.TEXT
 
-    def correct_input_data_scale(self):
-        return self.rescaled(SCALE_CONSTANT, SCALE_CONSTANT)
+    def to_dict(self):
+        return json.loads(self.model_dump_json())
 
-    def correct_output_data_scale(self):
-        return self.rescaled(1 / SCALE_CONSTANT, 1 / SCALE_CONSTANT)
+    def get_bounding_box(self) -> Rectangle:
+        return Rectangle.from_width_height(
+            left=int(self.left), top=int(self.top), width=int(self.width), height=int(self.height)
+        )
 
-    def rescaled(self, factor_width: float, factor_height: float):
-        self.left = self.left * factor_width
-        self.top = self.top * factor_height
-        self.width = self.width * factor_width
-        self.height = self.height * factor_height
-        return self
+    def scale_down(self):
+        self.left = round(self.left * SCALE_RATIO, 0)
+        self.top = round(self.top * SCALE_RATIO, 0)
+        self.width = round(self.width * SCALE_RATIO, 0)
+        self.height = round(self.height * SCALE_RATIO, 0)
+
+    def scale_up(self):
+        self.left = round(self.left / SCALE_RATIO, 0)
+        self.top = round(self.top / SCALE_RATIO, 0)
+        self.width = round(self.width / SCALE_RATIO, 0)
+        self.height = round(self.height / SCALE_RATIO, 0)

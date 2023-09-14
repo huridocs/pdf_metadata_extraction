@@ -1,7 +1,8 @@
 import os
 import shutil
 from os.path import join
-from typing import List
+from pathlib import Path
+
 from unittest import TestCase
 
 from data.LabeledData import LabeledData
@@ -16,7 +17,7 @@ DOCKER_VOLUME_PATH = (
 
 class TestFilterValidSegmentPages(TestCase):
     @staticmethod
-    def get_labeled_data(label_numbers: List[int], pages_number: int = None):
+    def get_labeled_data(label_numbers: list[int], pages_number: int = None):
         if not pages_number:
             pages_number = max(label_numbers)
 
@@ -35,7 +36,7 @@ class TestFilterValidSegmentPages(TestCase):
         )
 
     @staticmethod
-    def get_prediction_data(page_numbers: List[int]):
+    def get_prediction_data(page_numbers: list[int]):
         return PredictionData(
             tenant="",
             id="",
@@ -199,7 +200,23 @@ class TestFilterValidSegmentPages(TestCase):
         prediction_data = self.get_prediction_data(page_numbers=[2])
         pages_per_document = filter_valid_segment_pages.for_prediction([prediction_data])
         self.assertEqual(1, len(pages_per_document))
-        self.assertEqual([1], pages_per_document[0])
+        self.assertEqual([1, 2], pages_per_document[0])
+
+    def test_get_valid_pages_for_prediction_empty(self):
+        tenant = "tenant_filter"
+        extraction_id = "property_filter"
+
+        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+
+        filter_valid_segment_pages = FilterValidSegmentPages(tenant, extraction_id)
+        labeled_data_json_path = Path(filter_valid_segment_pages.labeled_data_json_path)
+        os.makedirs(labeled_data_json_path.parent, exist_ok=True)
+        labeled_data_json_path.write_text("")
+
+        prediction_data = self.get_prediction_data(page_numbers=[2])
+        pages_per_document = filter_valid_segment_pages.for_prediction([prediction_data])
+        self.assertEqual(1, len(pages_per_document))
+        self.assertEqual([1, 2], pages_per_document[0])
 
     def test_get_valid_pages_only_prediction(self):
         tenant = "tenant_filter"
@@ -211,7 +228,7 @@ class TestFilterValidSegmentPages(TestCase):
         prediction_data = self.get_prediction_data(page_numbers=[2])
         pages_per_document = filter_valid_segment_pages.for_prediction([prediction_data])
         self.assertEqual(1, len(pages_per_document))
-        self.assertEqual([1], pages_per_document[0])
+        self.assertEqual([1, 2], pages_per_document[0])
 
     def test_get_valid_pages_prediction_first_page(self):
         tenant = "tenant_filter"

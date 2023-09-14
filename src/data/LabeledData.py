@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 from data.Option import Option
@@ -12,12 +10,20 @@ class LabeledData(BaseModel):
     xml_file_name: str
     language_iso: str
     label_text: str = ""
-    options: List[Option] = list()
+    options: list[Option] = list()
     page_width: float
     page_height: float
-    xml_segments_boxes: List[SegmentBox]
-    label_segments_boxes: List[SegmentBox]
+    xml_segments_boxes: list[SegmentBox]
+    label_segments_boxes: list[SegmentBox]
 
-    def correct_data_scale(self):
-        self.label_segments_boxes = [x.correct_input_data_scale() for x in self.label_segments_boxes]
+    def to_dict(self):
+        labeled_data_dict = self.model_dump()
+        labeled_data_dict["xml_segments_boxes"] = [x.to_dict() for x in self.xml_segments_boxes]
+        labeled_data_dict["label_segments_boxes"] = [x.to_dict() for x in self.label_segments_boxes]
+        return labeled_data_dict
+
+    def scale_down_labels(self):
+        for label in self.label_segments_boxes:
+            label.scale_down()
+
         return self

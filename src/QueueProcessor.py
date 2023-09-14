@@ -55,9 +55,10 @@ class QueueProcessor:
             )
 
         else:
-            data_url = None
             if task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
                 data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.params.id}"
+            else:
+                data_url = None
 
             model_results_message = ResultsMessage(
                 tenant=task.tenant,

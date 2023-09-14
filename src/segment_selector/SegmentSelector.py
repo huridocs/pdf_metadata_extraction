@@ -4,9 +4,9 @@ import lightgbm as lgb
 from os import makedirs
 from os.path import join, exists
 from pathlib import Path
-from typing import List
+
 from config import DATA_PATH
-from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
+from metadata_extraction.PdfSegments import PdfSegments
 from segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
 
 
@@ -37,10 +37,10 @@ class SegmentSelector:
 
         return model_path
 
-    def create_model(self, pdfs_features: List[PdfFeatures]) -> (bool, str):
+    def create_model(self, pdfs_segments: list[PdfSegments]) -> (bool, str):
         model_path = self.prepare_model_folder()
 
-        self.model = LightgbmFrequentWords().create_model(pdfs_features, model_path)
+        self.model = LightgbmFrequentWords().create_model(pdfs_segments, model_path)
 
         if not self.model:
             return False, "No data to create model"
@@ -49,10 +49,10 @@ class SegmentSelector:
 
         return True, ""
 
-    def set_extraction_segments(self, pdfs_features: List[PdfFeatures]):
-        predictions = LightgbmFrequentWords().predict(self.model, pdfs_features, self.model_path)
+    def set_extraction_segments(self, pdfs_segments: list[PdfSegments]):
+        predictions = LightgbmFrequentWords().predict(self.model, pdfs_segments, self.model_path)
         index = 0
-        for pdf_features in pdfs_features:
+        for pdf_features in pdfs_segments:
             for segment in pdf_features.pdf_segments:
                 segment.ml_label = 1 if predictions[index] > 0.5 else 0
                 index += 1

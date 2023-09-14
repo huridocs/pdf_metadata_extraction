@@ -1,6 +1,5 @@
 import os
 from contextlib import asynccontextmanager
-from typing import List, Dict
 import json
 
 import pymongo
@@ -110,8 +109,7 @@ async def delete_queues():
 async def labeled_data_post(labeled_data: LabeledData):
     try:
         pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-        labeled_data = labeled_data.correct_data_scale()
-        pdf_metadata_extraction_db.labeled_data.insert_one(labeled_data.dict())
+        pdf_metadata_extraction_db.labeled_data.insert_one(labeled_data.scale_down_labels().to_dict())
         return "labeled data saved"
     except Exception:
         config_logger.error("Error", exc_info=1)
@@ -122,7 +120,7 @@ async def labeled_data_post(labeled_data: LabeledData):
 async def prediction_data_post(prediction_data: PredictionData):
     try:
         pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-        pdf_metadata_extraction_db.prediction_data.insert_one(prediction_data.dict())
+        pdf_metadata_extraction_db.prediction_data.insert_one(prediction_data.to_dict())
         return "prediction data saved"
     except Exception:
         config_logger.error("Error", exc_info=1)
@@ -135,10 +133,10 @@ async def get_suggestions(tenant: str, extraction_id: str):
         config_logger.info(f"get_suggestions {tenant} {extraction_id}")
         pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
         suggestions_filter = {"tenant": tenant, "id": extraction_id}
-        suggestions_list: List[Dict[str, str]] = list()
+        suggestions_list: list[str] = list()
 
         for document in pdf_metadata_extraction_db.suggestions.find(suggestions_filter):
-            suggestions_list.append(Suggestion(**document).dict())
+            suggestions_list.append(Suggestion(**document).scale_up().to_dict())
 
         pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
         config_logger.info(f"{len(suggestions_list)} suggestions created for {tenant} {extraction_id}")

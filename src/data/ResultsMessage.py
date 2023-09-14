@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 from data.Params import Params
 
@@ -8,4 +10,4 @@ class ResultsMessage(BaseModel):
     params: Params
     success: bool
     error_message: str
-    data_url: str = None
+    data_url: Optional[str] = None

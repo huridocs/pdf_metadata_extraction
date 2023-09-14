@@ -1,14 +1,17 @@
+import json
 import os
 import shutil
 from os.path import exists, join
-from typing import List
+
 from unittest import TestCase
 
 import mongomock
 import pymongo
+from pdf_token_type_labels.TokenType import TokenType
 
 from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
 from data.MetadataExtractionTask import MetadataExtractionTask
+from data.Option import Option
 from data.Params import Params
 from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
@@ -37,7 +40,7 @@ class TestMetadataExtractor(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1}],
+            "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1, "type": "TEXT"}],
         }
         mongo_client.pdf_metadata_extraction.labeled_data.insert_one(json_data)
 
@@ -121,7 +124,11 @@ class TestMetadataExtractor(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [SegmentBox(left=400, top=115, width=74, height=9, page_number=1).dict()],
+            "label_segments_boxes": [
+                json.loads(
+                    SegmentBox(left=400, top=115, width=74, height=9, page_number=1, type=TokenType.TEXT).model_dump_json()
+                )
+            ],
         }
 
         mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
@@ -166,11 +173,11 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual(1, suggestion.page_number)
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertAlmostEqual(397 / 0.75, suggestion.segments_boxes[0].left)
-        self.assertAlmostEqual(115 / 0.75, suggestion.segments_boxes[0].top)
-        self.assertAlmostEqual(74 / 0.75, suggestion.segments_boxes[0].width)
-        self.assertAlmostEqual(9 / 0.75, suggestion.segments_boxes[0].height)
-        self.assertAlmostEqual(1, suggestion.segments_boxes[0].page_number)
+        self.assertEqual(397.0, suggestion.segments_boxes[0].left)
+        self.assertEqual(114.0, suggestion.segments_boxes[0].top)
+        self.assertEqual(77.0, suggestion.segments_boxes[0].width)
+        self.assertEqual(11.0, suggestion.segments_boxes[0].height)
+        self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.prediction_data.find_one())
 
@@ -197,8 +204,16 @@ class TestMetadataExtractor(TestCase):
             "label_text": "text",
             "page_width": 612,
             "page_height": 792,
-            "xml_segments_boxes": [SegmentBox(left=0, top=130, width=612, height=70, page_number=2).dict()],
-            "label_segments_boxes": [SegmentBox(left=300, top=150, width=5, height=5, page_number=2).dict()],
+            "xml_segments_boxes": [
+                json.loads(
+                    SegmentBox(left=0, top=130, width=612, height=70, page_number=2, type=TokenType.TEXT).model_dump_json()
+                )
+            ],
+            "label_segments_boxes": [
+                json.loads(
+                    SegmentBox(left=300, top=150, width=5, height=5, page_number=2, type=TokenType.TEXT).model_dump_json()
+                )
+            ],
         }
 
         mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
@@ -217,7 +232,9 @@ class TestMetadataExtractor(TestCase):
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
-            "xml_segments_boxes": [SegmentBox(left=0, top=130, width=612, height=70, page_number=2).dict()],
+            "xml_segments_boxes": [
+                json.loads(SegmentBox(left=0, top=130, width=612, height=70, page_number=2).model_dump_json())
+            ],
         }
 
         mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
@@ -245,11 +262,11 @@ class TestMetadataExtractor(TestCase):
         self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"))
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertAlmostEqual(173.33333333333331, suggestion.segments_boxes[0].left)
-        self.assertAlmostEqual(168, suggestion.segments_boxes[0].top)
-        self.assertAlmostEqual(476, suggestion.segments_boxes[0].width)
-        self.assertAlmostEqual(94.666666666, suggestion.segments_boxes[0].height)
-        self.assertAlmostEqual(2, suggestion.segments_boxes[0].page_number)
+        self.assertEqual(134.0, suggestion.segments_boxes[0].left)
+        self.assertEqual(126.0, suggestion.segments_boxes[0].top)
+        self.assertEqual(357.0, suggestion.segments_boxes[0].width)
+        self.assertEqual(72, suggestion.segments_boxes[0].height)
+        self.assertEqual(2, suggestion.segments_boxes[0].page_number)
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -294,7 +311,7 @@ class TestMetadataExtractor(TestCase):
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
-                "label_segments_boxes": [SegmentBox(left=397, top=115, width=74, height=9, page_number=1).dict()],
+                "label_segments_boxes": [SegmentBox(left=397, top=115, width=74, height=9, page_number=1).to_dict()],
             }
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
@@ -315,7 +332,7 @@ class TestMetadataExtractor(TestCase):
             )
         )
 
-        suggestions: List[Suggestion] = list()
+        suggestions: list[Suggestion] = list()
         find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
@@ -329,11 +346,11 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual({"English"}, {x.text for x in suggestions})
 
         self.assertEqual({1}, set([len(x.segments_boxes) for x in suggestions]))
-        self.assertAlmostEqual(397 / 0.75, suggestions[0].segments_boxes[0].left)
-        self.assertAlmostEqual(115 / 0.75, suggestions[0].segments_boxes[0].top)
-        self.assertAlmostEqual(74 / 0.75, suggestions[0].segments_boxes[0].width)
-        self.assertAlmostEqual(9 / 0.75, suggestions[0].segments_boxes[0].height)
-        self.assertAlmostEqual(1, suggestions[0].segments_boxes[0].page_number)
+        self.assertEqual(397.0, suggestions[0].segments_boxes[0].left)
+        self.assertEqual(114.0, suggestions[0].segments_boxes[0].top)
+        self.assertEqual(77.0, suggestions[0].segments_boxes[0].width)
+        self.assertEqual(11.0, suggestions[0].segments_boxes[0].height)
+        self.assertEqual(1, suggestions[0].segments_boxes[0].page_number)
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -370,7 +387,9 @@ class TestMetadataExtractor(TestCase):
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
-                "label_segments_boxes": [SegmentBox(left=397, top=91, width=10, height=9, page_number=1).dict()],
+                "label_segments_boxes": [
+                    json.loads(SegmentBox(left=397, top=91, width=10, height=9, page_number=1).model_dump_json())
+                ],
             }
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
@@ -391,7 +410,7 @@ class TestMetadataExtractor(TestCase):
             )
         )
 
-        suggestions: List[Suggestion] = list()
+        suggestions: list[Suggestion] = list()
         find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
@@ -435,7 +454,9 @@ class TestMetadataExtractor(TestCase):
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
-                "label_segments_boxes": [SegmentBox(left=289, top=206, width=34, height=10, page_number=1).dict()],
+                "label_segments_boxes": [
+                    json.loads(SegmentBox(left=289, top=206, width=34, height=10, page_number=1).model_dump_json())
+                ],
             }
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
@@ -476,7 +497,7 @@ class TestMetadataExtractor(TestCase):
             )
         )
 
-        suggestions: List[Suggestion] = list()
+        suggestions: list[Suggestion] = list()
         find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
@@ -664,7 +685,9 @@ class TestMetadataExtractor(TestCase):
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
-                "label_segments_boxes": [SegmentBox(left=397, top=91, width=10, height=9, page_number=1).dict()],
+                "label_segments_boxes": [
+                    json.loads(SegmentBox(left=397, top=91, width=10, height=9, page_number=1).model_dump_json())
+                ],
             }
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
@@ -685,7 +708,7 @@ class TestMetadataExtractor(TestCase):
             )
         )
 
-        suggestions: List[Suggestion] = list()
+        suggestions: list[Suggestion] = list()
         find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
@@ -696,7 +719,7 @@ class TestMetadataExtractor(TestCase):
         self.assertEqual(extraction_id, suggestions[0].id)
         self.assertEqual("test.xml", suggestions[0].xml_file_name)
         self.assertEqual("15 February 2021", suggestions[0].segment_text)
-        self.assertEqual([{"id": "id15", "label": "15"}], suggestions[0].options)
+        self.assertEqual([Option(id="id15", label="15")], suggestions[0].options)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
         self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))

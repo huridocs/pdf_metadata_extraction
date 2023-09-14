@@ -4,7 +4,7 @@ import shutil
 from functools import lru_cache
 from os.path import join, exists, dirname
 from pathlib import Path
-from typing import List
+
 
 import transformers
 from huggingface_hub import hf_hub_download
@@ -44,7 +44,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
     def get_max_length_path(self):
         return Path(join(self.base_path, self.get_name(), "max_length_output"))
 
-    def get_max_input_length(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def get_max_input_length(self, semantic_extraction_data: list[SemanticExtractionData]):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
         texts = [self.extraction_id + ": " + self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_extraction_data]
         tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
@@ -52,14 +52,14 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         config_logger.info(f"Max input length: {str(input_length)}")
         return input_length
 
-    def get_max_output_length(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def get_max_output_length(self, semantic_extraction_data: list[SemanticExtractionData]):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
         tokens_number = [len(tokenizer(x.text)["input_ids"]) for x in semantic_extraction_data]
         output_length = min(int((max(tokens_number) + 5) * 1.5), 256)
         config_logger.info(f"Max output length: {str(output_length)}")
         return output_length
 
-    def prepare_dataset(self, semantic_extractions_data: List[SemanticExtractionData]):
+    def prepare_dataset(self, semantic_extractions_data: list[SemanticExtractionData]):
         data_path = join(self.base_path, self.get_name(), "t5_transformers_data.csv")
 
         if exists(data_path):
@@ -93,7 +93,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
         return 100 * len(correct) / len(performance_test_set), predictions
 
-    def train(self, semantic_extraction_data: List[SemanticExtractionData]):
+    def train(self, semantic_extraction_data: list[SemanticExtractionData]):
         self.remove_model()
         train_path = self.prepare_dataset(semantic_extraction_data)
         if not train_path:

@@ -2,7 +2,7 @@ import json
 from collections import Counter
 from pathlib import Path
 from time import time
-from typing import List
+
 
 import nltk
 import numpy as np
@@ -11,7 +11,7 @@ import lightgbm as lgb
 from sklearn.metrics import f1_score
 
 from config import config_logger
-from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
+from metadata_extraction.PdfSegments import PdfSegments
 from segment_selector.methods.lightgbm_frequent_words.SegmentLightgbmFrequentWords import SegmentLightgbmFrequentWords
 
 from nltk.tokenize import word_tokenize
@@ -22,13 +22,13 @@ nltk.download("stopwords")
 
 class LightgbmFrequentWords:
     def __init__(self):
-        self.segments: List[SegmentLightgbmFrequentWords] = list()
+        self.segments: list[SegmentLightgbmFrequentWords] = list()
         self.model = None
         self.best_cut = 0
 
-    def create_model(self, training_pdfs_features: List[PdfFeatures], model_path):
+    def create_model(self, training_pdfs_segments: list[PdfSegments], model_path):
         start = time()
-        self.set_segments(pdfs_features=training_pdfs_features)
+        self.set_segments(pdfs_segments=training_pdfs_segments)
 
         config_logger.info(f"Set segments {int(time() - start)} seconds")
 
@@ -79,13 +79,13 @@ class LightgbmFrequentWords:
 
         return X, y
 
-    def set_segments(self, pdfs_features: List[PdfFeatures]):
+    def set_segments(self, pdfs_segments: list[PdfSegments]):
         self.segments = list()
-        for pdf_features in pdfs_features:
+        for pdf_features in pdfs_segments:
             self.segments.extend(SegmentLightgbmFrequentWords.from_pdf_features(pdf_features))
 
-    def predict(self, model, testing_pdfs_features: List[PdfFeatures], model_path):
-        self.set_segments(testing_pdfs_features)
+    def predict(self, model, testing_pdfs_segments: list[PdfSegments], model_path):
+        self.set_segments(testing_pdfs_segments)
         self.set_most_frequent_words_to_segments(model_path)
         x, y = self.get_training_data()
         x = x[:, : model.num_feature()]

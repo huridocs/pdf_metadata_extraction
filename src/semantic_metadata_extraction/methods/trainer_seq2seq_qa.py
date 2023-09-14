@@ -15,7 +15,7 @@
 """
 A subclass of `Trainer` specific to Question-Answering tasks
 """
-from typing import Dict, List, Optional
+from typing import Optional
 
 from torch.utils.data import Dataset
 
@@ -38,10 +38,10 @@ class QuestionAnsweringSeq2SeqTrainer(Seq2SeqTrainer):
         self,
         eval_dataset: Optional[Dataset] = None,
         eval_examples=None,
-        ignore_keys: Optional[List[str]] = None,
+        ignore_keys: Optional[list[str]] = None,
         metric_key_prefix: str = "eval",
         **gen_kwargs,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         gen_kwargs = gen_kwargs.copy()
         gen_kwargs["max_length"] = (
             gen_kwargs["max_length"] if gen_kwargs.get("max_length") is not None else self.args.generation_max_length

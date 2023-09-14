@@ -2,7 +2,7 @@ import dataclasses
 import hashlib
 from statistics import mode
 
-from metadata_extraction.PdfFeatures.PdfFeatures import PdfFeatures
+from metadata_extraction.PdfSegments import PdfSegments
 
 
 @dataclasses.dataclass
@@ -14,22 +14,25 @@ class Modes:
     font_family_name_mode: str
     font_family_mode: int
     font_family_mode_normalized: float
-    pdf_features: PdfFeatures
+    pdf_segments: PdfSegments
 
-    def __init__(self, pdf_features: PdfFeatures):
-        self.pdf_features = pdf_features
+    def __init__(self, pdf_segments: PdfSegments):
+        self.pdf_segments = pdf_segments
         self.set_modes()
 
     def set_modes(self):
         line_spaces, right_spaces, left_spaces = [0], [0], [0]
-        for segment_tag in self.pdf_features.get_tags():
-            right_spaces.append(self.pdf_features.pages[0].page_width - segment_tag.bounding_box.right)
-            left_spaces.append(segment_tag.bounding_box.left)
-            line_spaces.append(segment_tag.bounding_box.bottom)
+        font_sizes, font_ids = list(), list()
 
-        font_sizes = [segment_tag.font.font_size for segment_tag in self.pdf_features.get_tags() if segment_tag.font]
+        if self.pdf_segments.pdf_features:
+            for page, token in self.pdf_segments.pdf_features.loop_tokens():
+                right_spaces.append(page.page_width - token.bounding_box.right)
+                left_spaces.append(token.bounding_box.left)
+                line_spaces.append(token.bounding_box.bottom)
+                font_sizes.append(token.font.font_size)
+                font_ids.append(token.font.font_id)
+
         self.font_size_mode = mode(font_sizes) if font_sizes else 0
-        font_ids = [segment_tag.font.font_id for segment_tag in self.pdf_features.get_tags() if segment_tag.font]
         self.font_family_name_mode = mode(font_ids) if font_ids else ""
         self.font_family_mode = abs(
             int(

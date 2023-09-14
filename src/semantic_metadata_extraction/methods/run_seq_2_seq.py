@@ -23,7 +23,7 @@ import logging
 import os
 import sys
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import datasets
 import numpy as np
@@ -405,7 +405,7 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
         question_column: str,
         context_column: str,
         answer_column: str,
-    ) -> Tuple[List[str], List[str]]:
+    ) -> Tuple[list[str], list[str]]:
         questions = examples[question_column]
         contexts = examples[context_column]
         answers = examples[answer_column]

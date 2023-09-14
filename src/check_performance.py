@@ -1,5 +1,5 @@
 from os.path import dirname, realpath, join
-from typing import List, Type
+from typing import Type
 
 import pandas as pd
 from datetime import datetime
@@ -15,7 +15,7 @@ class CheckPerformance:
 
     TENANT = "check_performance"
 
-    METHODS: List[Type[Method]] = [
+    METHODS: list[Type[Method]] = [
         # T5ZeroShot,
         MT5TrueCaseEnglishSpanishMethod,
         # MT5EnglishSpanishMethod,
@@ -28,7 +28,7 @@ class CheckPerformance:
         # FlanT5TrueCaseEnglishSpanishMethod
     ]
 
-    DATASETS: List[str] = [
+    DATASETS: list[str] = [
         # "code_spanish.tsv",
         # "country_spanish.tsv",
         "date_spanish.tsv",
