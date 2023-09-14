@@ -22,7 +22,7 @@ jobs:
           # if set to "true" but frees about 6 GB
           tool-cache: false
           android: true
-          dotnet: true
+          dotnet: false
           haskell: true
           large-packages: true
           docker-images: false
