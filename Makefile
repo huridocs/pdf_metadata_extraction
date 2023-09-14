@@ -56,5 +56,9 @@ free_up_space:
 	sudo apt-get remove -y google-cloud-sdk hhvm google-chrome-stable firefox mono-devel || true
 	sudo apt-get autoremove -y
 	sudo apt-get clean
+	sudo rm -rf /usr/share/dotnet
+	sudo rm -rf /usr/local/lib/android
+	sudo rm -rf /opt/hostedtoolcache/CodeQL
+	sudo docker image prune --all --force
 	df -h
 
