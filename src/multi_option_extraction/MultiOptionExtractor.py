@@ -31,7 +31,7 @@ class MultiOptionExtractor:
         self.options = multi_option_extraction_data.options
         self.multi_value = multi_option_extraction_data.multi_value
 
-        self.save_json(self.options_path, [x.dict() for x in multi_option_extraction_data.options])
+        self.save_json(self.options_path, [x.model_dump() for x in multi_option_extraction_data.options])
         self.save_json(self.multi_value_path, multi_option_extraction_data.multi_value)
 
         method = self.get_best_method(multi_option_extraction_data)

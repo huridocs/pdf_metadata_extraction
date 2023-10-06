@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import Optional
 
 from data.SegmentationData import SegmentationData
@@ -18,12 +17,12 @@ class PdfSegments:
         self.pdf_segments: list[PdfSegment] = list()
 
     def set_segments_from_segmentation_data(self, segmentation_data: SegmentationData):
-        pdf_segments_to_merge = defaultdict(list)
+        pdf_segments_to_merge = dict()
         pdf_segments_from_segmentation = [
             PdfSegment.from_segment_box(segment_box) for segment_box in segmentation_data.xml_segments_boxes
         ]
         for page, token in self.pdf_features.loop_tokens():
-            segment_from_tag = PdfSegment.from_pdf_token(token)
+            segment_from_tag: PdfSegment = PdfSegment.from_pdf_token(token)
 
             intersects_segmentation = [
                 segmentation_segment
@@ -35,7 +34,8 @@ class PdfSegments:
                 self.pdf_segments.append(segment_from_tag)
                 continue
 
-            pdf_segments_to_merge[intersects_segmentation[0]].append(segment_from_tag)
+            segment_from_tag.segment_type = intersects_segmentation[0].segment_type
+            pdf_segments_to_merge.setdefault(intersects_segmentation[0], []).append(segment_from_tag)
 
         self.pdf_segments.extend(
             [

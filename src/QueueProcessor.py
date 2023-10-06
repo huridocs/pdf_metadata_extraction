@@ -34,7 +34,7 @@ class QueueProcessor:
     def process(self, id, message, rc, ts):
         try:
             task = MetadataExtractionTask(**message)
-            config_logger.info(f"New task {task.dict()}")
+            config_logger.info(f"New task {task.model_dump()}")
         except ValidationError:
             config_logger.error(f"Not a valid Redis message: {message}")
             return True
@@ -68,8 +68,8 @@ class QueueProcessor:
                 error_message="",
                 data_url=data_url,
             )
-        config_logger.info(model_results_message.dict())
-        self.results_queue.sendMessage().message(model_results_message.dict()).execute()
+        config_logger.info(model_results_message.model_dump())
+        self.results_queue.sendMessage().message(model_results_message.model_dump()).execute()
         return True
 
     def log_process_information(self, message):
