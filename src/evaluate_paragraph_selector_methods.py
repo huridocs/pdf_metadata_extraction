@@ -2,6 +2,7 @@ import importlib
 import json
 import os
 import random
+import shutil
 
 from datetime import datetime
 from os.path import join
@@ -10,7 +11,7 @@ from pathlib import Path
 import requests
 from pdf_features.PdfFeatures import PdfFeatures
 from pdf_token_type_labels.TokenTypeLabels import TokenTypeLabels
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
 
 from config import ROOT_PATH
 from data.SegmentBox import SegmentBox
@@ -22,18 +23,24 @@ from segment_selector.evaluate_config import SIZES, SEEDS, LABELED_DATA_TO_USE, 
 
 RANDOM_SEED = 42
 
-task_pdf_features = dict()
+paragraphs_extraction_results: dict[str | Path : Paragraphs] = dict()
 
 
 def get_segmentation_data(pdf_path: str) -> SegmentationData:
-    files = {
-        "file": open(
-            pdf_path,
-            "rb",
-        ),
-    }
-    response = requests.post("http://localhost:5051", files=files)
-    paragraphs = Paragraphs(**response.json())
+    if pdf_path in paragraphs_extraction_results:
+        print(f"taking {pdf_path} from cache")
+        paragraphs = paragraphs_extraction_results[pdf_path]
+    else:
+        files = {
+            "file": open(
+                pdf_path,
+                "rb",
+            ),
+        }
+        response = requests.post("http://localhost:5051", files=files)
+        paragraphs = Paragraphs(**response.json())
+        paragraphs_extraction_results[pdf_path] = paragraphs
+
     xml_segments_boxes = [
         SegmentBox(
             left=paragraph.left,
@@ -81,16 +88,12 @@ def load_pdf_segments(task: str, pdf_name: str) -> PdfSegments:
 def load_training_testing_data(task: str, seed: int) -> (list[PdfSegments], list[PdfSegments]):
     print()
     print("Loading data for", task, "with seed", seed)
-    if task in task_pdf_features:
-        pdfs_segments = task_pdf_features[task]
-    else:
-        labeled_data_path = join(ROOT_PATH.parent, "pdf-labeled-data", "labeled_data", "paragraph_selector", task)
-        pdfs_segments = list()
-        for pdf_name in os.listdir(labeled_data_path):
-            print("Loading", pdf_name)
-            pdfs_segments.append(load_pdf_segments(task, pdf_name))
 
-        task_pdf_features[task] = pdfs_segments
+    labeled_data_path = join(ROOT_PATH.parent, "pdf-labeled-data", "labeled_data", "paragraph_selector", task)
+    pdfs_segments = list()
+    for index, pdf_name in enumerate(os.listdir(labeled_data_path)):
+        print("Loading", pdf_name)
+        pdfs_segments.append(load_pdf_segments(task, pdf_name))
 
     current_pdfs_segments = [x for x in pdfs_segments]
     random.seed(seed)
@@ -112,18 +115,30 @@ def snake_case_to_pascal_case(name: str):
     return "".join(word.title() for word in name.split("_"))
 
 
-def one_run(method, results, task, testing_pdfs_segments, training_pdfs_segments):
+def run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results):
     results.set_start_time()
-    method_class_name = snake_case_to_pascal_case(method)
-    import_from = f"segment_selector.methods.{method_class_name}.{method_class_name}"
-    evaluate_module = importlib.import_module(import_from, method_class_name)
-    predictions = evaluate_module.evaluate(task, training_pdfs_segments, testing_pdfs_segments)
-    accuracy = round(100 * accuracy_score(y_true, predictions), 2)
+    method_class_name = snake_case_to_pascal_case(method_name)
+    import_from = f"segment_selector.methods.{method_name}.{method_class_name}"
+
+    model_path = Path(join(ROOT_PATH, "docker_volume", "segment_selector", task, "model"))
+
+    shutil.rmtree(model_path.parent, ignore_errors=True)
+    os.makedirs(model_path.parent)
+
+    method = importlib.import_module(import_from, method_class_name)
+    method_class = getattr(method, method_class_name)
+    method_instance = method_class()
+    model = method_instance.create_model(training_pdfs_segments, model_path)
+    predictions = method_instance.predict(model, testing_pdfs_segments, model_path)
+
+    y_true = [x.ml_label for test in testing_pdfs_segments for x in test.pdf_segments]
+    prediction_binary = [1 if prediction > 0.5 else 0 for prediction in predictions]
+    f1 = round(100 * f1_score(y_true, prediction_binary), 2)
 
     results.save_result(
         dataset=task,
-        method=method,
-        accuracy=accuracy,
+        method=method_name,
+        accuracy=f1,
         train_length=len(training_pdfs_segments),
         test_length=len(testing_pdfs_segments),
     )
@@ -135,16 +150,15 @@ def evaluate_methods():
 
     for size, seed, task in get_loop_values():
         training_pdfs_segments, testing_pdfs_segments = load_training_testing_data(task, seed)
-    #     training_pdfs_segments = training_pdfs_segments[:size]
-    #     for method in METHODS_TO_EXECUTE:
-    #         print(f"\n\nevaluating time:{datetime.now():%Y/%m/%d %H:%M} size:{size} seed:{seed} task:{task} method:{method}")
-    #
-    #         one_run(method, results, task, testing_pdfs_segments, training_pdfs_segments)
-    #
-    # results.write_results()
+        training_pdfs_segments = training_pdfs_segments[:size]
+        for method_name in METHODS_TO_EXECUTE:
+            print(
+                f"\n\nevaluating time:{datetime.now():%Y/%m/%d %H:%M} size:{size} seed:{seed} task:{task} method:{method_name}"
+            )
+            run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results)
+
+    results.write_results()
 
 
 if __name__ == "__main__":
-    # LightgbmFrequentWords()
     evaluate_methods()
-    print(SIZES)

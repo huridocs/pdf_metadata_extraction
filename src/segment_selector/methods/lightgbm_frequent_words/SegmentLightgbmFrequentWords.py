@@ -128,7 +128,7 @@ class SegmentLightgbmFrequentWords:
             self.previous_title_segment.segment_index,
             len(self.previous_title_segment.pdf_segments.pdf_segments) - self.previous_title_segment.segment_index,
             self.previous_title_segment.page_index,
-            len(self.previous_title_segment.pdf_segments.pdf_segments.pages) - self.previous_title_segment.page_index,
+            len(self.pdf_segments.pdf_features.pages) - self.previous_title_segment.page_index,
             self.previous_title_segment.bold,
             self.previous_title_segment.italics,
             self.previous_title_segment.text_len,

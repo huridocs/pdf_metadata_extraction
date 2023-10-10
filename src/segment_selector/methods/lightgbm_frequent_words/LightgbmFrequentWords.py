@@ -111,8 +111,8 @@ class LightgbmFrequentWords:
         Path(frequent_words_path).write_text(json.dumps(most_repeated_words))
 
     @staticmethod
-    def get_frequent_words_path(model_path: str) -> str:
-        frequent_words_path = model_path + "_frequent_words"
+    def get_frequent_words_path(model_path: str | Path) -> str:
+        frequent_words_path = str(model_path) + "_frequent_words"
         return frequent_words_path
 
     def set_most_frequent_words_to_segments(self, model_path: str):
