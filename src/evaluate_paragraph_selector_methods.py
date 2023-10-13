@@ -1,11 +1,12 @@
 import importlib
 import json
 import os
+import pickle
 import random
 import shutil
 
 from datetime import datetime
-from os.path import join
+from os.path import join, exists
 from pathlib import Path
 
 import requests
@@ -13,7 +14,7 @@ from pdf_features.PdfFeatures import PdfFeatures
 from pdf_token_type_labels.TokenTypeLabels import TokenTypeLabels
 from sklearn.metrics import f1_score
 
-from config import ROOT_PATH
+from config import ROOT_PATH, DATA_PATH
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
 from metadata_extraction.PdfSegments import PdfSegments
@@ -23,13 +24,13 @@ from segment_selector.evaluate_config import SIZES, SEEDS, LABELED_DATA_TO_USE, 
 
 RANDOM_SEED = 42
 
-paragraphs_extraction_results: dict[str | Path : Paragraphs] = dict()
 
+def get_segmentation_data(pdf_path: str, pdf_name: str) -> SegmentationData:
+    pickle_path = join(DATA_PATH, "cached_segments", pdf_name + ".pickle")
 
-def get_segmentation_data(pdf_path: str) -> SegmentationData:
-    if pdf_path in paragraphs_extraction_results:
-        print(f"taking {pdf_path} from cache")
-        paragraphs = paragraphs_extraction_results[pdf_path]
+    if exists(pickle_path):
+        with open(pickle_path, "rb") as f:
+            paragraphs = pickle.load(f)
     else:
         files = {
             "file": open(
@@ -39,7 +40,8 @@ def get_segmentation_data(pdf_path: str) -> SegmentationData:
         }
         response = requests.post("http://localhost:5051", files=files)
         paragraphs = Paragraphs(**response.json())
-        paragraphs_extraction_results[pdf_path] = paragraphs
+        with open(pickle_path, "wb") as f:  # open a text file
+            pickle.dump(paragraphs, f)
 
     xml_segments_boxes = [
         SegmentBox(
@@ -68,7 +70,7 @@ def load_pdf_segments(task: str, pdf_name: str) -> PdfSegments:
     pdf_features = PdfFeatures.from_poppler_etree(join(pdfs_path, pdf_name, "etree.xml"))
 
     pdf_path = join(pdfs_path, pdf_name, "document.pdf")
-    segmentation_data: SegmentationData = get_segmentation_data(pdf_path)
+    segmentation_data: SegmentationData = get_segmentation_data(pdf_path, pdf_name)
 
     labeled_data_path = join(labeled_data_root_path, "labeled_data", "paragraph_selector", task, pdf_name, "labels.json")
     token_type_labels = TokenTypeLabels(**json.loads(Path(labeled_data_path).read_text()))
@@ -92,7 +94,6 @@ def load_training_testing_data(task: str, seed: int) -> (list[PdfSegments], list
     labeled_data_path = join(ROOT_PATH.parent, "pdf-labeled-data", "labeled_data", "paragraph_selector", task)
     pdfs_segments = list()
     for index, pdf_name in enumerate(os.listdir(labeled_data_path)):
-        print("Loading", pdf_name)
         pdfs_segments.append(load_pdf_segments(task, pdf_name))
 
     current_pdfs_segments = [x for x in pdfs_segments]
@@ -143,19 +144,33 @@ def run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segme
         test_length=len(testing_pdfs_segments),
     )
 
+    return f1
+
 
 def evaluate_methods():
     results_name = f"paragraph_selector_{datetime.now():%Y_%m_%d_%H_%M}"
     results = Results(results_name)
 
-    for size, seed, task in get_loop_values():
-        training_pdfs_segments, testing_pdfs_segments = load_training_testing_data(task, seed)
-        training_pdfs_segments = training_pdfs_segments[:size]
-        for method_name in METHODS_TO_EXECUTE:
+    for method_name in METHODS_TO_EXECUTE:
+        f1s = list()
+        for size, seed, task in get_loop_values():
+            training_pdfs_segments, testing_pdfs_segments = load_training_testing_data(task, seed)
+            training_pdfs_segments = training_pdfs_segments[:size]
+
             print(
                 f"\n\nevaluating time:{datetime.now():%Y/%m/%d %H:%M} size:{size} seed:{seed} task:{task} method:{method_name}"
             )
-            run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results)
+            f1 = run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results)
+            f1s.append(f1)
+
+        results.set_start_time()
+        results.save_result(
+            dataset="Average",
+            method="",
+            accuracy=round(sum(f1s) / len(f1s), 2),
+            train_length=0,
+            test_length=0,
+        )
 
     results.write_results()
 

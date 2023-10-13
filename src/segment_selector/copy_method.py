@@ -1,8 +1,8 @@
 import shutil
 from pathlib import Path
 
-METHOD_TO_COPY = "lightgbm_frequent_words"
-NEW_METHOD_NAME = "frequent_words_previous_next_title"
+METHOD_TO_COPY = "base_frequent_words"
+NEW_METHOD_NAME = "avoiding_words"
 
 METHODS_FOLDER = Path("./methods").resolve()
 
@@ -44,6 +44,4 @@ def copy_method():
 
 
 if __name__ == "__main__":
-    # print(Path(METHODS_FOLDER).resolve())
-    # print(to_pascal_case(METHOD_TO_COPY))
     copy_method()

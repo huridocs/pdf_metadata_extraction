@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+  pdf_metadata_extraction_api:
+    container_name: pdf_metadata_extraction_api
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5056" ]
+    init: true
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - data:/app/docker_volume
+    depends_on:
+      - mongo_metadata_extraction
+      - pdf_metadata_extraction_worker
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    network_mode: 'host'
+    env_file: .env
+  pdf_metadata_extraction_worker:
+    container_name: pdf_metadata_extraction_worker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    init: true
+    entrypoint: [ "python", "-m", "src.QueueProcessor" ]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - data:/app/docker_volume
+    shm_size: '11gb'
+    depends_on:
+      - mongo_metadata_extraction
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    network_mode: 'host'
+    env_file: .env
+  mongo_metadata_extraction:
+    restart: unless-stopped
+    command: mongod --port 29017
+    image: "mongo:6"
+    network_mode: 'host'
+
+volumes:
+  data:

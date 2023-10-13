@@ -1,4 +1,4 @@
-METHODS_TO_EXECUTE = ["lightgbm_frequent_words"]
+METHODS_TO_EXECUTE = ["avoiding_words"]
 
 LABELED_DATA_TO_USE = [
     "title",

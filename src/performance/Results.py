@@ -24,10 +24,10 @@ class Results:
         table = Table(title="", box=box.MINIMAL_DOUBLE_HEAD)
         table.add_column("Dataset")
         table.add_column("Method")
-        table.add_column("Train size", justify="right")
-        table.add_column("Test size", justify="right")
+        table.add_column("Train \n size", justify="right")
+        table.add_column("Test \n size", justify="right")
         table.add_column("Time", justify="right")
-        table.add_column("Accuracy", justify="right")
+        table.add_column("Acc.", justify="right")
         return table
 
     def set_start_time(self):
