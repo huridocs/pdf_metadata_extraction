@@ -5,7 +5,7 @@ from functools import lru_cache
 from os.path import join, exists, dirname
 from pathlib import Path
 
-
+import torch
 import transformers
 from huggingface_hub import hf_hub_download
 import pandas as pd
@@ -161,12 +161,14 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
 
         predictions = list()
         tokenizer = MT5Tokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
-        model = MT5ForConditionalGeneration.from_pretrained(self.get_model_path(), device_map="auto")
+        model = MT5ForConditionalGeneration.from_pretrained(self.get_model_path())
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        model.to(device)
 
         max_length_predictions = int(self.get_max_length_path().read_text())
         config_logger.info(f"Max length predictions: {max_length_predictions}")
         for input_text in pd.read_csv(predict_data_path)["input_with_prefix"].tolist():
-            input_ids = tokenizer(input_text, return_tensors="pt").input_ids
+            input_ids = tokenizer(input_text, return_tensors="pt").to(device).input_ids
             outputs = model.generate(input_ids, max_length=max_length_predictions)
             predictions.append(tokenizer.decode(outputs[0])[6:-4])
 

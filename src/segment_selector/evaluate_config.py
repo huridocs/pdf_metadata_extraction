@@ -14,4 +14,4 @@ LABELED_DATA_TO_USE = [
 ]
 
 SIZES = [3000]
-SEEDS = [42]
+SEED = 42

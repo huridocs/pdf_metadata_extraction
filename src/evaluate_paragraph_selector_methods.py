@@ -20,7 +20,7 @@ from data.SegmentationData import SegmentationData
 from metadata_extraction.PdfSegments import PdfSegments
 from performance.Results import Results
 from segment_selector.Paragraphs import Paragraphs
-from segment_selector.evaluate_config import SIZES, SEEDS, LABELED_DATA_TO_USE, METHODS_TO_EXECUTE
+from segment_selector.evaluate_config import SIZES, SEED, LABELED_DATA_TO_USE, METHODS_TO_EXECUTE
 
 RANDOM_SEED = 42
 
@@ -107,9 +107,8 @@ def load_training_testing_data(task: str, seed: int) -> (list[PdfSegments], list
 
 def get_loop_values():
     for size in SIZES:
-        for seed in SEEDS:
-            for task in LABELED_DATA_TO_USE:
-                yield size, seed, task
+        for task in LABELED_DATA_TO_USE:
+            yield size, SEED, task
 
 
 def snake_case_to_pascal_case(name: str):
