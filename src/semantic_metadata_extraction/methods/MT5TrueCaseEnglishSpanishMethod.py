@@ -133,7 +133,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             early_stopping_patience=4,
             log_level="error",
             generation_max_length=output_length,
-            use_cpu= not torch.cuda.is_available()
+            use_cpu=not torch.cuda.is_available(),
         )
 
         run(model_arguments, data_training_arguments, t5_training_arguments)
