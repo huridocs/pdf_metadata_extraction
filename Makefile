@@ -28,6 +28,10 @@ start:
 	docker compose -f local-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
 start_gpu:
+	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+
+
+start_local_gpu:
 	docker compose -f local-gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
 start_detached:

@@ -11,7 +11,7 @@ from huggingface_hub import hf_hub_download
 import pandas as pd
 import csv
 from transformers.utils import logging as logging_hf
-from transformers import AutoTokenizer, MT5Tokenizer, MT5ForConditionalGeneration
+from transformers import AutoTokenizer, MT5ForConditionalGeneration
 
 from config import DATA_PATH, config_logger
 from data.PdfTagData import PdfTagData
@@ -161,7 +161,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
             return texts
 
         predictions = list()
-        tokenizer = MT5Tokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
+        tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es")
         model = MT5ForConditionalGeneration.from_pretrained(self.get_model_path())
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model.to(device)
