@@ -2,7 +2,7 @@ version: "3.8"
 services:
   pdf_metadata_extraction_api:
     container_name: pdf_metadata_extraction_api
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5056" ]
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"   ]
     init: true
     restart: unless-stopped
     build:

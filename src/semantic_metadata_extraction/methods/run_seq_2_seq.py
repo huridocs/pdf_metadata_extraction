@@ -589,6 +589,8 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
         preds = outputs if isinstance(outputs, (np.ndarray, np.generic)) else outputs.predictions
         if isinstance(preds, tuple):
             preds = preds[0]
+
+        preds[preds == -100] = 0
         decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
 
         # Build a map example to its corresponding features.

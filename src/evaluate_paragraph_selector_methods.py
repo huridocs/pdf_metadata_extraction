@@ -20,7 +20,7 @@ from data.SegmentationData import SegmentationData
 from metadata_extraction.PdfSegments import PdfSegments
 from performance.Results import Results
 from segment_selector.Paragraphs import Paragraphs
-from segment_selector.evaluate_config import SIZES, SEED, LABELED_DATA_TO_USE, METHODS_TO_EXECUTE
+from segment_selector.evaluate_config import SIZES, SEED, LABELED_DATA_TO_USE, METHODS_TO_EXECUTE, PDF_LABELED_DATA_PATH
 
 RANDOM_SEED = 42
 
@@ -68,6 +68,7 @@ def load_pdf_segments(task: str, pdf_name: str) -> PdfSegments:
 
     pdfs_path = join(labeled_data_root_path, "pdfs")
     pdf_features = PdfFeatures.from_poppler_etree(join(pdfs_path, pdf_name, "etree.xml"))
+    pdf_features.file_name = pdf_name
 
     pdf_path = join(pdfs_path, pdf_name, "document.pdf")
     segmentation_data: SegmentationData = get_segmentation_data(pdf_path, pdf_name)
@@ -115,7 +116,27 @@ def snake_case_to_pascal_case(name: str):
     return "".join(word.title() for word in name.split("_"))
 
 
-def run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results):
+def save_mistakes(method_name: str, task: str, testing_pdfs_segments: list[PdfSegments], predictions_binary: list[int]):
+    prediction_index = 0
+    for pdf_segments in testing_pdfs_segments:
+        y_true = [segment.ml_label for segment in pdf_segments.pdf_segments]
+        pdf_segments_predictions = predictions_binary[prediction_index : prediction_index + len(y_true)]
+        prediction_index += len(y_true)
+
+        task_mistakes = TaskMistakes(PDF_LABELED_DATA_PATH, task + "_" + method_name, pdf_segments.pdf_features.file_name)
+        for segment, truth, prediction in zip(pdf_segments.pdf_segments, y_true, pdf_segments_predictions):
+            task_mistakes.add_label(segment.bounding_box, truth, prediction)
+
+        task_mistakes.save()
+
+
+def run_one_method(
+    method_name: str,
+    task: str,
+    training_pdfs_segments: list[PdfSegments],
+    testing_pdfs_segments: list[PdfSegments],
+    results: Results,
+):
     results.set_start_time()
     method_class_name = snake_case_to_pascal_case(method_name)
     import_from = f"segment_selector.methods.{method_name}.{method_class_name}"
@@ -133,6 +154,9 @@ def run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segme
 
     y_true = [x.ml_label for test in testing_pdfs_segments for x in test.pdf_segments]
     prediction_binary = [1 if prediction > 0.5 else 0 for prediction in predictions]
+
+    save_mistakes(method_name, task, testing_pdfs_segments, prediction_binary)
+
     f1 = round(100 * f1_score(y_true, prediction_binary), 2)
 
     results.save_result(
@@ -154,24 +178,25 @@ def evaluate_methods():
         f1s = list()
         for size, seed, task in get_loop_values():
             training_pdfs_segments, testing_pdfs_segments = load_training_testing_data(task, seed)
-            training_pdfs_segments = training_pdfs_segments[:size]
-
-            print(
-                f"\n\nevaluating time:{datetime.now():%Y/%m/%d %H:%M} size:{size} seed:{seed} task:{task} method:{method_name}"
-            )
-            f1 = run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results)
-            f1s.append(f1)
-
-        results.set_start_time()
-        results.save_result(
-            dataset="Average",
-            method="",
-            accuracy=round(sum(f1s) / len(f1s), 2),
-            train_length=0,
-            test_length=0,
-        )
-
-    results.write_results()
+            save_mistakes(task, testing_pdfs_segments, list())
+    #         training_pdfs_segments = training_pdfs_segments[:size]
+    #
+    #         print(
+    #             f"\n\nevaluating time:{datetime.now():%Y/%m/%d %H:%M} size:{size} seed:{seed} task:{task} method:{method_name}"
+    #         )
+    #         f1 = run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results)
+    #         f1s.append(f1)
+    #
+    #     results.set_start_time()
+    #     results.save_result(
+    #         dataset="Average",
+    #         method="",
+    #         accuracy=round(sum(f1s) / len(f1s), 2),
+    #         train_length=0,
+    #         test_length=0,
+    #     )
+    #
+    # results.write_results()
 
 
 if __name__ == "__main__":
