@@ -11,7 +11,8 @@ from pathlib import Path
 
 import requests
 from pdf_features.PdfFeatures import PdfFeatures
-from pdf_token_type_labels.TokenTypeLabels import TokenTypeLabels
+from pdf_token_type_labels.PdfLabels import PdfLabels
+from pdf_token_type_labels.TaskMistakes import TaskMistakes
 from sklearn.metrics import f1_score
 
 from config import ROOT_PATH, DATA_PATH
@@ -67,17 +68,16 @@ def load_pdf_segments(task: str, pdf_name: str) -> PdfSegments:
     labeled_data_root_path = join(ROOT_PATH.parent, "pdf-labeled-data")
 
     pdfs_path = join(labeled_data_root_path, "pdfs")
-    pdf_features = PdfFeatures.from_poppler_etree(join(pdfs_path, pdf_name, "etree.xml"))
-    pdf_features.file_name = pdf_name
+    pdf_features = PdfFeatures.from_poppler_etree(join(pdfs_path, pdf_name, "etree.xml"), pdf_name)
 
     pdf_path = join(pdfs_path, pdf_name, "document.pdf")
     segmentation_data: SegmentationData = get_segmentation_data(pdf_path, pdf_name)
 
     labeled_data_path = join(labeled_data_root_path, "labeled_data", "paragraph_selector", task, pdf_name, "labels.json")
-    token_type_labels = TokenTypeLabels(**json.loads(Path(labeled_data_path).read_text()))
+    pdf_labels = PdfLabels(**json.loads(Path(labeled_data_path).read_text()))
     segmentation_data.label_segments_boxes = [
         SegmentBox(left=label.left, top=label.top, width=label.width, height=label.height, page_number=page.number)
-        for page in token_type_labels.pages
+        for page in pdf_labels.pages
         for label in page.labels
     ]
 
@@ -125,7 +125,9 @@ def save_mistakes(method_name: str, task: str, testing_pdfs_segments: list[PdfSe
 
         task_mistakes = TaskMistakes(PDF_LABELED_DATA_PATH, task + "_" + method_name, pdf_segments.pdf_features.file_name)
         for segment, truth, prediction in zip(pdf_segments.pdf_segments, y_true, pdf_segments_predictions):
-            task_mistakes.add_label(segment.bounding_box, truth, prediction)
+            if not truth and not prediction:
+                continue
+            task_mistakes.add(segment.page_number, segment.bounding_box, truth, prediction)
 
         task_mistakes.save()
 
@@ -178,25 +180,24 @@ def evaluate_methods():
         f1s = list()
         for size, seed, task in get_loop_values():
             training_pdfs_segments, testing_pdfs_segments = load_training_testing_data(task, seed)
-            save_mistakes(task, testing_pdfs_segments, list())
-    #         training_pdfs_segments = training_pdfs_segments[:size]
-    #
-    #         print(
-    #             f"\n\nevaluating time:{datetime.now():%Y/%m/%d %H:%M} size:{size} seed:{seed} task:{task} method:{method_name}"
-    #         )
-    #         f1 = run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results)
-    #         f1s.append(f1)
-    #
-    #     results.set_start_time()
-    #     results.save_result(
-    #         dataset="Average",
-    #         method="",
-    #         accuracy=round(sum(f1s) / len(f1s), 2),
-    #         train_length=0,
-    #         test_length=0,
-    #     )
-    #
-    # results.write_results()
+            training_pdfs_segments = training_pdfs_segments[:size]
+
+            print(
+                f"\n\nevaluating time:{datetime.now():%Y/%m/%d %H:%M} size:{size} seed:{seed} task:{task} method:{method_name}"
+            )
+            f1 = run_one_method(method_name, task, training_pdfs_segments, testing_pdfs_segments, results)
+            f1s.append(f1)
+
+        results.set_start_time()
+        results.save_result(
+            dataset="Average",
+            method="",
+            accuracy=round(sum(f1s) / len(f1s), 2),
+            train_length=0,
+            test_length=0,
+        )
+
+    results.write_results()
 
 
 if __name__ == "__main__":
