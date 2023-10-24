@@ -2,7 +2,7 @@ from os.path import join
 
 from config import ROOT_PATH
 
-METHODS_TO_EXECUTE = ["avoiding_words"]
+METHODS_TO_EXECUTE = ["base_frequent_words"]
 
 LABELED_DATA_TO_USE = [
     "title",

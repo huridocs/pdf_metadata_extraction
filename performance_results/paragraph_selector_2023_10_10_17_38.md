@@ -3,17 +3,19 @@
   Dataset                 │ Method              │   size │  size │ Time │ Acc.  
  ═════════════════════════╪═════════════════════╪════════╪═══════╪══════╪══════ 
   title                   │ base_frequent_words │     15 │    11 │   2s │  83%  
-  decides                 │ base_frequent_words │     82 │    55 │  50s │  84%  
+  decides                 │ base_frequent_words │     82 │    55 │  45s │  84%  
   signatories             │ base_frequent_words │     82 │    55 │   5s │  97%  
-  first paragraph having  │ base_frequent_words │     82 │    55 │  15s │  96%  
+  first paragraph having  │ base_frequent_words │     82 │    55 │  14s │  96%  
   seen                    │                     │        │       │      │       
-  secretary               │ base_frequent_words │     82 │    55 │   4s │  96%  
-  president               │ base_frequent_words │     82 │    55 │   4s │  97%  
-  date                    │ base_frequent_words │     82 │    55 │   6s │  98%  
+  secretary               │ base_frequent_words │     82 │    55 │   4s │ 100%  
+  president               │ base_frequent_words │     82 │    55 │   4s │ 100%  
+  date                    │ base_frequent_words │     82 │    55 │   6s │  99%  
   plan many date          │ base_frequent_words │     95 │    64 │   9s │  98%  
-  plan many title         │ base_frequent_words │     95 │    64 │  10s │  99%  
-  semantic president      │ base_frequent_words │    150 │   100 │ 313s │  76%  
+  plan many title         │ base_frequent_words │     95 │    64 │  11s │  99%  
+  semantic president      │ base_frequent_words │    150 │   100 │ 287s │  76%  
   Average                 │                     │      0 │     0 │   0s │  93%  
+                          │                     │        │       │      │       
+  average                 │                     │        │       │      │  93%  
 
 
   title                   │ next_previous_title │     15 │    11 │   1s │  83%  
