@@ -30,4 +30,4 @@ rich==13.6.0
 joblib==1.3.2
 sentence_transformers==2.2.2
 git+https://github.com/huggingface/setfit.git@c023a1b6b15514b86f0ee0d5f88c6070251c9561
-git+https://github.com/huridocs/pdf-tokens-type-labeler@4fea0863939cd818cf8f9d0fd50e351b0e052ad9
+git+https://github.com/huridocs/pdf-tokens-type-labeler@576a06128ba653562f008fa7177c64a6b43fabe9

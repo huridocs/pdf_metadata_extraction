@@ -81,3 +81,19 @@
   plan many title             │ avoiding_words │     95 │    64 │  13s │  99%  
   semantic president          │ avoiding_words │    150 │   100 │ 575s │  77%  
   Average                     │                │      0 │     0 │   0s │  93%
+
+
+  title                  │ common_words_weights │     15 │    11 │   2s │  83%  
+  decides                │ common_words_weights │     82 │    55 │  45s │  82%  
+  signatories            │ common_words_weights │     82 │    55 │   5s │  98%  
+  first paragraph having │ common_words_weights │     82 │    55 │  13s │  96%  
+  seen                   │                      │        │       │      │       
+  secretary              │ common_words_weights │     82 │    55 │   4s │ 100%  
+  president              │ common_words_weights │     82 │    55 │   4s │ 100%  
+  date                   │ common_words_weights │     82 │    55 │   5s │  98%  
+  plan many date         │ common_words_weights │     95 │    64 │   9s │  98%  
+  plan many title        │ common_words_weights │     95 │    64 │  10s │  99%  
+  semantic president     │ common_words_weights │    150 │   100 │ 268s │  76%  
+  Average                │                      │      0 │     0 │   0s │  93%  
+                         │                      │        │       │      │       
+  average                │                      │        │       │      │  93%  

@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from copy import deepcopy
 
 import nltk
 import numpy as np
@@ -13,11 +13,10 @@ from segment_selector.methods.Modes import Modes
 nltk.download("punkt")
 
 
-class SegmentNextPreviousTitle:
+class SegmentTitlesHistory:
     def __init__(self, segment_index: int, pdf_segment: PdfSegment, pdf_segments: PdfSegments, modes: Modes):
         self.modes = modes
-        self.previous_title_segment = None
-        self.next_title_segment = None
+        self.previous_titles_segments: list["SegmentTitlesHistory"] = list()
         self.previous_segment = None
         self.next_segment = None
         self.segment_index: float = segment_index
@@ -119,39 +118,42 @@ class SegmentNextPreviousTitle:
             self.starts_with_roman_numbers = True
         self.starts_with_square_brackets = self.text_content[0] == "["
 
-    def get_title_features(self, segment_title: "SegmentNextPreviousTitle"):
-        if not segment_title:
+    def get_last_title_features(self, index: int):
+        if len(self.previous_titles_segments) <= index:
             return list(np.zeros(22))
 
-        font_size_mode = sum(segment_title.font_sizes) / len(segment_title.font_sizes)
+        font_size_mode = sum(self.previous_titles_segments[index].font_sizes) / len(
+            self.previous_titles_segments[index].font_sizes
+        )
 
         return [
-            segment_title.segment_index,
-            len(segment_title.pdf_segments.pdf_segments) - segment_title.segment_index,
-            segment_title.page_index,
-            len(self.pdf_segments.pdf_features.pages) - segment_title.page_index,
-            segment_title.bold,
-            segment_title.italics,
-            segment_title.text_len,
-            segment_title.top,
-            segment_title.bottom,
-            segment_title.height,
-            segment_title.width,
-            segment_title.font_size / font_size_mode,
-            segment_title.line_height,
-            segment_title.numbers_percentage,
-            1 if segment_title.starts_upper else 0,
-            1 if segment_title.starts_number else 0,
-            segment_title.starts_number_bar,
-            segment_title.numbers_quantity,
-            segment_title.starts_with_square_brackets,
-            segment_title.starts_letter_dot,
-            segment_title.dots_percentage,
-            1 if segment_title.uppercase else 0,
+            self.previous_titles_segments[index].segment_index,
+            len(self.previous_titles_segments[index].pdf_segments.pdf_segments)
+            - self.previous_titles_segments[index].segment_index,
+            self.previous_titles_segments[index].page_index,
+            len(self.pdf_segments.pdf_features.pages) - self.previous_titles_segments[index].page_index,
+            self.previous_titles_segments[index].bold,
+            self.previous_titles_segments[index].italics,
+            self.previous_titles_segments[index].text_len,
+            self.previous_titles_segments[index].top,
+            self.previous_titles_segments[index].bottom,
+            self.previous_titles_segments[index].height,
+            self.previous_titles_segments[index].width,
+            self.previous_titles_segments[index].font_size / font_size_mode,
+            self.previous_titles_segments[index].line_height,
+            self.previous_titles_segments[index].numbers_percentage,
+            1 if self.previous_titles_segments[index].starts_upper else 0,
+            1 if self.previous_titles_segments[index].starts_number else 0,
+            self.previous_titles_segments[index].starts_number_bar,
+            self.previous_titles_segments[index].numbers_quantity,
+            self.previous_titles_segments[index].starts_with_square_brackets,
+            self.previous_titles_segments[index].starts_letter_dot,
+            self.previous_titles_segments[index].dots_percentage,
+            1 if self.previous_titles_segments[index].uppercase else 0,
         ]
 
     @staticmethod
-    def get_other_segment_features(segment: "SegmentNextPreviousTitle"):
+    def get_other_segment_features(segment: "SegmentTitlesHistory"):
         if not segment:
             return list(np.zeros(22))
 
@@ -219,8 +221,9 @@ class SegmentNextPreviousTitle:
             ]
             + self.get_other_segment_features(self.previous_segment)
             + self.get_other_segment_features(self.next_segment)
-            + self.get_title_features(self.previous_title_segment)
-            + self.get_title_features(self.next_title_segment)
+            + self.get_last_title_features(0)
+            + self.get_last_title_features(1)
+            + self.get_last_title_features(2)
             + self.most_frequent_words
         )
         return features
@@ -238,16 +241,24 @@ class SegmentNextPreviousTitle:
         return False
 
     @staticmethod
-    def from_pdf_features(pdf_features: PdfSegments) -> list["SegmentNextPreviousTitle"]:
+    def from_pdf_features(pdf_features: PdfSegments) -> list["SegmentTitlesHistory"]:
         modes = Modes(pdf_features)
-        segments: list["SegmentNextPreviousTitle"] = list()
+        segments: list["SegmentTitlesHistory"] = list()
         for index, pdf_segment in enumerate(pdf_features.pdf_segments):
-            segment_landmarks = SegmentNextPreviousTitle(index, pdf_segment, pdf_features, modes)
+            segment_landmarks = SegmentTitlesHistory(index, pdf_segment, pdf_features, modes)
             segments.append(segment_landmarks)
 
         sorted_pdf_segments = sorted(segments, key=lambda x: (x.page_index, x.top))
 
-        SegmentNextPreviousTitle.set_context_titles(sorted_pdf_segments)
+        previous_titles_segment: list[SegmentTitlesHistory] = list()
+
+        for sorted_segment in sorted_pdf_segments:
+            sorted_segment.previous_titles_segments = deepcopy(previous_titles_segment)
+            if sorted_segment.pdf_segment.segment_type == TokenType.TITLE:
+                title_segment = deepcopy(sorted_segment)
+                title_segment.previous_titles_segments = []
+                previous_titles_segment.insert(0, title_segment)
+                previous_titles_segment = previous_titles_segment[:3]
 
         for index, sorted_segment in enumerate(sorted_pdf_segments):
             if 0 < index:
@@ -257,20 +268,6 @@ class SegmentNextPreviousTitle:
                 sorted_segment.next_segment = sorted_pdf_segments[index + 1]
 
         return segments
-
-    @staticmethod
-    def set_context_titles(sorted_pdf_segments):
-        previous_title_segment: Optional[SegmentNextPreviousTitle] = None
-        for sorted_segment in sorted_pdf_segments:
-            sorted_segment.previous_titles_segments = previous_title_segment
-            if sorted_segment.pdf_segment.segment_type == TokenType.TITLE:
-                previous_title_segment = sorted_segment
-
-        next_title_segment: Optional[SegmentNextPreviousTitle] = None
-        for sorted_segment in reversed(sorted_pdf_segments):
-            sorted_segment.next_title_segment = next_title_segment
-            if sorted_segment.pdf_segment.segment_type == TokenType.TITLE:
-                next_title_segment = sorted_segment
 
     def set_most_frequent_words(self, most_frequent_words: list[str]):
         self.most_frequent_words = [1 if w.lower() in self.text_content.lower() else 0 for w in most_frequent_words]

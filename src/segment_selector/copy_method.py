@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 
 METHOD_TO_COPY = "base_frequent_words"
-NEW_METHOD_NAME = "avoiding_words"
+NEW_METHOD_NAME = "titles_history"
 
 METHODS_FOLDER = Path("./methods").resolve()
 
