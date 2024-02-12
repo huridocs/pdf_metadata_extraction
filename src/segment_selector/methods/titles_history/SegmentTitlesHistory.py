@@ -271,5 +271,5 @@ class SegmentTitlesHistory:
         self.most_frequent_words = [1 if w.lower() in self.text_content.lower() else 0 for w in most_frequent_words]
 
     @staticmethod
-    def copy(segment: 'SegmentTitlesHistory'):
+    def copy(segment: "SegmentTitlesHistory"):
         return SegmentTitlesHistory(int(segment.segment_index), segment.pdf_segment, segment.pdf_segments, segment.modes)
