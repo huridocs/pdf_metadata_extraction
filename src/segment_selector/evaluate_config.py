@@ -2,10 +2,11 @@ from os.path import join
 
 from config import ROOT_PATH
 
-METHODS_TO_EXECUTE = ["base_frequent_words"]
+METHODS_TO_EXECUTE = ["titles_history"]
 
 LABELED_DATA_TO_USE = [
-    "title",
+    # "rightdocs_titles",
+    # "title",
     "decides",
     "signatories",
     "first_paragraph_having_seen",

@@ -253,11 +253,9 @@ class SegmentTitlesHistory:
         previous_titles_segment: list[SegmentTitlesHistory] = list()
 
         for sorted_segment in sorted_pdf_segments:
-            sorted_segment.previous_titles_segments = deepcopy(previous_titles_segment)
+            sorted_segment.previous_titles_segments = previous_titles_segment
             if sorted_segment.pdf_segment.segment_type == TokenType.TITLE:
-                title_segment = deepcopy(sorted_segment)
-                title_segment.previous_titles_segments = []
-                previous_titles_segment.insert(0, title_segment)
+                previous_titles_segment.insert(0, SegmentTitlesHistory.copy(sorted_segment))
                 previous_titles_segment = previous_titles_segment[:3]
 
         for index, sorted_segment in enumerate(sorted_pdf_segments):
@@ -271,3 +269,7 @@ class SegmentTitlesHistory:
 
     def set_most_frequent_words(self, most_frequent_words: list[str]):
         self.most_frequent_words = [1 if w.lower() in self.text_content.lower() else 0 for w in most_frequent_words]
+
+    @staticmethod
+    def copy(segment: 'SegmentTitlesHistory'):
+        return SegmentTitlesHistory(int(segment.segment_index), segment.pdf_segment, segment.pdf_segments, segment.modes)
