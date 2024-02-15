@@ -1,3 +1,84 @@
-[
-  {"cejil1":  ["Eduardo Ferrer Mac-Gregor Poisot", "other president"]}
-]
+{
+  "cejil1": [
+    "Eduardo Ferrer Mac-Gregor Poisot"
+  ],
+  "cejil7": [
+    "Sergio García Ramírez"
+  ],
+  "cejil8": [
+    "Héctor Fix-Zamudio"
+  ],
+  "cejil_b1": [
+    "Sergio García Ramírez"
+  ],
+  "cejil_b2": [
+    "Rafael Nieto Navia"
+  ],
+  "cejil_b3": [
+    "Thomas Buergenthal"
+  ],
+  "cejil_staging1": [
+    "Diego García-Sayán"
+  ],
+  "cejil_staging10": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging12": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging15": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging17": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging2": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging20": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging21": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging24": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging27": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging31": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging4": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging44": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging54": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging55": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging56": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging58": [
+    "L. Patricio Pazmiño Freire"
+  ],
+  "cejil_staging66": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging71": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging72": [
+    "Elizabeth Odio Benito"
+  ],
+  "cejil_staging8": [
+    "Joel Hernández",
+    "Esmeralda E. Arosemena Bernal de Troitiño"
+  ]
+}
