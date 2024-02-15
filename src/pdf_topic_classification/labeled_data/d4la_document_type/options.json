@@ -1,1 +1,14 @@
-["Mail", "Scientific"]
+[
+    "Budget",
+    "Email",
+    "Form",
+    "Invoice",
+    "Letter",
+    "Memo",
+    "News Article",
+    "Presentation",
+    "Resume",
+    "Scientific Publication",
+    "Scientific Report",
+    "Specification"
+]
