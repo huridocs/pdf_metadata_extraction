@@ -27,6 +27,7 @@ class PdfTopicClassificationMethod(ABC):
 
     def get_performance(self, task_labeled_data: PdfTopicClassificationLabeledData) -> float:
         train_size = int(len(task_labeled_data.pdfs_labels) * 0.8)
+        random.seed(22)
         train_set: list[PdfLabels] = random.choices(task_labeled_data.pdfs_labels, k=train_size)
         test_set: list[PdfLabels] = [x for x in task_labeled_data.pdfs_labels if x not in train_set]
         truth_one_hot = self.one_hot_to_options_list([x.labels for x in test_set])

@@ -1,8 +1,7 @@
-import json
+
 import os
 import pickle
-from json import JSONDecodeError
-from os import listdir
+
 from os.path import join, exists
 from pathlib import Path
 
@@ -16,14 +15,14 @@ from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
 from config import ROOT_PATH
 from pdf_topic_classification.PdfLabels import PARAGRAPHS_CACHE_FOLDER_PATH
-from pdf_topic_classification.get_pdf_topic_classification_labeled_data import get_pdf_names
+from pdf_topic_classification.pdf_topic_classification_data import get_pdf_names
 
 LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 
 
 def cache_pdfs_features():
     for pdf_name in get_pdf_names():
-        pickle_path = Path(join(PARAGRAPHS_CACHE_FOLDER_PATH, pdf_name + ".pickle"))
+        pickle_path = Path(str(join(PARAGRAPHS_CACHE_FOLDER_PATH, pdf_name + ".pickle")))
         os.makedirs(pickle_path.parent, exist_ok=True)
 
         if exists(pickle_path):
