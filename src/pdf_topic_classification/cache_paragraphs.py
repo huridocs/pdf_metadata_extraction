@@ -20,7 +20,7 @@ from pdf_topic_classification.pdf_topic_classification_data import get_pdf_names
 LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 
 
-def cache_pdfs_features():
+def cache_paragraph_extraction_predictions():
     for pdf_name in get_pdf_names():
         pickle_path = Path(str(join(PARAGRAPHS_CACHE_FOLDER_PATH, pdf_name + ".pickle")))
         os.makedirs(pickle_path.parent, exist_ok=True)
@@ -45,4 +45,4 @@ def cache_pdfs_features():
 
 
 if __name__ == "__main__":
-    cache_pdfs_features()
+    cache_paragraph_extraction_predictions()
