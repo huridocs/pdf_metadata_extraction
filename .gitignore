@@ -17,3 +17,4 @@ outputs
 /docker_volume/
 /huggingface/
 /.ruff_cache/
+/data/

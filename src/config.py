@@ -26,8 +26,6 @@ DATA_PATH = join(ROOT_PATH, "docker_volume")
 
 HUGGINGFACE_PATH = join(ROOT_PATH, "huggingface")
 
-LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
-
 handlers = [logging.StreamHandler()]
 
 if GRAYLOG_IP:
