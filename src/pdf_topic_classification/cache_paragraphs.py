@@ -15,15 +15,15 @@ from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
 from config import APP_PATH, ROOT_PATH
 
-PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH = join(Path(__file__).parent, 'labeled_data')
-PARAGRAPHS_CACHE_FOLDER_PATH = join(APP_PATH, 'data', 'paragraphs_cache')
+PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH = join(Path(__file__).parent, "labeled_data")
+PARAGRAPHS_CACHE_FOLDER_PATH = join(APP_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 
 
 def get_pdf_names():
     pdfs_names = set()
     for labeled_data_task in listdir(str(PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH)):
-        with open(join(PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH, labeled_data_task, 'labels.json'), mode="r") as file:
+        with open(join(PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH, labeled_data_task, "labels.json"), mode="r") as file:
             labels: dict[str, str] | dict[str, list[str]] = json.load(file)
             pdfs_names.update(labels.keys())
 
@@ -39,7 +39,7 @@ def cache_pdfs_features():
             continue
 
         print("caching ", pdf_name)
-        pdf_features = PdfFeatures.from_poppler_etree(join(LABELED_DATA_PDFS_PATH, pdf_name,  "etree.xml"))
+        pdf_features = PdfFeatures.from_poppler_etree(join(LABELED_DATA_PDFS_PATH, pdf_name, "etree.xml"))
         trainer = TokenTypeTrainer([pdf_features], ModelConfiguration())
         trainer.set_token_types()
         trainer = ParagraphExtractorTrainer(pdfs_features=[pdf_features], model_configuration=MODEL_CONFIGURATION)
@@ -49,5 +49,5 @@ def cache_pdfs_features():
             pickle.dump(paragraphs, file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cache_pdfs_features()
