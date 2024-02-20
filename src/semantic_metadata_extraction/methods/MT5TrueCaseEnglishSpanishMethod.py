@@ -198,12 +198,12 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         true_case_english, true_case_spanish = self.get_true_case()
 
         if semantic_extraction_data.language_iso == "en":
-            return true_case_english.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags))
+            return true_case_english.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.texts))
 
         if semantic_extraction_data.language_iso == "es":
-            return true_case_spanish.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags))
+            return true_case_spanish.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.texts))
 
-        return self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags)
+        return self.get_text_from_pdf_tags(semantic_extraction_data.texts)
 
     def delete_checkpoints(self):
         for file_name in os.listdir(self.get_model_path()):

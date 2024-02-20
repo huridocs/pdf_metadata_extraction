@@ -43,7 +43,7 @@ class MultiOptionMethod(ABC):
         one_hot_encoding = list()
         for sample in multi_option_extraction_data.samples:
             one_hot_encoding.append([0] * len(options_ids))
-            for option in sample.options:
+            for option in sample.values:
                 one_hot_encoding[-1][options_ids.index(option.id)] = 1
         return one_hot_encoding
 

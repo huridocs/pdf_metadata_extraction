@@ -1,4 +1,3 @@
-from json import JSONDecodeError
 from os import listdir
 from pdf_topic_classification.PdfTopicClassificationLabeledData import (
     PdfTopicClassificationLabeledData,
@@ -8,12 +7,9 @@ from pdf_topic_classification.PdfTopicClassificationLabeledData import (
 
 def get_labeled_data() -> list[PdfTopicClassificationLabeledData]:
     labeled_data: list[PdfTopicClassificationLabeledData] = list()
-    for labeled_data_task in listdir(str(PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH)):
-        try:
-            labeled_data.append(PdfTopicClassificationLabeledData(labeled_data_task))
-            print(f"Loading task {labeled_data_task}")
-        except JSONDecodeError:
-            print(f"error {labeled_data_task}")
+    for task_name in listdir(str(PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH)):
+        print(f"Loading task {task_name}")
+        labeled_data.append(PdfTopicClassificationLabeledData(task_name))
 
     print()
     return labeled_data

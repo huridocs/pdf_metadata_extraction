@@ -177,7 +177,7 @@ class MetadataExtraction:
             multi_option_extractor = MultiOptionExtractor(self.tenant, self.extraction_id)
             multi_option_predictions = multi_option_extractor.get_multi_option_predictions(semantic_predictions_data)
             for multi_option_extraction_sample, suggestion in zip(multi_option_predictions, suggestions):
-                suggestion.add_prediction_multi_option(multi_option_extraction_sample.options)
+                suggestion.add_prediction_multi_option(multi_option_extraction_sample.values)
         else:
             semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
             semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
@@ -240,8 +240,8 @@ class MetadataExtraction:
         multi_option_samples: list[MultiOptionExtractionSample] = list()
         for pdf_features, labeled_data in zip(self.pdf_segments, self.labeled_data):
             multi_option_sample = MultiOptionExtractionSample(
-                pdf_tags=(self.get_predicted_tags_data(pdf_features)),
-                options=labeled_data.options,
+                texts=(self.get_predicted_tags_data(pdf_features)),
+                values=labeled_data.values,
                 language_iso=standardize_tag(labeled_data.language_iso),
             )
             multi_option_samples.append(multi_option_sample)

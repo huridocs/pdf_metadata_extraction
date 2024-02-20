@@ -58,7 +58,7 @@ class MultiOptionExtractor:
         options_predictions = method.predict(semantic_predictions_data)
         for semantic_prediction_data, prediction in zip(semantic_predictions_data, options_predictions):
             multi_option_extraction_sample = MultiOptionExtractionSample(
-                pdf_tags=semantic_prediction_data.pdf_tags, options=prediction
+                pdf_tags=semantic_prediction_data.pdf_tags, values=prediction
             )
             multi_option_extraction_samples.append(multi_option_extraction_sample)
 
@@ -75,13 +75,17 @@ class MultiOptionExtractor:
             self.multi_value = json.load(file)
 
     def get_best_method(self, multi_option_extraction_data: MultiOptionExtractionData):
-        samples = [sample for sample in multi_option_extraction_data.samples if sample.pdf_tags]
+        best_method_instance = self.METHODS[0](self.tenant, self.extraction_id, self.options, self.multi_value)
+
+        if len(self.METHODS) == 1:
+            return best_method_instance
+
+        samples = [sample for sample in multi_option_extraction_data.samples if sample.texts]
         performance_multi_option_extraction_data = MultiOptionExtractionData(
             multi_value=self.multi_value, options=self.options, samples=samples
         )
 
         best_performance = 0
-        best_method_instance = self.METHODS[0](self.tenant, self.extraction_id, self.options, self.multi_value)
         for method in self.METHODS:
             method_instance = method(self.tenant, self.extraction_id, self.options, self.multi_value)
             config_logger.info(f"\nChecking {method_instance.get_name()}")

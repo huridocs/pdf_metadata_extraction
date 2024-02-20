@@ -37,8 +37,8 @@ class TestMultiOptionExtraction(TestCase):
         predictions = multi_option_extraction.get_multi_option_predictions(semantic_predictions_data)
 
         self.assertEqual(2, len(predictions))
-        self.assertEqual([Option(id="1", label="1")], predictions[0].options)
-        self.assertEqual([Option(id="3", label="3")], predictions[1].options)
+        self.assertEqual([Option(id="1", label="1")], predictions[0].values)
+        self.assertEqual([Option(id="3", label="3")], predictions[1].values)
 
     def test_multi_value(self):
         multi_option_extraction = MultiOptionExtractor(self.TENANT, self.extraction_id)
@@ -63,8 +63,8 @@ class TestMultiOptionExtraction(TestCase):
         predictions = multi_option_extraction.get_multi_option_predictions(semantic_predictions_data)
 
         self.assertEqual(2, len(predictions))
-        self.assertEqual([options[0], options[1]], sorted(predictions[0].options, key=lambda x: x.id))
-        self.assertEqual([options[0], options[2]], sorted(predictions[1].options, key=lambda x: x.id))
+        self.assertEqual([options[0], options[1]], sorted(predictions[0].values, key=lambda x: x.id))
+        self.assertEqual([options[0], options[2]], sorted(predictions[1].values, key=lambda x: x.id))
 
     def test_tf_idf(self):
         multi_option_extraction = MultiOptionExtractor(self.TENANT, self.extraction_id)
@@ -90,8 +90,8 @@ class TestMultiOptionExtraction(TestCase):
         predictions = multi_option_extraction.get_multi_option_predictions(semantic_predictions_data)
 
         self.assertEqual(2, len(predictions))
-        self.assertEqual([options[0], options[1]], sorted(predictions[0].options, key=lambda x: x.id))
-        self.assertEqual([options[0], options[2]], sorted(predictions[1].options, key=lambda x: x.id))
+        self.assertEqual([options[0], options[1]], sorted(predictions[0].values, key=lambda x: x.id))
+        self.assertEqual([options[0], options[2]], sorted(predictions[1].values, key=lambda x: x.id))
 
     def test_setfit(self):
         multi_option_extraction = MultiOptionExtractor(self.TENANT, self.extraction_id)
@@ -117,8 +117,8 @@ class TestMultiOptionExtraction(TestCase):
         predictions = multi_option_extraction.get_multi_option_predictions(semantic_predictions_data)
 
         self.assertEqual(2, len(predictions))
-        self.assertEqual([options[0], options[1]], sorted(predictions[0].options, key=lambda x: x.id))
-        self.assertEqual([options[0], options[2]], sorted(predictions[1].options, key=lambda x: x.id))
+        self.assertEqual([options[0], options[1]], sorted(predictions[0].values, key=lambda x: x.id))
+        self.assertEqual([options[0], options[2]], sorted(predictions[1].values, key=lambda x: x.id))
 
     def test_bert(self):
         multi_option_extraction = MultiOptionExtractor(self.TENANT, self.extraction_id)
@@ -144,5 +144,5 @@ class TestMultiOptionExtraction(TestCase):
         predictions = multi_option_extraction.get_multi_option_predictions(semantic_predictions_data)
 
         self.assertEqual(2, len(predictions))
-        self.assertEqual([options[0], options[1]], sorted(predictions[0].options, key=lambda x: x.id))
-        self.assertEqual([options[0], options[2]], sorted(predictions[1].options, key=lambda x: x.id))
+        self.assertEqual([options[0], options[1]], sorted(predictions[0].values, key=lambda x: x.id))
+        self.assertEqual([options[0], options[2]], sorted(predictions[1].values, key=lambda x: x.id))

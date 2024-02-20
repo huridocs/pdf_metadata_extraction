@@ -1,9 +1,6 @@
 from copy import deepcopy
 
-from paragraph_extraction_trainer.Paragraph import Paragraph
 from pdf_features.PdfToken import PdfToken
-
-from data.SemanticPredictionData import SemanticPredictionData
 from pdf_topic_classification.TextExtractionMethod import TextExtractionMethod
 
 
@@ -26,6 +23,5 @@ class TextAtTheBeginningMethod(TextExtractionMethod):
 
         return first_tokens
 
-    def get_text(self) -> list[SemanticPredictionData]:
-        pdf_tokens: list[PdfToken] = self.get_first_tokens(750)
-        return [SemanticPredictionData.from_text(x.content) for x in pdf_tokens]
+    def get_pdf_tokens(self) -> list[PdfToken]:
+        return self.get_first_tokens(750)

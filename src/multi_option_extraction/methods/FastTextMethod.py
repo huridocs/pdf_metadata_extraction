@@ -38,7 +38,7 @@ class FastTextMethod(MultiOptionMethod):
         texts = [self.get_text_from_pdf_tags(sample.pdf_tags) for sample in multi_option_extraction_data.samples]
         texts = [text.replace("\n", " ") for text in texts]
         labels = [
-            "__label__" + " __label__".join(self.clean_labels(sample.options))
+            "__label__" + " __label__".join(self.clean_labels(sample.values))
             for sample in multi_option_extraction_data.samples
         ]
         data = [f"{label} {text}" for label, text in zip(labels, texts)]

@@ -8,4 +8,3 @@ class NaiveMethod(PdfTopicClassificationMethod):
 
     def train(self, pdfs_labels: list[PdfLabels]):
         pass
-

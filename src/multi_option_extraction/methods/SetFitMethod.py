@@ -80,14 +80,7 @@ class SetFitMethod(MultiOptionMethod):
             num_epochs=10,  # The number of epochs to use for contrastive learning
         )
 
-        trainer.freeze()
         trainer.train()
-
-        # Unfreeze the head and freeze the body -> head-only training
-        # trainer.unfreeze(keep_body_frozen=True)
-        # or
-        # Unfreeze the head and unfreeze the body -> end-to-end training
-        trainer.unfreeze(keep_body_frozen=False)
 
         trainer.train(
             num_epochs=10,  # The number of epochs to train the head or the whole model (body and head)

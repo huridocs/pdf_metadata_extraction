@@ -18,3 +18,4 @@ outputs
 /huggingface/
 /.ruff_cache/
 /data/
+/src/checkpoints/

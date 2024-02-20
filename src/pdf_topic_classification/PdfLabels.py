@@ -1,5 +1,5 @@
 import pickle
-from os.path import join
+from os.path import join, exists
 
 from config import ROOT_PATH
 
@@ -10,7 +10,13 @@ class PdfLabels:
     def __init__(self, pdf_name: str, labels: list[str]):
         self.pdf_name = pdf_name
         self.labels = labels
-        with open(join(PARAGRAPHS_CACHE_FOLDER_PATH, f"{pdf_name}.pickle"), mode="rb") as file:
+
+        paragraph_pickle_path = join(PARAGRAPHS_CACHE_FOLDER_PATH, f"{pdf_name}.pickle")
+
+        if not exists(paragraph_pickle_path):
+            return
+
+        with open(paragraph_pickle_path, mode="rb") as file:
             self.paragraphs = pickle.load(file)
 
     @staticmethod

@@ -8,7 +8,7 @@ from data.SemanticPredictionData import SemanticPredictionData
 @dataclass
 class MultiOptionExtractionSample:
     pdf_tags: list[PdfTagData]
-    options: list[Option]
+    values: list[Option]
     language_iso: str = ""
 
 
