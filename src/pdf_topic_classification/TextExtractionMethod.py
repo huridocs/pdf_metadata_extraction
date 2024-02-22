@@ -11,7 +11,7 @@ from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtract
 
 class TextExtractionMethod(ABC):
     def __init__(self, pdf_paragraphs: list[Paragraph], options: list[str], multi_option: bool):
-        self.pdf_paragraphs = pdf_paragraphs
+        self.pdf_paragraphs: list[Paragraph] = pdf_paragraphs
         self.options = options
         self.multi_option = multi_option
 

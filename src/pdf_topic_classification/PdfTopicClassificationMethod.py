@@ -1,8 +1,12 @@
+import json
 import random
+from os.path import join
+from pathlib import Path
 from typing import Type
 
 from sklearn.metrics import f1_score
 
+from config import DATA_PATH
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionSample, MultiOptionExtractionData
@@ -23,12 +27,14 @@ class PdfTopicClassificationMethod:
         self.task_name = ""
         self.options = []
         self.multi_value = False
+        self.base_path = ""
 
     def set_parameters(self, run_name: str, pdf_topic_classification_labeled_data: PdfTopicClassificationLabeledData):
         self.run_name = run_name
         self.options = pdf_topic_classification_labeled_data.options
         self.task_name = pdf_topic_classification_labeled_data.task_name
         self.multi_value = pdf_topic_classification_labeled_data.multi_value
+        self.base_path = join(DATA_PATH, self.run_name, self.task_name)
 
     def get_name(self):
         if self.text_extraction_method and self.multi_option_method:
@@ -47,6 +53,7 @@ class PdfTopicClassificationMethod:
 
         self.train(train_set)
         predictions = self.predict(test_set)
+        Path(join(self.base_path, "predictions.json")).write_text(json.dumps(predictions, indent=4))
 
         predictions_one_hot = self.one_hot_to_options_list(predictions)
         return 100 * f1_score(truth_one_hot, predictions_one_hot, average="macro")

@@ -6,19 +6,42 @@ from rich import print
 
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
 from pdf_topic_classification.cache_paragraphs import cache_paragraph_extraction_predictions
-from pdf_topic_classification.methods import PDF_TOPIC_CLASSIFICATION_METHODS
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
 from pdf_topic_classification.results import get_results_table, add_row
 
+from multi_option_extraction.methods.BertBaseMethod import BertBaseMethod
+from multi_option_extraction.methods.FastTextMethod import FastTextMethod
+from multi_option_extraction.methods.SetFitMethod import SetFitMethod
+from multi_option_extraction.methods.TfIdfMethod import TfIdfMethod
+from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
+from pdf_topic_classification.pdf_topic_classification_methods.CheckData import CheckData
+from pdf_topic_classification.pdf_topic_classification_methods.NaiveMethod import NaiveMethod
+from pdf_topic_classification.text_extraction_methods.TextAtTheBeginningMethod import TextAtTheBeginningMethod
+from pdf_topic_classification.text_extraction_methods.TextAtTheEndMethod import TextAtTheEndMethod
+
 CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
+
+
+PDF_TOPIC_CLASSIFICATION_METHODS = [
+    # CheckData(),
+    # NaiveMethod(),
+    # PdfTopicClassificationMethod(TextAtTheBeginningMethod, BertBaseMethod),
+    # PdfTopicClassificationMethod(TextAtTheBeginningMethod, FastTextMethod),
+    PdfTopicClassificationMethod(TextAtTheBeginningMethod, SetFitMethod),
+    # PdfTopicClassificationMethod(TextAtTheBeginningMethod, TfIdfMethod),
+    # PdfTopicClassificationMethod(TextAtTheEndMethod, BertBaseMethod),
+    # PdfTopicClassificationMethod(TextAtTheEndMethod, FastTextMethod),
+    # PdfTopicClassificationMethod(TextAtTheEndMethod, SetFitMethod),
+    # PdfTopicClassificationMethod(TextAtTheEndMethod, TfIdfMethod),
+]
 
 
 def get_results(with_cache_paragraph_extraction_predictions: bool = False):
     if with_cache_paragraph_extraction_predictions:
         cache_paragraph_extraction_predictions()
 
-    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data()
+    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data("cejil_countries")
     results_table = get_results_table()
 
     for labeled_data_one_task in pdf_topic_classification_labeled_data:
