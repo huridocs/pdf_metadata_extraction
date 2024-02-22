@@ -21,7 +21,7 @@ def get_results(with_cache_paragraph_extraction_predictions: bool = False):
     pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data()
     results_table = get_results_table()
 
-    for labeled_data_one_task in pdf_topic_classification_labeled_data[:1]:
+    for labeled_data_one_task in pdf_topic_classification_labeled_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:
             method.set_parameters("benchmark", labeled_data_one_task)
             start = time()

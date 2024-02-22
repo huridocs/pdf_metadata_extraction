@@ -1,4 +1,5 @@
 import os
+import shutil
 from os.path import join, exists
 from pathlib import Path
 
@@ -80,18 +81,29 @@ class SetFitMethod(MultiOptionMethod):
             num_epochs=10,  # The number of epochs to use for contrastive learning
         )
 
-        trainer.train()
+        trainer.train(
+            output_dir=self.get_model_path(),
+            save_strategy="no",
+        )
 
         trainer.train(
+            output_dir=self.get_model_path(),
+            save_strategy="no",
+            load_best_model_at_end=False,
+            save_steps=100000,
+            eval_steps=100000,
+            evaluation_strategy="no",
+            save_total_limit=0,
             num_epochs=10,  # The number of epochs to train the head or the whole model (body and head)
             batch_size=2,
             body_learning_rate=1e-5,  # The body's learning rate
             learning_rate=1e-2,  # The head's learning rate
             l2_weight=0.0,  # Weight decay on **both** the body and head. If `None`, will use 0.01.
-            max_length=256,
+            max_length=256
         )
 
         trainer.model.save_pretrained(self.get_model_path())
+        shutil.rmtree("checkpoints", ignore_errors=True)
 
     def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[list[Option]]:
         model = SetFitModel.from_pretrained(self.get_model_path())

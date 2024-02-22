@@ -8,12 +8,11 @@ from pdf_topic_classification.text_extraction_methods.TextAtTheBeginningMethod i
 from pdf_topic_classification.text_extraction_methods.TextAtTheEndMethod import TextAtTheEndMethod
 
 PDF_TOPIC_CLASSIFICATION_METHODS = [
-    NaiveMethod(TextAtTheBeginningMethod, BertBaseMethod),
+    NaiveMethod(),
     PdfTopicClassificationMethod(TextAtTheBeginningMethod, BertBaseMethod),
     PdfTopicClassificationMethod(TextAtTheBeginningMethod, FastTextMethod),
     PdfTopicClassificationMethod(TextAtTheBeginningMethod, SetFitMethod),
     PdfTopicClassificationMethod(TextAtTheBeginningMethod, TfIdfMethod),
-    NaiveMethod(TextAtTheEndMethod, BertBaseMethod),
     PdfTopicClassificationMethod(TextAtTheEndMethod, BertBaseMethod),
     PdfTopicClassificationMethod(TextAtTheEndMethod, FastTextMethod),
     PdfTopicClassificationMethod(TextAtTheEndMethod, SetFitMethod),
