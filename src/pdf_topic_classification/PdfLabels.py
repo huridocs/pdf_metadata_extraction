@@ -1,6 +1,8 @@
 import pickle
 from os.path import join, exists
 
+from paragraph_extraction_trainer.Paragraph import Paragraph
+
 from config import ROOT_PATH
 
 PARAGRAPHS_CACHE_FOLDER_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
@@ -17,7 +19,10 @@ class PdfLabels:
             return
 
         with open(paragraph_pickle_path, mode="rb") as file:
-            self.paragraphs = pickle.load(file)
+            self.paragraphs: list[Paragraph] = pickle.load(file)
+
+        for paragraph in self.paragraphs:
+            paragraph.pdf_name = self.pdf_name
 
     @staticmethod
     def from_dicts(label_dict):

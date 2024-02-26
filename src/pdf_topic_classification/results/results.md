@@ -1,4 +1,23 @@
 Task                     Method name                                 Time  Score
+cyrilla_keywords         NaiveMethod                              0.0mins  7.37%
+cyrilla_keywords         Sentence_Similarity_LightGBM                        27%
+cyrilla_keywords         TextAtTheBeginning_BertBase              1.8mins  49.3%
+cyrilla_keywords         TextAtTheBeginning_FastText              0.0mins 29.69%
+cyrilla_keywords         TextAtTheBeginning_SetFit                4.8mins 27.15%
+cyrilla_keywords         TextAtTheBeginning_TfIdf                 0.0mins 27.59%
+cyrilla_keywords         TextAtTheEnd_BertBase                    1.7mins 32.46%
+cyrilla_keywords         TextAtTheEnd_FastText                    0.0mins 26.67%
+cyrilla_keywords         TextAtTheEnd_SetFit                      4.4mins 26.48%
+cyrilla_keywords         TextAtTheEnd_TfIdf                       0.0mins 24.43%
+cyrilla_keywords         Summaries_FastText                       0.0mins 23.82%
+cyrilla_keywords         Summaries_TfIdf                          0.0mins 21.13%
+cyrilla_keywords         Summaries_SetFit                         3.0mins 30.28%
+cyrilla_keywords         Summaries_BertBase_text_title            1.7mins 39.74%
+cyrilla_keywords         Summaries_BertBase_text                  1.7mins 29.41%
+cyrilla_keywords         Summaries_BertBase_text_title_Falconsai  1.7mins   48.8%
+cyrilla_keywords         Summ_BertBase_text_title_list_Falconsai  1.7mins   43.95%
+
+
 d4la_document_type       NaiveMethod                              0.0mins  1.46%
 d4la_document_type       TextAtTheBeginning_BertBase              2.7mins 31.74%
 d4la_document_type       TextAtTheBeginning_FastText              0.0mins  15.0%
@@ -38,17 +57,7 @@ cejil_countries          TextAtTheEnd_BertBase                    1.9mins   0.0%
 cejil_countries          TextAtTheEnd_FastText                    0.0mins   0.0%
 cejil_countries          TextAtTheEnd_SetFit                      6.1mins  0.86%
 cejil_countries          TextAtTheEnd_TfIdf                       0.0mins  0.62%
-                                                                                
-cyrilla_keywords         NaiveMethod                              0.0mins  7.37%
-cyrilla_keywords         TextAtTheBeginning_BertBase              1.8mins  49.3%
-cyrilla_keywords         TextAtTheBeginning_FastText              0.0mins 29.69%
-cyrilla_keywords         TextAtTheBeginning_SetFit                4.8mins 27.15%
-cyrilla_keywords         TextAtTheBeginning_TfIdf                 0.0mins 27.59%
-cyrilla_keywords         TextAtTheEnd_BertBase                    1.7mins 32.46%
-cyrilla_keywords         TextAtTheEnd_FastText                    0.0mins 26.67%
-cyrilla_keywords         TextAtTheEnd_SetFit                      4.4mins 26.48%
-cyrilla_keywords         TextAtTheEnd_TfIdf                       0.0mins 24.43%
-                                                                                
+
 cejil_date               NaiveMethod                              0.0mins   0.0%
 cejil_date               TextAtTheBeginning_BertBase              1.8mins   0.0%
 cejil_date               TextAtTheBeginning_FastText              0.0mins   0.0%
