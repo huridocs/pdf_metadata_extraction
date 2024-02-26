@@ -25,20 +25,20 @@ def get_text(texts: list[str]) -> str:
         total_text += ". " + text
         final_texts.append(text)
 
-    return '. '.join(final_texts)
+    return ". ".join(final_texts)
 
 
 def get_summaries():
     task_labeled_data = get_labeled_data("cyrilla")[0]
     for pdf_labels in tqdm(task_labeled_data.pdfs_labels):
-        path = Path(join(ROOT_PATH, 'data', 'summaries', f"{pdf_labels.pdf_name}.txt"))
+        path = Path(join(ROOT_PATH, "data", "summaries", f"{pdf_labels.pdf_name}.txt"))
         pdf_segments = [PdfSegment.from_pdf_tokens(paragraph.tokens) for paragraph in pdf_labels.paragraphs]
         pdf_segments = [x for x in pdf_segments if x.segment_type in valid_types]
         texts = [pdf_segment.text_content for pdf_segment in pdf_segments if pdf_segment.segment_type in valid_types]
-        summary = summarizer(get_text(texts), max_length=130, min_length=30, do_sample=False)[0]['summary_text']
+        summary = summarizer(get_text(texts), max_length=130, min_length=30, do_sample=False)[0]["summary_text"]
         path.write_text(summary)
         print(path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_summaries()

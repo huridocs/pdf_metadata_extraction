@@ -15,7 +15,7 @@ from pdf_topic_classification.PdfLabels import PdfLabels
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
 import lightgbm as lgb
 
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 valid_types = [TokenType.TEXT, TokenType.TITLE, TokenType.LIST]
 
 
@@ -48,8 +48,11 @@ def get_features(option, pdfs_labels: list[PdfLabels]):
     for pdf_labels in pdfs_labels:
         pdf_segments = [PdfSegment.from_pdf_tokens(paragraph.tokens) for paragraph in pdf_labels.paragraphs]
         pdf_segments = [x for x in pdf_segments if x.page_number < 4]
-        texts_types = [(pdf_segment.text_content, pdf_segment.segment_type) for pdf_segment in pdf_segments if
-                       pdf_segment.segment_type in valid_types]
+        texts_types = [
+            (pdf_segment.text_content, pdf_segment.segment_type)
+            for pdf_segment in pdf_segments
+            if pdf_segment.segment_type in valid_types
+        ]
         similarities_types = [(get_similarity(option, text), type) for text, type in texts_types]
         similarities_titles = [score for score, sentence_type in similarities_types if sentence_type == TokenType.TITLE]
         similarities_no_titles = [score for score, sentence_type in similarities_types if sentence_type != TokenType.TITLE]
@@ -58,16 +61,18 @@ def get_features(option, pdfs_labels: list[PdfLabels]):
         scores = [score for score, _ in similarities_types]
         average = sum(scores) / len(scores) if scores else 0
 
-        features.append(one_hot_maximum +
-                        [maximum[0], average] +
-                        get_five_values(similarities_titles) +
-                        get_five_values(similarities_no_titles))
+        features.append(
+            one_hot_maximum
+            + [maximum[0], average]
+            + get_five_values(similarities_titles)
+            + get_five_values(similarities_no_titles)
+        )
 
     return features
 
 
 def get_model_name(option: str):
-    return join(ROOT_PATH, 'data', f"{option.replace(' ', '')}.model")
+    return join(ROOT_PATH, "data", f"{option.replace(' ', '')}.model")
 
 
 def train_models(task_labeled_data, train_set: list[PdfLabels]):
@@ -131,16 +136,26 @@ def run():
     get_predictions(task_labeled_data, test_set)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start = time()
     print("start")
     # run()
-    print(get_similarity('''“electronic communication” means any form of communication transmitted
+    print(
+        get_similarity(
+            """“electronic communication” means any form of communication transmitted
 or communicated electronically and includes any text message, writing,
 photograph, picture, recording or other matter that is communicated
-electronically;''', "Freedom of Expression"))
-    print(get_similarity('''“electronic communication” means any form of communication transmitted
+electronically;""",
+            "Freedom of Expression",
+        )
+    )
+    print(
+        get_similarity(
+            """“electronic communication” means any form of communication transmitted
 or communicated electronically and includes any text message, writing,
 photograph, picture, recording or other matter that is communicated
-electronically;''', "Privacy"))
+electronically;""",
+            "Privacy",
+        )
+    )
     print("finished in", round(time() - start, 1), "seconds")

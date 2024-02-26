@@ -9,8 +9,9 @@ from pdf_topic_classification.TextExtractionMethod import TextExtractionMethod
 class OnlyTitlesMethod(TextExtractionMethod):
     def get_titles(self, text_length: int) -> list[PdfToken]:
         total_text = ""
-        titles_tokens = [token for paragraph in self.pdf_paragraphs
-                         for token in paragraph.tokens if token.token_type == TokenType.TITLE]
+        titles_tokens = [
+            token for paragraph in self.pdf_paragraphs for token in paragraph.tokens if token.token_type == TokenType.TITLE
+        ]
 
         first_title_tokens: list[PdfToken] = list()
 

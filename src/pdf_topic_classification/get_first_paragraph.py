@@ -13,9 +13,9 @@ def get_first_paragraph():
         pdf_segments = [x for x in pdf_segments if x.segment_type in valid_types]
         print(pdf_labels.pdf_name)
         print([len(x.text_content) for x in pdf_segments])
-        print('\n'.join([x.text_content for x in pdf_segments]))
+        print("\n".join([x.text_content for x in pdf_segments]))
         break
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_first_paragraph()

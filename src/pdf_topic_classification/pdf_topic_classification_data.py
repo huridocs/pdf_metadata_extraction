@@ -8,7 +8,6 @@ from pdf_topic_classification.PdfTopicClassificationLabeledData import (
 def get_labeled_data(filter_name: str = "") -> list[PdfTopicClassificationLabeledData]:
     labeled_data: list[PdfTopicClassificationLabeledData] = list()
     for task_name in listdir(str(PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH)):
-
         if filter_name not in task_name:
             continue
 

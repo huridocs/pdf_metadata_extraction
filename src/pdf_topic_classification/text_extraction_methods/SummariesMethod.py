@@ -12,14 +12,13 @@ from pdf_topic_classification.TextExtractionMethod import TextExtractionMethod
 
 
 class SummariesMethod(TextExtractionMethod):
-
     def get_pdf_tokens(self) -> list[PdfToken]:
         padding_token = self.get_padding_token()
         if not self.pdf_paragraphs:
             print(":::::::::::::::::::::: no summary")
             return [padding_token]
 
-        summary = Path(join(ROOT_PATH, 'data', 'summaries', f"{self.pdf_paragraphs[0].pdf_name}.txt")).read_text()
+        summary = Path(join(ROOT_PATH, "data", "summaries", f"{self.pdf_paragraphs[0].pdf_name}.txt")).read_text()
 
         if summary:
             padding_token.content = summary

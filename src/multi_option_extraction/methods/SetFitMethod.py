@@ -99,7 +99,7 @@ class SetFitMethod(MultiOptionMethod):
             body_learning_rate=1e-5,  # The body's learning rate
             learning_rate=1e-2,  # The head's learning rate
             l2_weight=0.0,  # Weight decay on **both** the body and head. If `None`, will use 0.01.
-            max_length=256
+            max_length=256,
         )
 
         trainer.model.save_pretrained(self.get_model_path())
