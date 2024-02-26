@@ -17,7 +17,7 @@ from multi_option_extraction.methods.multi_label_sequence_classification_trainer
 )
 
 
-class BertBaseMethod(MultiOptionMethod):
+class GoogleBertBaseMethod(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -50,7 +50,7 @@ class BertBaseMethod(MultiOptionMethod):
 
         output_df = pd.DataFrame(rows)
         output_df.columns = ["text", "labels"]
-        output_df = output_df.sample(frac=1).reset_index(drop=True)
+        output_df = output_df.sample(frac=1, random_state=22).reset_index(drop=True)
 
         output_df.to_csv(self.get_data_path(name))
         return self.get_data_path(name)
@@ -58,7 +58,7 @@ class BertBaseMethod(MultiOptionMethod):
     def train(self, multi_option_extraction_data: MultiOptionExtractionData):
         training_csv_path = self.create_dataset(multi_option_extraction_data, "train")
         validation_csv_path = self.create_dataset(multi_option_extraction_data, "validation")
-        model_arguments = ModelArguments("bert-base-uncased")
+        model_arguments = ModelArguments("google-bert/bert-base-uncased")
         labels_number = len(self.options)
 
         data_training_arguments = MultiLabelDataTrainingArguments(

@@ -68,10 +68,6 @@
     "Intellectual Property",
     "Freedom of Expression"
   ],
-  "cyrilla_18": [
-    "Privacy",
-    "Freedom of Expression"
-  ],
   "cyrilla_19": [
     "Telecommunication",
     "Privacy"
@@ -93,10 +89,6 @@
     "Telecommunication"
   ],
   "cyrilla_24": [
-    "Intellectual Property",
-    "Access to Information"
-  ],
-  "cyrilla_25": [
     "Intellectual Property",
     "Access to Information"
   ],
@@ -168,10 +160,6 @@
     "Access to Information",
     "Telecommunication"
   ],
-  "cyrilla_42": [
-    "Telecommunication",
-    "Freedom of Expression"
-  ],
   "cyrilla_43": [
     "Access to Information",
     "Telecommunication"
@@ -185,9 +173,6 @@
   "cyrilla_46": [
     "Telecommunication"
   ],
-  "cyrilla_48": [
-    "Intellectual Property"
-  ],
   "cyrilla_49": [
     "Telecommunication"
   ],
@@ -199,9 +184,6 @@
   ],
   "cyrilla_52": [
     "Intellectual Property"
-  ],
-  "cyrilla_53": [
-    "Telecommunication"
   ],
   "cyrilla_54": [
     "Privacy"

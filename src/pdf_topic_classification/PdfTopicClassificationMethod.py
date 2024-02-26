@@ -40,15 +40,22 @@ class PdfTopicClassificationMethod:
         if self.text_extraction_method and self.multi_option_method:
             text_extractor_name = self.text_extraction_method.__name__.replace("Method", "")
             multi_option_name = self.multi_option_method.__name__.replace("Method", "")
+            text_extractor_name = text_extractor_name.replace("TextAtThe", "")
+            multi_option_name = multi_option_name.replace("TextAtThe", "")
             return f"{text_extractor_name}_{multi_option_name}"
 
         return self.__class__.__name__
 
-    def get_performance(self, task_labeled_data: PdfTopicClassificationLabeledData) -> float:
+    @staticmethod
+    def get_train_test_sets(task_labeled_data) -> (list[PdfLabels], list[PdfLabels]):
         train_size = int(len(task_labeled_data.pdfs_labels) * 0.8)
         random.seed(22)
         train_set: list[PdfLabels] = random.choices(task_labeled_data.pdfs_labels, k=train_size)
         test_set: list[PdfLabels] = [x for x in task_labeled_data.pdfs_labels if x not in train_set]
+        return train_set, test_set
+
+    def get_performance(self, task_labeled_data: PdfTopicClassificationLabeledData) -> float:
+        train_set, test_set = self.get_train_test_sets(task_labeled_data)
         truth_one_hot = self.one_hot_to_options_list([x.labels for x in test_set])
 
         self.train(train_set)
@@ -56,7 +63,8 @@ class PdfTopicClassificationMethod:
         Path(join(self.base_path, "predictions.json")).write_text(json.dumps(predictions, indent=4))
 
         predictions_one_hot = self.one_hot_to_options_list(predictions)
-        return 100 * f1_score(truth_one_hot, predictions_one_hot, average="macro")
+        score = 100 * f1_score(truth_one_hot, predictions_one_hot, average="macro")
+        return score
 
     def one_hot_to_options_list(self, pdfs_options: list[list[str]]) -> list[list[int]]:
         options_one_hot: list[list[int]] = list()
