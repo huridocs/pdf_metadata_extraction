@@ -11,6 +11,9 @@ class MultiOptionExtractionSample:
     values: list[Option]
     language_iso: str = ""
 
+    def get_text(self):
+        return ' '.join([x.text for x in self.pdf_tags])
+
 
 @dataclass
 class MultiOptionExtractionData:
