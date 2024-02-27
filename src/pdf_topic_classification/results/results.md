@@ -2,9 +2,11 @@ Task                     Method name                             Time(m)   Score
 cyrilla_keywords         CleanBeginningDot750_GoogleBertBase         1.6  64.97%
 cyrilla_keywords         CleanBeginning750_GoogleBertBase            1.6  63.51%
 cyrilla_keywords         CleanBeginning750_GoogleBertBase            1.6  63.51%
+cyrilla_keywords         CleanBeginningDot750_MultiBertBatch1        2.0  60.13%
 cyrilla_keywords         CleanBeginningDot750_MultiBertBase          1.0  58.03%
 cyrilla_keywords         CleanBeginningDot750_MultiBertBase_500_tok  1.2  55.48%
 cyrilla_keywords         CleanBeginningDot750_MultiBert              1.1 55.68%
+cyrilla_keywords    CleanBeginningDot750_MultiBertBatch2               1.349.47%
 cyrilla_keywords         CleanBeginningDot750_MultiBert100Tokens     0.8   47.0%
 cyrilla_keywords         CleanBeginning750_GoogleBertBase            1.6  49.41%
 cyrilla_keywords         CleanBeginning750_GoogleBertBase_with_dot   1.6  58.97%
