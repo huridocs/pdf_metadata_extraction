@@ -49,8 +49,8 @@ class PdfTopicClassificationMethod:
     @staticmethod
     def get_train_test_sets(task_labeled_data) -> (list[PdfLabels], list[PdfLabels]):
         train_size = int(len(task_labeled_data.pdfs_labels) * 0.8)
-        random.seed(22)
-        train_set: list[PdfLabels] = random.choices(task_labeled_data.pdfs_labels, k=train_size)
+        random.seed(23)
+        train_set: list[PdfLabels] = random.sample(task_labeled_data.pdfs_labels, k=train_size)
         test_set: list[PdfLabels] = [x for x in task_labeled_data.pdfs_labels if x not in train_set]
         return train_set, test_set
 
