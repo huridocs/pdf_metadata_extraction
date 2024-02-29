@@ -10,7 +10,7 @@ def get_results_table() -> Table:
     grid.add_column(justify="right")
     grid.add_column(justify="right")
 
-    grid.add_row("Task", "Method name", "Time(m)", "Score")
+    grid.add_row("Task__________________", "Method name_____________________________________________", "Time(m)_____", "Score__")
 
     return grid
 

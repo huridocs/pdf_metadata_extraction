@@ -47,24 +47,28 @@ class PdfTopicClassificationMethod:
         return self.__class__.__name__
 
     @staticmethod
-    def get_train_test_sets(task_labeled_data) -> (list[PdfLabels], list[PdfLabels]):
+    def get_train_test_sets(task_labeled_data, seed: int) -> (list[PdfLabels], list[PdfLabels]):
         train_size = int(len(task_labeled_data.pdfs_labels) * 0.8)
-        random.seed(23)
+        random.seed(seed)
         train_set: list[PdfLabels] = random.sample(task_labeled_data.pdfs_labels, k=train_size)
         test_set: list[PdfLabels] = [x for x in task_labeled_data.pdfs_labels if x not in train_set]
         return train_set, test_set
 
-    def get_performance(self, task_labeled_data: PdfTopicClassificationLabeledData) -> float:
-        train_set, test_set = self.get_train_test_sets(task_labeled_data)
-        truth_one_hot = self.one_hot_to_options_list([x.labels for x in test_set])
+    def get_performance(self, task_labeled_data: PdfTopicClassificationLabeledData, repetitions: int = 1) -> float:
+        scores = list()
+        seeds = [22, 23, 24, 25]
+        for i in range(repetitions):
+            train_set, test_set = self.get_train_test_sets(task_labeled_data,  seeds[i])
+            truth_one_hot = self.one_hot_to_options_list([x.labels for x in test_set])
 
-        self.train(train_set)
-        predictions = self.predict(test_set)
-        Path(join(self.base_path, "predictions.json")).write_text(json.dumps(predictions, indent=4))
+            self.train(train_set)
+            predictions = self.predict(test_set)
+            Path(join(self.base_path, "predictions.json")).write_text(json.dumps(predictions, indent=4))
 
-        predictions_one_hot = self.one_hot_to_options_list(predictions)
-        score = 100 * f1_score(truth_one_hot, predictions_one_hot, average="macro")
-        return score
+            predictions_one_hot = self.one_hot_to_options_list(predictions)
+            scores.append(100 * f1_score(truth_one_hot, predictions_one_hot, average="macro"))
+
+        return sum(scores) / len(scores)
 
     def one_hot_to_options_list(self, pdfs_options: list[list[str]]) -> list[list[int]]:
         options_one_hot: list[list[int]] = list()
