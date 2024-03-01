@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from data.Option import Option
 from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
-from metadata_extraction.PdfSegment import PdfSegment
-from metadata_extraction.PdfSegments import PdfSegments
+from metadata_extraction.PdfMetadataSegment import PdfMetadataSegment
+from metadata_extraction.PdfMetadata import PdfMetadata
 
 
 class Suggestion(BaseModel):
@@ -28,9 +28,9 @@ class Suggestion(BaseModel):
         extraction_id: str,
         semantic_prediction_data: SemanticPredictionData,
         prediction: str,
-        pdf_segments: PdfSegments,
+        pdf_segments: PdfMetadata,
     ):
-        segments = [x for x in pdf_segments.pdf_segments if x.ml_label]
+        segments = [x for x in pdf_segments.pdf_metadata_segments if x.ml_label]
 
         if segments:
             page_number = segments[0].page_number
@@ -68,14 +68,14 @@ class Suggestion(BaseModel):
         return self
 
     def add_segments(self, pdf_features):
-        segments: list[PdfSegment] = [x for x in pdf_features.pdf_segments if x.ml_label]
+        segments: list[PdfMetadataSegment] = [x for x in pdf_features.pdf_metadata_segments if x.ml_label]
 
         if segments:
             self.page_number = segments[0].page_number
         else:
             self.page_number = 1
 
-        self.segments_boxes = [pdf_segment.get_segment_box() for pdf_segment in segments]
+        self.segments_boxes = [SegmentBox.from_pdf_segment(pdf_segment) for pdf_segment in segments]
         self.segment_text = " ".join([pdf_segment.text_content for pdf_segment in segments])
         return self
 

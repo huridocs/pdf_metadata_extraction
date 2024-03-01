@@ -18,7 +18,7 @@ from sklearn.metrics import f1_score
 from config import ROOT_PATH, DATA_PATH
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
-from metadata_extraction.PdfSegments import PdfSegments
+from metadata_extraction.PdfMetadata import PdfMetadata
 from performance.Results import Results
 from segment_selector.Paragraphs import Paragraphs
 from segment_selector.evaluate_config import SIZES, SEED, LABELED_DATA_TO_USE, METHODS_TO_EXECUTE, PDF_LABELED_DATA_PATH
@@ -64,7 +64,7 @@ def get_segmentation_data(pdf_path: str, pdf_name: str) -> SegmentationData:
     )
 
 
-def load_pdf_segments(task: str, pdf_name: str) -> PdfSegments:
+def load_pdf_segments(task: str, pdf_name: str) -> PdfMetadata:
     labeled_data_root_path = join(ROOT_PATH.parent, "pdf-labeled-data")
 
     pdfs_path = join(labeled_data_root_path, "pdfs")
@@ -81,14 +81,14 @@ def load_pdf_segments(task: str, pdf_name: str) -> PdfSegments:
         for label in page.labels
     ]
 
-    pdf_segments = PdfSegments(pdf_features=pdf_features)
+    pdf_segments = PdfMetadata(pdf_features=pdf_features)
     pdf_segments.set_segments_from_segmentation_data(segmentation_data)
     pdf_segments.set_ml_label_from_segmentation_data(segmentation_data)
 
     return pdf_segments
 
 
-def load_training_testing_data(task: str, seed: int) -> (list[PdfSegments], list[PdfSegments]):
+def load_training_testing_data(task: str, seed: int) -> (list[PdfMetadata], list[PdfMetadata]):
     print()
     print("Loading data for", task, "with seed", seed)
 
@@ -116,15 +116,15 @@ def snake_case_to_pascal_case(name: str):
     return "".join(word.title() for word in name.split("_"))
 
 
-def save_mistakes(method_name: str, task: str, testing_pdfs_segments: list[PdfSegments], predictions_binary: list[int]):
+def save_mistakes(method_name: str, task: str, testing_pdfs_segments: list[PdfMetadata], predictions_binary: list[int]):
     prediction_index = 0
     for pdf_segments in testing_pdfs_segments:
-        y_true = [segment.ml_label for segment in pdf_segments.pdf_segments]
+        y_true = [segment.ml_label for segment in pdf_segments.pdf_metadata_segments]
         pdf_segments_predictions = predictions_binary[prediction_index : prediction_index + len(y_true)]
         prediction_index += len(y_true)
 
         task_mistakes = TaskMistakes(PDF_LABELED_DATA_PATH, task + "_" + method_name, pdf_segments.pdf_features.file_name)
-        for segment, truth, prediction in zip(pdf_segments.pdf_segments, y_true, pdf_segments_predictions):
+        for segment, truth, prediction in zip(pdf_segments.pdf_metadata_segments, y_true, pdf_segments_predictions):
             if not truth and not prediction:
                 continue
             task_mistakes.add(segment.page_number, segment.bounding_box, truth, prediction)
@@ -135,8 +135,8 @@ def save_mistakes(method_name: str, task: str, testing_pdfs_segments: list[PdfSe
 def run_one_method(
     method_name: str,
     task: str,
-    training_pdfs_segments: list[PdfSegments],
-    testing_pdfs_segments: list[PdfSegments],
+    training_pdfs_segments: list[PdfMetadata],
+    testing_pdfs_segments: list[PdfMetadata],
     results: Results,
 ):
     results.set_start_time()
@@ -154,7 +154,7 @@ def run_one_method(
     model = method_instance.create_model(training_pdfs_segments, model_path)
     predictions = method_instance.predict(model, testing_pdfs_segments, model_path)
 
-    y_true = [x.ml_label for test in testing_pdfs_segments for x in test.pdf_segments]
+    y_true = [x.ml_label for test in testing_pdfs_segments for x in test.pdf_metadata_segments]
     prediction_binary = [1 if prediction > 0.5 else 0 for prediction in predictions]
 
     save_mistakes(method_name, task, testing_pdfs_segments, prediction_binary)

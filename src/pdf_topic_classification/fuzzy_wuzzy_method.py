@@ -1,5 +1,8 @@
 import pickle
 from os.path import join
+from fuzzywuzzy import fuzz
+from paragraph_extraction_trainer.Paragraph import Paragraph
+from paragraph_extraction_trainer.PdfSegment import PdfSegment
 
 from config import ROOT_PATH
 
@@ -26,80 +29,121 @@ label_data = {
     "Diego García-Sayán"
   ],
   "cejil_staging10": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging12": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging15": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging17": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging2": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging20": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging21": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging24": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging27": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging31": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging4": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging44": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging54": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging55": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging56": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging58": [
     "L. Patricio Pazmiño Freire"
   ],
   "cejil_staging66": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging71": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging72": [
-    "Elizabeth Odio Benito"
+    "Elizabeth O. Benito"
   ],
   "cejil_staging8": [
     "Joel Hernández",
-    "Esmeralda E. Arosemena Bernal de Troitiño"
+    "Esmeralda Test Arosemena Bernal de Troitiño"
   ]
 }
 
-def load_paragraphs(pdf_name):
+
+def load_paragraphs(pdf_name) -> list[Paragraph]:
     paragraphs_path = join(ROOT_PATH, f"data/paragraphs_cache/{pdf_name}.pickle")
-    print(paragraphs_path)
     with open(paragraphs_path, mode="rb") as file:
-        return pickle.load(file)
+        paragraphs: list[Paragraph] = pickle.load(file)
+
+    return paragraphs
+
+options = [
+    "Thomas Buergenthal",
+    "Héctor Fix-Zamudio",
+    "Eduardo Ferrer Mac-Gregor Poisot",
+    "Joel Hernández",
+    "Sergio García Ramírez",
+    "Rafael Nieto Navia",
+    "Elizabeth O. Benito",
+    "L. Patricio Pazmiño Freire",
+    "Diego García-Sayán",
+    "Esmeralda Test Arosemena Bernal de Troitiño"
+]
+
 
 if __name__ == '__main__':
-
+    ratio_threshold = 75
+    pdf_paragraphs = dict()
     for pdf_name, presidents in label_data.items():
-        load_paragraphs(pdf_name)
+        paragraphs = load_paragraphs(pdf_name)
+        pdf_paragraphs[pdf_name] = paragraphs
+        pdf_segments = [PdfSegment.from_pdf_tokens(x.tokens) for x in paragraphs]
+        is_president = False
+        for president in [x for x in options if x not in presidents]:
+            for pdf_segment in pdf_segments:
+                ratio = fuzz.ratio(president, pdf_segment.text_content)
+                if ratio > ratio_threshold:
+                    # print(president, pdf_segment.text_content)
+                    is_president = True
+                    break
+            if is_president:
+                break
+
+        print(pdf_name, president, is_president)
 
 
-    print('done')
+    # print('done')
+    #
+    # pdf_text = "Esmeralda E. Arosemena Bernal de Troitiño"
+    # option = "Esmeralda Test Arosemena Bernal de Troitiño"
+    # ratio = fuzz.ratio(pdf_text, option)
+    # print(ratio)
+    #
+    # pdf_text = "Elizabeth Odio"
+    # option = "Elizabeth blah Odio"
+    # ratio = fuzz.ratio(pdf_text, option)
+    # print(ratio)
 
-    pdf_text = "Eduardo Ferrer Mac-Gregor Poisot"
+

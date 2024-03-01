@@ -5,7 +5,7 @@ from unittest import TestCase
 from config import DATA_PATH, APP_PATH
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
-from metadata_extraction.PdfSegments import PdfSegments
+from metadata_extraction.PdfMetadata import PdfMetadata
 from metadata_extraction.XmlFile import XmlFile
 from pdf_token_type_labels.TokenType import TokenType
 
@@ -46,17 +46,17 @@ class TestPdfSegments(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_segments = PdfSegments.from_xml_file(xml_file, segmentation_data, [])
+        pdf_segments = PdfMetadata.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(612, pdf_segments.pdf_features.pages[0].page_width)
         self.assertEqual(792, pdf_segments.pdf_features.pages[0].page_height)
-        self.assertEqual(1, len([segment for segment in pdf_segments.pdf_segments if segment.ml_label == 1]))
-        self.assertEqual("A /INF/76/1", pdf_segments.pdf_segments[0].text_content)
-        self.assertEqual("United Nations", pdf_segments.pdf_segments[1].text_content)
-        self.assertEqual("General Assembly", pdf_segments.pdf_segments[2].text_content)
+        self.assertEqual(1, len([segment for segment in pdf_segments.pdf_metadata_segments if segment.ml_label == 1]))
+        self.assertEqual("A /INF/76/1", pdf_segments.pdf_metadata_segments[0].text_content)
+        self.assertEqual("United Nations", pdf_segments.pdf_metadata_segments[1].text_content)
+        self.assertEqual("General Assembly", pdf_segments.pdf_metadata_segments[2].text_content)
         self.assertEqual(
             "Opening dates of forthcoming regular sessions of the General Assembly and of the general debate",
-            [segment for segment in pdf_segments.pdf_segments if segment.ml_label == 1][0].text_content,
+            [segment for segment in pdf_segments.pdf_metadata_segments if segment.ml_label == 1][0].text_content,
         )
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
@@ -83,9 +83,9 @@ class TestPdfSegments(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_features = PdfSegments.from_xml_file(xml_file, segmentation_data, [])
+        pdf_features = PdfMetadata.from_xml_file(xml_file, segmentation_data, [])
 
-        self.assertEqual(0, len(pdf_features.pdf_segments))
+        self.assertEqual(0, len(pdf_features.pdf_metadata_segments))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -108,9 +108,9 @@ class TestPdfSegments(TestCase):
             xml_file_name="test.xml",
         )
 
-        pdf_segments = PdfSegments.from_xml_file(xml_file, segmentation_data, [])
+        pdf_segments = PdfMetadata.from_xml_file(xml_file, segmentation_data, [])
 
-        self.assertEqual(0, len(pdf_segments.pdf_segments))
+        self.assertEqual(0, len(pdf_segments.pdf_metadata_segments))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -153,9 +153,9 @@ class TestPdfSegments(TestCase):
             xml_file_name="test.xml",
         )
 
-        pdf_features = PdfSegments.from_xml_file(xml_file, segmentation_data, [])
+        pdf_features = PdfMetadata.from_xml_file(xml_file, segmentation_data, [])
 
-        self.assertEqual(0, len(pdf_features.pdf_segments))
+        self.assertEqual(0, len(pdf_features.pdf_metadata_segments))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -182,8 +182,8 @@ class TestPdfSegments(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_segments = PdfSegments.from_xml_file(xml_file, segmentation_data, [1])
+        pdf_segments = PdfMetadata.from_xml_file(xml_file, segmentation_data, [1])
 
-        self.assertEqual(0, len([segment for segment in pdf_segments.pdf_segments if segment.page_number > 1]))
+        self.assertEqual(0, len([segment for segment in pdf_segments.pdf_metadata_segments if segment.page_number > 1]))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)

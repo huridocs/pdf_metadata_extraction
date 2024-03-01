@@ -9,7 +9,7 @@ from config import APP_PATH, DATA_PATH
 from data.LabeledData import LabeledData
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
-from metadata_extraction.PdfSegments import PdfSegments
+from metadata_extraction.PdfMetadata import PdfMetadata
 from metadata_extraction.XmlFile import XmlFile
 from segment_selector.SegmentSelector import SegmentSelector
 from pdf_token_type_labels.TokenType import TokenType
@@ -55,10 +55,10 @@ class TestSegmentSelector(TestCase):
 
     def test_create_model(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
-        pdf_segments = PdfSegments.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
+        pdf_segments = PdfMetadata.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        model_created, error = segment_selector.create_model(pdfs_segments=[pdf_segments])
+        model_created, error = segment_selector.create_model(pdfs_metadata=[pdf_segments])
 
         self.assertTrue(model_created)
         self.assertEqual("", error)
@@ -69,21 +69,21 @@ class TestSegmentSelector(TestCase):
         start = time()
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
         for i in range(20):
-            PdfSegments.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
+            PdfMetadata.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
         print(time() - start, "create model")
 
     def test_set_extraction_segments(self):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
 
-        pdf_features = PdfSegments.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
+        pdf_features = PdfMetadata.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        segment_selector.create_model(pdfs_segments=[pdf_features])
+        segment_selector.create_model(pdfs_metadata=[pdf_features])
 
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        segment_selector.set_extraction_segments(pdfs_segments=[pdf_features])
+        segment_selector.set_extraction_segments(pdfs_metadata=[pdf_features])
 
-        extraction_segments = [x for x in pdf_features.pdf_segments if x.ml_label]
+        extraction_segments = [x for x in pdf_features.pdf_metadata_segments if x.ml_label]
         self.assertEqual(1, len(extraction_segments))
         self.assertEqual(1, extraction_segments[0].page_number)
         self.assertEqual("Original: English", extraction_segments[0].text_content)

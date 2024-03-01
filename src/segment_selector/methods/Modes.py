@@ -2,7 +2,7 @@ import dataclasses
 import hashlib
 from statistics import mode
 
-from metadata_extraction.PdfSegments import PdfSegments
+from metadata_extraction.PdfMetadata import PdfMetadata
 
 
 @dataclasses.dataclass
@@ -14,9 +14,9 @@ class Modes:
     font_family_name_mode: str
     font_family_mode: int
     font_family_mode_normalized: float
-    pdf_segments: PdfSegments
+    pdf_segments: PdfMetadata
 
-    def __init__(self, pdf_segments: PdfSegments):
+    def __init__(self, pdf_segments: PdfMetadata):
         self.pdf_segments = pdf_segments
         self.set_modes()
 

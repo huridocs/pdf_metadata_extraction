@@ -1,4 +1,5 @@
 import os
+import shutil
 from math import exp
 from os.path import join, exists
 
@@ -17,7 +18,7 @@ from multi_option_extraction.methods.multi_label_sequence_classification_trainer
 )
 
 
-class GoogleBertBaseMethod(MultiOptionMethod):
+class BertBatch2(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -56,6 +57,8 @@ class GoogleBertBaseMethod(MultiOptionMethod):
         return self.get_data_path(name)
 
     def train(self, multi_option_extraction_data: MultiOptionExtractionData):
+        shutil.rmtree(self.get_model_path(), ignore_errors=True)
+
         training_csv_path = self.create_dataset(multi_option_extraction_data, "train")
         validation_csv_path = self.create_dataset(multi_option_extraction_data, "validation")
         model_arguments = ModelArguments("google-bert/bert-base-uncased")

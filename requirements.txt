@@ -20,7 +20,7 @@ pandas==2.2.0
 dateparser==1.2.0
 langcodes==3.3.0
 nltk==3.8.1
-transformers==4.37.2
+transformers~=4.38.1
 httpx==0.26.0
 sentencepiece==0.1.99
 accelerate==0.27.2
@@ -32,3 +32,11 @@ sentence_transformers==2.3.1
 setfit==1.0.3
 git+https://github.com/huridocs/pdf-tokens-type-labeler@e5a73befe270146e78c8b50da4dd2777bf66ead6
 git+https://github.com/huridocs/pdf_paragraphs_extraction@649d97ae2bf4be0d7dc6651cdfb9c9b02a3c5952
+pydantic~=2.6.1
+numpy==1.26.4
+lightgbm==4.3.0
+scikit-learn~=1.4.0
+tqdm==4.66.2
+typer==0.4.2
+spacy==3.7.4
+rapidfuzz==3.3.0

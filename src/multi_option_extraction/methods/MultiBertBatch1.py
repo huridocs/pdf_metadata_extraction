@@ -1,4 +1,5 @@
 import os
+import shutil
 from math import exp
 from os.path import join, exists
 import evaluate
@@ -71,6 +72,8 @@ class MultiBertBatch1(MultiOptionMethod):
         return example
 
     def train(self, multi_option_extraction_data: MultiOptionExtractionData):
+        shutil.rmtree(self.get_model_path(), ignore_errors=True)
+
         self.create_dataset(multi_option_extraction_data, "train")
 
         examples = [self.preprocess_function(x) for x in multi_option_extraction_data.samples]
