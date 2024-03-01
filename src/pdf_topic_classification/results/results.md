@@ -23,3 +23,5 @@ cyrilla_keywords      All75FuzzyMethod                                0.0 58.55%
 
 
 cejil_president       FuzzySegmentSelectorMethod                      0.3  12.5%
+cejil_president       All100FuzzyMethod                               0.0 11.83%
+cejil_president       All75FuzzyMethod                                0.0 24.52%
