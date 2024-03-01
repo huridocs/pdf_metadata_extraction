@@ -4,30 +4,29 @@ from time import time
 import rich
 
 from config import ROOT_PATH, APP_PATH
-
-from multi_option_extraction.methods.BertBatch1FitTokens import BertBatch1FitTokens
+from multi_option_extraction.methods.MultilingualBertBatch1 import MultilingualBertBatch1
+from multi_option_extraction.methods.MultilingualMultiBertBatch1 import MultilingualMultiBertBatch1
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 from pdf_topic_classification.cache_pdf_features import cache_paragraph_extraction_predictions
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
-from pdf_topic_classification.pdf_topic_classification_methods.All100FuzzyMethod import All100FuzzyMethod
-from pdf_topic_classification.pdf_topic_classification_methods.All75FuzzyMethod import All75FuzzyMethod
 from pdf_topic_classification.results import get_results_table, add_row, get_predictions_table, add_prediction_row
-
-from pdf_topic_classification.text_extraction_methods.CleanEndDot500 import CleanEndDot500
 from pdf_topic_classification.text_extraction_methods.CleanEndDot750 import CleanEndDot750
+from pdf_topic_classification.text_extraction_methods.FuzzyTextExtractor import FuzzyTextExtractor
 
 CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
-text_extractors = [CleanEndDot750]
-multi_option_extractors = [BertBatch1FitTokens]
+text_extractors = [CleanEndDot750, FuzzyTextExtractor]
+multi_option_extractors = [MultilingualBertBatch1, MultilingualMultiBertBatch1]
 
-PDF_TOPIC_CLASSIFICATION_METHODS = [All100FuzzyMethod(), All75FuzzyMethod()] + [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]
+
+PDF_TOPIC_CLASSIFICATION_METHODS = [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]
+# PDF_TOPIC_CLASSIFICATION_METHODS = [FuzzySegmentSelectorMethod()]
 
 
 def loop_datasets_methods():
-    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data("cejil_president")
+    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data("presi")
 
     for labeled_data_one_task in pdf_topic_classification_labeled_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:

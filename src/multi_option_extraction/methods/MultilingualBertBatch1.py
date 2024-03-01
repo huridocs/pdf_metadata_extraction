@@ -4,7 +4,7 @@ from math import exp
 from os.path import join, exists
 
 import pandas as pd
-from transformers import TrainingArguments, AutoTokenizer
+from transformers import TrainingArguments
 
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
@@ -17,12 +17,10 @@ from multi_option_extraction.methods.multi_label_sequence_classification_trainer
     ModelArguments,
 )
 
-MODEL_NAME = "google-bert/bert-base-uncased"
+MODEL_NAME = "google-bert/bert-base-multilingual-cased"
 
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-
-class BertBatch1(MultiOptionMethod):
+class MultilingualBertBatch1(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
