@@ -1,4 +1,7 @@
+import json
 from os import listdir
+from os.path import join
+
 from pdf_topic_classification.PdfTopicClassificationLabeledData import (
     PdfTopicClassificationLabeledData,
     PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH,
@@ -19,10 +22,11 @@ def get_labeled_data(filter_name: str = "") -> list[PdfTopicClassificationLabele
 
 
 def get_pdf_names():
-    labeled_data = get_labeled_data()
     pdfs_names = set()
-    for task_labeled_data in labeled_data:
-        pdfs_names.update(task_labeled_data.get_pdfs_names())
+    for task_name in listdir(str(PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH)):
+        with open(join(PDF_TOPIC_CLASSIFICATION_LABELED_DATA_PATH, task_name, "labels.json"), mode="r") as file:
+            labels_dict: dict[str, list[str]] = json.load(file)
+            pdfs_names.update(labels_dict.keys())
 
     return pdfs_names
 

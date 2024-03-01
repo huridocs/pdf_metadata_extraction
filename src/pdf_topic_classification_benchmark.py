@@ -15,11 +15,12 @@ from pdf_topic_classification.pdf_topic_classification_methods.All75FuzzyMethod 
 from pdf_topic_classification.results import get_results_table, add_row, get_predictions_table, add_prediction_row
 
 from pdf_topic_classification.text_extraction_methods.CleanEndDot500 import CleanEndDot500
+from pdf_topic_classification.text_extraction_methods.CleanEndDot750 import CleanEndDot750
 
 CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
-text_extractors = [CleanEndDot500]
+text_extractors = [CleanEndDot750]
 multi_option_extractors = [BertBatch1FitTokens]
 
 PDF_TOPIC_CLASSIFICATION_METHODS = [All100FuzzyMethod(), All75FuzzyMethod()] + [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]
