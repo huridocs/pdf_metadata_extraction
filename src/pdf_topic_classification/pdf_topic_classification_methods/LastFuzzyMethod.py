@@ -6,9 +6,9 @@ from pdf_topic_classification.PdfLabels import PdfLabels
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 
 
-class FirstFuzzyMethod(PdfTopicClassificationMethod):
+class LastFuzzyMethod(PdfTopicClassificationMethod):
     def get_first_appearance(self, pdf_segments: list[PdfSegment]) -> list[str]:
-        for pdf_segment in pdf_segments:
+        for pdf_segment in reversed(pdf_segments):
             for ratio_threshold in range(100, 60, -10):
                 for option in self.options:
                     if fuzz.partial_ratio(option, pdf_segment.text_content) >= ratio_threshold:

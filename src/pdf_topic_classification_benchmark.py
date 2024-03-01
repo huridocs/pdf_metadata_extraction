@@ -10,19 +10,21 @@ from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicC
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 from pdf_topic_classification.cache_pdf_features import cache_paragraph_extraction_predictions
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
+from pdf_topic_classification.pdf_topic_classification_methods.LastFuzzyMethod import LastFuzzyMethod
 from pdf_topic_classification.results import get_results_table, add_row, get_predictions_table, add_prediction_row
 from pdf_topic_classification.text_extraction_methods.CleanEndDot750 import CleanEndDot750
+from pdf_topic_classification.text_extraction_methods.CleanEndDot250 import CleanEndDot250
 from pdf_topic_classification.text_extraction_methods.FuzzyTextExtractor import FuzzyTextExtractor
 
 CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
-text_extractors = [CleanEndDot750, FuzzyTextExtractor]
+text_extractors = [CleanEndDot250]
 multi_option_extractors = [MultilingualBertBatch1, MultilingualMultiBertBatch1]
 
 
 PDF_TOPIC_CLASSIFICATION_METHODS = [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]
-# PDF_TOPIC_CLASSIFICATION_METHODS = [FuzzySegmentSelectorMethod()]
+# PDF_TOPIC_CLASSIFICATION_METHODS = [LastFuzzyMethod()]
 
 
 def loop_datasets_methods():
@@ -55,7 +57,7 @@ def check_mistakes():
 
         print("Calculating", method.task_name, method.get_name())
 
-        train, test_set = method.get_train_test_sets(labeled_data_one_task, 22)
+        train, test_set = method.get_train_test_sets(labeled_data_one_task, 24)
         predictions = method.predict(test_set)
         labels = [x.labels for x in test_set]
         pdfs_names = [x.pdf_name for x in labeled_data_one_task.pdfs_labels]

@@ -66,7 +66,8 @@ class PdfTopicClassificationMethod:
             Path(join(self.base_path, "predictions.json")).write_text(json.dumps(predictions, indent=4))
 
             predictions_one_hot = self.one_hot_to_options_list(predictions)
-            scores.append(100 * f1_score(truth_one_hot, predictions_one_hot, average="macro"))
+            score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
+            scores.append(100 * score)
 
         return sum(scores) / len(scores)
 

@@ -1,4 +1,48 @@
 Task..................   Method name...................................... Time(m)   Score..
+
+cyrilla_keywords      CleanBeginningDot500_BertBatch1                 8.8 78.78%
+cyrilla_keywords      CleanBeginningDot500_BertBatch1FitToke…           - 74.09%
+cyrilla_keywords      Beginning750_BertBatch2                         6.2 74.2%
+cyrilla_keywords      Beginning750_BertBatch1                         8.7 72.75%
+cyrilla_keywords      CleanBeginningDot500_BertBatch2                 6.2 72.7%
+cyrilla_keywords      CleanBeginningDot1500_BertBatch2                6.3 71.6%
+cyrilla_keywords      CleanBeginning750_BertBatch2                    6.2 71.75%
+cyrilla_keywords      CleanBeginningDot750_BertBatch2                 6.2 70.19%
+cyrilla_keywords      CleanBeginningDot750_MultiBertBatch2            5.5 64.37%
+cyrilla_keywords      Beginning750_MultiBertBatch2                    6.2 64.38%
+cyrilla_keywords      CleanBeginning750_BertBatch1                    8.7 66.54%
+cyrilla_keywords      CleanBeginning750_MultiBertBatch2               5.4 62.38%
+cyrilla_keywords      CleanBeginningDot500_MultiBertBatch2            4.4 66.78%
+cyrilla_keywords      CleanBeginningDot750_BertBatch1                 8.7 68.57%
+cyrilla_keywords      CleanBeginningDot750_MultiBertBatch2            5.3 65.2%
+cyrilla_keywords      CleanBeginningDot1500_BertBatch1                8.7 69.8%
+cyrilla_keywords      CleanBeginningDot1500_MultiBertBatch2           8.7 66.12%
+cyrilla_keywords      CleanBeginningDotWithNumbers750_BertBatch1      8.7 60.74%
+cyrilla_keywords      CleanBeginningDotWithNumbers750_BertBatch2      6.2 67.79%
+cyrilla_keywords      All100FuzzyMethod                               0.0 50.55%
+cyrilla_keywords      All88FuzzyMethod                                0.0 51.31%
+cyrilla_keywords      All75FuzzyMethod                                0.0 58.55%
+cyrilla_keywords      FuzzyTextExtractor_BertBatch1                   8.8 56.25%
+cyrilla_keywords      CleanEndDot500_BertBatch1                         - 37.59%
+cyrilla_keywords      FuzzyCleanTextExtractor_BertBatch1              9.1 47.51%
+
+
+
+
+
+cejil_president       All75FuzzyMethod                                0.0 24.52%
+cejil_president       LastFuzzyMethod                                 0.0 19.14%
+cejil_president       FuzzySegmentSelectorMethod                      0.3  12.5%
+cejil_president       All100FuzzyMethod                               0.0 11.83%
+cejil_president       CleanEndDot500_BertBatch1FitTokens              3.3  9.14%
+cejil_president       CleanEndDot750_BertBatch1FitTokens              3.6  8.17%
+cejil_president       FuzzyCleanTextExtractor_BertBatch1              3.8  9.14%
+cejil_president       CleanEndDot750_MultilingualBertBatch1           5.8  8.37%
+cejil_president       CleanEndDot750_MultilingualBertBatch1           5.8  8.37%
+cejil_president       CleanEndDot750_MultilingualMultiBertBa…         4.3  8.79%
+cejil_president       CleanEndDot250_MultilingualBertBatch1           4.9  8.31%
+cejil_president       CleanEndDot250_MultilingualMultiBertBa…         3.7  8.66%
+
 cyrilla_keywords         CleanBeginningDot750_GoogleBertBase         1.6  64.97%
 cyrilla_keywords         CleanBeginning750_GoogleBertBase            1.6  63.51%
 cyrilla_keywords         CleanBeginning750_GoogleBertBase            1.6  63.51%
