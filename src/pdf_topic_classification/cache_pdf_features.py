@@ -69,4 +69,5 @@ def cache_pdf_features():
 
 
 if __name__ == "__main__":
+    cache_paragraph_extraction_predictions()
     cache_pdf_features()
