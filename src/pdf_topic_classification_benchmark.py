@@ -4,12 +4,14 @@ from time import time
 import rich
 
 from config import ROOT_PATH, APP_PATH
+from multi_option_extraction.methods.BertBatch1 import BertBatch1
 from multi_option_extraction.methods.MultilingualBertBatch1 import MultilingualBertBatch1
 from multi_option_extraction.methods.MultilingualMultiBertBatch1 import MultilingualMultiBertBatch1
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 from pdf_topic_classification.cache_pdf_features import cache_paragraph_extraction_predictions
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
+from pdf_topic_classification.pdf_topic_classification_methods.All88FuzzyMethod import All88FuzzyMethod
 from pdf_topic_classification.pdf_topic_classification_methods.LastFuzzyMethod import LastFuzzyMethod
 from pdf_topic_classification.results import get_results_table, add_row, get_predictions_table, add_prediction_row
 from pdf_topic_classification.text_extraction_methods.CleanEndDot750 import CleanEndDot750
@@ -20,11 +22,15 @@ CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 text_extractors = [CleanEndDot250]
-multi_option_extractors = [MultilingualBertBatch1, MultilingualMultiBertBatch1]
+multi_option_extractors = [BertBatch1]
 
 
-PDF_TOPIC_CLASSIFICATION_METHODS = [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]
-# PDF_TOPIC_CLASSIFICATION_METHODS = [LastFuzzyMethod()]
+# cejil_president       LastFuzzyMethod                                 0.0 80.77%
+# cejil_president       All88FuzzyMethod                                0.0 22.23%
+# cejil_president       CleanEndDot250_BertBatch1                       3.7 70.58%
+
+PDF_TOPIC_CLASSIFICATION_METHODS = [LastFuzzyMethod(), All88FuzzyMethod()] + [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]
+# PDF_TOPIC_CLASSIFICATION_METHODS = [All88FuzzyMethod()]
 
 
 def loop_datasets_methods():
@@ -45,7 +51,7 @@ def get_results(with_cache_paragraph_extraction_predictions: bool = False):
         method.set_parameters("benchmark", labeled_data_one_task)
         start = time()
         print("Calculating", method.task_name, method.get_name())
-        performance = method.get_performance(labeled_data_one_task, 4)
+        performance = method.get_performance(labeled_data_one_task, 1)
         add_row(results_table, method, round(time() - start), performance)
 
 

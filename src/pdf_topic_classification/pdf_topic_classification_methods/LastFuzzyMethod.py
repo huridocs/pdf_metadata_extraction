@@ -7,7 +7,7 @@ from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassi
 
 
 class LastFuzzyMethod(PdfTopicClassificationMethod):
-    def get_first_appearance(self, pdf_segments: list[PdfSegment]) -> list[str]:
+    def get_last_appearance(self, pdf_segments: list[PdfSegment]) -> list[str]:
         for pdf_segment in reversed(pdf_segments):
             for ratio_threshold in range(100, 60, -10):
                 for option in self.options:
@@ -20,7 +20,7 @@ class LastFuzzyMethod(PdfTopicClassificationMethod):
         predictions = list()
         for pdf_label in pdfs_labels:
             pdf_segments = [PdfSegment.from_pdf_tokens(x.tokens) for x in pdf_label.paragraphs]
-            predictions.append(self.get_first_appearance(pdf_segments))
+            predictions.append(self.get_last_appearance(pdf_segments))
 
         return predictions
 
