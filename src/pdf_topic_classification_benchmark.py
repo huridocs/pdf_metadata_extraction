@@ -4,18 +4,18 @@ from time import time
 import rich
 
 from config import ROOT_PATH, APP_PATH
+from multi_option_extraction.methods.BertBatch1Tokens350 import BertBatch1Tokens350
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 from pdf_topic_classification.cache_pdf_features import cache_paragraph_extraction_predictions
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
 from pdf_topic_classification.results import get_results_table, add_row, get_predictions_table, add_prediction_row
 from pdf_topic_classification.text_extraction_methods.CleanBeginningDot2500 import CleanBeginningDot2500
-from pdf_topic_classification.text_extraction_methods.CleanBeginningDot500 import CleanBeginningDot500
 CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
-text_extractors = [CleanBeginningDot500]
-multi_option_extractors = [CleanBeginningDot2500]
+text_extractors = [CleanBeginningDot2500]
+multi_option_extractors = [BertBatch1Tokens350]
 
 
 PDF_TOPIC_CLASSIFICATION_METHODS = [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]

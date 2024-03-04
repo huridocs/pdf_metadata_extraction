@@ -1,4 +1,5 @@
 Task                  Method name                                 Time(m) Score   
+cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.0 80.82%
 cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
 cyrilla_keywords      Beginning750_BertBatch1                         9.4 76.49%
 cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
