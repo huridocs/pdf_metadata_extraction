@@ -51,7 +51,7 @@ def get_results(with_cache_paragraph_extraction_predictions: bool = False):
         method.set_parameters("benchmark", labeled_data_one_task)
         start = time()
         print("Calculating", method.task_name, method.get_name())
-        performance = method.get_performance(labeled_data_one_task, 1)
+        performance = method.get_performance(labeled_data_one_task, 4)
         add_row(results_table, method, round(time() - start), performance)
 
 

@@ -1,6 +1,10 @@
 Task                  Method name                                 Time(m) Score   
+cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
 cyrilla_keywords      Beginning750_BertBatch1                         9.4 76.49%
 cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
+cyrilla_keywords      CleanBeginningDot750_BertBatch1                 9.8 70.77%
+cyrilla_keywords      CleanBeginningDot1500_BertBatch1                9.1 73.42%
+cyrilla_keywords      NounsBeginning500_BertBatch1                    9.8 43.57%
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.9 72.87%
 
 cejil_president       LastFuzzyMethod                                 0.0 80.77%
