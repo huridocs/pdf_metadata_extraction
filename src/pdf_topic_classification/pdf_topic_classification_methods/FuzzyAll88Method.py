@@ -7,7 +7,7 @@ from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassi
 ratio_threshold = 88
 
 
-class All88FuzzyMethod(PdfTopicClassificationMethod):
+class FuzzyAll88Method(PdfTopicClassificationMethod):
     def get_all_appearance(self, pdf_segments: list[PdfSegment]) -> list[str]:
         appearances = []
         for option in self.options:

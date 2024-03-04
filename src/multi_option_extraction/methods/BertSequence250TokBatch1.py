@@ -23,7 +23,7 @@ clf_metrics = evaluate.combine(["accuracy", "f1", "precision", "recall"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-class MultiBert(MultiOptionMethod):
+class BertSequence250TokBatch1(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -98,8 +98,8 @@ class MultiBert(MultiOptionMethod):
         training_args = TrainingArguments(
             output_dir=self.get_model_path(),
             learning_rate=2e-5,
-            per_device_train_batch_size=3,
-            per_device_eval_batch_size=3,
+            per_device_train_batch_size=1,
+            per_device_eval_batch_size=1,
             num_train_epochs=23,
             weight_decay=0.01,
             save_strategy="no",
@@ -146,7 +146,7 @@ class MultiBert(MultiOptionMethod):
             return_tensors="pt",
             padding="max_length",
             truncation="only_first",
-            max_length=self.get_token_length(),
+            max_length=256,
         )
         output = model(inputs["input_ids"], attention_mask=inputs["attention_mask"])
 

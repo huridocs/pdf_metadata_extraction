@@ -5,7 +5,7 @@ from pdf_topic_classification.PdfLabels import PdfLabels
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 
 
-class FirstFuzzyMethod(PdfTopicClassificationMethod):
+class FuzzyFirstMethod(PdfTopicClassificationMethod):
     def get_first_appearance(self, pdf_segments: list[PdfSegment]) -> list[str]:
         for pdf_segment in pdf_segments:
             for ratio_threshold in range(100, 60, -10):

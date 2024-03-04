@@ -4,22 +4,25 @@ from rapidfuzz import fuzz
 from pdf_topic_classification.PdfLabels import PdfLabels
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 
+ratio_threshold = 75
 
-class LastFuzzyMethod(PdfTopicClassificationMethod):
-    def get_last_appearance(self, pdf_segments: list[PdfSegment]) -> list[str]:
-        for pdf_segment in reversed(pdf_segments):
-            for ratio_threshold in range(100, 60, -10):
-                for option in self.options:
-                    if fuzz.partial_ratio(option.lower(), pdf_segment.text_content.lower()) >= ratio_threshold:
-                        return [option]
 
-        return []
+class FuzzyAll75Method(PdfTopicClassificationMethod):
+    def get_all_appearance(self, pdf_segments: list[PdfSegment]) -> list[str]:
+        appearances = []
+        for option in self.options:
+            for pdf_segment in pdf_segments:
+                ratio = fuzz.partial_ratio(option.lower(), pdf_segment.text_content.lower())
+                if ratio >= ratio_threshold:
+                    appearances.append(option)
+
+        return list(set(appearances))
 
     def predict(self, pdfs_labels: list[PdfLabels]):
         predictions = list()
         for pdf_label in pdfs_labels:
             pdf_segments = [PdfSegment.from_pdf_tokens(x.tokens) for x in pdf_label.paragraphs]
-            predictions.append(self.get_last_appearance(pdf_segments))
+            predictions.append(self.get_all_appearance(pdf_segments))
 
         return predictions
 

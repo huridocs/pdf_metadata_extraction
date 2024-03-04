@@ -17,13 +17,13 @@ from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
 
-MODEL_NAME = "google-bert/bert-base-uncased"
+MODEL_NAME = "google-bert/bert-base-multilingual-cased"
 
 clf_metrics = evaluate.combine(["accuracy", "f1", "precision", "recall"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-class MultiBertBatch2(MultiOptionMethod):
+class SingleLabelMultiBertBatch1(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -70,7 +70,8 @@ class MultiBertBatch2(MultiOptionMethod):
 
     def preprocess_function(self, multi_option_sample: MultiOptionExtractionSample):
         text = multi_option_sample.get_text()
-        labels = [1.0 if value in multi_option_sample.values else 0.0 for value in self.options]
+
+        labels = self.options.index(multi_option_sample.values[0])
 
         example = tokenizer(text, padding="max_length", truncation="only_first", max_length=self.get_token_length())
         example["labels"] = labels
@@ -92,14 +93,14 @@ class MultiBertBatch2(MultiOptionMethod):
             num_labels=len(self.options),
             id2label=id2class,
             label2id=class2id,
-            problem_type="multi_label_classification",
+            problem_type="single_label_classification",
         )
 
         training_args = TrainingArguments(
             output_dir=self.get_model_path(),
             learning_rate=2e-5,
-            per_device_train_batch_size=2,
-            per_device_eval_batch_size=2,
+            per_device_train_batch_size=1,
+            per_device_eval_batch_size=1,
             num_train_epochs=23,
             weight_decay=0.01,
             save_strategy="no",
@@ -136,7 +137,7 @@ class MultiBertBatch2(MultiOptionMethod):
             num_labels=len(self.options),
             id2label=id2class,
             label2id=class2id,
-            problem_type="multi_label_classification",
+            problem_type="single_label_classification",
         )
 
         model.eval()

@@ -1,4 +1,6 @@
 Task                  Method name                                 Time(m) Score   
+d4la_document_type    CleanBeginningDot500_SingleLabelBertBa…        13.2 54.17%
+d4la_document_type    CleanBeginningDot500_BertBatch1                15.4 49.82%
 d4la_document_type    CleanBeginningDot500_BertBatch1                16.3 48.66%
 d4la_document_type    CleanBeginningDot500_DistilbertBatch1           9.6 48.24%
 d4la_document_type    Beginning750_BertBatch1                        16.6 49.57%
@@ -8,13 +10,13 @@ d4la_document_type    CleanEndDot500_DebertaBatch1                   27.7 11.75%
 
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.0 80.82%
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.7 72.87%
+cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
+cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
+cyrilla_keywords      Beginning750_BertBatch1                         9.4 76.49%
 cyrilla_keywords      CleanBeginningDot500_DistilbertBatch1           5.6 73.29%
 cyrilla_keywords      CleanBeginningDot1500_DistilbertBatch1          5.6 74.54%
 cyrilla_keywords      CleanEndDot500_DistilbertBatch1                 5.7 52.16%
 cyrilla_keywords      CleanEndDot750_DistilbertBatch1                 5.6 52.71%
-cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
-cyrilla_keywords      Beginning750_BertBatch1                         9.4 76.49%
-cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
 cyrilla_keywords      CleanBeginningDot750_BertBatch1                 9.8 70.77%
 cyrilla_keywords      CleanBeginningDot1500_BertBatch1                9.1 73.42%
 cyrilla_keywords      Summaries_BertBatch1                            8.9 68.64%
@@ -43,7 +45,7 @@ cejil_judge           All88FuzzyMethod                                0.0 75.71%
 cejil_judge           All100FuzzyMethod                               0.0 75.71%
 cejil_judge           FirstFuzzyMethod                                0.0 67.86%
 
-cejil_countries       FuzzyCleanLabel                                 0.0 72.15%
+cejil_countries       FuzzyCleanLabel                                 0.0 70.08%
 cejil_countries       FuzzyFirstCleanTo80Label                        0.0 50.00%
 cejil_countries       FirstFuzzyMethod                                0.0 42.65%
 cejil_countries       FirstFuzzyCountry                               0.0 54.41%

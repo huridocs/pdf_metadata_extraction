@@ -7,10 +7,13 @@ from config import ROOT_PATH, APP_PATH
 from multi_option_extraction.methods.BertBatch1 import BertBatch1
 from multi_option_extraction.methods.MultilingualBertBatch1 import MultilingualBertBatch1
 from multi_option_extraction.methods.MultilingualMultiBertBatch1 import MultilingualMultiBertBatch1
+from multi_option_extraction.methods.SingleLabelBertBatch1 import SingleLabelBertBatch1
+from multi_option_extraction.methods.SingleLabelMultiBertBatch1 import SingleLabelMultiBertBatch1
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 from pdf_topic_classification.cache_pdf_features import cache_paragraph_extraction_predictions
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
+from pdf_topic_classification.pdf_topic_classification_methods.FuzzyFirstCleanLabel import FuzzyFirstCleanLabel
 
 from pdf_topic_classification.pdf_topic_classification_methods.FuzzyFirstCleanTo80Label import FuzzyFirstCleanTo80Label
 from pdf_topic_classification.results import get_results_table, add_row, get_predictions_table, add_prediction_row
@@ -21,21 +24,20 @@ CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 text_extractors = [CleanBeginningDot500]
-multi_option_extractors = [BertBatch1]
+multi_option_extractors = [SingleLabelMultiBertBatch1]
 
-# fuzzy_methods = [FuzzyFirstCleanTo80Label()]
 # fuzzy_methods = [FirstFuzzyCountry(), All75FuzzyMethod(), All88FuzzyMethod(), All100FuzzyMethod(), FirstFuzzyMethod(), LastFuzzyMethod()]
+# fuzzy_methods = [FuzzyFirstCleanLabel()]
+# PDF_TOPIC_CLASSIFICATION_METHODS = fuzzy_methods
+
 
 PDF_TOPIC_CLASSIFICATION_METHODS = [
     PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors
 ]
-# PDF_TOPIC_CLASSIFICATION_METHODS = fuzzy_methods
 
 
 def loop_datasets_methods():
-    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data(
-        ["cejil_countries", "d4la_document_type"]
-    )
+    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data(["cejil_countries"])
 
     for labeled_data_one_task in pdf_topic_classification_labeled_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:
@@ -64,7 +66,7 @@ def check_mistakes():
 
         print("Calculating", method.task_name, method.get_name())
 
-        train, test_set = method.get_train_test_sets(labeled_data_one_task, 22)
+        train, test_set = method.get_train_test_sets(labeled_data_one_task, 25)
         predictions = method.predict(test_set)
         labels = [x.labels for x in test_set]
         pdfs_names = [x.pdf_name for x in test_set]
