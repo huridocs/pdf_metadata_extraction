@@ -4,38 +4,26 @@ from time import time
 import rich
 
 from config import ROOT_PATH, APP_PATH
-from multi_option_extraction.methods.BertBatch1 import BertBatch1
-from multi_option_extraction.methods.MultilingualBertBatch1 import MultilingualBertBatch1
-from multi_option_extraction.methods.MultilingualMultiBertBatch1 import MultilingualMultiBertBatch1
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 from pdf_topic_classification.cache_pdf_features import cache_paragraph_extraction_predictions
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
-from pdf_topic_classification.pdf_topic_classification_methods.All88FuzzyMethod import All88FuzzyMethod
-from pdf_topic_classification.pdf_topic_classification_methods.LastFuzzyMethod import LastFuzzyMethod
 from pdf_topic_classification.results import get_results_table, add_row, get_predictions_table, add_prediction_row
-from pdf_topic_classification.text_extraction_methods.BeginningParagraphDot500 import BeginningParagraphDot500
-from pdf_topic_classification.text_extraction_methods.CleanEndDot750 import CleanEndDot750
-from pdf_topic_classification.text_extraction_methods.CleanEndDot250 import CleanEndDot250
-from pdf_topic_classification.text_extraction_methods.FuzzyTextExtractor import FuzzyTextExtractor
-
+from pdf_topic_classification.text_extraction_methods.CleanBeginningDot2500 import CleanBeginningDot2500
+from pdf_topic_classification.text_extraction_methods.CleanBeginningDot500 import CleanBeginningDot500
 CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
-text_extractors = [BeginningParagraphDot500]
-multi_option_extractors = [BertBatch1]
+text_extractors = [CleanBeginningDot500]
+multi_option_extractors = [CleanBeginningDot2500]
 
 
-# cejil_president       LastFuzzyMethod                                 0.0 80.77%
-# cejil_president       All88FuzzyMethod                                0.0 22.23%
-# cejil_president       CleanEndDot250_BertBatch1                       3.7 70.58%
+PDF_TOPIC_CLASSIFICATION_METHODS = [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]
 
-PDF_TOPIC_CLASSIFICATION_METHODS = [LastFuzzyMethod(), All88FuzzyMethod()] + [PdfTopicClassificationMethod(x, y) for x in text_extractors for y in multi_option_extractors]
-# PDF_TOPIC_CLASSIFICATION_METHODS = [All88FuzzyMethod()]
 
 
 def loop_datasets_methods():
-    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data("cyrilla")
+    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data("judge")
 
     for labeled_data_one_task in pdf_topic_classification_labeled_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:
