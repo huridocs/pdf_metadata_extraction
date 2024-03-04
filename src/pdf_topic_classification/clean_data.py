@@ -36,19 +36,21 @@ def character_density():
 
     pdf_labeled_data_root_path = join(Path(ROOT_PATH).parent, "pdf-labeled-data")
 
-    task_mistakes = TaskMistakes(pdf_labeled_data_root_path=pdf_labeled_data_root_path, test_id="characeter_density", pdf_name="cyrilla_58")
+    task_mistakes = TaskMistakes(
+        pdf_labeled_data_root_path=pdf_labeled_data_root_path, test_id="characeter_density", pdf_name="cyrilla_58"
+    )
     for paragraph in paragraphs:
         segment_top = min([x.bounding_box.top for x in paragraph.tokens]) + 8
         first_line_segment = PdfSegment.from_pdf_tokens([x for x in paragraph.tokens if x.bounding_box.top < segment_top])
         pdf_segment = PdfSegment.from_pdf_tokens(paragraph.tokens)
         characters_count = len([x for x in first_line_segment.text_content if x.isalpha()])
 
-        character_ratio: float = pdf_segment.bounding_box.width/characters_count if characters_count else 0
+        character_ratio: float = pdf_segment.bounding_box.width / characters_count if characters_count else 0
 
         task_mistakes.add(pdf_segment.page_number, pdf_segment.bounding_box, 1, 1, str(round(character_ratio, 1)))
 
     task_mistakes.save()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     character_density()

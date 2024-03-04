@@ -12,7 +12,7 @@ class MultiOptionExtractionSample:
     language_iso: str = ""
 
     def get_text(self):
-        return ' '.join([x.text for x in self.pdf_tags])
+        return " ".join([x.text for x in self.pdf_tags])
 
 
 @dataclass

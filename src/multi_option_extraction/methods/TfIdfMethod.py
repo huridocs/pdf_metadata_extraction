@@ -97,4 +97,4 @@ class TfIdfMethod(MultiOptionMethod):
         classifier = load(self.get_model_path())
         predictions_text = classifier.predict(tfidf_predict_vectors)
         predictions = [prediction for prediction in predictions_text.tolist()]
-        return self.one_hot_to_options_list(predictions)
+        return self.predictions_to_options_list(predictions)

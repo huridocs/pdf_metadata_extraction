@@ -1,4 +1,3 @@
-
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
 from rapidfuzz import fuzz
 
@@ -11,7 +10,7 @@ class LastFuzzyMethod(PdfTopicClassificationMethod):
         for pdf_segment in reversed(pdf_segments):
             for ratio_threshold in range(100, 60, -10):
                 for option in self.options:
-                    if fuzz.partial_ratio(option, pdf_segment.text_content) >= ratio_threshold:
+                    if fuzz.partial_ratio(option.lower(), pdf_segment.text_content.lower()) >= ratio_threshold:
                         return [option]
 
         return []

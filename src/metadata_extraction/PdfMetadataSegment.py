@@ -53,9 +53,7 @@ class PdfMetadataSegment:
         text: str = " ".join([pdf_token.content for pdf_token in pdf_tokens])
         bounding_boxes = [pdf_token.bounding_box for pdf_token in pdf_tokens]
         segment_type = mode([token.token_type for token in pdf_tokens])
-        return PdfMetadataSegment(
-            pdf_tokens[0].page_number, Rectangle.merge_rectangles(bounding_boxes), text, segment_type
-        )
+        return PdfMetadataSegment(pdf_tokens[0].page_number, Rectangle.merge_rectangles(bounding_boxes), text, segment_type)
 
     @staticmethod
     def from_list_to_merge(pdf_segments_to_merge: list["PdfMetadataSegment"]):

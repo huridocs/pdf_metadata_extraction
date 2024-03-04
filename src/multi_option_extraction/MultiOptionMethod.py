@@ -6,6 +6,8 @@ from os import makedirs
 from os.path import exists, join
 from pathlib import Path
 
+import numpy as np
+from numpy import argmax
 from sklearn.metrics import f1_score
 
 from config import DATA_PATH
@@ -110,12 +112,16 @@ class MultiOptionMethod(ABC):
         testing_set = MultiOptionExtractionData(False, [], samples=multi_option_extraction_data.samples[train_amount:])
         return training_set, testing_set
 
-    def one_hot_to_options_list(self, predictions):
-        prediction_options: list[list[Option]] = list()
-        for prediction in predictions:
-            prediction_options.append(list())
-            for i, value in enumerate(prediction):
-                if value > 0.5:
-                    prediction_options[-1].append(self.options[i])
+    def predictions_to_options_list(self, predictions) -> list[list[Option]]:
+        return [self.one_prediction_to_option_list(prediction) for prediction in predictions]
 
-        return prediction_options
+    def one_prediction_to_option_list(self, prediction) -> list[Option]:
+        if not self.multi_value:
+            best_score_index = argmax(prediction)
+            return [self.options[best_score_index]] if prediction[best_score_index] > 0.5 else []
+
+        return [self.options[i] for i, value in enumerate(prediction) if value > 0.5]
+
+
+if __name__ == "__main__":
+    print(argmax(np.array([1, 2, 1, 4, 1])))

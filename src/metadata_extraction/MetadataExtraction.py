@@ -90,7 +90,9 @@ class MetadataExtraction:
         self.set_pdf_features_for_training()
         print(f"set pdf features {round(time() - start, 2)} seconds")
 
-        all_pdf_segments = [pdf_segment for pdf_segments in self.pdf_segments for pdf_segment in pdf_segments.pdf_metadata_segments]
+        all_pdf_segments = [
+            pdf_segment for pdf_segments in self.pdf_segments for pdf_segment in pdf_segments.pdf_metadata_segments
+        ]
         if not all_pdf_segments:
             self.delete_training_data()
             return False, "No labeled data to create model"

@@ -18,11 +18,11 @@ valid_types = [TokenType.TITLE, TokenType.TEXT]
 
 
 def clean_content_pdf_token(texts):
-    all_text = ' '.join(texts)
+    all_text = " ".join(texts)
     all_text_words = all_text.split()
     clean_words = list()
     for word in all_text_words:
-        clean_word = ''.join([x for x in word if x.isalpha()])
+        clean_word = "".join([x for x in word if x.isalpha()])
         if clean_word:
             clean_words.append(clean_word)
     return clean_words

@@ -130,7 +130,7 @@ class MultilingualBertBatch1(MultiOptionMethod):
         )
 
         logits = multi_label_run(model_arguments, data_training_arguments, t5_training_arguments)
-        return self.one_hot_to_options_list([self.logit_to_probabilities(logit) for logit in logits])
+        return self.predictions_to_options_list([self.logit_to_probabilities(logit) for logit in logits])
 
     def get_predict_dataframe(self, semantic_predictions_data: list[SemanticPredictionData]):
         pdf_tags = [x.pdf_tags for x in semantic_predictions_data]

@@ -126,7 +126,8 @@ class SegmentAvoidingWords:
 
         return [
             self.previous_title_segment.segment_index,
-            len(self.previous_title_segment.pdf_metadata_segments.pdf_metadata_segments) - self.previous_title_segment.segment_index,
+            len(self.previous_title_segment.pdf_metadata_segments.pdf_metadata_segments)
+            - self.previous_title_segment.segment_index,
             self.previous_title_segment.page_index,
             len(self.pdf_segments.pdf_features.pages) - self.previous_title_segment.page_index,
             self.previous_title_segment.bold,

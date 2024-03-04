@@ -58,7 +58,7 @@ class PdfTopicClassificationMethod:
         scores = list()
         seeds = [22, 23, 24, 25]
         for i in range(repetitions):
-            train_set, test_set = self.get_train_test_sets(task_labeled_data,  seeds[i])
+            train_set, test_set = self.get_train_test_sets(task_labeled_data, seeds[i])
             truth_one_hot = self.one_hot_to_options_list([x.labels for x in test_set])
 
             self.train(train_set)

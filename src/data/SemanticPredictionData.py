@@ -7,7 +7,7 @@ class SemanticPredictionData(BaseModel):
     pdf_tags: list[PdfTagData]
 
     def get_text(self):
-        return ' '.join([x.text for x in self.pdf_tags])
+        return " ".join([x.text for x in self.pdf_tags])
 
     @staticmethod
     def from_text(text: str):

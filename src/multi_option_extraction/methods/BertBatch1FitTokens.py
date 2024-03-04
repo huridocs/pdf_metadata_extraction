@@ -132,7 +132,7 @@ class BertBatch1FitTokens(MultiOptionMethod):
         )
 
         logits = multi_label_run(model_arguments, data_training_arguments, t5_training_arguments)
-        return self.one_hot_to_options_list([self.logit_to_probabilities(logit) for logit in logits])
+        return self.predictions_to_options_list([self.logit_to_probabilities(logit) for logit in logits])
 
     def get_predict_dataframe(self, semantic_predictions_data: list[SemanticPredictionData]):
         pdf_tags = [x.pdf_tags for x in semantic_predictions_data]
@@ -148,7 +148,7 @@ class BertBatch1FitTokens(MultiOptionMethod):
         data = pd.read_csv(self.get_data_path("train"))
         max_length = 0
         for index, row in data.iterrows():
-            length = len(tokenizer(row['text']).data['input_ids'])
+            length = len(tokenizer(row["text"]).data["input_ids"])
             max_length = max(length, max_length)
 
         return max_length

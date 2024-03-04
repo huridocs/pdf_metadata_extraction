@@ -39,11 +39,11 @@ class SegmentBox(BaseModel):
 
     def to_pdf_segment(self):
         return PdfMetadataSegment(
-                page_number=self.page_number,
-                bounding_box=self.get_bounding_box(),
-                text_content="",
-                segment_type=self.segment_type,
-            )
+            page_number=self.page_number,
+            bounding_box=self.get_bounding_box(),
+            text_content="",
+            segment_type=self.segment_type,
+        )
 
     @staticmethod
     def from_pdf_segment(pdf_segment: PdfMetadataSegment):

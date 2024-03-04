@@ -13,8 +13,8 @@ class CleanBeginningDotWithNumbers750(TextExtractionMethod):
                 if len(total_text + " " + pdf_token.content) > text_length:
                     break
                 token_copy = self.clean_content_pdf_token(pdf_token)
-                if '.' == pdf_token.content[-1]:
-                    token_copy.content += '.'
+                if "." == pdf_token.content[-1]:
+                    token_copy.content += "."
                 total_text += " " + token_copy.content
                 first_tokens.append(token_copy)
 
@@ -29,10 +29,10 @@ class CleanBeginningDotWithNumbers750(TextExtractionMethod):
         token_copy = deepcopy(pdf_token)
         words = list()
         for word in token_copy.content.split():
-            clean_word = ''.join([x for x in word if x.isalnum()])
+            clean_word = "".join([x for x in word if x.isalnum()])
             if clean_word:
                 words.append(clean_word)
-        token_copy.content = ' '.join(words)
+        token_copy.content = " ".join(words)
         return token_copy
 
     def get_pdf_tokens(self) -> list[PdfToken]:

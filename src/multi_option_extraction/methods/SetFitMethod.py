@@ -110,4 +110,4 @@ class SetFitMethod(MultiOptionMethod):
         predict_texts = [self.get_text_from_pdf_tags(data.pdf_tags) for data in semantic_predictions_data]
         predictions = model(predict_texts)
 
-        return self.one_hot_to_options_list(predictions.tolist())
+        return self.predictions_to_options_list(predictions.tolist())

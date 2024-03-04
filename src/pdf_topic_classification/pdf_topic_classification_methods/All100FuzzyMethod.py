@@ -1,4 +1,3 @@
-
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
 from rapidfuzz import fuzz
 

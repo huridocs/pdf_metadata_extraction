@@ -5,12 +5,31 @@ from pdf_topic_classification.PdfLabels import PdfLabels
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 
 
-class FirstFuzzyMethod(PdfTopicClassificationMethod):
+class FirstFuzzyCountry(PdfTopicClassificationMethod):
+    @staticmethod
+    def clean_text(text: str):
+        text = text.lower()
+        for to_remove in [
+            "Republic of",
+            "Bolivarian Republic of",
+            "United",
+            "Federative Republic of",
+            "Eastern Republic of",
+            "Plurinational State of",
+            " Republic",
+        ]:
+            text = text.replace(to_remove.lower(), "")
+
+        return text
+
     def get_first_appearance(self, pdf_segments: list[PdfSegment]) -> list[str]:
         for pdf_segment in pdf_segments:
             for ratio_threshold in range(100, 60, -10):
                 for option in self.options:
-                    if fuzz.partial_ratio(option.lower(), pdf_segment.text_content.lower()) >= ratio_threshold:
+                    if (
+                        fuzz.partial_ratio(self.clean_text(option), self.clean_text(pdf_segment.text_content))
+                        >= ratio_threshold
+                    ):
                         return [option]
 
         return []

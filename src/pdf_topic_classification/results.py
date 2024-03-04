@@ -11,7 +11,9 @@ def get_results_table() -> Table:
     grid.add_column(justify="right")
     grid.add_column(justify="right")
 
-    grid.add_row("Task__________________", "Method name_____________________________________________", "Time(m)_____", "Score__")
+    grid.add_row(
+        "Task__________________", "Method name_____________________________________________", "Time(m)_____", "Score__"
+    )
 
     return grid
 
@@ -28,7 +30,7 @@ def get_predictions_table() -> Table:
 
 
 def format_list(list_strings: list[str]):
-    return '\n'.join(sorted(list_strings)) + '\n'
+    return "\n".join(sorted(list_strings)) + "\n"
 
 
 def add_prediction_row(table: Table, pdf_name: str = "", truth: list[str] = None, predictions: list[str] = None):

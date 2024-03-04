@@ -1,4 +1,3 @@
-
 from rapidfuzz import fuzz
 
 from metadata_extraction.PdfMetadata import PdfMetadata
@@ -17,7 +16,7 @@ class FuzzySegmentSelectorMethod(PdfTopicClassificationMethod):
                 if not pdf_metadata_segment.ml_label:
                     continue
 
-                if fuzz.partial_ratio(option, pdf_metadata_segment.text_content) > ratio_threshold:
+                if fuzz.partial_ratio(option.lower(), pdf_metadata_segment.text_content.lower()) > ratio_threshold:
                     appearances.append(option)
 
         return list(set(appearances))

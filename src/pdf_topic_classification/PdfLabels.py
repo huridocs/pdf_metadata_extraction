@@ -27,8 +27,6 @@ class PdfLabels:
         for paragraph in self.paragraphs:
             paragraph.pdf_name = self.pdf_name
 
-
-
     @staticmethod
     def from_dicts(label_dict):
         return PdfLabels(pdf_name=label_dict[0], labels=label_dict[1])

@@ -5,8 +5,13 @@ from os.path import join, exists
 import evaluate
 import numpy as np
 import pandas as pd
-from transformers import TrainingArguments, Trainer, AutoTokenizer, DataCollatorWithPadding, \
-    AutoModelForSequenceClassification
+from transformers import (
+    TrainingArguments,
+    Trainer,
+    AutoTokenizer,
+    DataCollatorWithPadding,
+    AutoModelForSequenceClassification,
+)
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
@@ -65,10 +70,10 @@ class MultiBertBatch2(MultiOptionMethod):
 
     def preprocess_function(self, multi_option_sample: MultiOptionExtractionSample):
         text = multi_option_sample.get_text()
-        labels = [1. if value in multi_option_sample.values else 0. for value in self.options]
+        labels = [1.0 if value in multi_option_sample.values else 0.0 for value in self.options]
 
-        example = tokenizer(text, padding="max_length", truncation='only_first', max_length=self.get_token_length())
-        example['labels'] = labels
+        example = tokenizer(text, padding="max_length", truncation="only_first", max_length=self.get_token_length())
+        example["labels"] = labels
         return example
 
     def train(self, multi_option_extraction_data: MultiOptionExtractionData):
@@ -87,7 +92,8 @@ class MultiBertBatch2(MultiOptionMethod):
             num_labels=len(self.options),
             id2label=id2class,
             label2id=class2id,
-            problem_type="multi_label_classification")
+            problem_type="multi_label_classification",
+        )
 
         training_args = TrainingArguments(
             output_dir=self.get_model_path(),
@@ -99,7 +105,7 @@ class MultiBertBatch2(MultiOptionMethod):
             save_strategy="no",
             load_best_model_at_end=True,
             fp16=False,
-            bf16=False
+            bf16=False,
         )
 
         trainer = Trainer(
@@ -130,14 +136,21 @@ class MultiBertBatch2(MultiOptionMethod):
             num_labels=len(self.options),
             id2label=id2class,
             label2id=class2id,
-            problem_type="multi_label_classification")
+            problem_type="multi_label_classification",
+        )
 
         model.eval()
 
-        inputs = tokenizer([x.get_text() for x in semantic_predictions_data], return_tensors="pt", padding="max_length", truncation='only_first', max_length=self.get_token_length())
-        output = model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
+        inputs = tokenizer(
+            [x.get_text() for x in semantic_predictions_data],
+            return_tensors="pt",
+            padding="max_length",
+            truncation="only_first",
+            max_length=self.get_token_length(),
+        )
+        output = model(inputs["input_ids"], attention_mask=inputs["attention_mask"])
 
-        return self.one_hot_to_options_list([self.logit_to_probabilities(logit) for logit in output.logits])
+        return self.predictions_to_options_list([self.logit_to_probabilities(logit) for logit in output.logits])
 
     def get_predict_dataframe(self, semantic_predictions_data: list[SemanticPredictionData]):
         pdf_tags = [x.pdf_tags for x in semantic_predictions_data]
@@ -153,7 +166,7 @@ class MultiBertBatch2(MultiOptionMethod):
         data = pd.read_csv(self.get_data_path("train"))
         max_length = 0
         for index, row in data.iterrows():
-            length = len(tokenizer(row['text']).data['input_ids'])
+            length = len(tokenizer(row["text"]).data["input_ids"])
             max_length = max(length, max_length)
 
         return max_length
