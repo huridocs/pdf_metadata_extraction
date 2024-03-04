@@ -14,6 +14,7 @@ from pdf_topic_classification.pdf_topic_classification_data import get_labeled_d
 from pdf_topic_classification.pdf_topic_classification_methods.All88FuzzyMethod import All88FuzzyMethod
 from pdf_topic_classification.pdf_topic_classification_methods.LastFuzzyMethod import LastFuzzyMethod
 from pdf_topic_classification.results import get_results_table, add_row, get_predictions_table, add_prediction_row
+from pdf_topic_classification.text_extraction_methods.BeginningParagraphDot500 import BeginningParagraphDot500
 from pdf_topic_classification.text_extraction_methods.CleanEndDot750 import CleanEndDot750
 from pdf_topic_classification.text_extraction_methods.CleanEndDot250 import CleanEndDot250
 from pdf_topic_classification.text_extraction_methods.FuzzyTextExtractor import FuzzyTextExtractor
@@ -21,7 +22,7 @@ from pdf_topic_classification.text_extraction_methods.FuzzyTextExtractor import 
 CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
-text_extractors = [CleanEndDot250]
+text_extractors = [BeginningParagraphDot500]
 multi_option_extractors = [BertBatch1]
 
 
@@ -34,7 +35,7 @@ PDF_TOPIC_CLASSIFICATION_METHODS = [LastFuzzyMethod(), All88FuzzyMethod()] + [Pd
 
 
 def loop_datasets_methods():
-    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data("presi")
+    pdf_topic_classification_labeled_data: list[PdfTopicClassificationLabeledData] = get_labeled_data("cyrilla")
 
     for labeled_data_one_task in pdf_topic_classification_labeled_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:

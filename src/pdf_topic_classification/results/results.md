@@ -7,6 +7,10 @@ cyrilla_keywords      CleanBeginningDot1500_BertBatch1                9.1 73.42%
 cyrilla_keywords      NounsBeginning500_BertBatch1                    9.8 43.57%
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.9 72.87%
 
+d4la_document_type    CleanBeginningDot500_BertBatch1                16.3 48.66%
+d4la_document_type    Beginning750_BertBatch1                        16.6 49.57%
+d4la_document_type    CleanBeginning750_BertBatch1                   15.6 47.71%
+
 cejil_president       LastFuzzyMethod                                 0.0 80.77%
 cejil_president       All88FuzzyMethod                                0.0 22.23%
 cejil_president       CleanEndDot250_BertBatch1                       3.7 70.58%
