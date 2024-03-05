@@ -99,8 +99,8 @@ class BertSeq30EpochsStopping(MultiOptionMethod):
         training_args = TrainingArguments(
             output_dir=self.get_model_path(),
             learning_rate=2e-5,
-            per_device_train_batch_size=self.get_batch_size(),
-            per_device_eval_batch_size=self.get_batch_size(),
+            per_device_train_batch_size=self.get_batch_size(multi_option_extraction_data),
+            per_device_eval_batch_size=self.get_batch_size(multi_option_extraction_data),
             num_train_epochs=30,
             weight_decay=0.01,
             save_strategy="epoch",
