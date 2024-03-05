@@ -10,20 +10,20 @@ from transformers import (
     Trainer,
     AutoTokenizer,
     DataCollatorWithPadding,
-    AutoModelForSequenceClassification,
+    AutoModelForSequenceClassification, EarlyStoppingCallback,
 )
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
 
-MODEL_NAME = "google-bert/bert-base-uncased"
+MODEL_NAME = "microsoft/deberta-v3-base"
 
 clf_metrics = evaluate.combine(["accuracy", "f1", "precision", "recall"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-class SingleLabelBertBatch1(MultiOptionMethod):
+class DebertaSequence(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -70,8 +70,7 @@ class SingleLabelBertBatch1(MultiOptionMethod):
 
     def preprocess_function(self, multi_option_sample: MultiOptionExtractionSample):
         text = multi_option_sample.get_text()
-
-        labels = self.options.index(multi_option_sample.values[0])
+        labels = [1.0 if value in multi_option_sample.values else 0.0 for value in self.options]
 
         example = tokenizer(text, padding="max_length", truncation="only_first", max_length=self.get_token_length())
         example["labels"] = labels
@@ -93,20 +92,23 @@ class SingleLabelBertBatch1(MultiOptionMethod):
             num_labels=len(self.options),
             id2label=id2class,
             label2id=class2id,
-            problem_type="single_label_classification",
+            problem_type="multi_label_classification",
         )
 
         training_args = TrainingArguments(
+            report_to=[],
             output_dir=self.get_model_path(),
-            learning_rate=2e-5,
+            overwrite_output_dir=True,
+            do_train=True,
+            do_eval=False,
             per_device_train_batch_size=1,
-            per_device_eval_batch_size=1,
-            num_train_epochs=23,
-            weight_decay=0.01,
+            per_device_eval_batch_size=3,
+            evaluation_strategy="no",
             save_strategy="no",
+            num_train_epochs=30,
+            logging_strategy="no",
+            logging_dir=self.get_model_path(),
             load_best_model_at_end=True,
-            fp16=False,
-            bf16=False,
         )
 
         trainer = Trainer(
@@ -137,7 +139,7 @@ class SingleLabelBertBatch1(MultiOptionMethod):
             num_labels=len(self.options),
             id2label=id2class,
             label2id=class2id,
-            problem_type="single_label_classification",
+            problem_type="multi_label_classification",
         )
 
         model.eval()
@@ -170,4 +172,4 @@ class SingleLabelBertBatch1(MultiOptionMethod):
             length = len(tokenizer(row["text"]).data["input_ids"])
             max_length = max(length, max_length)
 
-        return min(max_length, 512)
+        return max_length

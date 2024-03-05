@@ -1,5 +1,8 @@
 Task                  Method name                                 Time(m) Score   
+d4la_document_type    CleanBeginningDot1500_SingleLabelDeber…        35.3 56.25%
 d4la_document_type    CleanBeginningDot500_SingleLabelBertBa…        13.2 54.17%
+d4la_document_type    CleanBeginningDot1500_SingleLabelDisti…        12.5 48.96%
+d4la_document_type    CleanBeginningDot1500_SingleLabelBertB…        22.7 44.79%
 d4la_document_type    CleanBeginningDot500_BertBatch1                15.4 49.82%
 d4la_document_type    CleanBeginningDot500_BertBatch1                16.3 48.66%
 d4la_document_type    CleanBeginningDot500_DistilbertBatch1           9.6 48.24%
@@ -10,19 +13,23 @@ d4la_document_type    CleanEndDot500_DebertaBatch1                   27.7 11.75%
 
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.0 80.82%
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.7 72.87%
+
 cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
 cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
 cyrilla_keywords      Beginning750_BertBatch1                         9.4 76.49%
+cyrilla_keywords      CleanBeginningDot500_BertSeq250Tokens           7.6 73.37%
+cyrilla_keywords      CleanBeginningDot500_BertSeqBatch1              8.1 73.07%
 cyrilla_keywords      CleanBeginningDot500_DistilbertBatch1           5.6 73.29%
+cyrilla_keywords      CleanBeginningDot1500_DebertaSequence (1 seed)  6.1 66.67%
+cyrilla_keywords      CleanBeginningDot1500_BertBatch1                9.1 73.42%
 cyrilla_keywords      CleanBeginningDot1500_DistilbertBatch1          5.6 74.54%
+cyrilla_keywords      CleanBeginningDot750_BertBatch1                 9.8 70.77%
+cyrilla_keywords      BeginningParagraphDot500_BertBatch1             9.0 67.11%
 cyrilla_keywords      CleanEndDot500_DistilbertBatch1                 5.7 52.16%
 cyrilla_keywords      CleanEndDot750_DistilbertBatch1                 5.6 52.71%
-cyrilla_keywords      CleanBeginningDot750_BertBatch1                 9.8 70.77%
-cyrilla_keywords      CleanBeginningDot1500_BertBatch1                9.1 73.42%
 cyrilla_keywords      Summaries_BertBatch1                            8.9 68.64%
 cyrilla_keywords      CleanBeginningDot2500_BertBatch1Tokens350      10.6 48.23%
 cyrilla_keywords      NounsBeginning500_BertBatch1                    9.8 43.57%
-cyrilla_keywords      BeginningParagraphDot500_BertBatch1             9.0 67.11%
 cyrilla_keywords      CleanNumbersBeginningDot500_BertBatch1          9.0 52.51%
 cyrilla_keywords      LastFuzzyMethod                                 0.0 49.41%
 cyrilla_keywords      All88FuzzyMethod                                0.0  58.1%
@@ -50,6 +57,7 @@ cejil_countries       FuzzyFirstCleanTo80Label                        0.0 50.00%
 cejil_countries       FirstFuzzyMethod                                0.0 42.65%
 cejil_countries       FirstFuzzyCountry                               0.0 54.41%
 cejil_countries       FirstFuzzyLastLabelWord                         0.0 50.00%
+cejil_countries       CleanBeginningDot500_SingleLabelMultiB…        14.0 38.24%
 cejil_countries       All75FuzzyMethod                                0.3  8.47%
 cejil_countries       All88FuzzyMethod                                0.3 25.73%
 cejil_countries       LastFuzzyMethod                                 0.0  1.47%

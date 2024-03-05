@@ -17,13 +17,13 @@ from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
 
-MODEL_NAME = "google-bert/bert-base-uncased"
+MODEL_NAME = "distilbert/distilbert-base-uncased"
 
 clf_metrics = evaluate.combine(["accuracy", "f1", "precision", "recall"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-class SingleLabelBertBatch1(MultiOptionMethod):
+class SingleLabelDistilbertBatch1(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 

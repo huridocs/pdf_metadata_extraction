@@ -7,6 +7,7 @@ from os.path import exists, join
 from pathlib import Path
 
 import numpy as np
+import torch
 from numpy import argmax
 from sklearn.metrics import f1_score
 
@@ -121,6 +122,14 @@ class MultiOptionMethod(ABC):
             return [self.options[best_score_index]] if prediction[best_score_index] > 0.5 else []
 
         return [self.options[i] for i, value in enumerate(prediction) if value > 0.5]
+
+    @staticmethod
+    def get_batch_size(multi_option_extraction_data: MultiOptionExtractionData):
+        samples_count = len(multi_option_extraction_data.samples)
+        batch_size_by_samples = int(samples_count / 100)
+        memory_available = torch.cuda.get_device_properties(0).total_memory / 1000000000
+        limit_batch = max(int(memory_available / 5), 1)
+        return min(limit_batch, batch_size_by_samples)
 
 
 if __name__ == "__main__":
