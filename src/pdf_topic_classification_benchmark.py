@@ -3,20 +3,21 @@ from time import time
 
 
 from config import ROOT_PATH, APP_PATH
-from multi_option_extraction.methods.BertBatch1 import BertBatch1
+from multi_option_extraction.methods.BertSequence30Epochs import BertSequence30Epochs
+from multi_option_extraction.methods.DebertaSequence30Epochs import DebertaSequence30Epochs
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
 from pdf_topic_classification.PdfTopicClassificationMethod import PdfTopicClassificationMethod
 from pdf_topic_classification.cache_pdf_features import cache_paragraph_extraction_predictions
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
 
 from pdf_topic_classification.results import get_results_table, add_row
-from pdf_topic_classification.text_extraction_methods.CleanBeginningDot500 import CleanBeginningDot500
+from pdf_topic_classification.text_extraction_methods.CleanBeginningDot750 import CleanBeginningDot750
 
 CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
-text_extractors = [CleanBeginningDot500]
-multi_option_extractors = [BertBatch1]
+text_extractors = [CleanBeginningDot750]
+multi_option_extractors = [BertSequence30Epochs, DebertaSequence30Epochs]
 
 # fuzzy_methods = [FirstFuzzyCountry(), All75FuzzyMethod(), All88FuzzyMethod(), All100FuzzyMethod(), FirstFuzzyMethod(), LastFuzzyMethod()]
 # fuzzy_methods = [FuzzyFirstCleanLabel()]
@@ -58,5 +59,5 @@ def get_benchmark(repetitions: int = 4, with_cache_paragraph_extraction_predicti
 
 
 if __name__ == "__main__":
-    get_benchmark(1)
+    get_benchmark()
 

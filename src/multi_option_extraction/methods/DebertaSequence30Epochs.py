@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 from math import exp
@@ -11,10 +10,8 @@ from transformers import (
     Trainer,
     AutoTokenizer,
     DataCollatorWithPadding,
-    AutoModelForSequenceClassification, EarlyStoppingCallback,
+    AutoModelForSequenceClassification,
 )
-
-from config import ROOT_PATH
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
@@ -24,11 +21,9 @@ MODEL_NAME = "microsoft/deberta-v3-base"
 
 clf_metrics = evaluate.combine(["accuracy", "f1", "precision", "recall"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-import os
-os.environ["MASTER_ADDR"] = "127.0.0.1"
 
 
-class DebertaDeepSpeed(MultiOptionMethod):
+class DebertaSequence30Epochs(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -101,20 +96,16 @@ class DebertaDeepSpeed(MultiOptionMethod):
         )
 
         training_args = TrainingArguments(
-            report_to=[],
             output_dir=self.get_model_path(),
-            overwrite_output_dir=True,
-            do_train=True,
-            do_eval=False,
+            learning_rate=2e-5,
             per_device_train_batch_size=1,
-            per_device_eval_batch_size=3,
-            evaluation_strategy="no",
-            save_strategy="no",
+            per_device_eval_batch_size=1,
             num_train_epochs=30,
-            logging_strategy="no",
-            logging_dir=self.get_model_path(),
+            weight_decay=0.01,
+            save_strategy="no",
             load_best_model_at_end=True,
-            deepspeed=join(ROOT_PATH, "src", "pdf_topic_classification", "deepspeed_config.json")
+            fp16=False,
+            bf16=False,
         )
 
         trainer = Trainer(
@@ -178,4 +169,4 @@ class DebertaDeepSpeed(MultiOptionMethod):
             length = len(tokenizer(row["text"]).data["input_ids"])
             max_length = max(length, max_length)
 
-        return min(max_length, 512)
+        return max_length

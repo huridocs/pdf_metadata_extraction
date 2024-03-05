@@ -12,6 +12,7 @@ d4la_document_type    CleanEndDot500_BertBatch1                      16.7 44.33%
 d4la_document_type    CleanEndDot500_DebertaBatch1                   27.7 11.75%
 
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.0 80.82%
+cyrilla_keywords      ML CleanBeginningDot500_BertSequenceBatch1        4 70.00%
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.7 72.87%
 cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
 cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
