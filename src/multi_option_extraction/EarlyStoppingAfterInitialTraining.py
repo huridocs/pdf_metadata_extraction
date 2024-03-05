@@ -1,4 +1,4 @@
-from transformers import EarlyStoppingCallback
+from transformers import EarlyStoppingCallback, IntervalStrategy
 
 
 class EarlyStoppingAfterInitialTraining(EarlyStoppingCallback):

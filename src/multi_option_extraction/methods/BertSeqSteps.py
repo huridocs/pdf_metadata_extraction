@@ -14,6 +14,7 @@ from transformers import (
 )
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
+from multi_option_extraction.AvoidEvaluation import AvoidEvaluation
 from multi_option_extraction.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
@@ -120,7 +121,7 @@ class BertSeqSteps(MultiOptionMethod):
             tokenizer=tokenizer,
             data_collator=data_collator,
             compute_metrics=self.compute_metrics,
-            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3)],
+            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidEvaluation()],
         )
 
         trainer.train()
