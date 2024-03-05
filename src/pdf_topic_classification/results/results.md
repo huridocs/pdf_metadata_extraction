@@ -11,17 +11,21 @@ d4la_document_type    CleanBeginning750_BertBatch1                   15.6 47.71%
 d4la_document_type    CleanEndDot500_BertBatch1                      16.7 44.33%
 d4la_document_type    CleanEndDot500_DebertaBatch1                   27.7 11.75%
 
-cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.0 80.82%
-cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
-cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
+
+COMPARISON USING DIFFERENT COMPUTERS
 
 cyrilla_keywords      CleanBeginningDot750_BertSequence30Epochs      10.4 73.72%
 cyrilla_keywords      ALI CleanBeginningDot750_BertSequence30Epo…    11.2 73.19%
 cyrilla_keywords      ML CleanBeginningDot750_BertSequence30Epochs    4.5 72.42%
+cyrilla_keywords      ML CleanBeginningDot750_BertSeq30EpochsStoppin 13.2 69.14%
 
 cyrilla_keywords      CleanBeginningDot750_DebertaSequence30Epochs   17.5  61.6%
+cyrilla_keywords      ALI CleanBeginningDot750_DebertaSequence30…    18.8 62.21%
 cyrilla_keywords      ML CleanBeginningDot750_DebertaSequence30Epochs 8.3 66.97%
 
+cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.0 80.82%
+cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
+cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.7 72.87%
 cyrilla_keywords      Beginning750_BertBatch1                         9.4 76.49%
 cyrilla_keywords      CleanBeginningDot500_BertSeq250Tokens           7.6 73.37%

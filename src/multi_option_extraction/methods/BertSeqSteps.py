@@ -10,10 +10,11 @@ from transformers import (
     Trainer,
     AutoTokenizer,
     DataCollatorWithPadding,
-    AutoModelForSequenceClassification,
+    AutoModelForSequenceClassification, EarlyStoppingCallback,
 )
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
+from multi_option_extraction.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
 from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
 
@@ -23,7 +24,7 @@ clf_metrics = evaluate.combine(["accuracy", "f1", "precision", "recall"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-class BertSequenceBatch1(MultiOptionMethod):
+class BertSeqSteps(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -98,11 +99,13 @@ class BertSequenceBatch1(MultiOptionMethod):
         training_args = TrainingArguments(
             output_dir=self.get_model_path(),
             learning_rate=2e-5,
-            per_device_train_batch_size=1,
-            per_device_eval_batch_size=1,
-            num_train_epochs=23,
+            per_device_train_batch_size=self.get_batch_size(multi_option_extraction_data),
+            per_device_eval_batch_size=self.get_batch_size(multi_option_extraction_data),
+            max_steps=2000,
             weight_decay=0.01,
-            save_strategy="no",
+            eval_steps=200,
+            save_strategy="steps",
+            evaluation_strategy="steps",
             load_best_model_at_end=True,
             fp16=False,
             bf16=False,
@@ -116,6 +119,7 @@ class BertSequenceBatch1(MultiOptionMethod):
             tokenizer=tokenizer,
             data_collator=data_collator,
             compute_metrics=self.compute_metrics,
+            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3)],
         )
 
         trainer.train()
