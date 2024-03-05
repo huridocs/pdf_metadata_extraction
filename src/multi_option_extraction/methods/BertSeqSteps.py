@@ -104,6 +104,7 @@ class BertSeqSteps(MultiOptionMethod):
             max_steps=2000,
             weight_decay=0.01,
             eval_steps=200,
+            save_steps=200,
             save_strategy="steps",
             evaluation_strategy="steps",
             load_best_model_at_end=True,
