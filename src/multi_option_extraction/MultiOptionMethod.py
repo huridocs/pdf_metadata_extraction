@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import shutil
 from abc import ABC, abstractmethod
@@ -126,7 +127,7 @@ class MultiOptionMethod(ABC):
     @staticmethod
     def get_batch_size(multi_option_extraction_data: MultiOptionExtractionData):
         samples_count = len(multi_option_extraction_data.samples)
-        batch_size_by_samples = int(samples_count / 100)
+        batch_size_by_samples = math.ceil(samples_count / 100)
         memory_available = torch.cuda.get_device_properties(0).total_memory / 1000000000
         limit_batch = max(int(memory_available / 5), 1)
         return min(limit_batch, batch_size_by_samples)

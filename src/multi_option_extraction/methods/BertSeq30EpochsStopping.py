@@ -119,7 +119,7 @@ class BertSeq30EpochsStopping(MultiOptionMethod):
             tokenizer=tokenizer,
             data_collator=data_collator,
             compute_metrics=self.compute_metrics,
-            callbacks=EarlyStoppingAfterInitialTraining(early_stopping_patience=3),
+            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3)],
         )
 
         trainer.train()

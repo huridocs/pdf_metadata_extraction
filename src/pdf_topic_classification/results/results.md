@@ -19,6 +19,7 @@ cyrilla_keywords      CleanBeginningDot750_BertSequence30Epochs      10.4 73.72%
 cyrilla_keywords      ALI CleanBeginningDot750_BertSequence30Epo…    11.2 73.19%
 cyrilla_keywords      ML CleanBeginningDot750_BertSequence30Epochs    4.5 72.42%
 
+cyrilla_keywords      CleanBeginningDot750_DebertaSequence30Epochs   17.5  61.6%
 cyrilla_keywords      ML CleanBeginningDot750_DebertaSequence30Epochs 8.3 66.97%
 
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.7 72.87%
