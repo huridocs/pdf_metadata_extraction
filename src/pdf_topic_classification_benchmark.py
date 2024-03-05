@@ -3,6 +3,7 @@ from time import time
 
 
 from config import ROOT_PATH, APP_PATH
+from multi_option_extraction.methods.BertSeq30EpochsStopping import BertSeq30EpochsStopping
 from multi_option_extraction.methods.BertSequence30Epochs import BertSequence30Epochs
 from multi_option_extraction.methods.DebertaSequence30Epochs import DebertaSequence30Epochs
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
@@ -17,7 +18,7 @@ CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 text_extractors = [CleanBeginningDot750]
-multi_option_extractors = [BertSequence30Epochs, DebertaSequence30Epochs]
+multi_option_extractors = [BertSeq30EpochsStopping]
 
 # fuzzy_methods = [FirstFuzzyCountry(), All75FuzzyMethod(), All88FuzzyMethod(), All100FuzzyMethod(), FirstFuzzyMethod(), LastFuzzyMethod()]
 # fuzzy_methods = [FuzzyFirstCleanLabel()]

@@ -67,7 +67,7 @@ class PdfTopicClassificationMethod:
             predictions_one_hot = self.one_hot_to_options_list(predictions)
             score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
             scores.append(100 * score)
-            print(f"Score for {self.run_name} {self.task_name} {self.get_name()}: {100 * score}")
+            print(f"Score for {seeds[i]} {self.run_name} {self.task_name} {self.get_name()}: {100 * score}")
 
         return sum(scores) / len(scores)
 
