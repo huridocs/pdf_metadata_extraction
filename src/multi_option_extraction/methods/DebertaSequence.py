@@ -109,6 +109,8 @@ class DebertaSequence(MultiOptionMethod):
             logging_strategy="no",
             logging_dir=self.get_model_path(),
             load_best_model_at_end=True,
+            seed=22,
+            data_seed=22,
         )
 
         trainer = Trainer(
