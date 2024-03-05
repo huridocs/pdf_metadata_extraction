@@ -13,7 +13,6 @@ d4la_document_type    CleanEndDot500_DebertaBatch1                   27.7 11.75%
 
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.0 80.82%
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.7 72.87%
-
 cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
 cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%
 cyrilla_keywords      Beginning750_BertBatch1                         9.4 76.49%
@@ -21,6 +20,7 @@ cyrilla_keywords      CleanBeginningDot500_BertSeq250Tokens           7.6 73.37%
 cyrilla_keywords      CleanBeginningDot500_BertSeqBatch1              8.1 73.07%
 cyrilla_keywords      CleanBeginningDot500_DistilbertBatch1           5.6 73.29%
 cyrilla_keywords      CleanBeginningDot1500_DebertaSequence (1 seed)  6.1 66.67%
+cyrilla_keywords      CleanBeginningDot1500_DebertaSequence (1 seed)  2.2 44.44%
 cyrilla_keywords      CleanBeginningDot1500_BertBatch1                9.1 73.42%
 cyrilla_keywords      CleanBeginningDot1500_DistilbertBatch1          5.6 74.54%
 cyrilla_keywords      CleanBeginningDot750_BertBatch1                 9.8 70.77%
@@ -33,6 +33,7 @@ cyrilla_keywords      NounsBeginning500_BertBatch1                    9.8 43.57%
 cyrilla_keywords      CleanNumbersBeginningDot500_BertBatch1          9.0 52.51%
 cyrilla_keywords      LastFuzzyMethod                                 0.0 49.41%
 cyrilla_keywords      All88FuzzyMethod                                0.0  58.1%
+cyrilla_keywords      CleanBeginningDot1500_DebertaDeepSpeed          19.2  0.0%
 
 cejil_president       LastFuzzyMethod                                 0.0 80.77%
 cejil_president       FuzzySegmentSelectorMethod                      0.3 74.59%

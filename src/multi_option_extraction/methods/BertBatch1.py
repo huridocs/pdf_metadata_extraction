@@ -84,7 +84,6 @@ class BertBatch1(MultiOptionMethod):
             per_device_eval_batch_size=1,
             gradient_accumulation_steps=1,
             eval_accumulation_steps=1,
-            bf16=False,
             learning_rate=5e-05,
             do_train=True,
             do_eval=False,
