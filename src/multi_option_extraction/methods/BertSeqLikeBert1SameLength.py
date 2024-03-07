@@ -95,7 +95,6 @@ class BertSeqLikeBert1SameLength(MultiOptionMethod):
             id2label=id2class,
             label2id=class2id,
             problem_type="multi_label_classification",
-            max_seq_length=256,
         )
 
         training_args = TrainingArguments(
@@ -145,7 +144,6 @@ class BertSeqLikeBert1SameLength(MultiOptionMethod):
             id2label=id2class,
             label2id=class2id,
             problem_type="multi_label_classification",
-            max_seq_length=256,
         )
 
         model.eval()
