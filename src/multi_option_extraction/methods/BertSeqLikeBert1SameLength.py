@@ -25,7 +25,7 @@ clf_metrics = evaluate.combine(["accuracy"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-class BertSeqLikeBert1(MultiOptionMethod):
+class BertSeqLikeBert1SameLength(MultiOptionMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -95,6 +95,7 @@ class BertSeqLikeBert1(MultiOptionMethod):
             id2label=id2class,
             label2id=class2id,
             problem_type="multi_label_classification",
+            max_seq_length=256,
         )
 
         training_args = TrainingArguments(
@@ -144,6 +145,7 @@ class BertSeqLikeBert1(MultiOptionMethod):
             id2label=id2class,
             label2id=class2id,
             problem_type="multi_label_classification",
+            max_seq_length=256,
         )
 
         model.eval()
