@@ -3,6 +3,8 @@ from time import time
 
 
 from config import ROOT_PATH, APP_PATH
+from multi_option_extraction.methods.BertBatch1 import BertBatch1
+from multi_option_extraction.methods.BertSeqLikeBert1 import BertSeqLikeBert1
 
 from multi_option_extraction.methods.BertSeqSteps import BertSeqSteps
 from pdf_topic_classification.PdfTopicClassificationLabeledData import PdfTopicClassificationLabeledData
@@ -17,7 +19,7 @@ CACHE_PARAGRAPHS_PATH = join(ROOT_PATH, "data", "paragraphs_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 text_extractors = [CleanBeginningDot750]
-multi_option_extractors = [BertSeqSteps]
+multi_option_extractors = [BertSeqLikeBert1, BertSeqSteps, BertBatch1]
 
 # fuzzy_methods = [FirstFuzzyCountry(), All75FuzzyMethod(), All88FuzzyMethod(), All100FuzzyMethod(), FirstFuzzyMethod(), LastFuzzyMethod()]
 # fuzzy_methods = [FuzzyFirstCleanLabel()]

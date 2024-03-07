@@ -76,6 +76,7 @@ Containers with `make start_for_testing`
                              "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
                              }' localhost:5056/labeled_data
     
+
     Multi-option case:
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
@@ -85,8 +86,7 @@ Containers with `make start_for_testing`
                              "options": [{"id": "1", "label": "option 1"}, {"id": "2", "label": "option 2"}],
                              "page_width": 612,
                              "page_height": 792,
-                             "xml_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}],
-                             "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
+                             "xml_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
                              }' localhost:5056/labeled_data
 
 ![Alt logo](readme_pictures/send_json.png?raw=true "Post labeled data")

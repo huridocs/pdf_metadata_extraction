@@ -14,7 +14,7 @@ class LabeledData(BaseModel):
     page_width: float
     page_height: float
     xml_segments_boxes: list[SegmentBox]
-    label_segments_boxes: list[SegmentBox]
+    label_segments_boxes: list[SegmentBox] = list()
 
     def to_dict(self):
         labeled_data_dict = self.model_dump()
