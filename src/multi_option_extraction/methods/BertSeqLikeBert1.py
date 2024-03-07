@@ -105,7 +105,7 @@ class BertSeqLikeBert1(MultiOptionMethod):
             per_device_eval_batch_size=self.get_batch_size(multi_option_extraction_data),
             max_steps=1219,
             weight_decay=0.01,
-            eval_steps=2000,
+            eval_steps=53,
             save_steps=53,
             save_strategy="steps",
             evaluation_strategy="steps",
