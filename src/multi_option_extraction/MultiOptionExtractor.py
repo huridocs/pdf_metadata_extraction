@@ -8,13 +8,13 @@ from config import DATA_PATH, config_logger
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
-from multi_option_extraction.MultiOptionMethod import MultiOptionMethod
-from multi_option_extraction.methods.FastTextMethod import FastTextMethod
-from multi_option_extraction.methods.TfIdfMethod import TfIdfMethod
+from multi_option_extraction.TextToMultiOptionMethod import TextToMultiOptionMethod
+from multi_option_extraction.text_to_multi_option_methods.FastTextMethod import FastTextMethod
+from multi_option_extraction.text_to_multi_option_methods.TfIdfMethod import TfIdfMethod
 
 
 class MultiOptionExtractor:
-    METHODS: list[Type[MultiOptionMethod]] = [FastTextMethod, TfIdfMethod]
+    METHODS: list[Type[TextToMultiOptionMethod]] = [FastTextMethod, TfIdfMethod]
 
     def __init__(self, tenant: str, extraction_id: str):
         self.tenant = tenant

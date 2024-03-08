@@ -1,0 +1,272 @@
+import shutil
+from os.path import join
+from pathlib import Path
+from time import time
+
+import pymongo
+from langcodes import standardize_tag
+
+from config import config_logger, MONGO_PORT, MONGO_HOST
+from data.LabeledData import LabeledData
+from data.Option import Option
+from data.PdfTagData import PdfTagData
+
+from data.PredictionData import PredictionData
+from data.SegmentationData import SegmentationData
+from data.SemanticExtractionData import SemanticExtractionData
+from data.SemanticPredictionData import SemanticPredictionData
+from data.Suggestion import Suggestion
+from data.ExtractionTask import ExtractionTask
+from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentsPages
+from metadata_extraction.PdfMetadataSegment import PdfMetadataSegment
+from metadata_extraction.PdfData import PdfData
+
+from metadata_extraction.XmlFile import XmlFile
+from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
+from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
+from segment_selector.SegmentSelector import SegmentSelector
+from semantic_metadata_extraction.SemanticMetadataExtraction import SemanticMetadataExtraction
+
+
+class Extractor:
+    CREATE_MODEL_TASK_NAME = "create_model"
+    SUGGESTIONS_TASK_NAME = "suggestions"
+
+    def __init__(self, tenant: str, extraction_id: str, options: list[Option] = None, multi_value: bool = False):
+        self.tenant = tenant
+        self.extraction_id = extraction_id
+        self.multi_value = multi_value
+        self.options = options
+
+        client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
+        self.pdf_metadata_extraction_db = client["pdf_metadata_extraction"]
+        self.mongo_filter = {"tenant": self.tenant, "id": self.extraction_id}
+
+        self.pdfs_data: list[PdfData] = list()
+        self.labeled_data: list[LabeledData] = list()
+
+    def get_labeled_data(self):
+        labeled_data_list = []
+        for document in self.pdf_metadata_extraction_db.labeled_data.find(self.mongo_filter):
+            labeled_data_list.append(LabeledData(**document))
+
+        return labeled_data_list
+
+    def get_page_numbers_to_keep(self, labeled_data_list):
+        filter_valid_segment_pages = FilterValidSegmentsPages(self.tenant, self.extraction_id)
+        if self.options:
+            page_numbers_list: list[list[int]] = filter_valid_segment_pages.for_training(labeled_data_list)
+            config_logger.info(f"Filter pages for training: total {len(page_numbers_list)} documents.")
+            config_logger.info(f"Filter: {page_numbers_list}")
+        else:
+            page_numbers_list = [list() for _ in labeled_data_list]
+        return page_numbers_list
+
+    def set_pdf_data_for_training(self):
+        labeled_data_list = self.get_labeled_data()
+        start = time()
+        for labeled_data, page_numbers_to_keep in zip(labeled_data_list, self.get_page_numbers_to_keep(labeled_data_list)):
+            segmentation_data = SegmentationData.from_labeled_data(labeled_data)
+            xml_file = XmlFile(
+                tenant=labeled_data.tenant,
+                extraction_id=labeled_data.id,
+                to_train=True,
+                xml_file_name=labeled_data.xml_file_name,
+            )
+
+            pdf_segments = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers_to_keep)
+
+            if not pdf_segments:
+                continue
+
+            self.labeled_data.append(labeled_data)
+            self.pdfs_data.append(pdf_segments)
+
+        config_logger.info(f"PdfFeatures {round(time() - start, 2)} seconds")
+
+    def create_models(self, options: list[Option], multi_value: bool):
+        start = time()
+        config_logger.info(f"Loading data to create model for {self.tenant} {self.extraction_id}")
+        self.set_pdf_data_for_training()
+        print(f"set pdf features {round(time() - start, 2)} seconds")
+
+        all_pdf_segments: list[PdfMetadataSegment] = [
+            pdf_segment for pdf_segments in self.pdfs_data for pdf_segment in pdf_segments.pdf_metadata_segments
+        ]
+        if not all_pdf_segments:
+            self.delete_training_data()
+            return False, "No labeled data to create model"
+
+        if options:
+            multi_option_extractor = MultiOptionExtractor(tenant=self.tenant, extraction_id=self.extraction_id)
+            multi_option_extractor.create_model(self.get_multi_option_extraction_data(options, multi_value))
+        else:
+            config_logger.info(f"Creating model with {len(self.pdfs_data)} documents for {self.tenant} {self.extraction_id}")
+            segment_selector = SegmentSelector(self.tenant, self.extraction_id)
+            segment_selector.create_model(pdfs_metadata=self.pdfs_data)
+
+            config_logger.info(f"Finished creating model {round(time() - start, 2)} seconds")
+
+            config_logger.info("Creating semantic model")
+            start = time()
+
+            self.create_semantic_model()
+
+        config_logger.info(f"Finished semantic model in {round(time() - start, 2)} seconds")
+
+        self.delete_training_data()
+        return True, ""
+
+    def delete_training_data(self):
+        training_xml_path = XmlFile.get_xml_folder_path(tenant=self.tenant, extraction_id=self.extraction_id, to_train=True)
+        shutil.rmtree(training_xml_path, ignore_errors=True)
+        self.pdf_metadata_extraction_db.labeled_data.delete_many(self.mongo_filter)
+
+    def create_semantic_model(self):
+        semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
+        semantic_metadata_extraction.remove_models()
+        semantic_extractions_data: list[SemanticExtractionData] = list()
+        for pdf_features, labeled_data in zip(self.pdfs_data, self.labeled_data):
+            semantic_extraction_data = SemanticExtractionData(
+                text=labeled_data.label_text.strip(),
+                pdf_tags=(self.get_predicted_tags_data(pdf_features)),
+                language_iso=standardize_tag(labeled_data.language_iso),
+            )
+
+            semantic_extractions_data.append(semantic_extraction_data)
+
+        semantic_metadata_extraction.create_model(semantic_extractions_data)
+
+    @staticmethod
+    def get_predicted_tags_data(pdf_segments: PdfData) -> list[PdfTagData]:
+        predicted_pdf_segments = [x for x in pdf_segments.pdf_metadata_segments if x.ml_label]
+
+        pdfs_tag_data: list[PdfTagData] = list()
+        for pdf_segment in predicted_pdf_segments:
+            for page, token in pdf_segments.pdf_features.loop_tokens():
+                if pdf_segment.intersects(PdfMetadataSegment.from_pdf_token(token)):
+                    pdfs_tag_data.append(PdfTagData(text=token.content))
+
+        return pdfs_tag_data
+
+    def insert_suggestions_in_db(self) -> (bool, str):
+        segment_selector = SegmentSelector(self.tenant, self.extraction_id)
+        if not segment_selector.model:
+            return False, "No model"
+
+        suggestions = self.get_suggestions()
+
+        if not suggestions:
+            return False, "No data to calculate suggestions"
+
+        config_logger.info(f"Calculated and inserting {len(suggestions)} suggestions")
+
+        self.pdf_metadata_extraction_db.suggestions.insert_many([x.to_dict() for x in suggestions])
+        xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.extraction_id, False)
+        for suggestion in suggestions:
+            xml_name = {"xml_file_name": suggestion.xml_file_name}
+            self.pdf_metadata_extraction_db.prediction_data.delete_many({**self.mongo_filter, **xml_name})
+            Path(join(xml_folder_path, suggestion.xml_file_name)).unlink(missing_ok=True)
+
+        return True, ""
+
+    def get_suggestions(self) -> list[Suggestion]:
+        start = time()
+        semantic_predictions_data, suggestions = self.get_segment_selector_prediction_data()
+        config_logger.info(f"get_segment_selector_suggestions {round(time() - start, 2)} seconds")
+
+        start = time()
+        if MultiOptionExtractor.exist_model(self.tenant, self.extraction_id):
+            multi_option_extractor = MultiOptionExtractor(self.tenant, self.extraction_id)
+            multi_option_predictions = multi_option_extractor.get_multi_option_predictions(semantic_predictions_data)
+            for multi_option_extraction_sample, suggestion in zip(multi_option_predictions, suggestions):
+                suggestion.add_prediction_multi_option(multi_option_extraction_sample.values)
+        else:
+            semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
+            semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
+
+            for semantic_prediction_text, suggestion in zip(semantic_predictions_texts, suggestions):
+                suggestion.add_prediction(semantic_prediction_text)
+
+        config_logger.info(f"get_semantic_predictions {round(time() - start, 2)} seconds")
+        return suggestions
+
+    def get_segment_selector_prediction_data(self) -> (list[SemanticPredictionData], list[Suggestion]):
+        predictions_data, pdfs_features = self.get_pdf_features()
+
+        config_logger.info(f"Calculating {len(predictions_data)} suggestions for {self.tenant} {self.extraction_id}")
+
+        semantic_predictions_data: list[SemanticPredictionData] = list()
+        suggestions: list[Suggestion] = list()
+
+        for prediction_data, pdf_features in zip(predictions_data, pdfs_features):
+            suggestion = Suggestion.get_empty(self.tenant, self.extraction_id, prediction_data.xml_file_name)
+
+            if not pdf_features.pdf_metadata_segments:
+                semantic_predictions_data.append(SemanticPredictionData.from_text(""))
+                suggestions.append(suggestion)
+                continue
+
+            segment_selector = SegmentSelector(self.tenant, self.extraction_id)
+            segment_selector.set_extraction_segments(pdfs_metadata=[pdf_features])
+            semantic_predictions_data.append(SemanticPredictionData(pdf_tags=self.get_predicted_tags_data(pdf_features)))
+            suggestions.append(suggestion.add_segments(pdf_features))
+
+        return semantic_predictions_data, suggestions
+
+    def get_pdf_features(self):
+        pdfs_features: list[PdfData] = list()
+        config_logger.info(f"Loading data to calculate suggestions for {self.tenant} {self.extraction_id}")
+        prediction_data_list = []
+        for document in self.pdf_metadata_extraction_db.prediction_data.find(self.mongo_filter):
+            prediction_data_list.append(PredictionData(**document))
+
+        filter_valid_pages = FilterValidSegmentsPages(self.tenant, self.extraction_id)
+        page_numbers_list = filter_valid_pages.for_prediction(prediction_data_list)
+        config_logger.info(f"Filter pages for prediction: total {len(page_numbers_list)} documents.")
+        config_logger.info(f"Filter: {page_numbers_list}")
+
+        predictions_data: list[PredictionData] = list()
+        for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
+            predictions_data.append(prediction_data)
+            segmentation_data = SegmentationData.from_prediction_data(prediction_data)
+
+            xml_file = XmlFile(
+                tenant=self.tenant,
+                extraction_id=self.extraction_id,
+                to_train=False,
+                xml_file_name=prediction_data.xml_file_name,
+            )
+            pdfs_features.append(PdfData.from_xml_file(xml_file, segmentation_data, page_numbers))
+
+        return predictions_data, pdfs_features
+
+    def get_multi_option_extraction_data(self, options, multi_value):
+        multi_option_samples: list[MultiOptionExtractionSample] = list()
+        for pdf_features, labeled_data in zip(self.pdfs_data, self.labeled_data):
+            multi_option_sample = MultiOptionExtractionSample(
+                pdf_tags=(self.get_predicted_tags_data(pdf_features)),
+                values=labeled_data.values,
+                language_iso=standardize_tag(labeled_data.language_iso),
+            )
+            multi_option_samples.append(multi_option_sample)
+
+        return MultiOptionExtractionData(multi_value=multi_value, options=options, samples=multi_option_samples)
+
+    @staticmethod
+    def calculate_task(extraction_task: ExtractionTask) -> (bool, str):
+        tenant = extraction_task.tenant
+        extraction_id = extraction_task.params.id
+
+        if extraction_task.task == Extractor.CREATE_MODEL_TASK_NAME:
+            options = extraction_task.params.options
+            multi_value = extraction_task.params.multi_value
+            metadata_extraction = Extractor(tenant, extraction_id, options, multi_value)
+            return metadata_extraction.create_models()
+
+        if extraction_task.task == Extractor.SUGGESTIONS_TASK_NAME:
+            config_logger.info("Calculating suggestions")
+            metadata_extraction = Extractor(tenant, extraction_id)
+            return metadata_extraction.insert_suggestions_in_db()
+
+        return False, "Error"

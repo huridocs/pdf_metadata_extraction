@@ -1,7 +1,7 @@
 import rich
 
 
-from pdf_topic_classification.results import get_predictions_table, add_prediction_row
+from multi_option_extraction.results import get_predictions_table, add_prediction_row
 from pdf_topic_classification_benchmark import loop_datasets_methods
 
 

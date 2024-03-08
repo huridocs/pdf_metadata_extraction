@@ -10,12 +10,12 @@ import pymongo
 from pdf_token_type_labels.TokenType import TokenType
 
 from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
-from data.MetadataExtractionTask import MetadataExtractionTask
+from data.ExtractionTask import ExtractionTask
 from data.Option import Option
 from data.Params import Params
 from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
-from metadata_extraction.MetadataExtraction import MetadataExtraction
+from Extractor import Extractor
 
 
 class TestMetadataExtractor(TestCase):
@@ -49,12 +49,12 @@ class TestMetadataExtractor(TestCase):
         os.makedirs(f"{base_path}/xml_to_train")
         shutil.copy(self.test_xml_path, f"{base_path}/xml_to_train/test.xml")
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+            task=Extractor.CREATE_MODEL_TASK_NAME,
             params=Params(id=extraction_id),
         )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
+        task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
 
@@ -65,12 +65,12 @@ class TestMetadataExtractor(TestCase):
         tenant = "error_segment_test"
         extraction_id = "error_extraction_id"
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+            task=Extractor.CREATE_MODEL_TASK_NAME,
             params=Params(id=extraction_id),
         )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
+        task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
         self.assertEqual(error, "No labeled data to create model")
@@ -95,12 +95,12 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.labeled_data.insert_one(json_data)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+            task=Extractor.CREATE_MODEL_TASK_NAME,
             params=Params(id=extraction_id),
         )
-        MetadataExtraction.calculate_task(task)
+        Extractor.calculate_task(task)
 
         self.assertFalse(os.path.exists(f"{DATA_PATH}/segment_test/extraction_id/xml_to_train"))
         self.assertFalse(os.path.exists(f"{DATA_PATH}/segment_test/extraction_id/segment_predictor_model/model.model"))
@@ -133,10 +133,10 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
-        MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+                task=Extractor.CREATE_MODEL_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
@@ -152,12 +152,12 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+            task=Extractor.SUGGESTIONS_TASK_NAME,
             params=Params(id=extraction_id),
         )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
+        task_calculated, error = Extractor.calculate_task(task)
 
         documents_count = mongo_client.pdf_metadata_extraction.suggestions.count_documents({})
         suggestion = Suggestion(**mongo_client.pdf_metadata_extraction.suggestions.find_one())
@@ -218,10 +218,10 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
-        MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+                task=Extractor.CREATE_MODEL_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
@@ -239,10 +239,10 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
 
-        task_calculated, error = MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        task_calculated, error = Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+                task=Extractor.SUGGESTIONS_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
@@ -316,18 +316,18 @@ class TestMetadataExtractor(TestCase):
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
-        MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+                task=Extractor.CREATE_MODEL_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
 
-        task_calculated, error = MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        task_calculated, error = Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+                task=Extractor.SUGGESTIONS_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
@@ -394,18 +394,18 @@ class TestMetadataExtractor(TestCase):
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
-        MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+                task=Extractor.CREATE_MODEL_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
 
-        task_calculated, error = MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        task_calculated, error = Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+                task=Extractor.SUGGESTIONS_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
@@ -481,18 +481,18 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
 
-        MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+                task=Extractor.CREATE_MODEL_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
 
-        task_calculated, error = MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        task_calculated, error = Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+                task=Extractor.SUGGESTIONS_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )
@@ -524,12 +524,12 @@ class TestMetadataExtractor(TestCase):
 
         shutil.copy(self.model_path, f"{base_path}/segment_predictor_model/")
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+            task=Extractor.SUGGESTIONS_TASK_NAME,
             params=Params(id=extraction_id),
         )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
+        task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
         self.assertEqual(error, "No data to calculate suggestions")
@@ -561,12 +561,12 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+            task=Extractor.SUGGESTIONS_TASK_NAME,
             params=Params(id=extraction_id),
         )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
+        task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
         self.assertEqual(error, "No model")
@@ -598,12 +598,12 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+            task=Extractor.CREATE_MODEL_TASK_NAME,
             params=Params(id=extraction_id),
         )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
+        task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
 
@@ -637,12 +637,12 @@ class TestMetadataExtractor(TestCase):
 
         mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
-            task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+            task=Extractor.CREATE_MODEL_TASK_NAME,
             params=Params(id=extraction_id),
         )
-        task_calculated, error = MetadataExtraction.calculate_task(task)
+        task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
 
@@ -692,18 +692,18 @@ class TestMetadataExtractor(TestCase):
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
 
-        MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.CREATE_MODEL_TASK_NAME,
+                task=Extractor.CREATE_MODEL_TASK_NAME,
                 params=Params(id=extraction_id, options=options, multi_value=False),
             )
         )
 
-        task_calculated, error = MetadataExtraction.calculate_task(
-            MetadataExtractionTask(
+        task_calculated, error = Extractor.calculate_task(
+            ExtractionTask(
                 tenant=tenant,
-                task=MetadataExtraction.SUGGESTIONS_TASK_NAME,
+                task=Extractor.SUGGESTIONS_TASK_NAME,
                 params=Params(id=extraction_id),
             )
         )

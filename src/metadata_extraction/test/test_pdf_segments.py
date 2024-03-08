@@ -5,7 +5,7 @@ from unittest import TestCase
 from config import DATA_PATH, APP_PATH
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
-from metadata_extraction.PdfMetadata import PdfMetadata
+from metadata_extraction.PdfData import PdfData
 from metadata_extraction.XmlFile import XmlFile
 from pdf_token_type_labels.TokenType import TokenType
 
@@ -46,7 +46,7 @@ class TestPdfSegments(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_segments = PdfMetadata.from_xml_file(xml_file, segmentation_data, [])
+        pdf_segments = PdfData.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(612, pdf_segments.pdf_features.pages[0].page_width)
         self.assertEqual(792, pdf_segments.pdf_features.pages[0].page_height)
@@ -83,7 +83,7 @@ class TestPdfSegments(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_features = PdfMetadata.from_xml_file(xml_file, segmentation_data, [])
+        pdf_features = PdfData.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(0, len(pdf_features.pdf_metadata_segments))
 
@@ -108,7 +108,7 @@ class TestPdfSegments(TestCase):
             xml_file_name="test.xml",
         )
 
-        pdf_segments = PdfMetadata.from_xml_file(xml_file, segmentation_data, [])
+        pdf_segments = PdfData.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(0, len(pdf_segments.pdf_metadata_segments))
 
@@ -153,7 +153,7 @@ class TestPdfSegments(TestCase):
             xml_file_name="test.xml",
         )
 
-        pdf_features = PdfMetadata.from_xml_file(xml_file, segmentation_data, [])
+        pdf_features = PdfData.from_xml_file(xml_file, segmentation_data, [])
 
         self.assertEqual(0, len(pdf_features.pdf_metadata_segments))
 
@@ -182,7 +182,7 @@ class TestPdfSegments(TestCase):
 
             xml_file.save(file=file.read())
 
-        pdf_segments = PdfMetadata.from_xml_file(xml_file, segmentation_data, [1])
+        pdf_segments = PdfData.from_xml_file(xml_file, segmentation_data, [1])
 
         self.assertEqual(0, len([segment for segment in pdf_segments.pdf_metadata_segments if segment.page_number > 1]))
 

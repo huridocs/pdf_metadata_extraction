@@ -75,9 +75,8 @@ Containers with `make start_for_testing`
                              "xml_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}],
                              "label_segments_boxes": [{"left": 124, "top": 48, "width": 83, "height": 13, "page_number": 1}]
                              }' localhost:5056/labeled_data
-    
 
-    Multi-option case:
+    ### Multi-option case:
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
                              "property_name": "property_name",

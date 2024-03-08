@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentPages
+from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentsPages
 
 
 class TestFilterXmlPages(TestCase):
@@ -52,7 +52,7 @@ class TestFilterXmlPages(TestCase):
         </pdf2xml>
         """
 
-        result = FilterValidSegmentPages.filter_xml_pages(xml_text, [2]).split()
+        result = FilterValidSegmentsPages.filter_xml_pages(xml_text, [2]).split()
         self.assertEqual(xml_expect.split(), result)
 
     def test_filter_xml_pages_one_line(self):
@@ -89,7 +89,7 @@ class TestFilterXmlPages(TestCase):
         </pdf2xml>
         """
 
-        self.assertEqual(xml_expect.split(), FilterValidSegmentPages.filter_xml_pages(xml_text, [2]).split())
+        self.assertEqual(xml_expect.split(), FilterValidSegmentsPages.filter_xml_pages(xml_text, [2]).split())
 
     def test_filter_xml_pages_two_pages(self):
         xml_text = """<foo />
@@ -125,7 +125,7 @@ class TestFilterXmlPages(TestCase):
                 </pdf2xml>
                 """
 
-        self.assertEqual(xml_expect.split(), FilterValidSegmentPages.filter_xml_pages(xml_text, [1, 2]).split())
+        self.assertEqual(xml_expect.split(), FilterValidSegmentsPages.filter_xml_pages(xml_text, [1, 2]).split())
 
     def test_filter_xml_pages_last_page(self):
         xml_text = """<foo />
@@ -157,7 +157,7 @@ class TestFilterXmlPages(TestCase):
                         </pdf2xml>
                         """
 
-        self.assertEqual(xml_expect.split(), FilterValidSegmentPages.filter_xml_pages(xml_text, [3]).split())
+        self.assertEqual(xml_expect.split(), FilterValidSegmentsPages.filter_xml_pages(xml_text, [3]).split())
 
     def test_filter_xml_pages_id_with_zeros(self):
         xml_text = """<foo />
@@ -186,7 +186,7 @@ class TestFilterXmlPages(TestCase):
                                 </pdf2xml>
                                 """
 
-        self.assertEqual(xml_expect.split(), FilterValidSegmentPages.filter_xml_pages(xml_text, [2]).split())
+        self.assertEqual(xml_expect.split(), FilterValidSegmentsPages.filter_xml_pages(xml_text, [2]).split())
 
     def test_filter_xml_should_do_nothing_when_not_matching_tags(self):
         xml_text_more_opening_ones = """<foo />
@@ -214,14 +214,14 @@ class TestFilterXmlPages(TestCase):
 
         self.assertEqual(
             xml_text_more_opening_ones.split(),
-            FilterValidSegmentPages.filter_xml_pages(xml_text_more_opening_ones, [2]).split(),
+            FilterValidSegmentsPages.filter_xml_pages(xml_text_more_opening_ones, [2]).split(),
         )
 
         self.assertEqual(
             xml_text_more_opening_ones_2.split(),
-            FilterValidSegmentPages.filter_xml_pages(xml_text_more_opening_ones_2, [2]).split(),
+            FilterValidSegmentsPages.filter_xml_pages(xml_text_more_opening_ones_2, [2]).split(),
         )
 
         self.assertEqual(
-            xml_text_more_closing.split(), FilterValidSegmentPages.filter_xml_pages(xml_text_more_closing, [2]).split()
+            xml_text_more_closing.split(), FilterValidSegmentsPages.filter_xml_pages(xml_text_more_closing, [2]).split()
         )

@@ -6,7 +6,7 @@ from os.path import join, exists
 from pathlib import Path
 
 from config import DATA_PATH
-from metadata_extraction.PdfMetadata import PdfMetadata
+from metadata_extraction.PdfData import PdfData
 from segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
 
 
@@ -37,7 +37,7 @@ class SegmentSelector:
 
         return model_path
 
-    def create_model(self, pdfs_metadata: list[PdfMetadata]) -> (bool, str):
+    def create_model(self, pdfs_metadata: list[PdfData]) -> (bool, str):
         model_path = self.prepare_model_folder()
 
         self.model = LightgbmFrequentWords().create_model(pdfs_metadata, model_path)
@@ -49,7 +49,7 @@ class SegmentSelector:
 
         return True, ""
 
-    def set_extraction_segments(self, pdfs_metadata: list[PdfMetadata]):
+    def set_extraction_segments(self, pdfs_metadata: list[PdfData]):
         predictions = LightgbmFrequentWords().predict(self.model, pdfs_metadata, self.model_path)
         index = 0
         for pdf_metadata in pdfs_metadata:

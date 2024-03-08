@@ -7,14 +7,14 @@ from pdf_features.PdfToken import PdfToken
 from pdf_token_type_labels.TokenType import TokenType
 
 from metadata_extraction.PdfMetadataSegment import PdfMetadataSegment
-from metadata_extraction.PdfMetadata import PdfMetadata
+from metadata_extraction.PdfData import PdfData
 from segment_selector.methods.Modes import Modes
 
 nltk.download("punkt")
 
 
 class SegmentTitlesHistory:
-    def __init__(self, segment_index: int, pdf_segment: PdfMetadataSegment, pdf_segments: PdfMetadata, modes: Modes):
+    def __init__(self, segment_index: int, pdf_segment: PdfMetadataSegment, pdf_segments: PdfData, modes: Modes):
         self.modes = modes
         self.previous_titles_segments: list["SegmentTitlesHistory"] = list()
         self.previous_segment = None
@@ -36,7 +36,7 @@ class SegmentTitlesHistory:
                 self.segment_tokens = [pdf_token]
                 break
 
-        self.pdf_segments: PdfMetadata = pdf_segments
+        self.pdf_segments: PdfData = pdf_segments
         self.page_width = self.pdf_segments.pdf_features.pages[0].page_width
         self.page_height = self.pdf_segments.pdf_features.pages[0].page_height
         self.text_content: str = ""
@@ -241,7 +241,7 @@ class SegmentTitlesHistory:
         return False
 
     @staticmethod
-    def from_pdf_features(pdf_features: PdfMetadata) -> list["SegmentTitlesHistory"]:
+    def from_pdf_features(pdf_features: PdfData) -> list["SegmentTitlesHistory"]:
         modes = Modes(pdf_features)
         segments: list["SegmentTitlesHistory"] = list()
         for index, pdf_segment in enumerate(pdf_features.pdf_metadata_segments):

@@ -4,7 +4,7 @@ from data.Option import Option
 from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
 from metadata_extraction.PdfMetadataSegment import PdfMetadataSegment
-from metadata_extraction.PdfMetadata import PdfMetadata
+from metadata_extraction.PdfData import PdfData
 
 
 class Suggestion(BaseModel):
@@ -28,7 +28,7 @@ class Suggestion(BaseModel):
         extraction_id: str,
         semantic_prediction_data: SemanticPredictionData,
         prediction: str,
-        pdf_segments: PdfMetadata,
+        pdf_segments: PdfData,
     ):
         segments = [x for x in pdf_segments.pdf_metadata_segments if x.ml_label]
 

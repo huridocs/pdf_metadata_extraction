@@ -7,7 +7,7 @@ from rsmq import RedisSMQ
 import requests
 
 from config import APP_PATH
-from data.MetadataExtractionTask import MetadataExtractionTask
+from data.ExtractionTask import ExtractionTask
 from data.Option import Option
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
@@ -55,7 +55,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id),
@@ -95,7 +95,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id),
@@ -138,7 +138,7 @@ class TestEndToEnd(TestCase):
     def test_create_model_error(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id),
@@ -158,7 +158,7 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(results_message, expected_result)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id),
@@ -226,7 +226,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id, options=options, muti_value=False),
@@ -236,7 +236,7 @@ class TestEndToEnd(TestCase):
 
         self.get_results_message()
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id),

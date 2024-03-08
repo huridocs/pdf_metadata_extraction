@@ -53,7 +53,7 @@ class Method(ABC):
 
             config_logger.info("prediction: " + prediction)
             config_logger.info("truth     : " + semantic_extraction_data.text)
-            config_logger.info("text      : " + self.get_text_from_pdf_tags(semantic_extraction_data.texts))
+            config_logger.info("text      : " + self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags))
 
     def load_json(self, file_name: str):
         path = join(self.base_path, self.get_name(), file_name)

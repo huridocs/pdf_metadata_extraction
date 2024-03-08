@@ -9,7 +9,7 @@ from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 
 
-class FilterValidSegmentPages:
+class FilterValidSegmentsPages:
     def __init__(self, tenant: str, extraction_id: str):
         self.labeled_data_json_path = join(DATA_PATH, tenant, extraction_id, "filter_pages.json")
         self.start_gaps = []
@@ -124,7 +124,7 @@ class FilterValidSegmentPages:
         page_numbers = [id_field.replace('"', "").replace("<page number=", "") for id_field in pages_xml]
         ends_of_pages = [x.end() for x in re.finditer("</page>", xml_content)]
 
-        if not FilterValidSegmentPages.correct_page_numbers(xml_content, page_numbers, ends_of_pages):
+        if not FilterValidSegmentsPages.correct_page_numbers(xml_content, page_numbers, ends_of_pages):
             return xml_content
 
         pages_to_remove = [page_number for page_number in page_numbers if int(page_number) not in page_numbers_to_keep]
