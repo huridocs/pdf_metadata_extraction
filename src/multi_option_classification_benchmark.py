@@ -8,8 +8,11 @@ from time import time
 from config import ROOT_PATH, APP_PATH
 from data.Option import Option
 from metadata_extraction.PdfData import PdfData
+from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from multi_option_extraction.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
+from multi_option_extraction.multi_labels_methods.BertBatch1 import BertBatch1
 from multi_option_extraction.multi_option_extraction_methods.FuzzyFirstCleanLabel import FuzzyFirstCleanLabel
 
 from multi_option_extraction.results import get_results_table, add_row
@@ -19,15 +22,15 @@ PDF_DATA_FOLDER_PATH = join(ROOT_PATH, "data", "pdf_data_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 
-# text_extractors = [CleanBeginningDot500]
-# multi_option_extractors = [BertBatch1]
-# PDF_TOPIC_CLASSIFICATION_METHODS = [
-#     MultiOptionExtractionMethod(x, y) for x in text_extractors for y in multi_option_extractors
-# ]
+text_extractors = [CleanBeginningDot500]
+multi_option_extractors = [BertBatch1]
+PDF_TOPIC_CLASSIFICATION_METHODS = [
+    MultiOptionExtractionMethod(x, y) for x in text_extractors for y in multi_option_extractors
+]
 
 # fuzzy_methods = [FirstFuzzyCountry(), All75FuzzyMethod(), All88FuzzyMethod(), All100FuzzyMethod(), FirstFuzzyMethod(), LastFuzzyMethod()]
 # fuzzy_methods = [FuzzyFirstCleanLabel()]
-PDF_TOPIC_CLASSIFICATION_METHODS = [FuzzyFirstCleanLabel()]
+# PDF_TOPIC_CLASSIFICATION_METHODS = [FuzzyFirstCleanLabel()]
 
 
 def get_multi_option_benchmark_data(filter_names: list[str] = None) -> list[MultiOptionData]:
@@ -84,7 +87,7 @@ def loop_datasets_methods():
     # cejil_secretary
     # cyrilla_keywords
     # d4la_document_type
-    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data(["cejil_countries"])
+    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data(["cyrilla_keywords"])
 
     for multi_option_data in multi_option_extractions_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:
