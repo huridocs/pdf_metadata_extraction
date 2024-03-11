@@ -38,10 +38,10 @@ class FilterValidSegmentsPages:
         with open(self.labeled_data_json_path, "w") as file:
             json.dump([x.model_dump_json() for x in labeled_data_list], file)
 
-            self.set_parameters(labeled_data_list)
-            pages_list = [[x.page_number for x in labeled_data.xml_segments_boxes] for labeled_data in labeled_data_list]
-            total_number_pages_per_document = [max(pages) if pages else 1000 for pages in pages_list]
-            return self.get_valid_pages(total_number_pages_per_document)
+        self.set_parameters(labeled_data_list)
+        pages_list = [[x.page_number for x in labeled_data.xml_segments_boxes] for labeled_data in labeled_data_list]
+        total_number_pages_per_document = [max(pages) if pages else 1000 for pages in pages_list]
+        return self.get_valid_pages(total_number_pages_per_document)
 
     def for_prediction(self, prediction_data_list: list[PredictionData]):
         try:

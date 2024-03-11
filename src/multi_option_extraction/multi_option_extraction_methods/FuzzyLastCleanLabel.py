@@ -4,10 +4,10 @@ from paragraph_extraction_trainer.PdfSegment import PdfSegment
 from rapidfuzz import fuzz
 
 from multi_option_extraction.PdfLabels import PdfLabels
-from multi_option_extraction.PdfMultiOptionExtractionMethod import PdfMultiOptionExtractionMethod
+from multi_option_extraction.PdfMultiOptionExtractionMethod import MultiOptionExtractionMethod
 
 
-class FuzzyLastCleanLabel(PdfMultiOptionExtractionMethod):
+class FuzzyLastCleanLabel(MultiOptionExtractionMethod):
     def get_last_appearance(self, pdf_segments: list[PdfSegment], options: list[str]) -> list[str]:
         for pdf_segment in reversed(pdf_segments):
             for ratio_threshold in range(100, 95, -1):
@@ -17,10 +17,10 @@ class FuzzyLastCleanLabel(PdfMultiOptionExtractionMethod):
 
         return []
 
-    def predict(self, pdfs_labels: list[PdfLabels]):
+    def predict(self, multi_option_samples: list[PdfLabels]):
         predictions = list()
         clean_options = self.get_cleaned_options(self.options)
-        for pdf_label in pdfs_labels:
+        for pdf_label in multi_option_samples:
             pdf_segments = [PdfSegment.from_pdf_tokens(x.tokens) for x in pdf_label.paragraphs]
             prediction = self.get_last_appearance(pdf_segments, clean_options)
             if prediction:
@@ -30,7 +30,7 @@ class FuzzyLastCleanLabel(PdfMultiOptionExtractionMethod):
 
         return predictions
 
-    def train(self, pdfs_labels: list[PdfLabels]):
+    def train(self, multi_option_samples: list[PdfLabels]):
         pass
 
     def get_cleaned_options(self, options: list[str]):

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from data.Option import Option
 from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
-from metadata_extraction.PdfMetadataSegment import PdfMetadataSegment
+from metadata_extraction.PdfDataSegment import PdfDataSegment
 from metadata_extraction.PdfData import PdfData
 
 
@@ -30,7 +30,7 @@ class Suggestion(BaseModel):
         prediction: str,
         pdf_segments: PdfData,
     ):
-        segments = [x for x in pdf_segments.pdf_metadata_segments if x.ml_label]
+        segments = [x for x in pdf_segments.pdf_data_segments if x.ml_label]
 
         if segments:
             page_number = segments[0].page_number
@@ -67,8 +67,8 @@ class Suggestion(BaseModel):
         self.options = options
         return self
 
-    def add_segments(self, pdf_features):
-        segments: list[PdfMetadataSegment] = [x for x in pdf_features.pdf_metadata_segments if x.ml_label]
+    def add_segments(self, pdf_data: PdfData):
+        segments: list[PdfDataSegment] = [x for x in pdf_data.pdf_data_segments if x.ml_label]
 
         if segments:
             self.page_number = segments[0].page_number

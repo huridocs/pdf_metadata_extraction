@@ -58,7 +58,7 @@ class TestSegmentSelector(TestCase):
         pdf_segments = PdfData.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        model_created, error = segment_selector.create_model(pdfs_metadata=[pdf_segments])
+        model_created, error = segment_selector.create_model(pdfs_data=[pdf_segments])
 
         self.assertTrue(model_created)
         self.assertEqual("", error)
@@ -78,12 +78,12 @@ class TestSegmentSelector(TestCase):
 
         pdf_features = PdfData.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        segment_selector.create_model(pdfs_metadata=[pdf_features])
+        segment_selector.create_model(pdfs_data=[pdf_features])
 
         segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
-        segment_selector.set_extraction_segments(pdfs_metadata=[pdf_features])
+        segment_selector.set_extraction_segments(pdfs_data=[pdf_features])
 
-        extraction_segments = [x for x in pdf_features.pdf_metadata_segments if x.ml_label]
+        extraction_segments = [x for x in pdf_features.pdf_data_segments if x.ml_label]
         self.assertEqual(1, len(extraction_segments))
         self.assertEqual(1, extraction_segments[0].page_number)
         self.assertEqual("Original: English", extraction_segments[0].text_content)

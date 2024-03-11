@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from pdf_token_type_labels.TokenType import TokenType
 from pdf_features.Rectangle import Rectangle
 
-from metadata_extraction.PdfMetadataSegment import PdfMetadataSegment
+from metadata_extraction.PdfDataSegment import PdfDataSegment
 
 SCALE_RATIO = 0.75
 
@@ -38,7 +38,7 @@ class SegmentBox(BaseModel):
         self.height = round(self.height / SCALE_RATIO, 0)
 
     def to_pdf_segment(self):
-        return PdfMetadataSegment(
+        return PdfDataSegment(
             page_number=self.page_number,
             bounding_box=self.get_bounding_box(),
             text_content="",
@@ -46,7 +46,7 @@ class SegmentBox(BaseModel):
         )
 
     @staticmethod
-    def from_pdf_segment(pdf_segment: PdfMetadataSegment):
+    def from_pdf_segment(pdf_segment: PdfDataSegment):
         return SegmentBox(
             left=pdf_segment.bounding_box.left,
             top=pdf_segment.bounding_box.top,

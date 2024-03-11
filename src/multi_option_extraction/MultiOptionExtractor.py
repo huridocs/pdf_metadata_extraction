@@ -6,15 +6,16 @@ from typing import Type
 
 from config import DATA_PATH, config_logger
 from data.Option import Option
-from data.SemanticPredictionData import SemanticPredictionData
-from multi_option_extraction.MultiOptionExtractionData import MultiOptionExtractionData, MultiOptionExtractionSample
-from multi_option_extraction.TextToMultiOptionMethod import TextToMultiOptionMethod
+from metadata_extraction.PdfData import PdfData
+from multi_option_extraction.data.MultiOptionData import MultiOptionData
+from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from multi_option_extraction.TextToMultiOptionMethod import MultiLabelMethods
 from multi_option_extraction.text_to_multi_option_methods.FastTextMethod import FastTextMethod
 from multi_option_extraction.text_to_multi_option_methods.TfIdfMethod import TfIdfMethod
 
 
 class MultiOptionExtractor:
-    METHODS: list[Type[TextToMultiOptionMethod]] = [FastTextMethod, TfIdfMethod]
+    METHODS: list[Type[MultiLabelMethods]] = [FastTextMethod, TfIdfMethod]
 
     def __init__(self, tenant: str, extraction_id: str):
         self.tenant = tenant
@@ -27,16 +28,16 @@ class MultiOptionExtractor:
         self.options: list[Option] = list()
         self.multi_value = False
 
-    def create_model(self, multi_option_extraction_data: MultiOptionExtractionData):
-        self.options = multi_option_extraction_data.options
-        self.multi_value = multi_option_extraction_data.multi_value
+    def create_model(self, multi_option_data: MultiOptionData):
+        self.options = multi_option_data.options
+        self.multi_value = multi_option_data.multi_value
 
-        self.save_json(self.options_path, [x.model_dump() for x in multi_option_extraction_data.options])
-        self.save_json(self.multi_value_path, multi_option_extraction_data.multi_value)
+        self.save_json(self.options_path, [x.model_dump() for x in multi_option_data.options])
+        self.save_json(self.multi_value_path, multi_option_data.multi_value)
 
-        method = self.get_best_method(multi_option_extraction_data)
+        method = self.get_best_method(multi_option_data)
 
-        method.train(multi_option_extraction_data)
+        method.train(multi_option_data)
 
         return True, ""
 
@@ -48,21 +49,21 @@ class MultiOptionExtractor:
         with open(path, "w") as file:
             json.dump(data, file)
 
-    def get_multi_option_predictions(
-        self, semantic_predictions_data: list[SemanticPredictionData]
-    ) -> list[MultiOptionExtractionSample]:
+    def get_multi_option_predictions(self, pdfs_data: list[PdfData]) -> list[MultiOptionSample]:
         self.load_options()
-
-        multi_option_extraction_samples = list()
-        method = self.get_predictions_method()
-        options_predictions = method.predict(semantic_predictions_data)
-        for semantic_prediction_data, prediction in zip(semantic_predictions_data, options_predictions):
-            multi_option_extraction_sample = MultiOptionExtractionSample(
-                pdf_tags=semantic_prediction_data.pdf_tags, values=prediction
-            )
-            multi_option_extraction_samples.append(multi_option_extraction_sample)
-
-        return multi_option_extraction_samples
+        multi_option_samples = [MultiOptionSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
+        multi_option_data = MultiOptionData(multi_value=self.multi_value, options=self.options, samples=multi_option_samples)
+        #
+        # multi_option_samples = list()
+        # method = self.get_predictions_method()
+        # options_predictions = method.predict(semantic_predictions_data)
+        # for semantic_prediction_data, prediction in zip(semantic_predictions_data, options_predictions):
+        #     multi_option_sample = MultiOptionExtractionSample(
+        #         pdf_data=semantic_prediction_data.pdf_data, values=prediction
+        #     )
+        #     multi_option_samples.append(multi_option_sample)
+        #
+        # return multi_option_samples
 
     def load_options(self):
         if not exists(self.options_path) or not exists(self.multi_value_path):
@@ -74,22 +75,20 @@ class MultiOptionExtractor:
         with open(self.multi_value_path, "r") as file:
             self.multi_value = json.load(file)
 
-    def get_best_method(self, multi_option_extraction_data: MultiOptionExtractionData):
+    def get_best_method(self, multi_option_data: MultiOptionData):
         best_method_instance = self.METHODS[0](self.tenant, self.extraction_id, self.options, self.multi_value)
 
         if len(self.METHODS) == 1:
             return best_method_instance
 
-        samples = [sample for sample in multi_option_extraction_data.samples if sample.texts]
-        performance_multi_option_extraction_data = MultiOptionExtractionData(
-            multi_value=self.multi_value, options=self.options, samples=samples
-        )
+        samples = [sample for sample in multi_option_data.samples if sample.texts]
+        performance_multi_option_data = MultiOptionData(multi_value=self.multi_value, options=self.options, samples=samples)
 
         best_performance = 0
         for method in self.METHODS:
             method_instance = method(self.tenant, self.extraction_id, self.options, self.multi_value)
             config_logger.info(f"\nChecking {method_instance.get_name()}")
-            performance = method_instance.performance(performance_multi_option_extraction_data, 30)
+            performance = method_instance.performance(performance_multi_option_data, 30)
             config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
             if performance == 100:
                 config_logger.info(f"\nBest method {method_instance.get_name()} with {performance}%")

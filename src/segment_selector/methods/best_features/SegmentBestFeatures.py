@@ -6,7 +6,7 @@ import numpy as np
 from pdf_features.PdfToken import PdfToken
 from pdf_token_type_labels.TokenType import TokenType
 
-from metadata_extraction.PdfMetadataSegment import PdfMetadataSegment
+from metadata_extraction.PdfDataSegment import PdfDataSegment
 from metadata_extraction.PdfData import PdfData
 from segment_selector.methods.Modes import Modes
 
@@ -14,7 +14,7 @@ nltk.download("punkt")
 
 
 class SegmentBestFeatures:
-    def __init__(self, segment_index: int, pdf_segment: PdfMetadataSegment, pdf_segments: PdfData, modes: Modes):
+    def __init__(self, segment_index: int, pdf_segment: PdfDataSegment, pdf_segments: PdfData, modes: Modes):
         self.modes = modes
         self.previous_title_segment = None
         self.previous_segment = None
@@ -60,7 +60,7 @@ class SegmentBestFeatures:
         self.starts_with_square_brackets: bool = False
         self.starts_with_roman_numbers: bool = False
         self.uppercase: bool = False
-        self.last_token: PdfMetadataSegment = None
+        self.last_token: PdfDataSegment = None
         self.bold: float = False
         self.bold_token_number: int = 0
         self.italics: float = False
@@ -126,7 +126,7 @@ class SegmentBestFeatures:
 
         return [
             self.previous_title_segment.segment_index,
-            len(self.previous_title_segment.pdf_metadata_segments.pdf_metadata_segments)
+            len(self.previous_title_segment.multi_option_samples.multi_option_samples)
             - self.previous_title_segment.segment_index,
             self.previous_title_segment.page_index,
             len(self.pdf_segments.pdf_features.pages) - self.previous_title_segment.page_index,
@@ -159,7 +159,7 @@ class SegmentBestFeatures:
 
         return [
             segment.segment_index,
-            len(segment.pdf_segments.pdf_metadata_segments) - segment.segment_index,
+            len(segment.pdf_segments.pdf_data_segments) - segment.segment_index,
             segment.page_index,
             len(segment.pdf_segments.pdf_features.pages) - segment.page_index,
             segment.bold,
@@ -213,7 +213,7 @@ class SegmentBestFeatures:
                 self.starts_letter_dot,
                 self.dots_percentage,
                 1 if self.uppercase else 0,
-                len(self.pdf_segments.pdf_metadata_segments) - self.segment_index,
+                len(self.pdf_segments.pdf_data_segments) - self.segment_index,
                 len(self.pdf_segments.pdf_features.pages) - self.page_index,
                 self.pdf_segment.segment_type.get_index(),
             ]
@@ -240,7 +240,7 @@ class SegmentBestFeatures:
     def from_pdf_features(pdf_features: PdfData) -> list["SegmentBestFeatures"]:
         modes = Modes(pdf_features)
         segments: list["SegmentBestFeatures"] = list()
-        for index, pdf_segment in enumerate(pdf_features.pdf_metadata_segments):
+        for index, pdf_segment in enumerate(pdf_features.pdf_data_segments):
             segment_landmarks = SegmentBestFeatures(index, pdf_segment, pdf_features, modes)
             segments.append(segment_landmarks)
 

@@ -6,7 +6,7 @@ from data.SegmentationData import SegmentationData
 from pdf_features.PdfFeatures import PdfFeatures
 
 from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentsPages
-from metadata_extraction.PdfMetadataSegment import PdfMetadataSegment
+from metadata_extraction.PdfDataSegment import PdfDataSegment
 from metadata_extraction.XmlFile import XmlFile
 
 
@@ -16,12 +16,12 @@ class PdfData:
         self.file_name = file_name
         self.file_type = file_type
         self.pdf_path = ""
-        self.pdf_metadata_segments: list[PdfMetadataSegment] = list()
+        self.pdf_data_segments: list[PdfDataSegment] = list()
 
     def set_segments_from_paragraphs(self, paragraphs: list[Paragraph]):
         for paragraph in paragraphs:
-            self.pdf_metadata_segments.append(PdfMetadataSegment.from_pdf_tokens(paragraph.tokens))
-        self.pdf_metadata_segments.sort(key=lambda x: (x.page_number, x.bounding_box.top, x.bounding_box.left))
+            self.pdf_data_segments.append(PdfDataSegment.from_pdf_tokens(paragraph.tokens))
+        self.pdf_data_segments.sort(key=lambda x: (x.page_number, x.bounding_box.top, x.bounding_box.left))
 
     def set_segments_from_segmentation_data(self, segmentation_data: SegmentationData):
         pdf_segments_to_merge = dict()
@@ -29,7 +29,7 @@ class PdfData:
             segment_box.to_pdf_segment() for segment_box in segmentation_data.xml_segments_boxes
         ]
         for page, token in self.pdf_features.loop_tokens():
-            segment_from_tag: PdfMetadataSegment = PdfMetadataSegment.from_pdf_token(token)
+            segment_from_tag: PdfDataSegment = PdfDataSegment.from_pdf_token(token)
 
             intersects_segmentation = [
                 segmentation_segment
@@ -38,23 +38,23 @@ class PdfData:
             ]
 
             if not intersects_segmentation:
-                self.pdf_metadata_segments.append(segment_from_tag)
+                self.pdf_data_segments.append(segment_from_tag)
                 continue
 
             segment_from_tag.segment_type = intersects_segmentation[0].segment_type
             pdf_segments_to_merge.setdefault(intersects_segmentation[0], []).append(segment_from_tag)
 
-        self.pdf_metadata_segments.extend(
+        self.pdf_data_segments.extend(
             [
-                PdfMetadataSegment.from_list_to_merge(each_pdf_segments_to_merge)
+                PdfDataSegment.from_list_to_merge(each_pdf_segments_to_merge)
                 for each_pdf_segments_to_merge in pdf_segments_to_merge.values()
             ]
         )
-        self.pdf_metadata_segments.sort(key=lambda x: (x.page_number, x.bounding_box.top, x.bounding_box.left))
+        self.pdf_data_segments.sort(key=lambda x: (x.page_number, x.bounding_box.top, x.bounding_box.left))
 
     def set_ml_label_from_segmentation_data(self, segmentation_data: SegmentationData):
         for label_segment_box in segmentation_data.label_segments_boxes:
-            for segment in self.pdf_metadata_segments:
+            for segment in self.pdf_data_segments:
                 if segment.page_number != label_segment_box.page_number:
                     continue
                 if segment.is_selected(label_segment_box.get_bounding_box()):

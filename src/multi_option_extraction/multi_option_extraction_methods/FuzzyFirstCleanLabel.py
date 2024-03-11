@@ -1,14 +1,15 @@
 from collections import Counter
-
-from paragraph_extraction_trainer.PdfSegment import PdfSegment
 from rapidfuzz import fuzz
 
-from multi_option_extraction.PdfLabels import PdfLabels
-from multi_option_extraction.PdfMultiOptionExtractionMethod import PdfMultiOptionExtractionMethod
+from data.Option import Option
+from metadata_extraction.PdfDataSegment import PdfDataSegment
+from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
+from multi_option_extraction.data.MultiOptionData import MultiOptionData
 
 
-class FuzzyFirstCleanLabel(PdfMultiOptionExtractionMethod):
-    def get_first_appearance(self, pdf_segments: list[PdfSegment], options: list[str]) -> list[str]:
+class FuzzyFirstCleanLabel(MultiOptionExtractionMethod):
+    @staticmethod
+    def get_first_appearance(pdf_segments: list[PdfDataSegment], options: list[str]) -> list[str]:
         for pdf_segment in pdf_segments:
             for ratio_threshold in range(100, 95, -1):
                 for option in options:
@@ -17,30 +18,30 @@ class FuzzyFirstCleanLabel(PdfMultiOptionExtractionMethod):
 
         return []
 
-    def predict(self, pdfs_labels: list[PdfLabels]):
+    def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
         predictions = list()
-        clean_options = self.get_cleaned_options(self.options)
-        for pdf_label in pdfs_labels:
-            pdf_segments = [PdfSegment.from_pdf_tokens(x.tokens) for x in pdf_label.paragraphs]
+        clean_options = self.get_cleaned_options(multi_option_data.options)
+        for multi_option_sample in multi_option_data.samples:
+            pdf_segments: list[PdfDataSegment] = [x for x in multi_option_sample.pdf_data.pdf_data_segments]
             prediction = self.get_first_appearance(pdf_segments, clean_options)
             if prediction:
-                predictions.append([self.options[clean_options.index(prediction[0])]])
+                predictions.append([multi_option_data.options[clean_options.index(prediction[0])]])
             else:
                 predictions.append([])
 
         return predictions
 
-    def train(self, pdfs_labels: list[PdfLabels]):
+    def train(self, multi_option_data: MultiOptionData):
         pass
 
-    def get_cleaned_options(self, options: list[str]):
-        options = [x.lower() for x in options]
+    def get_cleaned_options(self, options: list[Option]):
+        options_labels = [x.label.lower() for x in options]
         words_counter = Counter()
-        for option in options:
+        for option in options_labels:
             words_counter.update(option.split())
 
         clean_options = list()
-        for option in options:
+        for option in options_labels:
             clean_options.append(option)
             for word, count in words_counter.most_common():
                 if count == 1:

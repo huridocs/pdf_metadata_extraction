@@ -1,22 +1,19 @@
 import rich
 
-
+from multi_option_classification_benchmark import loop_datasets_methods
 from multi_option_extraction.results import get_predictions_table, add_prediction_row
-from pdf_topic_classification_benchmark import loop_datasets_methods
 
 
 def check_mistakes():
     predictions_table = get_predictions_table()
 
-    for labeled_data_one_task, method in loop_datasets_methods():
-        method.set_parameters("benchmark", labeled_data_one_task)
+    for multi_option_data, method in loop_datasets_methods():
+        print("Calculating", method.extraction_id, method.get_name())
 
-        print("Calculating", method.task_name, method.get_name())
-
-        train, test_set = method.get_train_test_sets(labeled_data_one_task, 25)
+        train, test_set = method.get_train_test_sets(multi_option_data, 25)
         predictions = method.predict(test_set)
-        labels = [x.labels for x in test_set]
-        pdfs_names = [x.pdf_name for x in test_set]
+        labels = [x.values for x in test_set.samples]
+        pdfs_names = [x.pdf_data.file_name for x in test_set.samples]
         for label, prediction, pdf_name in zip(labels, predictions, pdfs_names):
             add_prediction_row(predictions_table, pdf_name, label, prediction)
 
