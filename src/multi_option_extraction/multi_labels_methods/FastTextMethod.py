@@ -57,7 +57,7 @@ class FastTextMethod(MultiLabelMethods):
         model.save_model(self.get_model_path())
 
     def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[list[Option]]:
-        texts = [self.get_text_from_pdf_segments(sample.pdf_tags) for sample in semantic_predictions_data]
+        texts = [self.get_text_from_pdf_segments(sample.pdf_tags_data) for sample in semantic_predictions_data]
         texts = [text.replace("\n", " ") for text in texts]
 
         model = fasttext.load_model(self.get_model_path())

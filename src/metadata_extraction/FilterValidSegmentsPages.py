@@ -5,13 +5,14 @@ from os.path import join, exists
 
 
 from config import DATA_PATH
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 
 
 class FilterValidSegmentsPages:
-    def __init__(self, tenant: str, extraction_id: str):
-        self.labeled_data_json_path = join(DATA_PATH, tenant, extraction_id, "filter_pages.json")
+    def __init__(self, extraction_identifier: ExtractionIdentifier):
+        self.labeled_data_json_path = join(extraction_identifier.get_path(), "filter_pages.json")
         self.start_gaps = []
         self.end_gaps = []
         self.valid_pages_ranges = []

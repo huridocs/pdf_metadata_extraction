@@ -132,7 +132,7 @@ async def get_suggestions(tenant: str, extraction_id: str):
     try:
         config_logger.info(f"get_suggestions {tenant} {extraction_id}")
         pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-        suggestions_filter = {"tenant": tenant, "id": extraction_id}
+        suggestions_filter = {"run_name": tenant, "extraction_name": extraction_id}
         suggestions_list: list[str] = list()
 
         for document in pdf_metadata_extraction_db.suggestions.find(suggestions_filter):

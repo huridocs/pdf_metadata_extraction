@@ -42,8 +42,8 @@ class TestEndToEnd(TestCase):
             requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
 
         labeled_data_json = {
-            "id": extraction_id,
-            "tenant": tenant,
+            "extraction_name": extraction_id,
+            "run_name": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
             "label_text": "Original: English",
@@ -85,8 +85,8 @@ class TestEndToEnd(TestCase):
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         predict_data_json = {
-            "tenant": tenant,
-            "id": extraction_id,
+            "run_name": tenant,
+            "extraction_name": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -190,11 +190,11 @@ class TestEndToEnd(TestCase):
         options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
 
         labeled_data_json = {
-            "id": extraction_id,
-            "tenant": tenant,
+            "extraction_name": extraction_id,
+            "run_name": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
-            "options": [{"id": "1", "label": "United Nations"}],
+            "options": [{"extraction_name": "1", "label": "United Nations"}],
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
@@ -216,8 +216,8 @@ class TestEndToEnd(TestCase):
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         predict_data_json = {
-            "tenant": tenant,
-            "id": extraction_id,
+            "run_name": tenant,
+            "extraction_name": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -278,5 +278,5 @@ class TestEndToEnd(TestCase):
             )
             message = queue.receiveMessage().exceptions(False).execute()
             if message:
-                queue.deleteMessage(id=message["id"]).execute()
+                queue.deleteMessage(id=message["extraction_name"]).execute()
                 return ResultsMessage(**json.loads(message["message"]))

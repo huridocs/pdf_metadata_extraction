@@ -57,3 +57,7 @@ class PdfDataSegment:
             text_content=text_content,
             segment_type=segment_type,
         )
+
+    @staticmethod
+    def from_texts(texts: list[str]):
+        return [PdfDataSegment(1, Rectangle(0, 0, 0, 0), text) for text in texts]

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
@@ -42,16 +43,16 @@ class Suggestion(BaseModel):
             id=extraction_id,
             xml_file_name=semantic_prediction_data.xml_file_name,
             text=prediction,
-            segment_text=" ".join([x.text for x in semantic_prediction_data.pdf_tags]),
+            segment_text=" ".join([x.text for x in semantic_prediction_data.pdf_tags_data]),
             page_number=page_number,
             segments_boxes=[x.bounding_box.to_segment_box(x.page_number).correct_output_data_scale() for x in segments],
         )
 
     @staticmethod
-    def get_empty(tenant: str, extraction_id: str, xml_file_name: str) -> "Suggestion":
+    def get_empty(extraction_identifier: ExtractionIdentifier, xml_file_name: str) -> "Suggestion":
         return Suggestion(
-            tenant=tenant,
-            id=extraction_id,
+            tenant=extraction_identifier.run_name,
+            id=extraction_identifier.extraction_name,
             xml_file_name=xml_file_name,
             text="",
             segment_text=" ",

@@ -90,7 +90,7 @@ class TfIdfMethod(MultiLabelMethods):
         vectorizer = TfidfVectorizer()
         vectorizer.fit_transform(train_texts)
 
-        predict_texts = [self.clean_text(data.pdf_tags) for data in semantic_predictions_data]
+        predict_texts = [self.clean_text(data.pdf_tags_data) for data in semantic_predictions_data]
 
         tfidf_predict_vectors = vectorizer.transform(predict_texts)
 

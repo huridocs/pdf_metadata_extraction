@@ -106,7 +106,7 @@ class SetFitMethod(MultiLabelMethods):
 
     def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[list[Option]]:
         model = SetFitModel.from_pretrained(self.get_model_path())
-        predict_texts = [self.get_text_from_pdf_segments(data.pdf_tags) for data in semantic_predictions_data]
+        predict_texts = [self.get_text_from_pdf_segments(data.pdf_tags_data) for data in semantic_predictions_data]
         predictions = model(predict_texts)
 
         return self.predictions_to_options_list(predictions.tolist())

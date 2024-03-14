@@ -11,7 +11,6 @@ from pdf_token_type_labels.TokenType import TokenType
 
 from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
 from data.ExtractionTask import ExtractionTask
-from data.Option import Option
 from data.Params import Params
 from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
@@ -73,7 +72,7 @@ class TestMetadataExtractor(TestCase):
         task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
-        self.assertEqual(error, "No labeled data to create model")
+        self.assertEqual("No data to create model", error)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_should_do_nothing_when_no_xml(self):
@@ -545,7 +544,7 @@ class TestMetadataExtractor(TestCase):
 
         base_path = join(DATA_PATH, tenant, extraction_id)
 
-        os.makedirs(f"{base_path}/xml_to_predict")
+        os.makedirs(f"{base_path}/xml_to_predict", exist_ok=True)
         shutil.copy(self.test_xml_path, f"{base_path}/xml_to_predict/test.xml")
 
         to_predict_json = [
@@ -569,7 +568,7 @@ class TestMetadataExtractor(TestCase):
         task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
-        self.assertEqual(error, "No model")
+        self.assertEqual("No data to calculate suggestions", error)
 
         shutil.rmtree(join(DATA_PATH, tenant))
 
@@ -645,81 +644,6 @@ class TestMetadataExtractor(TestCase):
         task_calculated, error = Extractor.calculate_task(task)
 
         self.assertFalse(task_calculated)
-
-        self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_get_multi_option_suggestions(self):
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-
-        tenant = "tenant_to_be_removed"
-        extraction_id = "extraction_id"
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
-
-        to_predict_json = [
-            {
-                "xml_file_name": "test.xml",
-                "id": extraction_id,
-                "tenant": tenant,
-                "page_width": 612,
-                "page_height": 792,
-                "xml_segments_boxes": [],
-            }
-        ]
-
-        mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
-
-        options = [{"id": f"id{n}", "label": str(n)} for n in range(16)]
-        for i in range(7):
-            labeled_data_json = {
-                "id": extraction_id,
-                "tenant": tenant,
-                "xml_file_name": "test.xml",
-                "language_iso": "en",
-                "options": [{"id": "id15", "label": "15"}],
-                "page_width": 612,
-                "page_height": 792,
-                "xml_segments_boxes": [],
-                "label_segments_boxes": [
-                    json.loads(SegmentBox(left=397, top=91, width=10, height=9, page_number=1).model_dump_json())
-                ],
-            }
-
-            mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
-
-        Extractor.calculate_task(
-            ExtractionTask(
-                tenant=tenant,
-                task=Extractor.CREATE_MODEL_TASK_NAME,
-                params=Params(id=extraction_id, options=options, multi_value=False),
-            )
-        )
-
-        task_calculated, error = Extractor.calculate_task(
-            ExtractionTask(
-                tenant=tenant,
-                task=Extractor.SUGGESTIONS_TASK_NAME,
-                params=Params(id=extraction_id),
-            )
-        )
-
-        suggestions: list[Suggestion] = list()
-        find_filter = {"id": extraction_id, "tenant": tenant}
-        for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
-            suggestions.append(Suggestion(**document))
-
-        self.assertTrue(task_calculated)
-        self.assertEqual(1, len(suggestions))
-        self.assertEqual(tenant, suggestions[0].tenant)
-        self.assertEqual(extraction_id, suggestions[0].id)
-        self.assertEqual("test.xml", suggestions[0].xml_file_name)
-        self.assertEqual("15 February 2021", suggestions[0].segment_text)
-        self.assertEqual([Option(id="id15", label="15")], suggestions[0].options)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
         self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))

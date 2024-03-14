@@ -6,7 +6,7 @@ from metadata_extraction.PdfDataSegment import PdfDataSegment
 from multi_option_extraction.FilterSegmentsMethod import FilterSegmentsMethod
 
 
-class CleanBeginningDot500(FilterSegmentsMethod):
+class CleanBeginningDot1000(FilterSegmentsMethod):
     def get_first_tokens(self, pdf_data_segments: list[PdfDataSegment], text_length: int) -> list[PdfDataSegment]:
         total_text = ""
         filtered_segments: list[PdfDataSegment] = list()
@@ -49,4 +49,4 @@ class CleanBeginningDot500(FilterSegmentsMethod):
         return pdf_data_segment_copy
 
     def filter_segments(self, pdf_data_segments: list[PdfDataSegment]) -> list[PdfDataSegment]:
-        return self.get_first_tokens(pdf_data_segments, 500)
+        return self.get_first_tokens(pdf_data_segments, 1000)

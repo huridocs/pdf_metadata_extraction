@@ -10,4 +10,4 @@ class SemanticExtractionData(BaseModel):
     language_iso: str
 
     def to_semantic_prediction(self):
-        return SemanticPredictionData(pdf_tags=self.pdf_tags)
+        return SemanticPredictionData(pdf_tags_data=self.pdf_tags)

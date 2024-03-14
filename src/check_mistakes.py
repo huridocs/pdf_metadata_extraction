@@ -8,7 +8,7 @@ def check_mistakes():
     predictions_table = get_predictions_table()
 
     for multi_option_data, method in loop_datasets_methods():
-        print("Calculating", method.extraction_id, method.get_name())
+        print(f"Calculating {method.extraction_identifier} {method.get_name()}")
 
         train, test_set = method.get_train_test_sets(multi_option_data, 25)
         predictions = method.predict(test_set)

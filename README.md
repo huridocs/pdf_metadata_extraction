@@ -53,11 +53,11 @@ Containers with `make start_for_testing`
 
 2. Post xml files to train
 
-    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5056/xml_to_train/tenant_name/property_name
+    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5056/xml_to_train/tenant_name/id
 
 3. Post xml files to get suggestions
 
-    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5056/xml_to_predict/tenant_name/property_name
+    curl -X POST -F 'file=@/PATH/TO/PDF/xml_file_name.xml' localhost:5056/xml_to_predict/tenant_name/id
 
 ![Alt logo](readme_pictures/send_files.png?raw=true "Post xml files")
 
@@ -66,7 +66,7 @@ Containers with `make start_for_testing`
     Text, numeric or date cases:
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
-                             "property_name": "property_name",
+                             "id": "property_id",
                              "tenant": "tenant_name",
                              "language_iso": "en",
                              "label_text": "text",
@@ -79,7 +79,7 @@ Containers with `make start_for_testing`
     ### Multi-option case:
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
-                             "property_name": "property_name",
+                             "id": "property_id",
                              "tenant": "tenant_name",
                              "language_iso": "en",
                              "options": [{"id": "1", "label": "option 1"}, {"id": "2", "label": "option 2"}],
@@ -93,7 +93,7 @@ Containers with `make start_for_testing`
 4. Post data to predict
 
     curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
-                             "property_name": "property_name",
+                             "id": "property_id",
                              "tenant": "tenant_name",
                              "page_width": 612,
                              "page_height": 792,
@@ -112,18 +112,18 @@ information_extraction_tasks"
     # Text, numeric or date cases:
 
     # Create model
-    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "create_model", "params": {"property_name": "property_name"}}').execute()
+    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "create_model", "params": {"id": "property_id"}}').execute()
     # Calculate suggestions
-    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "suggestions", "params": {"property_name": "property_name"}}').execute()
+    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "suggestions", "params": {"id": "property_id"}}').execute()
     
     # Multi-option case:
 
     # Create model
     # The options parameter are all the posible values for all the PDF
     # The multi_value parameter tells if the algorithm can pick more than one option per PDF
-    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "create_model", "params": {"property_name": "property_name" , "options": [{"id": "1", "label": "option 1"}, {"id": "2", "label": "option 2"}, {"id": "3", "label": "option 3"}], "multi_value": false}}').execute()
+    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "create_model", "params": {"id": "property_id" , "options": [{"id": "1", "label": "option 1"}, {"id": "2", "label": "option 2"}, {"id": "3", "label": "option 3"}], "multi_value": false}}').execute()
     # Calculate suggestions
-    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "suggestions", "params": {"property_name": "property_name"}}').execute()
+    queue.sendMessage(delay=0).message('{"tenant": "tenant_name", "task": "suggestions", "params": {"id": "property_id"}}').execute()
 
 ![Alt logo](readme_pictures/process.png?raw=true "Create model and calculate suggestions")
 
@@ -137,21 +137,21 @@ There is a redis queue where it is possible to get notified when the different t
     # The models have been created message
     # {"tenant": "tenant_name", 
     # "task": "create_model", 
-    # "params": {"property_name": "property_name"}, 
+    # "params": {"id": "property_id"}, 
     # "success": true, 
     # "error_message": ""}
 
     # The suggestions have been computed
     # {"tenant": "tenant_name", 
     # "task": "suggestions", 
-    # "params": {"property_name": "property_name"}, 
+    # "params": {"id": "property_id"}, 
     # "success": true, 
     # "error_message": "", 
     # "data_url":""}
 
 Get suggestions
 
-    curl -X GET  localhost:5056/get_suggestions/tenant_name/property_name
+    curl -X GET  localhost:5056/get_suggestions/tenant_name/id
 
 or in python
 
@@ -166,7 +166,7 @@ Text, numeric or date cases:
 ```
         [{
         "tenant": "tenant", 
-        "property_name": "property_name", 
+        "id": "property_id", 
         "xml_file_name": "xml_file_name_1", 
         "text": "suggestion_text_1", 
         "segment_text": "segment_text_1",
@@ -174,7 +174,7 @@ Text, numeric or date cases:
         }, 
         {
         "tenant": "tenant", 
-        "property_name": "property_name", 
+        "id": "property_id", 
         "xml_file_name": "xml_file_name_2", 
         "text": "suggestion_text_2", 
         "segment_text": "segment_text_2",
@@ -188,7 +188,7 @@ Multi-option case:
 ```
         [{
         "tenant": "tenant", 
-        "property_name": "property_name", 
+        "id": "property_id", 
         "xml_file_name": "xml_file_name_1", 
         "options": [{"id": "1", "label": "option 1"}], 
         "segment_text": "segment_text_1",
@@ -196,7 +196,7 @@ Multi-option case:
         }, 
         {
         "tenant": "tenant", 
-        "property_name": "property_name", 
+        "id": "property_id", 
         "xml_file_name": "xml_file_name_2", 
         "options": [{"id": "2", "label": "option 2"}], 
         "segment_text": "segment_text_2",

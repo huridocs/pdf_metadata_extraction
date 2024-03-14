@@ -25,8 +25,8 @@ class TestSegmentSelector(TestCase):
 
     labels = SegmentBox(left=400, top=115, width=74, height=9, page_number=1, type=TokenType.TITLE)
     LABELED_DATA_JSON = {
-        "tenant": TENANT,
-        "id": extraction_id,
+        "run_name": TENANT,
+        "extraction_name": extraction_id,
         "xml_file_name": TEST_XML_NAME,
         "language_iso": "en",
         "label_text": "text",

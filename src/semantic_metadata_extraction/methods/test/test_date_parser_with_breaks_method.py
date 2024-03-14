@@ -24,7 +24,7 @@ class TestDateParserWithBreaksMethod(TestCase):
             PdfTagData.from_text("OF MARCH 10, 2007"),
         ]
         predictions = date_parser_method.predict(
-            [SemanticPredictionData(pdf_tags=pdf_tags_data_1), SemanticPredictionData(pdf_tags=pdf_tags_data_2)]
+            [SemanticPredictionData(pdf_tags_data=pdf_tags_data_1), SemanticPredictionData(pdf_tags_data=pdf_tags_data_2)]
         )
         self.assertEqual("2006-02-09", predictions[0])
         self.assertEqual("2007-03-10", predictions[1])

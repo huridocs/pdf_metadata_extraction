@@ -11,18 +11,18 @@ import torch
 from numpy import argmax
 
 from config import DATA_PATH
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 
 
 class MultiLabelMethod(ABC):
-    def __init__(self, tenant: str, extraction_id: str, options: list[Option], multi_value: bool):
-        self.tenant = tenant
-        self.extraction_id = extraction_id
+    def __init__(self, extraction_identifier: ExtractionIdentifier, options: list[Option], multi_value: bool):
+        self.extraction_identifier = extraction_identifier
         self.options = options
         self.multi_value = multi_value
-        self.base_path = join(DATA_PATH, tenant, extraction_id)
+        self.base_path = extraction_identifier.get_path()
 
         if not exists(self.base_path):
             os.makedirs(self.base_path)

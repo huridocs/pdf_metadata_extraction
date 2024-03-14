@@ -7,20 +7,17 @@ from os.path import exists, join
 from pathlib import Path
 
 
-from config import config_logger, DATA_PATH
+from config import config_logger
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
 
 
-class Method(ABC):
-    def __init__(self, tenant: str, extraction_id: str):
-        self.tenant = tenant
-        self.extraction_id = extraction_id
-        self.base_path = join(DATA_PATH, tenant, extraction_id)
-
-        if not exists(self.base_path):
-            os.makedirs(self.base_path)
+class SemanticMethod(ABC):
+    def __init__(self, extraction_identifier: ExtractionIdentifier):
+        self.extraction_identifier = extraction_identifier
+        os.makedirs(self.extraction_identifier.get_path(), exist_ok=True)
 
     @abstractmethod
     def performance(self, semantic_extraction_data: list[SemanticExtractionData], training_set_length: int):
@@ -38,7 +35,7 @@ class Method(ABC):
         return self.__class__.__name__
 
     def save_json(self, file_name: str, data: any):
-        path = join(self.base_path, self.get_name(), file_name)
+        path = join(self.extraction_identifier.get_path(), self.get_name(), file_name)
         if not exists(Path(path).parent):
             makedirs(Path(path).parent)
 
@@ -53,16 +50,16 @@ class Method(ABC):
 
             config_logger.info("prediction: " + prediction)
             config_logger.info("truth     : " + semantic_extraction_data.text)
-            config_logger.info("text      : " + self.get_text_from_pdf_tags(semantic_extraction_data.pdf_data))
+            config_logger.info("text      : " + self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags))
 
     def load_json(self, file_name: str):
-        path = join(self.base_path, self.get_name(), file_name)
+        path = join(self.extraction_identifier.get_path(), self.get_name(), file_name)
 
         with open(path, "r") as file:
             return json.load(file)
 
     def remove_model(self):
-        shutil.rmtree(join(self.base_path, self.get_name()), ignore_errors=True)
+        shutil.rmtree(join(self.extraction_identifier.get_path(), self.get_name()), ignore_errors=True)
 
     @staticmethod
     def get_train_test(
@@ -85,7 +82,7 @@ class Method(ABC):
 
     @staticmethod
     def get_segments_texts_without_breaks(semantic_data: list[SemanticExtractionData]) -> list[str]:
-        return [Method.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_data]
+        return [SemanticMethod.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_data]
 
     @staticmethod
     def get_text_from_pdf_tags(pdf_tags_data: list[PdfTagData]) -> str:

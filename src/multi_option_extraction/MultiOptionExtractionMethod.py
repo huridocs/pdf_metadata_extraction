@@ -1,10 +1,9 @@
 import random
-from os.path import join
+import shutil
 from typing import Type
 
 from sklearn.metrics import f1_score
 
-from config import DATA_PATH
 from data.Option import Option
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
@@ -20,18 +19,16 @@ class MultiOptionExtractionMethod:
     ):
         self.multi_label_method = multi_label_method
         self.filter_segments_method = filter_segments_method
-        self.tenant = ""
-        self.extraction_id = ""
+        self.extraction_identifier = None
         self.options: list[Option] = []
         self.multi_value = False
         self.base_path = ""
 
     def set_parameters(self, multi_option_data: MultiOptionData):
-        self.tenant = "benchmark"
-        self.extraction_id = multi_option_data.extraction_id
+        self.extraction_identifier = multi_option_data.extraction_identifier
         self.options = multi_option_data.options
         self.multi_value = multi_option_data.multi_value
-        self.base_path = join(DATA_PATH, self.tenant, self.extraction_id)
+        self.base_path = multi_option_data.extraction_identifier.get_path()
 
     def get_name(self):
         if self.filter_segments_method and self.multi_label_method:
@@ -45,11 +42,14 @@ class MultiOptionExtractionMethod:
 
     @staticmethod
     def get_train_test_sets(multi_option_data: MultiOptionData, seed: int) -> (MultiOptionData, MultiOptionData):
+        if len(multi_option_data.samples) < 15:
+            return multi_option_data, multi_option_data
+
         train_size = int(len(multi_option_data.samples) * 0.8)
         random.seed(seed)
 
-        train_set: list[MultiOptionSample] = random.sample(multi_option_data.samples, k=train_size)
-        test_set: list[MultiOptionSample] = [x for x in multi_option_data.samples if x not in train_set]
+        train_set: list[MultiOptionSample] = random.sample(multi_option_data.samples, k=train_size)[:80]
+        test_set: list[MultiOptionSample] = [x for x in multi_option_data.samples if x not in train_set][:30]
 
         train_data = MultiOptionData(
             samples=train_set, options=multi_option_data.options, multi_value=multi_option_data.multi_value
@@ -75,7 +75,8 @@ class MultiOptionExtractionMethod:
             predictions_one_hot = self.one_hot_to_options_list(predictions)
             score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
             scores.append(100 * score)
-            print(f"Score for {seeds[i]} {self.tenant} {self.extraction_id} {self.get_name()}: {100 * score}")
+            print(f"Score for seed={seeds[i]} {self.extraction_identifier} {self.get_name()}: {100 * score}")
+            self.remove_models()
 
         return sum(scores) / len(scores)
 
@@ -100,7 +101,7 @@ class MultiOptionExtractionMethod:
         filtered_multi_option_data = self.filter_segments_method().filter(multi_option_data)
 
         print("Creating model")
-        multi_label = self.multi_label_method(self.tenant, self.extraction_id, self.options, self.multi_value)
+        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value)
         multi_label.train(filtered_multi_option_data)
 
     def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
@@ -110,10 +111,13 @@ class MultiOptionExtractionMethod:
         filtered_multi_option_data = self.filter_segments_method().filter(multi_option_data)
 
         print("Prediction")
-        multi_label = self.multi_label_method(self.tenant, self.extraction_id, self.options, self.multi_value)
+        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value)
         predictions = multi_label.predict(filtered_multi_option_data)
 
         return predictions
 
     def get_options(self):
         return [Option(id=option, label=option) for option in self.options]
+
+    def remove_models(self):
+        shutil.rmtree(self.base_path, ignore_errors=True)

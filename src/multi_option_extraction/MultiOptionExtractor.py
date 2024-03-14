@@ -1,29 +1,52 @@
 import json
+import os
 from os import makedirs
 from os.path import join, exists
 from pathlib import Path
-from typing import Type
 
-from config import DATA_PATH, config_logger
+from config import config_logger
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from metadata_extraction.PdfData import PdfData
+from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
-from multi_option_extraction.TextToMultiOptionMethod import MultiLabelMethods
-from multi_option_extraction.text_to_multi_option_methods.FastTextMethod import FastTextMethod
-from multi_option_extraction.text_to_multi_option_methods.TfIdfMethod import TfIdfMethod
+from multi_option_extraction.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
+from multi_option_extraction.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
+from multi_option_extraction.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
+from multi_option_extraction.filter_segments_methods.CleanEndDot250 import CleanEndDot250
+from multi_option_extraction.multi_labels_methods.BertBatch1 import BertBatch1
+from multi_option_extraction.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
+from multi_option_extraction.multi_option_extraction_methods.FuzzyAll75 import FuzzyAll75
+from multi_option_extraction.multi_option_extraction_methods.FuzzyAll88 import FuzzyAll88
+from multi_option_extraction.multi_option_extraction_methods.FuzzyFirst import FuzzyFirst
+from multi_option_extraction.multi_option_extraction_methods.FuzzyFirstCleanLabel import FuzzyFirstCleanLabel
+from multi_option_extraction.multi_option_extraction_methods.FuzzyLast import FuzzyLast
+from multi_option_extraction.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
 
 
 class MultiOptionExtractor:
-    METHODS: list[Type[MultiLabelMethods]] = [FastTextMethod, TfIdfMethod]
+    METHODS: list[MultiOptionExtractionMethod] = [
+        FuzzyFirst(),
+        FuzzyLast(),
+        FuzzyFirstCleanLabel(),
+        FuzzyLastCleanLabel(),
+        FuzzyAll75(),
+        FuzzyAll88(),
+        FuzzyAll100(),
+        MultiOptionExtractionMethod(CleanBeginningDot250, BertBatch1),
+        MultiOptionExtractionMethod(CleanEndDot250, BertBatch1),
+        MultiOptionExtractionMethod(CleanBeginningDot1000, BertBatch1),
+        MultiOptionExtractionMethod(CleanEndDot1000, BertBatch1),
+    ]
 
-    def __init__(self, tenant: str, extraction_id: str):
-        self.tenant = tenant
-        self.extraction_id = extraction_id
+    def __init__(self, extraction_identifier: ExtractionIdentifier):
+        self.extraction_identifier = extraction_identifier
 
-        self.base_path = join(DATA_PATH, tenant, extraction_id, "multi_option_extractor")
+        self.base_path = join(self.extraction_identifier.get_path(), "multi_option_extractor")
         self.options_path = join(self.base_path, "options.json")
         self.multi_value_path = join(self.base_path, "multi_value.json")
+        self.method_name_path = Path(join(self.base_path, "method_name.json"))
 
         self.options: list[Option] = list()
         self.multi_value = False
@@ -36,8 +59,10 @@ class MultiOptionExtractor:
         self.save_json(self.multi_value_path, multi_option_data.multi_value)
 
         method = self.get_best_method(multi_option_data)
-
         method.train(multi_option_data)
+
+        os.makedirs(self.method_name_path.parent, exist_ok=True)
+        self.method_name_path.write_text(method.get_name())
 
         return True, ""
 
@@ -52,18 +77,20 @@ class MultiOptionExtractor:
     def get_multi_option_predictions(self, pdfs_data: list[PdfData]) -> list[MultiOptionSample]:
         self.load_options()
         multi_option_samples = [MultiOptionSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
-        multi_option_data = MultiOptionData(multi_value=self.multi_value, options=self.options, samples=multi_option_samples)
-        #
-        # multi_option_samples = list()
-        # method = self.get_predictions_method()
-        # options_predictions = method.predict(semantic_predictions_data)
-        # for semantic_prediction_data, prediction in zip(semantic_predictions_data, options_predictions):
-        #     multi_option_sample = MultiOptionExtractionSample(
-        #         pdf_data=semantic_prediction_data.pdf_data, values=prediction
-        #     )
-        #     multi_option_samples.append(multi_option_sample)
-        #
-        # return multi_option_samples
+        multi_option_data = MultiOptionData(
+            multi_value=self.multi_value,
+            options=self.options,
+            samples=multi_option_samples,
+            extraction_identifier=self.extraction_identifier,
+        )
+        method = self.get_predictions_method()
+        method.set_parameters(multi_option_data)
+        prediction = method.predict(multi_option_data)
+
+        for prediction, multi_option_sample in zip(prediction, multi_option_samples):
+            multi_option_sample.values = prediction
+
+        return multi_option_samples
 
     def load_options(self):
         if not exists(self.options_path) or not exists(self.multi_value_path):
@@ -75,48 +102,34 @@ class MultiOptionExtractor:
         with open(self.multi_value_path, "r") as file:
             self.multi_value = json.load(file)
 
-    def get_best_method(self, multi_option_data: MultiOptionData):
-        best_method_instance = self.METHODS[0](self.tenant, self.extraction_id, self.options, self.multi_value)
-
-        if len(self.METHODS) == 1:
-            return best_method_instance
-
-        samples = [sample for sample in multi_option_data.samples if sample.texts]
-        performance_multi_option_data = MultiOptionData(multi_value=self.multi_value, options=self.options, samples=samples)
-
+    def get_best_method(self, multi_option_data: MultiOptionData) -> MultiOptionExtractionMethod:
+        best_method_instance = self.METHODS[0]
         best_performance = 0
         for method in self.METHODS:
-            method_instance = method(self.tenant, self.extraction_id, self.options, self.multi_value)
-            config_logger.info(f"\nChecking {method_instance.get_name()}")
-            performance = method_instance.performance(performance_multi_option_data, 30)
-            config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
+            method.set_parameters(multi_option_data)
+            config_logger.info(f"\nChecking {method.get_name()}")
+            performance = method.get_performance(multi_option_data)
+            config_logger.info(f"\nPerformance {method.get_name()}: {performance}%")
             if performance == 100:
-                config_logger.info(f"\nBest method {method_instance.get_name()} with {performance}%")
-                return method_instance
+                config_logger.info(f"\nBest method {method.get_name()} with {performance}%")
+                return method
 
             if performance > best_performance:
                 best_performance = performance
-                best_method_instance = method_instance
+                best_method_instance = method
 
         return best_method_instance
 
     @staticmethod
-    def exist_model(tenant, extraction_id):
-        multi_option_extractor = MultiOptionExtractor(tenant, extraction_id)
+    def is_multi_option_extraction(extraction_identifier: ExtractionIdentifier):
+        multi_option_extractor = MultiOptionExtractor(extraction_identifier)
         multi_option_extractor.load_options()
         return len(multi_option_extractor.options) > 0
 
     def get_predictions_method(self):
+        method_name = self.method_name_path.read_text()
         for method in self.METHODS:
-            method_instance = method(self.tenant, self.extraction_id, self.options, self.multi_value)
-            method_path = join(DATA_PATH, self.tenant, self.extraction_id, method_instance.get_name())
-            config_logger.info(f"Checking {method_path}")
+            if method.get_name() == method_name:
+                return method
 
-            if exists(method_path):
-                config_logger.info(f"Predicting with {method_instance.get_name()}")
-
-                return method_instance
-
-        default_method = self.METHODS[0](self.tenant, self.extraction_id, self.options, self.multi_value)
-        config_logger.info(f"Predicting with {default_method.get_name()}")
-        return default_method
+        return self.METHODS[0]

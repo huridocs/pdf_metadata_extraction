@@ -3,6 +3,7 @@ from os.path import join
 from unittest import TestCase
 
 from config import DATA_PATH, APP_PATH
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
 from metadata_extraction.PdfData import PdfData
@@ -38,8 +39,7 @@ class TestPdfSegments(TestCase):
 
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
-                tenant=tenant,
-                extraction_id=extraction_id,
+                extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
                 to_train=True,
                 xml_file_name="test.xml",
             )
@@ -75,8 +75,7 @@ class TestPdfSegments(TestCase):
 
         with open(self.no_pages_file_path, "rb") as file:
             xml_file = XmlFile(
-                tenant=tenant,
-                extraction_id=extraction_id,
+                extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
                 to_train=True,
                 xml_file_name="no_pages.xml",
             )
@@ -102,8 +101,7 @@ class TestPdfSegments(TestCase):
         )
 
         xml_file = XmlFile(
-            tenant=tenant,
-            extraction_id=extraction_id,
+            extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
             to_train=True,
             xml_file_name="test.xml",
         )
@@ -140,15 +138,13 @@ class TestPdfSegments(TestCase):
         )
         with open(self.test_file_path, "rb") as file:
             XmlFile(
-                tenant=tenant,
-                extraction_id="different_extraction_id",
+                extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name="different_extraction_id"),
                 to_train=False,
                 xml_file_name="test.xml",
             ).save(file=file.read())
 
         xml_file = XmlFile(
-            tenant=tenant,
-            extraction_id=extraction_id,
+            extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
             to_train=False,
             xml_file_name="test.xml",
         )
@@ -174,8 +170,7 @@ class TestPdfSegments(TestCase):
 
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
-                tenant=tenant,
-                extraction_id=extraction_id,
+                extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
                 to_train=True,
                 xml_file_name="test.xml",
             )

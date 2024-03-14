@@ -3,6 +3,7 @@ from time import time
 from langcodes import standardize_tag
 
 from config import config_logger
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
@@ -14,11 +15,10 @@ from semantic_metadata_extraction.SemanticMetadataExtraction import SemanticMeta
 
 
 class PdfMetadataExtractor:
-    def __init__(self, tenant: str, extraction_id: str, pdfs_data: list[PdfData]):
-        self.tenant = tenant
-        self.extraction_id = extraction_id
+    def __init__(self, extraction_identifier: ExtractionIdentifier, pdfs_data: list[PdfData]):
+        self.extraction_identifier = extraction_identifier
         self.pdfs_data = pdfs_data
-        self.segment_selector = SegmentSelector(self.tenant, self.extraction_id)
+        self.segment_selector = SegmentSelector(self.extraction_identifier)
 
     def create_model(self, labeled_data: list[LabeledData]) -> (bool, str):
         all_pdf_segments: list[PdfDataSegment] = [
@@ -28,14 +28,14 @@ class PdfMetadataExtractor:
         if not all_pdf_segments:
             return False, "No data to create model"
 
-        segment_selector = SegmentSelector(self.tenant, self.extraction_id)
+        segment_selector = SegmentSelector(self.extraction_identifier)
         segment_selector.create_model(pdfs_data=self.pdfs_data)
 
         self.create_semantic_model(labeled_data)
         return True, ""
 
     def create_semantic_model(self, labeled_data: list[LabeledData]):
-        semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
+        semantic_metadata_extraction = SemanticMetadataExtraction(self.extraction_identifier)
         semantic_metadata_extraction.remove_models()
         semantic_extractions_data: list[SemanticExtractionData] = list()
         for pdf_features, labeled_data in zip(self.pdfs_data, labeled_data):
@@ -64,7 +64,7 @@ class PdfMetadataExtractor:
     def get_metadata_predictions(self) -> list[str]:
         start = time()
         config_logger.info("get_metadata_predictions")
-        segment_selector = SegmentSelector(self.tenant, self.extraction_id)
+        segment_selector = SegmentSelector(self.extraction_identifier)
 
         if not segment_selector.model:
             return []
@@ -74,9 +74,9 @@ class PdfMetadataExtractor:
         semantic_predictions_data = list()
         for pdf_data in self.pdfs_data:
             selected_segments = [pdf_segment for pdf_segment in pdf_data.pdf_data_segments if pdf_segment.ml_label]
-            semantic_predictions_data.append(SemanticPredictionData(pdf_data_segments=selected_segments))
+            semantic_predictions_data.append(SemanticPredictionData.from_pdf_data_segments(selected_segments))
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(self.tenant, self.extraction_id)
+        semantic_metadata_extraction = SemanticMetadataExtraction(self.extraction_identifier)
         semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
 
         config_logger.info(f"get_semantic_predictions {round(time() - start, 2)} seconds")

@@ -75,14 +75,15 @@ class BertBatch1(MultiLabelMethod):
             labels_number=labels_number,
         )
 
+        batch_size = self.get_batch_size(multi_option_data)
         t5_training_arguments = TrainingArguments(
             report_to=[],
             output_dir=self.get_model_path(),
             overwrite_output_dir=True,
-            per_device_train_batch_size=1,
-            per_device_eval_batch_size=1,
-            gradient_accumulation_steps=1,
-            eval_accumulation_steps=1,
+            per_device_train_batch_size=batch_size,
+            per_device_eval_batch_size=batch_size,
+            gradient_accumulation_steps=batch_size,
+            eval_accumulation_steps=batch_size,
             learning_rate=5e-05,
             do_train=True,
             do_eval=False,
@@ -117,14 +118,15 @@ class BertBatch1(MultiLabelMethod):
             labels_number=labels_number,
         )
 
+        batch_size = self.get_batch_size(multi_option_data)
         t5_training_arguments = TrainingArguments(
             report_to=[],
             output_dir=self.get_model_path(),
             overwrite_output_dir=False,
-            per_device_train_batch_size=2,
-            per_device_eval_batch_size=2,
-            gradient_accumulation_steps=1,
-            eval_accumulation_steps=1,
+            per_device_train_batch_size=batch_size,
+            per_device_eval_batch_size=batch_size,
+            gradient_accumulation_steps=batch_size,
+            eval_accumulation_steps=batch_size,
             do_train=False,
             do_eval=False,
             do_predict=True,

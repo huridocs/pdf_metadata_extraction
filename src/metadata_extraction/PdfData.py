@@ -86,3 +86,9 @@ class PdfData:
         pdf_segments.set_ml_label_from_segmentation_data(segmentation_data)
 
         return pdf_segments
+
+    @staticmethod
+    def from_texts(texts: list[str]):
+        pdf_data = PdfData(None)
+        pdf_data.pdf_data_segments = PdfDataSegment.from_texts(texts)
+        return pdf_data

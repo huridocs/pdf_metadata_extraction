@@ -6,7 +6,7 @@ from datetime import datetime
 
 from data.SemanticExtractionData import SemanticExtractionData
 from performance.Results import Results
-from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.SemanticMethod import SemanticMethod
 from semantic_metadata_extraction.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
 
 
@@ -15,7 +15,7 @@ class CheckPerformance:
 
     TENANT = "check_performance"
 
-    METHODS: list[Type[Method]] = [
+    METHODS: list[Type[SemanticMethod]] = [
         # T5ZeroShot,
         MT5TrueCaseEnglishSpanishMethod,
         # MT5EnglishSpanishMethod,
@@ -72,7 +72,7 @@ class CheckPerformance:
             accuracies = list()
             method_names = list()
 
-            train, test = Method.get_train_test(self.semantic_information_data, self.training_length)
+            train, test = SemanticMethod.get_train_test(self.semantic_information_data, self.training_length)
 
             for self.current_method in self.METHODS:
                 self.run_method(accuracies)
@@ -111,7 +111,7 @@ class CheckPerformance:
         self.best_results.write_results()
 
     def write_mistakes(self):
-        _, performance_test_set = Method.get_train_test(self.semantic_information_data, self.training_length)
+        _, performance_test_set = SemanticMethod.get_train_test(self.semantic_information_data, self.training_length)
         correct_path = "../performance_results/mistakes/"
         correct_path += f"{self.training_length}_{self.current_method_name}_{self.current_dataset}_correct.txt"
         mistakes_path = "../performance_results/mistakes/"

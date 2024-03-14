@@ -3,11 +3,11 @@ import re
 from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
-from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.SemanticMethod import SemanticMethod
 from dateparser.search import search_dates
 
 
-class DateParserMethod(Method):
+class DateParserMethod(SemanticMethod):
     @staticmethod
     def get_best_date(dates):
         if not dates:
@@ -21,7 +21,7 @@ class DateParserMethod(Method):
 
     @staticmethod
     def get_date(pdf_tags: list[PdfTagData], languages):
-        text = Method.get_text_from_pdf_tags(pdf_tags)
+        text = SemanticMethod.get_text_from_pdf_tags(pdf_tags)
         try:
             dates = search_dates(text, languages=languages)
 
@@ -57,7 +57,7 @@ class DateParserMethod(Method):
     def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
         languages = self.load_json("languages.json")
         predictions_dates = [
-            self.get_date(semantic_prediction_data.pdf_tags, languages)
+            self.get_date(semantic_prediction_data.pdf_tags_data, languages)
             for semantic_prediction_data in semantic_predictions_data
         ]
         predictions = [date.strftime("%Y-%m-%d") if date else "" for date in predictions_dates]

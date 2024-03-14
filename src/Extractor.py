@@ -7,6 +7,7 @@ import pymongo
 from langcodes import standardize_tag
 
 from config import config_logger, MONGO_PORT, MONGO_HOST
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.Option import Option
 
@@ -28,15 +29,14 @@ class Extractor:
     CREATE_MODEL_TASK_NAME = "create_model"
     SUGGESTIONS_TASK_NAME = "suggestions"
 
-    def __init__(self, tenant: str, extraction_id: str, options: list[Option] = None, multi_value: bool = False):
-        self.tenant = tenant
-        self.extraction_id = extraction_id
+    def __init__(self, extraction_identifier: ExtractionIdentifier, options: list[Option] = None, multi_value: bool = False):
+        self.extraction_identifier = extraction_identifier
         self.multi_value = multi_value
         self.options = options
 
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         self.pdf_metadata_extraction_db = client["pdf_metadata_extraction"]
-        self.mongo_filter = {"tenant": self.tenant, "id": self.extraction_id}
+        self.mongo_filter = {"tenant": self.extraction_identifier.run_name, "id": self.extraction_identifier.extraction_name}
 
         self.pdfs_data: list[PdfData] = list()
         self.labeled_data: list[LabeledData] = list()
@@ -51,7 +51,7 @@ class Extractor:
 
     # move to filter_valid_segments_pages
     def get_page_numbers_to_keep(self, labeled_data_list):
-        filter_valid_segment_pages = FilterValidSegmentsPages(self.tenant, self.extraction_id)
+        filter_valid_segment_pages = FilterValidSegmentsPages(self.extraction_identifier)
         if self.options:
             page_numbers_list: list[list[int]] = filter_valid_segment_pages.for_training(labeled_data_list)
         else:
@@ -63,13 +63,13 @@ class Extractor:
 
     def set_pdf_data_for_training(self):
         start = time()
-        config_logger.info(f"Loading data to create model for {self.tenant} {self.extraction_id}")
+        config_logger.info(f"Loading data to create model for {str(self.extraction_identifier)}")
         labeled_data_list = self.get_labeled_data()
         for labeled_data, page_numbers_to_keep in zip(labeled_data_list, self.get_page_numbers_to_keep(labeled_data_list)):
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
+            extraction_identifier = ExtractionIdentifier(run_name=labeled_data.tenant, extraction_name=labeled_data.id)
             xml_file = XmlFile(
-                tenant=labeled_data.tenant,
-                extraction_id=labeled_data.id,
+                extraction_identifier=extraction_identifier,
                 to_train=True,
                 xml_file_name=labeled_data.xml_file_name,
             )
@@ -85,12 +85,12 @@ class Extractor:
         config_logger.info(f"Set pdf data {round(time() - start, 2)} seconds")
 
     def set_pdf_data_for_predictions(self):
-        config_logger.info(f"Loading data to calculate suggestions for {self.tenant} {self.extraction_id}")
+        config_logger.info(f"Loading data to calculate suggestions for {self.extraction_identifier}")
         prediction_data_list = []
         for document in self.pdf_metadata_extraction_db.prediction_data.find(self.mongo_filter):
             prediction_data_list.append(PredictionData(**document))
 
-        filter_valid_pages = FilterValidSegmentsPages(self.tenant, self.extraction_id)
+        filter_valid_pages = FilterValidSegmentsPages(self.extraction_identifier)
         page_numbers_list = filter_valid_pages.for_prediction(prediction_data_list)
         config_logger.info(f"Filter pages for prediction: total {len(page_numbers_list)} documents.")
         config_logger.info(f"Filter: {page_numbers_list}")
@@ -100,8 +100,7 @@ class Extractor:
             segmentation_data = SegmentationData.from_prediction_data(prediction_data)
 
             xml_file = XmlFile(
-                tenant=self.tenant,
-                extraction_id=self.extraction_id,
+                extraction_identifier=self.extraction_identifier,
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
@@ -111,11 +110,11 @@ class Extractor:
         self.set_pdf_data_for_training()
         is_multi_option = len(self.options) > 1
         if is_multi_option:
-            multi_option_extractor = MultiOptionExtractor(tenant=self.tenant, extraction_id=self.extraction_id)
+            multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
             model_created = multi_option_extractor.create_model(self.get_multi_option_data())
         else:
             pdf_metadata_extractor = PdfMetadataExtractor(
-                tenant=self.tenant, extraction_id=self.extraction_id, pdfs_data=self.pdfs_data
+                extraction_identifier=self.extraction_identifier, pdfs_data=self.pdfs_data
             )
             model_created = pdf_metadata_extractor.create_model(self.labeled_data)
 
@@ -123,7 +122,7 @@ class Extractor:
         return model_created
 
     def delete_training_data(self):
-        training_xml_path = XmlFile.get_xml_folder_path(tenant=self.tenant, extraction_id=self.extraction_id, to_train=True)
+        training_xml_path = XmlFile.get_xml_folder_path(extraction_identifier=self.extraction_identifier, to_train=True)
         shutil.rmtree(training_xml_path, ignore_errors=True)
         self.pdf_metadata_extraction_db.labeled_data.delete_many(self.mongo_filter)
 
@@ -134,7 +133,7 @@ class Extractor:
         config_logger.info(f"Calculated and inserting {len(suggestions)} suggestions")
 
         self.pdf_metadata_extraction_db.suggestions.insert_many([x.to_dict() for x in suggestions])
-        xml_folder_path = XmlFile.get_xml_folder_path(self.tenant, self.extraction_id, False)
+        xml_folder_path = XmlFile.get_xml_folder_path(extraction_identifier=self.extraction_identifier, to_train=False)
         for suggestion in suggestions:
             xml_name = {"xml_file_name": suggestion.xml_file_name}
             self.pdf_metadata_extraction_db.prediction_data.delete_many({**self.mongo_filter, **xml_name})
@@ -145,18 +144,24 @@ class Extractor:
     def get_suggestions(self) -> list[Suggestion]:
         self.set_pdf_data_for_predictions()
 
+        if not self.pdfs_data:
+            return []
+
         suggestions = []
         for prediction_data in self.predictions_data:
-            suggestions.append(Suggestion.get_empty(self.tenant, self.extraction_id, prediction_data.xml_file_name))
+            suggestions.append(Suggestion.get_empty(self.extraction_identifier, prediction_data.xml_file_name))
 
-        if MultiOptionExtractor.exist_model(self.tenant, self.extraction_id):
-            multi_option_extractor = MultiOptionExtractor(self.tenant, self.extraction_id)
+        if MultiOptionExtractor.is_multi_option_extraction(self.extraction_identifier):
+            multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
             multi_option_predictions = multi_option_extractor.get_multi_option_predictions(self.pdfs_data)
             for multi_option_sample, suggestion in zip(multi_option_predictions, self.predictions_data):
                 suggestion.add_prediction_multi_option(multi_option_sample.values)
         else:
-            pdf_metadata_extractor = PdfMetadataExtractor(self.tenant, self.extraction_id, self.pdfs_data)
+            pdf_metadata_extractor = PdfMetadataExtractor(self.extraction_identifier, self.pdfs_data)
             semantic_predictions_texts = pdf_metadata_extractor.get_metadata_predictions()
+
+            if not semantic_predictions_texts:
+                return []
 
             for i, suggestion in enumerate(suggestions):
                 suggestion.add_segments(self.pdfs_data[i])
@@ -174,23 +179,29 @@ class Extractor:
             )
             multi_option_samples.append(multi_option_sample)
 
-        return MultiOptionData(samples=multi_option_samples, options=self.options, multi_value=self.multi_value)
+        return MultiOptionData(
+            samples=multi_option_samples,
+            options=self.options,
+            multi_value=self.multi_value,
+            extraction_identifier=self.extraction_identifier,
+        )
 
     @staticmethod
     def calculate_task(extraction_task: ExtractionTask) -> (bool, str):
         tenant = extraction_task.tenant
         extraction_id = extraction_task.params.id
+        extractor_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
 
         if extraction_task.task == Extractor.CREATE_MODEL_TASK_NAME:
             options = extraction_task.params.options
             multi_value = extraction_task.params.multi_value
-            metadata_extraction = Extractor(tenant, extraction_id, options, multi_value)
-            return metadata_extraction.create_models()
+            extractor = Extractor(extractor_identifier, options, multi_value)
+            return extractor.create_models()
 
         if extraction_task.task == Extractor.SUGGESTIONS_TASK_NAME:
             config_logger.info("Calculating suggestions")
-            metadata_extraction = Extractor(tenant, extraction_id)
-            suggestions = metadata_extraction.get_suggestions()
-            return metadata_extraction.insert_suggestions_in_db(suggestions)
+            extractor = Extractor(extractor_identifier)
+            suggestions = extractor.get_suggestions()
+            return extractor.insert_suggestions_in_db(suggestions)
 
         return False, "Error"

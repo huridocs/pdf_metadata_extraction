@@ -6,6 +6,7 @@ from pathlib import Path
 from time import time
 
 from config import ROOT_PATH, APP_PATH
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from metadata_extraction.PdfData import PdfData
 from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
@@ -46,8 +47,14 @@ def get_multi_option_benchmark_data(filter_names: list[str] = None) -> list[Mult
 
         multi_option_samples = get_samples(task_name)
         multi_value: bool = len([sample for sample in multi_option_samples if len(sample.values) > 1]) != 0
+        extraction_identifier = ExtractionIdentifier(run_name=task_name, extraction_name=task_name)
         benchmark_data.append(
-            MultiOptionData(samples=multi_option_samples, options=options, multi_value=multi_value, extraction_id=task_name)
+            MultiOptionData(
+                samples=multi_option_samples,
+                options=options,
+                multi_value=multi_value,
+                extraction_identifier=extraction_identifier,
+            )
         )
 
     return benchmark_data
@@ -99,7 +106,7 @@ def get_benchmark(repetitions: int = 4):
 
     for multi_option_extractions_data, method in loop_datasets_methods():
         start = time()
-        print("Calculating", method.extraction_id, method.get_name())
+        print("Calculating", method.extraction_identifier, method.get_name())
         performance = method.get_performance(multi_option_extractions_data, repetitions)
         add_row(results_table, method, round(time() - start), performance)
 

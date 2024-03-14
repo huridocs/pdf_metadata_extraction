@@ -163,7 +163,7 @@ class BertSeqLikeBert1(MultiLabelMethods):
         return self.predictions_to_options_list([self.logit_to_probabilities(logit) for logit in output.logits])
 
     def get_predict_dataframe(self, semantic_predictions_data: list[SemanticPredictionData]):
-        pdf_tags = [x.pdf_tags for x in semantic_predictions_data]
+        pdf_tags = [x.pdf_tags_data for x in semantic_predictions_data]
         texts = [self.get_text_from_pdf_segments(x) for x in pdf_tags]
         labels_number = len(self.options)
         output_df = pd.DataFrame([[text, [0] * labels_number] for text in texts])
