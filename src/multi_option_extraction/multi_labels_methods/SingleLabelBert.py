@@ -72,7 +72,10 @@ class SingleLabelBert(MultiLabelMethod):
 
     def preprocess_function(self, multi_option_sample: MultiOptionSample):
         text = multi_option_sample.get_text()
-        labels = self.options.index(multi_option_sample.values[0])
+        if multi_option_sample.values:
+            labels = self.options.index(multi_option_sample.values[0])
+        else:
+            labels = -1
 
         example = tokenizer(text, padding="max_length", truncation="only_first", max_length=self.get_token_length())
         example["labels"] = labels

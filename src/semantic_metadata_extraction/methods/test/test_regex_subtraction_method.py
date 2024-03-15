@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
@@ -14,7 +15,8 @@ class TestRegexSubtractionMethod(TestCase):
         semantic_information_data += [
             SemanticExtractionData(text="three", pdf_tags=[PdfTagData.from_text("one three")], language_iso="en")
         ]
-        regex_method = RegexSubtractionMethod("regex_subtraction_test", "regex_subtraction_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexSubtractionMethod(extraction_identifier)
 
         self.assertEqual(100, regex_method.performance(semantic_information_data, 1)[0])
 
@@ -25,7 +27,8 @@ class TestRegexSubtractionMethod(TestCase):
         semantic_information_data += [
             SemanticExtractionData(text="three", pdf_tags=[PdfTagData.from_text("three other")], language_iso="en")
         ]
-        regex_method = RegexSubtractionMethod("regex_subtraction_test", "regex_subtraction_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexSubtractionMethod(extraction_identifier)
 
         self.assertEqual(100, regex_method.performance(semantic_information_data, 1)[0])
 
@@ -55,7 +58,8 @@ class TestRegexSubtractionMethod(TestCase):
                 language_iso="en",
             )
         ]
-        regex_method = RegexSubtractionMethod("regex_subtraction_test", "regex_subtraction_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexSubtractionMethod(extraction_identifier)
 
         performance, _ = regex_method.performance(semantic_information_data, 1)
         self.assertEqual(100, performance)
@@ -67,7 +71,8 @@ class TestRegexSubtractionMethod(TestCase):
         semantic_information_data += [
             SemanticExtractionData(text="three", pdf_tags=[PdfTagData.from_text("1/ three final")], language_iso="en")
         ]
-        regex_method = RegexSubtractionMethod("regex_subtraction_test", "regex_subtraction_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexSubtractionMethod(extraction_identifier)
 
         self.assertEqual(100, regex_method.performance(semantic_information_data, 1)[0])
 
@@ -78,7 +83,8 @@ class TestRegexSubtractionMethod(TestCase):
         semantic_information_data += [
             SemanticExtractionData(text="var", pdf_tags=[PdfTagData.from_text("2/ var end")], language_iso="")
         ]
-        regex_method = RegexSubtractionMethod("regex_subtraction_test", "regex_subtraction_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexSubtractionMethod(extraction_identifier)
 
         regex_method.train(semantic_information_data)
         predictions = regex_method.predict(SemanticPredictionData.from_texts(["3/ one end", "4/ two end"]))
@@ -93,7 +99,8 @@ class TestRegexSubtractionMethod(TestCase):
         semantic_information_data += [
             SemanticExtractionData(text="344", pdf_tags=[PdfTagData.from_text("")], language_iso="")
         ]
-        regex_method = RegexSubtractionMethod("regex_subtraction_test", "regex_subtraction_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexSubtractionMethod(extraction_identifier)
 
         regex_method.train(semantic_information_data)
         predictions = regex_method.predict([SemanticPredictionData.from_text("")])

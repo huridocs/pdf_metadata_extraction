@@ -11,6 +11,7 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
 
 from config import config_logger, REDIS_HOST, REDIS_PORT, RESULTS_QUEUE_NAME, MONGO_HOST, MONGO_PORT
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
@@ -57,8 +58,7 @@ async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...))
     try:
         filename = file.filename
         xml_file = XmlFile(
-            tenant=tenant,
-            extraction_id=extraction_id,
+            extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
             to_train=True,
             xml_file_name=filename,
         )
@@ -75,8 +75,7 @@ async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...
     try:
         filename = file.filename
         xml_file = XmlFile(
-            tenant=tenant,
-            extraction_id=extraction_id,
+            extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
             to_train=False,
             xml_file_name=filename,
         )
@@ -132,7 +131,7 @@ async def get_suggestions(tenant: str, extraction_id: str):
     try:
         config_logger.info(f"get_suggestions {tenant} {extraction_id}")
         pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-        suggestions_filter = {"run_name": tenant, "extraction_name": extraction_id}
+        suggestions_filter = {"tenant": tenant, "id": extraction_id}
         suggestions_list: list[str] = list()
 
         for document in pdf_metadata_extraction_db.suggestions.find(suggestions_filter):

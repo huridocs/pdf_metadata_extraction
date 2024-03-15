@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
@@ -11,7 +12,8 @@ class TestRegexMethod(TestCase):
         semantic_information_data = [
             SemanticExtractionData(text="12", pdf_tags=[PdfTagData.from_text("one 12")], language_iso="en") for _ in range(6)
         ]
-        regex_method = RegexMethod("regex_test", "regex_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexMethod(extraction_identifier)
         self.assertEqual(100, regex_method.performance(semantic_information_data, 3)[0])
 
     def test_performance_0(self):
@@ -19,7 +21,8 @@ class TestRegexMethod(TestCase):
             SemanticExtractionData(text="12", pdf_tags=[PdfTagData.from_text("one two")], language_iso="en")
             for _ in range(6)
         ]
-        regex_method = RegexMethod("regex_test", "regex_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexMethod(extraction_identifier)
         self.assertEqual(0, regex_method.performance(semantic_information_data, 3)[0])
 
     def test_performance_50(self):
@@ -31,12 +34,14 @@ class TestRegexMethod(TestCase):
             SemanticExtractionData(text="no regex", pdf_tags=[PdfTagData.from_text("one two")], language_iso="en")
             for _ in range(1)
         ]
-        regex_method = RegexMethod("regex_test", "regex_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexMethod(extraction_identifier)
 
         self.assertEqual(75, regex_method.performance(semantic_information_data, 3)[0])
 
     def test_performance_no_samples(self):
-        regex_method = RegexMethod("regex_test", "regex_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexMethod(extraction_identifier)
 
         self.assertEqual((0, []), regex_method.performance([], 3))
 
@@ -44,14 +49,16 @@ class TestRegexMethod(TestCase):
         semantic_information_data = [
             SemanticExtractionData(text="12", pdf_tags=[PdfTagData.from_text("one 12")], language_iso="en")
         ]
-        regex_method = RegexMethod("regex_test", "regex_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexMethod(extraction_identifier)
 
         self.assertEqual(100, regex_method.performance(semantic_information_data, 3)[0])
 
     def test_predict(self):
         semantic_information_data = [SemanticExtractionData(text="12", pdf_tags=[], language_iso="")]
         semantic_information_data += [SemanticExtractionData(text="34", pdf_tags=[], language_iso="")]
-        regex_method = RegexMethod("regex_test", "regex_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexMethod(extraction_identifier)
 
         regex_method.train(semantic_information_data)
         predictions = regex_method.predict(SemanticPredictionData.from_texts(["one 12", "13", "14 foo"]))
@@ -63,7 +70,8 @@ class TestRegexMethod(TestCase):
     def test_predict_void(self):
         semantic_information_data = [SemanticExtractionData(text="124", pdf_tags=[], language_iso="")]
         semantic_information_data += [SemanticExtractionData(text="344", pdf_tags=[], language_iso="")]
-        regex_method = RegexMethod("regex_test", "regex_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexMethod(extraction_identifier)
 
         regex_method.train(semantic_information_data)
         predictions = regex_method.predict([SemanticPredictionData.from_text("14 foo" "")])
@@ -72,7 +80,8 @@ class TestRegexMethod(TestCase):
 
     def test_retrain(self):
         semantic_information_data = [SemanticExtractionData(text="1", pdf_tags=[], language_iso="")]
-        regex_method = RegexMethod("regex_test", "regex_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        regex_method = RegexMethod(extraction_identifier)
         regex_method.train(semantic_information_data)
 
         semantic_information_data = [SemanticExtractionData(text="111", pdf_tags=[], language_iso="")]

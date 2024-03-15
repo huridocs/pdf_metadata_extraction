@@ -6,6 +6,7 @@ from time import time
 from unittest import TestCase
 
 from config import APP_PATH, DATA_PATH
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
@@ -18,15 +19,16 @@ from pdf_token_type_labels.TokenType import TokenType
 class TestSegmentSelector(TestCase):
     TENANT = "segment_selector_test"
     extraction_id = "extraction_id"
+    EXTRACTION_IDENTIFIER = ExtractionIdentifier(run_name=TENANT, extraction_name=extraction_id)
     TEST_XML_NAME = "test.xml"
 
     TEST_XML_PATH = join(APP_PATH, "tenant_test", extraction_id, "xml_to_train", TEST_XML_NAME)
     BASE_PATH = join(DATA_PATH, TENANT, extraction_id)
 
-    labels = SegmentBox(left=400, top=115, width=74, height=9, page_number=1, type=TokenType.TITLE)
+    labels = SegmentBox(left=400, top=115, width=74, height=9, page_number=1, segment_type=TokenType.TITLE)
     LABELED_DATA_JSON = {
-        "run_name": TENANT,
-        "extraction_name": extraction_id,
+        "tenant": TENANT,
+        "id": extraction_id,
         "xml_file_name": TEST_XML_NAME,
         "language_iso": "en",
         "label_text": "text",
@@ -37,8 +39,7 @@ class TestSegmentSelector(TestCase):
     }
 
     XML_FILE = XmlFile(
-        tenant=TENANT,
-        extraction_id=extraction_id,
+        extraction_identifier=EXTRACTION_IDENTIFIER,
         to_train=True,
         xml_file_name=TEST_XML_NAME,
     )
@@ -57,7 +58,7 @@ class TestSegmentSelector(TestCase):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
         pdf_segments = PdfData.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
 
-        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
+        segment_selector = SegmentSelector(extraction_identifier=TestSegmentSelector.EXTRACTION_IDENTIFIER)
         model_created, error = segment_selector.create_model(pdfs_data=[pdf_segments])
 
         self.assertTrue(model_created)
@@ -77,10 +78,10 @@ class TestSegmentSelector(TestCase):
         segmentation_data = SegmentationData.from_labeled_data(LabeledData(**TestSegmentSelector.LABELED_DATA_JSON))
 
         pdf_features = PdfData.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
-        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
+        segment_selector = SegmentSelector(extraction_identifier=TestSegmentSelector.EXTRACTION_IDENTIFIER)
         segment_selector.create_model(pdfs_data=[pdf_features])
 
-        segment_selector = SegmentSelector(TestSegmentSelector.TENANT, TestSegmentSelector.extraction_id)
+        segment_selector = SegmentSelector(extraction_identifier=TestSegmentSelector.EXTRACTION_IDENTIFIER)
         segment_selector.set_extraction_segments(pdfs_data=[pdf_features])
 
         extraction_segments = [x for x in pdf_features.pdf_data_segments if x.ml_label]

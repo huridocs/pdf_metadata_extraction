@@ -136,7 +136,11 @@ class MultiOptionExtractor:
         for method in methods_to_loop:
             method.set_parameters(multi_option_data)
             config_logger.info(f"\nChecking {method.get_name()}")
-            performance = method.get_performance(multi_option_data)
+            try:
+                performance = method.get_performance(multi_option_data)
+            except Exception as e:
+                config_logger.error(f"Error checking {method.get_name()}: {e}")
+                performance = 0
             config_logger.info(f"\nPerformance {method.get_name()}: {performance}%")
             if performance == 100:
                 config_logger.info(f"\nBest method {method.get_name()} with {performance}%")

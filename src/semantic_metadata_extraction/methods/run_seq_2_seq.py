@@ -571,16 +571,10 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
 
     def compute_metrics(p: EvalPrediction):
         references = [
-            {
-                "extraction_name": str(label["extraction_name"]),
-                "answers": [{"text": str(label["answers"]), "answer_start": 0}],
-            }
+            {"id": str(label["id"]), "answers": [{"text": str(label["answers"]), "answer_start": 0}]}
             for label in p.label_ids
         ]
-        predictions = [
-            {"extraction_name": str(pred["extraction_name"]), "prediction_text": str(pred["prediction_text"])}
-            for pred in p.predictions
-        ]
+        predictions = [{"id": str(pred["id"]), "prediction_text": str(pred["prediction_text"])} for pred in p.predictions]
 
         return metric.compute(
             predictions=predictions,
@@ -612,12 +606,12 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
         # Format the result to the format the metric expects.
         if data_args.version_2_with_negative:
             formatted_predictions = [
-                {"extraction_name": k, "prediction_text": v, "no_answer_probability": 0.0} for k, v in predictions.items()
+                {"id": k, "prediction_text": v, "no_answer_probability": 0.0} for k, v in predictions.items()
             ]
         else:
-            formatted_predictions = [{"extraction_name": k, "prediction_text": v} for k, v in predictions.items()]
+            formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
 
-        references = [{"extraction_name": ex["extraction_name"], "answers": ex[answer_column]} for ex in examples]
+        references = [{"id": ex["extraction_name"], "answers": ex[answer_column]} for ex in examples]
         return EvalPrediction(predictions=formatted_predictions, label_ids=references)
 
     callbacks = []

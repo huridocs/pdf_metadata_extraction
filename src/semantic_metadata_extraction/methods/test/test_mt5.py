@@ -3,6 +3,7 @@ from unittest import TestCase
 
 import torch
 
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
@@ -14,8 +15,8 @@ class TestMT5(TestCase):
         start = time()
         print("GPU available?")
         print(torch.cuda.is_available())
-
-        mt5_true_case_english_spanish = MT5TrueCaseEnglishSpanishMethod("mt5_test", "mt5_test")
+        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        mt5_true_case_english_spanish = MT5TrueCaseEnglishSpanishMethod(extraction_identifier)
 
         semantic_information_data = [
             SemanticExtractionData(text="foo", pdf_tags=[PdfTagData.from_text("1/ foo end")], language_iso="")

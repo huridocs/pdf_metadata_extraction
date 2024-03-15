@@ -4,6 +4,7 @@ from os.path import join
 from pathlib import Path
 from unittest import TestCase
 
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
@@ -19,7 +20,8 @@ class TestSemanticMetadataExtraction(TestCase):
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, extraction_id=extraction_id)
+        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
+        semantic_metadata_extraction = SemanticMetadataExtraction(extraction_identifier=extraction_identifier)
 
         pdf_tags = [PdfTagData.from_text("two")]
         semantic_information_data = [SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="en")]
@@ -37,7 +39,9 @@ class TestSemanticMetadataExtraction(TestCase):
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, extraction_id=extraction_id)
+        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
+        semantic_metadata_extraction = SemanticMetadataExtraction(extraction_identifier=extraction_identifier)
+
         pdf_tags = [PdfTagData.from_text("one two")]
         semantic_information_data = [
             SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="en"),
@@ -56,7 +60,8 @@ class TestSemanticMetadataExtraction(TestCase):
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, extraction_id=extraction_id)
+        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
+        semantic_metadata_extraction = SemanticMetadataExtraction(extraction_identifier=extraction_identifier)
 
         pdf_tags = [PdfTagData.from_text("one")]
 
@@ -77,7 +82,8 @@ class TestSemanticMetadataExtraction(TestCase):
 
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
 
-        semantic_metadata_extraction = SemanticMetadataExtraction(tenant=tenant, extraction_id=extraction_id)
+        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
+        semantic_metadata_extraction = SemanticMetadataExtraction(extraction_identifier=extraction_identifier)
 
         pdf_tags = [PdfTagData.from_text("one two")]
         semantic_information_data = [

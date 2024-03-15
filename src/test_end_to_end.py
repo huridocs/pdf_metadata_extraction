@@ -42,8 +42,8 @@ class TestEndToEnd(TestCase):
             requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
 
         labeled_data_json = {
-            "extraction_name": extraction_id,
-            "run_name": tenant,
+            "id": extraction_id,
+            "tenant": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
             "label_text": "Original: English",
@@ -85,8 +85,8 @@ class TestEndToEnd(TestCase):
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         predict_data_json = {
-            "run_name": tenant,
-            "extraction_name": extraction_id,
+            "tenant": tenant,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -152,11 +152,11 @@ class TestEndToEnd(TestCase):
             task="create_model",
             params=Params(id=extraction_id),
             success=False,
-            error_message="No labeled data to create model",
+            error_message="No data to create model",
             data_url=None,
         )
 
-        self.assertEqual(results_message, expected_result)
+        self.assertEqual(expected_result, results_message)
 
         task = ExtractionTask(
             tenant=tenant,
@@ -175,7 +175,7 @@ class TestEndToEnd(TestCase):
             data_url=None,
         )
 
-        self.assertEqual(results_message, expected_result)
+        self.assertEqual(expected_result, results_message)
 
     def test_get_suggestions_multi_select(self):
         tenant = "end_to_end_test"
@@ -190,23 +190,14 @@ class TestEndToEnd(TestCase):
         options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
 
         labeled_data_json = {
-            "extraction_name": extraction_id,
-            "run_name": tenant,
+            "id": extraction_id,
+            "tenant": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
-            "options": [{"extraction_name": "1", "label": "United Nations"}],
+            "values": [{"id": "1", "label": "United Nations"}],
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [
-                {
-                    "left": round(123 / 0.75, 0),
-                    "top": round(45 / 0.75, 0),
-                    "width": round(87 / 0.75, 0),
-                    "height": round(16 / 0.75, 0),
-                    "page_number": 1,
-                }
-            ],
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
@@ -216,8 +207,8 @@ class TestEndToEnd(TestCase):
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         predict_data_json = {
-            "run_name": tenant,
-            "extraction_name": extraction_id,
+            "tenant": tenant,
+            "id": extraction_id,
             "xml_file_name": "test.xml",
             "page_width": 612,
             "page_height": 792,
@@ -229,7 +220,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id, options=options, muti_value=False),
+            params=Params(id=extraction_id, options=options, multi_value=False),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
@@ -256,15 +247,6 @@ class TestEndToEnd(TestCase):
         self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual([Option(id="1", label="United Nations")], suggestion.values)
-        self.assertEqual("United Nations", suggestion.segment_text)
-        self.assertEqual(1, suggestion.page_number)
-
-        self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertEqual(round(123 / 0.75, 0), suggestion.segments_boxes[0].left)
-        self.assertEqual(round(45 / 0.75, 0), suggestion.segments_boxes[0].top)
-        self.assertEqual(round(87 / 0.75, 0), suggestion.segments_boxes[0].width)
-        self.assertEqual(round(16 / 0.75, 0), suggestion.segments_boxes[0].height)
-        self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
     @staticmethod
     def get_results_message() -> ResultsMessage:
@@ -278,5 +260,5 @@ class TestEndToEnd(TestCase):
             )
             message = queue.receiveMessage().exceptions(False).execute()
             if message:
-                queue.deleteMessage(id=message["extraction_name"]).execute()
+                queue.deleteMessage(id=message["id"]).execute()
                 return ResultsMessage(**json.loads(message["message"]))

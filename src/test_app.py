@@ -63,8 +63,8 @@ class TestApp(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
-            "run_name": tenant,
-            "extraction_name": extraction_id,
+            "tenant": tenant,
+            "id": extraction_id,
             "xml_file_name": "xml_file_name",
             "language_iso": "en",
             "label_text": "text",
@@ -80,8 +80,8 @@ class TestApp(TestCase):
         labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
         self.assertEqual(200, response.status_code)
-        self.assertEqual(tenant, labeled_data_document["run_name"])
-        self.assertEqual(extraction_id, labeled_data_document["extraction_name"])
+        self.assertEqual(tenant, labeled_data_document["tenant"])
+        self.assertEqual(extraction_id, labeled_data_document["id"])
         self.assertEqual("text", labeled_data_document["label_text"])
         self.assertEqual("en", labeled_data_document["language_iso"])
         self.assertEqual(1.1, labeled_data_document["page_width"])
@@ -104,8 +104,8 @@ class TestApp(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
-            "run_name": tenant,
-            "extraction_name": extraction_id,
+            "tenant": tenant,
+            "id": extraction_id,
             "xml_file_name": "different_xml_file_name",
             "language_iso": "spa",
             "label_text": "other_text",
@@ -120,8 +120,8 @@ class TestApp(TestCase):
         labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
         self.assertEqual(200, response.status_code)
-        self.assertEqual(tenant, labeled_data_document["run_name"])
-        self.assertEqual(extraction_id, labeled_data_document["extraction_name"])
+        self.assertEqual(tenant, labeled_data_document["tenant"])
+        self.assertEqual(extraction_id, labeled_data_document["id"])
         self.assertEqual("other_text", labeled_data_document["label_text"])
         self.assertEqual("spa", labeled_data_document["language_iso"])
         self.assertEqual(3.1, labeled_data_document["page_width"])
@@ -137,14 +137,14 @@ class TestApp(TestCase):
 
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
-        options_json = [{"extraction_name": "id1", "label": "label1"}, {"extraction_name": "id2", "label": "label2"}]
+        options_json = [{"id": "id1", "label": "label1"}, {"id": "id2", "label": "label2"}]
 
         json_data = {
-            "run_name": tenant,
-            "extraction_name": extraction_id,
+            "tenant": tenant,
+            "id": extraction_id,
             "xml_file_name": "xml_file_name",
             "language_iso": "en",
-            "options": options_json,
+            "values": options_json,
             "page_width": 1.1,
             "page_height": 2.1,
             "xml_segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 5}],
@@ -157,9 +157,9 @@ class TestApp(TestCase):
         labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
 
         self.assertEqual(200, response.status_code)
-        self.assertEqual(tenant, labeled_data_document["run_name"])
-        self.assertEqual(extraction_id, labeled_data_document["extraction_name"])
-        self.assertEqual(options_json, labeled_data_document["options"])
+        self.assertEqual(tenant, labeled_data_document["tenant"])
+        self.assertEqual(extraction_id, labeled_data_document["id"])
+        self.assertEqual(options_json, labeled_data_document["values"])
         self.assertEqual("en", labeled_data_document["language_iso"])
         self.assertEqual(1.1, labeled_data_document["page_width"])
         self.assertEqual(2.1, labeled_data_document["page_height"])
@@ -199,8 +199,8 @@ class TestApp(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
-            "run_name": tenant,
-            "extraction_name": extraction_id,
+            "tenant": tenant,
+            "id": extraction_id,
             "xml_file_name": "xml_file_name",
             "page_width": 612,
             "page_height": 792,
@@ -215,8 +215,8 @@ class TestApp(TestCase):
         prediction_data_document = mongo_client.pdf_metadata_extraction.prediction_data.find_one()
 
         self.assertEqual(200, response.status_code)
-        self.assertEqual(tenant, prediction_data_document["run_name"])
-        self.assertEqual(extraction_id, prediction_data_document["extraction_name"])
+        self.assertEqual(tenant, prediction_data_document["tenant"])
+        self.assertEqual(extraction_id, prediction_data_document["id"])
         self.assertEqual(612, prediction_data_document["page_width"])
         self.assertEqual(792, prediction_data_document["page_height"])
         self.assertEqual("xml_file_name", prediction_data_document["xml_file_name"])
@@ -235,8 +235,8 @@ class TestApp(TestCase):
 
         json_data = [
             {
-                "run_name": "wrong tenant",
-                "extraction_name": extraction_id,
+                "tenant": "wrong tenant",
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -244,8 +244,8 @@ class TestApp(TestCase):
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}],
             },
             {
-                "run_name": tenant,
-                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -253,8 +253,8 @@ class TestApp(TestCase):
                 "segments_boxes": [{"left": 3, "top": 6, "width": 9, "height": 12, "page_number": 2}],
             },
             {
-                "run_name": tenant,
-                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
                 "xml_file_name": "other_file_name",
                 "text": "other_text_predicted",
                 "segment_text": "other_segment_text",
@@ -262,8 +262,8 @@ class TestApp(TestCase):
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 3}],
             },
             {
-                "run_name": tenant,
-                "extraction_name": "wrong extraction name",
+                "tenant": tenant,
+                "id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
                 "text": "other_text_predicted",
                 "segment_text": "other_segment_text",
@@ -282,8 +282,8 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, len(suggestions))
 
-        self.assertEqual({tenant}, {x["run_name"] for x in suggestions})
-        self.assertEqual({extraction_id}, {x["extraction_name"] for x in suggestions})
+        self.assertEqual({tenant}, {x["tenant"] for x in suggestions})
+        self.assertEqual({extraction_id}, {x["id"] for x in suggestions})
 
         self.assertEqual("one_file_name", suggestions[0]["xml_file_name"])
         self.assertEqual("one_segment_text", suggestions[0]["segment_text"])
@@ -308,40 +308,40 @@ class TestApp(TestCase):
 
         json_data = [
             {
-                "run_name": "wrong tenant",
-                "extraction_name": extraction_id,
+                "tenant": "wrong tenant",
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
-                "options": [{"extraction_name": "one_id", "label": "one_label"}],
+                "values": [{"id": "one_id", "label": "one_label"}],
                 "segment_text": "one_segment_text",
                 "page_number": 1,
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}],
             },
             {
-                "run_name": tenant,
-                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
-                "options": [{"extraction_name": "one_id", "label": "one_label"}],
+                "values": [{"id": "one_id", "label": "one_label"}],
                 "segment_text": "one_segment_text",
                 "page_number": 2,
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 2}],
             },
             {
-                "run_name": tenant,
-                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
                 "xml_file_name": "other_file_name",
-                "options": [
-                    {"extraction_name": "other_id", "label": "other_label"},
-                    {"extraction_name": "other_id_2", "label": "other_label_2"},
+                "values": [
+                    {"id": "other_id", "label": "other_label"},
+                    {"id": "other_id_2", "label": "other_label_2"},
                 ],
                 "segment_text": "other_segment_text",
                 "page_number": 3,
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 3}],
             },
             {
-                "run_name": tenant,
-                "extraction_name": "wrong extraction name",
+                "tenant": tenant,
+                "id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
-                "options": [{"extraction_name": "other_id", "label": "other_label"}],
+                "values": [{"id": "other_id", "label": "other_label"}],
                 "segment_text": "other_segment_text",
                 "page_number": 4,
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 4}],
@@ -358,22 +358,22 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, len(suggestions))
 
-        self.assertEqual({tenant}, {x["run_name"] for x in suggestions})
-        self.assertEqual({extraction_id}, {x["extraction_name"] for x in suggestions})
+        self.assertEqual({tenant}, {x["tenant"] for x in suggestions})
+        self.assertEqual({extraction_id}, {x["id"] for x in suggestions})
 
         self.assertEqual("one_file_name", suggestions[0]["xml_file_name"])
         self.assertEqual("one_segment_text", suggestions[0]["segment_text"])
-        self.assertEqual([{"extraction_name": "one_id", "label": "one_label"}], suggestions[0]["options"])
+        self.assertEqual([{"id": "one_id", "label": "one_label"}], suggestions[0]["values"])
         self.assertEqual(2, suggestions[0]["page_number"])
 
         self.assertEqual("other_file_name", suggestions[1]["xml_file_name"])
         self.assertEqual("other_segment_text", suggestions[1]["segment_text"])
         self.assertEqual(
             [
-                {"extraction_name": "other_id", "label": "other_label"},
-                {"extraction_name": "other_id_2", "label": "other_label_2"},
+                {"id": "other_id", "label": "other_label"},
+                {"id": "other_id_2", "label": "other_label_2"},
             ],
-            suggestions[1]["options"],
+            suggestions[1]["values"],
         )
         self.assertEqual(3, suggestions[1]["page_number"])
 
@@ -386,8 +386,8 @@ class TestApp(TestCase):
 
         json_data = [
             {
-                "run_name": tenant + "1",
-                "extraction_name": extraction_id,
+                "tenant": tenant + "1",
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",
@@ -395,8 +395,8 @@ class TestApp(TestCase):
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}],
             },
             {
-                "run_name": tenant + "2",
-                "extraction_name": extraction_id,
+                "tenant": tenant + "2",
+                "id": extraction_id,
                 "xml_file_name": "one_file_name",
                 "text": "one_text_predicted",
                 "segment_text": "one_segment_text",

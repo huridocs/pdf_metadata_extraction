@@ -180,7 +180,7 @@ class TestMetadataExtractor(TestCase):
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.prediction_data.find_one())
 
-        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/spanish.xml"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/spanish.xml"))
         self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"))
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
@@ -257,7 +257,7 @@ class TestMetadataExtractor(TestCase):
         self.assertTrue("In accordance with paragraph" in suggestion.segment_text)
         self.assertTrue("every four years" in suggestion.text)
         self.assertEqual(2, suggestion.page_number)
-        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict"))
+        self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict"))
         self.assertFalse(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"))
 
         self.assertEqual(len(suggestion.segments_boxes), 1)
