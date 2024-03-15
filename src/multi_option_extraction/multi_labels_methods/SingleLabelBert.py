@@ -13,10 +13,11 @@ from transformers import (
     AutoModelForSequenceClassification,
 )
 from data.Option import Option
-from data.SemanticPredictionData import SemanticPredictionData
+from multi_option_extraction.MultiLabelMethod import MultiLabelMethod
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
-from multi_option_extraction.TextToMultiOptionMethod import MultiLabelMethods
+from multi_option_extraction.multi_labels_methods.AvoidEvaluation import AvoidEvaluation
+from multi_option_extraction.multi_labels_methods.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 
 MODEL_NAME = "google-bert/bert-base-uncased"
 
@@ -24,7 +25,7 @@ clf_metrics = evaluate.combine(["accuracy", "f1", "precision", "recall"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-class SingleLabelBertBatch1(MultiLabelMethods):
+class SingleLabelBert(MultiLabelMethod):
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -45,10 +46,8 @@ class SingleLabelBertBatch1(MultiLabelMethods):
 
         return str(model_path)
 
-    def create_dataset(self, multi_option_data, name: str):
-        pdf_tags = [x.pdf_data for x in multi_option_data.samples]
-        texts = [self.get_text_from_pdf_segments(x) for x in pdf_tags]
-        labels = self.get_one_hot_encoding(multi_option_data)
+    def create_dataset(self, multi_option_data: MultiOptionData, name: str):
+        texts, labels = self.get_texts_labels(multi_option_data)
 
         rows = list()
 
@@ -57,7 +56,9 @@ class SingleLabelBertBatch1(MultiLabelMethods):
 
         output_df = pd.DataFrame(rows)
         output_df.columns = ["text", "labels"]
-        output_df = output_df.sample(frac=1, random_state=22).reset_index(drop=True)
+
+        if name != "predict":
+            output_df = output_df.sample(frac=1, random_state=22).reset_index(drop=True)
 
         output_df.to_csv(self.get_data_path(name))
         return self.get_data_path(name)
@@ -71,7 +72,6 @@ class SingleLabelBertBatch1(MultiLabelMethods):
 
     def preprocess_function(self, multi_option_sample: MultiOptionSample):
         text = multi_option_sample.get_text()
-
         labels = self.options.index(multi_option_sample.values[0])
 
         example = tokenizer(text, padding="max_length", truncation="only_first", max_length=self.get_token_length())
@@ -100,11 +100,14 @@ class SingleLabelBertBatch1(MultiLabelMethods):
         training_args = TrainingArguments(
             output_dir=self.get_model_path(),
             learning_rate=2e-5,
-            per_device_train_batch_size=1,
-            per_device_eval_batch_size=1,
-            num_train_epochs=23,
+            per_device_train_batch_size=self.get_batch_size(multi_option_data),
+            per_device_eval_batch_size=self.get_batch_size(multi_option_data),
+            max_steps=self.get_max_steps(multi_option_data),
             weight_decay=0.01,
-            save_strategy="no",
+            eval_steps=200,
+            save_steps=200,
+            save_strategy="steps",
+            evaluation_strategy="steps",
             load_best_model_at_end=True,
             fp16=False,
             bf16=False,
@@ -118,6 +121,7 @@ class SingleLabelBertBatch1(MultiLabelMethods):
             tokenizer=tokenizer,
             data_collator=data_collator,
             compute_metrics=self.compute_metrics,
+            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidEvaluation()],
         )
 
         trainer.train()
@@ -129,22 +133,24 @@ class SingleLabelBertBatch1(MultiLabelMethods):
         odds = [1 / (1 + exp(-logit)) for logit in logits]
         return odds
 
-    def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[list[Option]]:
+    def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
         id2class = {index: label for index, label in enumerate([x.label for x in self.options])}
         class2id = {label: index for index, label in enumerate([x.label for x in self.options])}
+
+        self.create_dataset(multi_option_data, "predict")
 
         model = AutoModelForSequenceClassification.from_pretrained(
             self.get_model_path(),
             num_labels=len(self.options),
             id2label=id2class,
             label2id=class2id,
-            problem_type="single_label_classification",
+            problem_type="multi_label_classification",
         )
 
         model.eval()
 
         inputs = tokenizer(
-            [x.get_text() for x in semantic_predictions_data],
+            [x.pdf_data.get_text() for x in multi_option_data.samples],
             return_tensors="pt",
             padding="max_length",
             truncation="only_first",
@@ -154,16 +160,6 @@ class SingleLabelBertBatch1(MultiLabelMethods):
 
         return self.predictions_to_options_list([self.logit_to_probabilities(logit) for logit in output.logits])
 
-    def get_predict_dataframe(self, semantic_predictions_data: list[SemanticPredictionData]):
-        pdf_tags = [x.pdf_tags_data for x in semantic_predictions_data]
-        texts = [self.get_text_from_pdf_segments(x) for x in pdf_tags]
-        labels_number = len(self.options)
-        output_df = pd.DataFrame([[text, [0] * labels_number] for text in texts])
-        output_df.columns = ["text", "labels"]
-        output_df.to_csv(self.get_data_path("predict"))
-        test_path = self.get_data_path("predict")
-        return test_path
-
     def get_token_length(self):
         data = pd.read_csv(self.get_data_path("train"))
         max_length = 0
@@ -171,4 +167,4 @@ class SingleLabelBertBatch1(MultiLabelMethods):
             length = len(tokenizer(row["text"]).data["input_ids"])
             max_length = max(length, max_length)
 
-        return min(max_length, 512)
+        return max_length

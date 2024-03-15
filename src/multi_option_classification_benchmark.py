@@ -12,12 +12,9 @@ from metadata_extraction.PdfData import PdfData
 from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
-from multi_option_extraction.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
-from multi_option_extraction.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
+from multi_option_extraction.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
 from multi_option_extraction.multi_labels_methods.BertBatch1 import BertBatch1
-from multi_option_extraction.multi_labels_methods.TfIdfMethod import TfIdfMethod
-from multi_option_extraction.multi_option_extraction_methods.FuzzyLast import FuzzyLast
-from multi_option_extraction.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
+from multi_option_extraction.multi_labels_methods.BertSeqSteps import BertSeqSteps
 
 from multi_option_extraction.results import get_results_table, add_row
 
@@ -26,8 +23,8 @@ PDF_DATA_FOLDER_PATH = join(ROOT_PATH, "data", "pdf_data_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 
-text_extractors = [CleanBeginningDot1000]
-multi_option_extractors = [BertBatch1]
+text_extractors = [CleanBeginningDot500]
+multi_option_extractors = [BertSeqSteps]
 PDF_TOPIC_CLASSIFICATION_METHODS = [
     MultiOptionExtractionMethod(x, y) for x in text_extractors for y in multi_option_extractors
 ]
