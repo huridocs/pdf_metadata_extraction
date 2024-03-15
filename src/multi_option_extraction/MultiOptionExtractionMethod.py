@@ -4,6 +4,7 @@ from typing import Type
 
 from sklearn.metrics import f1_score
 
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
@@ -19,7 +20,7 @@ class MultiOptionExtractionMethod:
     ):
         self.multi_label_method = multi_label_method
         self.filter_segments_method = filter_segments_method
-        self.extraction_identifier = None
+        self.extraction_identifier = ExtractionIdentifier(run_name="not set", extraction_name="not set")
         self.options: list[Option] = []
         self.multi_value = False
         self.base_path = ""
@@ -52,11 +53,17 @@ class MultiOptionExtractionMethod:
         test_set: list[MultiOptionSample] = [x for x in multi_option_data.samples if x not in train_set][:30]
 
         train_data = MultiOptionData(
-            samples=train_set, options=multi_option_data.options, multi_value=multi_option_data.multi_value
+            samples=train_set,
+            options=multi_option_data.options,
+            multi_value=multi_option_data.multi_value,
+            extraction_identifier=multi_option_data.extraction_identifier
         )
 
         test_data = MultiOptionData(
-            samples=test_set, options=multi_option_data.options, multi_value=multi_option_data.multi_value
+            samples=test_set,
+            options=multi_option_data.options,
+            multi_value=multi_option_data.multi_value,
+            extraction_identifier=multi_option_data.extraction_identifier
         )
 
         return train_data, test_data
@@ -71,6 +78,9 @@ class MultiOptionExtractionMethod:
 
             self.train(train_set)
             predictions = self.predict(test_set)
+
+            if not self.multi_value:
+                predictions = [x[:1] for x in predictions]
 
             predictions_one_hot = self.one_hot_to_options_list(predictions)
             score = f1_score(truth_one_hot, predictions_one_hot, average="micro")

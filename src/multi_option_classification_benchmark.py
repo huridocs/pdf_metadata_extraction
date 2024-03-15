@@ -12,9 +12,12 @@ from metadata_extraction.PdfData import PdfData
 from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
-from multi_option_extraction.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
+from multi_option_extraction.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
+from multi_option_extraction.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
 from multi_option_extraction.multi_labels_methods.BertBatch1 import BertBatch1
-from multi_option_extraction.multi_option_extraction_methods.FuzzyFirstCleanLabel import FuzzyFirstCleanLabel
+from multi_option_extraction.multi_labels_methods.TfIdfMethod import TfIdfMethod
+from multi_option_extraction.multi_option_extraction_methods.FuzzyLast import FuzzyLast
+from multi_option_extraction.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
 
 from multi_option_extraction.results import get_results_table, add_row
 
@@ -23,7 +26,7 @@ PDF_DATA_FOLDER_PATH = join(ROOT_PATH, "data", "pdf_data_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 
-text_extractors = [CleanBeginningDot500]
+text_extractors = [CleanBeginningDot1000]
 multi_option_extractors = [BertBatch1]
 PDF_TOPIC_CLASSIFICATION_METHODS = [
     MultiOptionExtractionMethod(x, y) for x in text_extractors for y in multi_option_extractors
@@ -31,13 +34,13 @@ PDF_TOPIC_CLASSIFICATION_METHODS = [
 
 # fuzzy_methods = [FirstFuzzyCountry(), All75FuzzyMethod(), All88FuzzyMethod(), All100FuzzyMethod(), FirstFuzzyMethod(), LastFuzzyMethod()]
 # fuzzy_methods = [FuzzyFirstCleanLabel()]
-# PDF_TOPIC_CLASSIFICATION_METHODS = [FuzzyFirstCleanLabel()]
+# PDF_TOPIC_CLASSIFICATION_METHODS = [FuzzyLast(), FuzzyLastCleanLabel()]
 
 
 def get_multi_option_benchmark_data(filter_names: list[str] = None) -> list[MultiOptionData]:
     benchmark_data: list[MultiOptionData] = list()
     for task_name in listdir(str(PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH)):
-        if task_name not in filter_names:
+        if filter_names and task_name not in filter_names:
             continue
 
         print(f"Loading task {task_name}")
@@ -47,7 +50,7 @@ def get_multi_option_benchmark_data(filter_names: list[str] = None) -> list[Mult
 
         multi_option_samples = get_samples(task_name)
         multi_value: bool = len([sample for sample in multi_option_samples if len(sample.values) > 1]) != 0
-        extraction_identifier = ExtractionIdentifier(run_name=task_name, extraction_name=task_name)
+        extraction_identifier = ExtractionIdentifier(run_name="benchmark", extraction_name=task_name)
         benchmark_data.append(
             MultiOptionData(
                 samples=multi_option_samples,
@@ -94,7 +97,7 @@ def loop_datasets_methods():
     # cejil_secretary
     # cyrilla_keywords
     # d4la_document_type
-    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data(["cyrilla_keywords"])
+    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data(["cyrilla_keywords", "d4la_document_type"])
 
     for multi_option_data in multi_option_extractions_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:
@@ -106,7 +109,7 @@ def get_benchmark(repetitions: int = 4):
 
     for multi_option_extractions_data, method in loop_datasets_methods():
         start = time()
-        print("Calculating", method.extraction_identifier, method.get_name())
+        print("Calculating", multi_option_extractions_data.extraction_identifier, method.get_name())
         performance = method.get_performance(multi_option_extractions_data, repetitions)
         add_row(results_table, method, round(time() - start), performance)
 

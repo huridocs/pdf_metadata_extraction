@@ -92,3 +92,6 @@ class PdfData:
         pdf_data = PdfData(None)
         pdf_data.pdf_data_segments = PdfDataSegment.from_texts(texts)
         return pdf_data
+
+    def get_text(self):
+        return ' '.join([segment.text_content for segment in self.pdf_data_segments])

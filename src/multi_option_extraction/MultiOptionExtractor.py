@@ -11,11 +11,13 @@ from metadata_extraction.PdfData import PdfData
 from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from multi_option_extraction.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
 from multi_option_extraction.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
 from multi_option_extraction.filter_segments_methods.CleanEndDot250 import CleanEndDot250
 from multi_option_extraction.multi_labels_methods.BertBatch1 import BertBatch1
+from multi_option_extraction.multi_labels_methods.TfIdfMethod import TfIdfMethod
 from multi_option_extraction.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
 from multi_option_extraction.multi_option_extraction_methods.FuzzyAll75 import FuzzyAll75
 from multi_option_extraction.multi_option_extraction_methods.FuzzyAll88 import FuzzyAll88
@@ -26,6 +28,7 @@ from multi_option_extraction.multi_option_extraction_methods.FuzzyLastCleanLabel
 
 
 class MultiOptionExtractor:
+
     METHODS: list[MultiOptionExtractionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),
@@ -34,9 +37,11 @@ class MultiOptionExtractor:
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
+        MultiOptionExtractionMethod(CleanBeginningDigits3000, TfIdfMethod),
         MultiOptionExtractionMethod(CleanBeginningDot250, BertBatch1),
         MultiOptionExtractionMethod(CleanEndDot250, BertBatch1),
         MultiOptionExtractionMethod(CleanBeginningDot1000, BertBatch1),
+        MultiOptionExtractionMethod(CleanEndDot1000, BertBatch1),
         MultiOptionExtractionMethod(CleanEndDot1000, BertBatch1),
     ]
 
@@ -86,6 +91,9 @@ class MultiOptionExtractor:
         method = self.get_predictions_method()
         method.set_parameters(multi_option_data)
         prediction = method.predict(multi_option_data)
+
+        if not self.multi_value:
+            prediction = [x[:1] for x in prediction]
 
         for prediction, multi_option_sample in zip(prediction, multi_option_samples):
             multi_option_sample.values = prediction

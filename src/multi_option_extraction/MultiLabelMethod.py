@@ -10,10 +10,8 @@ from pathlib import Path
 import torch
 from numpy import argmax
 
-from config import DATA_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
-from data.SemanticPredictionData import SemanticPredictionData
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 
 
@@ -63,31 +61,6 @@ class MultiLabelMethod(ABC):
         labels = self.get_one_hot_encoding(multi_option_data)
         return texts, labels
 
-    @staticmethod
-    def get_train_test(
-        multi_option_data: MultiOptionData, training_set_length: int
-    ) -> (list[MultiOptionData], list[MultiOptionData]):
-        if len(multi_option_data.samples) >= 2 * training_set_length:
-            train_samples = multi_option_data.samples[:training_set_length]
-            train = MultiOptionData(samples=train_samples, options=multi_option_data.options, multi_value=False)
-            test_samples = multi_option_data.samples[training_set_length:]
-            test = MultiOptionData(samples=test_samples, options=multi_option_data.options, multi_value=False)
-            return train, test
-
-        if len(multi_option_data.samples) <= 10:
-            return multi_option_data, multi_option_data
-
-        train_amount = len(multi_option_data.samples) // 2
-        train_samples = multi_option_data.samples[:train_amount]
-        training_set = MultiOptionData(samples=train_samples, options=[], multi_value=False)
-        training_set.samples = training_set.samples[:training_set_length]
-        test_samples = multi_option_data.samples[train_amount:]
-        testing_set = MultiOptionData(samples=test_samples, options=[], multi_value=False)
-        return training_set, testing_set
-
-    def get_extraction_data_from_samples(self, samples: list[SemanticPredictionData]):
-        return MultiOptionData(samples=samples, options=self.options, multi_value=False)
-
     def predictions_to_options_list(self, predictions) -> list[list[Option]]:
         return [self.one_prediction_to_option_list(prediction) for prediction in predictions]
 
@@ -103,7 +76,11 @@ class MultiLabelMethod(ABC):
         one_hot_encoding = list()
         for sample in multi_option_data.samples:
             one_hot_encoding.append([0] * len(options_ids))
+
             for option in sample.values:
+                if option.id not in options_ids:
+                    print(f"option {option.id} not in {options_ids}")
+                    continue
                 one_hot_encoding[-1][options_ids.index(option.id)] = 1
         return one_hot_encoding
 

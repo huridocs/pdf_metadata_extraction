@@ -17,7 +17,6 @@ from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
 from data.Suggestion import Suggestion
 from metadata_extraction.PdfData import PdfData
-from metadata_extraction.PdfDataSegment import PdfDataSegment
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
 from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
@@ -69,7 +68,7 @@ class TestMultiOptionExtraction(TestCase):
         ]
 
         multi_option_data = MultiOptionData(
-            multi_value=False, options=options, samples=samples, extraction_identifier=extraction_identifier
+            multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
 
         multi_option_extraction = MultiOptionExtractor(extraction_identifier)
@@ -86,58 +85,35 @@ class TestMultiOptionExtraction(TestCase):
         self.assertTrue(Option(id="1", label="1") in predictions[1].values)
 
     def test_tf_idf(self):
-        multi_option_extraction = MultiOptionExtractor(self.TENANT, self.extraction_id)
-        multi_option_extraction.METHODS = [TfIdfMethod]
+        extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 
-        pdf_data_segment_1 = PdfTagData.from_texts(["point one point two"])
-        pdf_data_segment_2 = PdfTagData.from_texts(["point two"])
-        pdf_data_segment_3 = PdfTagData.from_texts(["point three point one"])
+        pdf_data_1 = PdfData.from_texts(["point one point two"])
+        pdf_data_2 = PdfData.from_texts(["point two"])
+        pdf_data_3 = PdfData.from_texts(["point three point one"])
 
         samples = [
-            MultiOptionSample(pdf_data_segment_1, [options[0], options[1]], "en"),
-            MultiOptionSample(pdf_data_segment_2, [options[1]], "en"),
-            MultiOptionSample(pdf_data_segment_3, [options[2], options[0]], "en"),
+            MultiOptionSample(pdf_data_1, [options[0], options[1]], "en"),
+            MultiOptionSample(pdf_data_2, [options[1]], "en"),
+            MultiOptionSample(pdf_data_3, [options[2], options[0]], "en"),
         ]
 
-        multi_option_data = MultiOptionData(multi_value=True, options=options, samples=samples)
+        multi_option_data = MultiOptionData(
+            multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
+        )
+
+        multi_option_extraction = MultiOptionExtractor(extraction_identifier)
         multi_option_extraction.create_model(multi_option_data)
 
-        semantic_prediction_data_1 = SemanticPredictionData(pdf_tags_data=pdf_data_segment_1)
-        semantic_prediction_data_3 = SemanticPredictionData(pdf_tags_data=pdf_data_segment_3)
-        semantic_predictions_data = [semantic_prediction_data_1, semantic_prediction_data_3]
-        predictions = multi_option_extraction.get_multi_option_predictions(semantic_predictions_data)
+        predictions = multi_option_extraction.get_multi_option_predictions([pdf_data_1, pdf_data_3])
 
         self.assertEqual(2, len(predictions))
-        self.assertEqual([options[0], options[1]], sorted(predictions[0].values, key=lambda x: x.id))
-        self.assertEqual([options[0], options[2]], sorted(predictions[1].values, key=lambda x: x.id))
-
-    def test_bert(self):
-        multi_option_extraction = MultiOptionExtractor(self.TENANT, self.extraction_id)
-        multi_option_extraction.METHODS = [BertSeqSteps]
-        options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
-
-        pdf_data_segment_1 = PdfTagData.from_texts(["point one point two"])
-        pdf_data_segment_2 = PdfTagData.from_texts(["point two"])
-        pdf_data_segment_3 = PdfTagData.from_texts(["point three point one"])
-
-        samples = [
-            MultiOptionSample(pdf_data_segment_1, [options[0], options[1]], "en"),
-            MultiOptionSample(pdf_data_segment_2, [options[1]], "en"),
-            MultiOptionSample(pdf_data_segment_3, [options[2], options[0]], "en"),
-        ]
-
-        multi_option_data = MultiOptionData(multi_value=True, options=options, samples=samples)
-        multi_option_extraction.create_model(multi_option_data)
-
-        semantic_prediction_data_1 = SemanticPredictionData(pdf_tags_data=pdf_data_segment_1)
-        semantic_prediction_data_3 = SemanticPredictionData(pdf_tags_data=pdf_data_segment_3)
-        semantic_predictions_data = [semantic_prediction_data_1, semantic_prediction_data_3]
-        predictions = multi_option_extraction.get_multi_option_predictions(semantic_predictions_data)
-
-        self.assertEqual(2, len(predictions))
-        self.assertEqual([options[0], options[1]], sorted(predictions[0].values, key=lambda x: x.id))
-        self.assertEqual([options[0], options[2]], sorted(predictions[1].values, key=lambda x: x.id))
+        self.assertTrue(Option(id="1", label="1") in predictions[0].values)
+        self.assertTrue(Option(id="2", label="2") in predictions[0].values)
+        self.assertTrue(Option(id="3", label="3") not in predictions[0].values)
+        self.assertTrue(Option(id="3", label="3") in predictions[1].values)
+        self.assertTrue(Option(id="2", label="2") not in predictions[1].values)
+        self.assertTrue(Option(id="1", label="1") in predictions[1].values)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_multi_option_suggestions(self):
