@@ -76,7 +76,7 @@ def get_model_name(option: str):
 
 
 def train_models(task_labeled_data, train_set: list[PdfLabels]):
-    for option in task_labeled_data.options:
+    for option in task_labeled_data.values:
         labels = [1 if option in x.labels else 0 for x in train_set]
         features = get_features(option, train_set)
         lgb_train = lgb.Dataset(np.array(features), labels)
@@ -106,7 +106,7 @@ def get_train_test(task_labeled_data) -> (list[PdfLabels], list[PdfLabels]):
 
 
 def get_predictions(task_labeled_data, test_set: list[PdfLabels]):
-    truth_one_hot = one_hot_to_options_list(task_labeled_data.options, [x.labels for x in test_set])
+    truth_one_hot = one_hot_to_options_list(task_labeled_data.values, [x.labels for x in test_set])
     predictions = list()
     for test_pdf in test_set[:5]:
         pdf_labels = list()
@@ -114,7 +114,7 @@ def get_predictions(task_labeled_data, test_set: list[PdfLabels]):
             predictions.append(pdf_labels)
             continue
 
-        for option in task_labeled_data.options:
+        for option in task_labeled_data.values:
             gbm = lgb.Booster(model_file=get_model_name(option))
             features = get_features(option, [test_pdf])
             y_pred = gbm.predict(features)
@@ -123,7 +123,7 @@ def get_predictions(task_labeled_data, test_set: list[PdfLabels]):
 
         predictions.append(pdf_labels)
 
-    predictions_one_hot = one_hot_to_options_list(task_labeled_data.options, predictions)
+    predictions_one_hot = one_hot_to_options_list(task_labeled_data.values, predictions)
     print(100 * f1_score(truth_one_hot, predictions_one_hot, average="macro"))
 
 

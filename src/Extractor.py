@@ -154,7 +154,7 @@ class Extractor:
         if MultiOptionExtractor.is_multi_option_extraction(self.extraction_identifier):
             multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
             multi_option_predictions = multi_option_extractor.get_multi_option_predictions(self.pdfs_data)
-            for multi_option_sample, suggestion in zip(multi_option_predictions, self.predictions_data):
+            for multi_option_sample, suggestion in zip(multi_option_predictions, suggestions):
                 suggestion.add_prediction_multi_option(multi_option_sample.values)
         else:
             pdf_metadata_extractor = PdfMetadataExtractor(self.extraction_identifier, self.pdfs_data)
@@ -167,6 +167,7 @@ class Extractor:
                 suggestion.add_segments(self.pdfs_data[i])
                 suggestion.add_prediction(semantic_predictions_texts[i])
 
+        shutil.rmtree(self.extraction_identifier.get_path(), ignore_errors=True)
         return suggestions
 
     def get_multi_option_data(self):

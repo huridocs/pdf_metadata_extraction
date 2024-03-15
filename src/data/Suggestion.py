@@ -13,7 +13,7 @@ class Suggestion(BaseModel):
     id: str
     xml_file_name: str
     text: str = ""
-    options: list[Option] = list()
+    values: list[Option] = list()
     segment_text: str
     page_number: int
     segments_boxes: list[SegmentBox]
@@ -65,7 +65,7 @@ class Suggestion(BaseModel):
         return self
 
     def add_prediction_multi_option(self, options: list[Option]):
-        self.options = options
+        self.values = options
         return self
 
     def add_segments(self, pdf_data: PdfData):

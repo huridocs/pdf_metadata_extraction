@@ -13,8 +13,7 @@ from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtra
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
-from multi_option_extraction.multi_labels_methods.BertBatch1 import BertBatch1
-from multi_option_extraction.multi_labels_methods.BertSeqSteps import BertSeqSteps
+from multi_option_extraction.multi_labels_methods.SingleLabelBert import SingleLabelBert
 
 from multi_option_extraction.results import get_results_table, add_row
 
@@ -24,7 +23,7 @@ LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 
 text_extractors = [CleanBeginningDot500]
-multi_option_extractors = [BertSeqSteps]
+multi_option_extractors = [SingleLabelBert]
 PDF_TOPIC_CLASSIFICATION_METHODS = [
     MultiOptionExtractionMethod(x, y) for x in text_extractors for y in multi_option_extractors
 ]
@@ -94,7 +93,7 @@ def loop_datasets_methods():
     # cejil_secretary
     # cyrilla_keywords
     # d4la_document_type
-    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data(["cyrilla_keywords", "d4la_document_type"])
+    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data(["d4la_document_type"])
 
     for multi_option_data in multi_option_extractions_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:

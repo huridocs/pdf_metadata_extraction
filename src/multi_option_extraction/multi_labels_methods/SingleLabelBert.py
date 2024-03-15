@@ -21,7 +21,7 @@ from multi_option_extraction.multi_labels_methods.EarlyStoppingAfterInitialTrain
 
 MODEL_NAME = "google-bert/bert-base-uncased"
 
-clf_metrics = evaluate.combine(["accuracy", "f1", "precision", "recall"])
+clf_metrics = evaluate.combine(["accuracy"])
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
@@ -65,10 +65,10 @@ class SingleLabelBert(MultiLabelMethod):
 
     @staticmethod
     def compute_metrics(eval_pred):
-        predictions, labels = eval_pred
-        predictions = 1 / (1 + np.exp(-predictions))
-        predictions = (predictions > 0.5).astype(int).reshape(-1)
-        return clf_metrics.compute(predictions=predictions, references=labels.astype(int).reshape(-1))
+        logits, labels = eval_pred
+        probabilities = 1 / (1 + np.exp(-logits))
+        predictions_list = [np.argmax(x) if x[np.argmax(x)] >= 0.5 else -1 for x in probabilities]
+        return clf_metrics.compute(predictions=predictions_list, references=labels)
 
     def preprocess_function(self, multi_option_sample: MultiOptionSample):
         text = multi_option_sample.get_text()

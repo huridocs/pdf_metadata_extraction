@@ -11,7 +11,7 @@ class FilterSegmentsMethod(ABC):
     def filter_segments(self, pdf_data_segments: list[PdfDataSegment]) -> list[PdfDataSegment]:
         pass
 
-    def filter(self, multi_option_data):
+    def filter(self, multi_option_data: MultiOptionData) -> MultiOptionData:
         filtered_samples: list[MultiOptionSample] = list()
         for sample in multi_option_data.samples:
             filtered_pdf_data = PdfData(

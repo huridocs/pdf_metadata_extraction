@@ -12,9 +12,7 @@ from data.ExtractionIdentifier import ExtractionIdentifier
 from data.ExtractionTask import ExtractionTask
 from data.Option import Option
 from data.Params import Params
-from data.PdfTagData import PdfTagData
 from data.SegmentBox import SegmentBox
-from data.SemanticPredictionData import SemanticPredictionData
 from data.Suggestion import Suggestion
 from metadata_extraction.PdfData import PdfData
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
@@ -128,8 +126,8 @@ class TestMultiOptionExtraction(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
-                "extraction_name": extraction_id,
-                "run_name": tenant,
+                "id": extraction_id,
+                "tenant": tenant,
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
@@ -138,14 +136,13 @@ class TestMultiOptionExtraction(TestCase):
 
         mongo_client.pdf_metadata_extraction.prediction_data.insert_many(to_predict_json)
 
-        options = [{"extraction_name": f"id{n}", "label": str(n)} for n in range(16)]
         for i in range(7):
             labeled_data_json = {
-                "extraction_name": extraction_id,
-                "run_name": tenant,
+                "id": extraction_id,
+                "tenant": tenant,
                 "xml_file_name": "test.xml",
                 "language_iso": "en",
-                "options": [{"extraction_name": "id15", "label": "15"}],
+                "values": [{"id": "id15", "label": "15"}],
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
@@ -155,6 +152,8 @@ class TestMultiOptionExtraction(TestCase):
             }
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
+
+        options = [Option(id=f"id{n}", label=str(n)) for n in range(16)]
 
         Extractor.calculate_task(
             ExtractionTask(
@@ -173,7 +172,7 @@ class TestMultiOptionExtraction(TestCase):
         )
 
         suggestions: list[Suggestion] = list()
-        find_filter = {"extraction_name": extraction_id, "run_name": tenant}
+        find_filter = {"id": extraction_id, "tenant": tenant}
         for document in mongo_client.pdf_metadata_extraction.suggestions.find(find_filter):
             suggestions.append(Suggestion(**document))
 
@@ -182,10 +181,7 @@ class TestMultiOptionExtraction(TestCase):
         self.assertEqual(tenant, suggestions[0].tenant)
         self.assertEqual(extraction_id, suggestions[0].id)
         self.assertEqual("test.xml", suggestions[0].xml_file_name)
-        self.assertEqual("15 February 2021", suggestions[0].segment_text)
-        self.assertEqual([Option(id="id15", label="15")], suggestions[0].options)
+        self.assertEqual([Option(id="id15", label="15")], suggestions[0].values)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id)))

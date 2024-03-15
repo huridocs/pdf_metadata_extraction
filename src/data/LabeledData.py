@@ -10,7 +10,7 @@ class LabeledData(BaseModel):
     xml_file_name: str
     language_iso: str
     label_text: str = ""
-    options: list[Option] = list()
+    values: list[Option] = list()
     page_width: float
     page_height: float
     xml_segments_boxes: list[SegmentBox]

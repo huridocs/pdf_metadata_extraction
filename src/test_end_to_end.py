@@ -255,7 +255,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(tenant, suggestion.tenant)
         self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
-        self.assertEqual([Option(id="1", label="United Nations")], suggestion.options)
+        self.assertEqual([Option(id="1", label="United Nations")], suggestion.values)
         self.assertEqual("United Nations", suggestion.segment_text)
         self.assertEqual(1, suggestion.page_number)
 

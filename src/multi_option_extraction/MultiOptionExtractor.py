@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from os import makedirs
 from os.path import join, exists
 from pathlib import Path
@@ -77,13 +78,14 @@ class MultiOptionExtractor:
         self.options = multi_option_data.options
         self.multi_value = multi_option_data.multi_value
 
-        self.save_json(self.options_path, [x.model_dump() for x in multi_option_data.options])
-        self.save_json(self.multi_value_path, multi_option_data.multi_value)
-
         method = self.get_best_method(multi_option_data)
+
+        shutil.rmtree(self.base_path, ignore_errors=True)
         method.train(multi_option_data)
 
         os.makedirs(self.method_name_path.parent, exist_ok=True)
+        self.save_json(self.options_path, [x.model_dump() for x in multi_option_data.options])
+        self.save_json(self.multi_value_path, multi_option_data.multi_value)
         self.method_name_path.write_text(method.get_name())
 
         return True, ""

@@ -1,5 +1,6 @@
 import random
 import shutil
+from os.path import join
 from typing import Type
 
 from sklearn.metrics import f1_score
@@ -86,7 +87,6 @@ class MultiOptionExtractionMethod:
             score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
             scores.append(100 * score)
             print(f"Score for seed={seeds[i]} {self.extraction_identifier} {self.get_name()}: {100 * score}")
-            self.remove_models()
 
         return sum(scores) / len(scores)
 
@@ -125,9 +125,3 @@ class MultiOptionExtractionMethod:
         predictions = multi_label.predict(filtered_multi_option_data)
 
         return predictions
-
-    def get_options(self):
-        return [Option(id=option, label=option) for option in self.options]
-
-    def remove_models(self):
-        shutil.rmtree(self.base_path, ignore_errors=True)
