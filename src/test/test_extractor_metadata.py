@@ -17,7 +17,7 @@ from data.Suggestion import Suggestion
 from Extractor import Extractor
 
 
-class TestMetadataExtractor(TestCase):
+class TestExtractorMetadata(TestCase):
     test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
     model_path = f"{APP_PATH}/tenant_test/extraction_id/segment_predictor_model/model.model"
 

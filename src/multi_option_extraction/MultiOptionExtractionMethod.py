@@ -1,6 +1,4 @@
 import random
-import shutil
-from os.path import join
 from typing import Type
 
 from sklearn.metrics import f1_score
