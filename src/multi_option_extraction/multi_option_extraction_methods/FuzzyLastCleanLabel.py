@@ -1,3 +1,4 @@
+import math
 from collections import Counter
 from rapidfuzz import fuzz
 
@@ -13,7 +14,10 @@ class FuzzyLastCleanLabel(MultiOptionExtractionMethod):
         for pdf_segment in reversed(pdf_segments):
             for ratio_threshold in range(100, 95, -1):
                 for option in options:
+                    if len(pdf_segment.text_content) < math.ceil(len(option) * ratio_threshold / 100):
+                        continue
                     if fuzz.partial_ratio(option, pdf_segment.text_content.lower()) >= ratio_threshold:
+                        pdf_segment.ml_label = 1
                         return [option]
 
         return []

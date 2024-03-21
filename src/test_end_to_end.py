@@ -2,6 +2,7 @@ import json
 import time
 from unittest import TestCase
 
+from pdf_token_type_labels.TokenType import TokenType
 from rsmq import RedisSMQ
 
 import requests
@@ -11,6 +12,7 @@ from data.ExtractionTask import ExtractionTask
 from data.Option import Option
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
+from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
 
 ROOT_PATH = "./"
@@ -177,7 +179,7 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(expected_result, results_message)
 
-    def test_get_suggestions_multi_select(self):
+    def test_get_suggestions_multi_option(self):
         tenant = "end_to_end_test"
         extraction_id = "multi_select_name"
 
@@ -246,6 +248,11 @@ class TestEndToEnd(TestCase):
         self.assertEqual(tenant, suggestion.tenant)
         self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
+        self.assertEqual("United Nations", suggestion.segment_text)
+        self.assertEqual(
+            [SegmentBox(left=164.0, top=60.0, width=116.0, height=21.0, page_number=1, segment_type=TokenType.TEXT)],
+            suggestion.segments_boxes,
+        )
         self.assertEqual([Option(id="1", label="United Nations")], suggestion.values)
 
     @staticmethod

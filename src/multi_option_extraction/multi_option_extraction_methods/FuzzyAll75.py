@@ -1,3 +1,5 @@
+import math
+
 from rapidfuzz import fuzz
 
 from data.Option import Option
@@ -14,7 +16,11 @@ class FuzzyAll75(MultiOptionExtractionMethod):
         appearances = []
         for pdf_segment in pdf_segments:
             for option in options:
+                if len(pdf_segment.text_content) < math.ceil(len(option) * 0.85):
+                    continue
+
                 if fuzz.partial_ratio(option, pdf_segment.text_content.lower()) >= threshold:
+                    pdf_segment.ml_label = 1
                     appearances.append(option)
 
         return list(set(appearances))
