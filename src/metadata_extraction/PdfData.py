@@ -5,7 +5,7 @@ from paragraph_extraction_trainer.Paragraph import Paragraph
 from data.SegmentationData import SegmentationData
 from pdf_features.PdfFeatures import PdfFeatures
 
-from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentsPages
+from FilterValidSegmentsPages import FilterValidSegmentsPages
 from metadata_extraction.PdfDataSegment import PdfDataSegment
 from metadata_extraction.XmlFile import XmlFile
 
@@ -94,4 +94,4 @@ class PdfData:
         return pdf_data
 
     def get_text(self):
-        return ' '.join([segment.text_content for segment in self.pdf_data_segments])
+        return " ".join([segment.text_content for segment in self.pdf_data_segments])

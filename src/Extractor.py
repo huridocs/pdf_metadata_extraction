@@ -15,7 +15,7 @@ from data.PredictionData import PredictionData
 from data.SegmentationData import SegmentationData
 from data.Suggestion import Suggestion
 from data.ExtractionTask import ExtractionTask
-from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentsPages
+from FilterValidSegmentsPages import FilterValidSegmentsPages
 from metadata_extraction.PdfMetadataExtractor import PdfMetadataExtractor
 from metadata_extraction.PdfData import PdfData
 
@@ -49,23 +49,12 @@ class Extractor:
 
         return labeled_data_list
 
-    # move to filter_valid_segments_pages
-    def get_page_numbers_to_keep(self, labeled_data_list):
-        filter_valid_segment_pages = FilterValidSegmentsPages(self.extraction_identifier)
-        if self.options:
-            page_numbers_list: list[list[int]] = filter_valid_segment_pages.for_training(labeled_data_list)
-        else:
-            page_numbers_list = [list() for _ in labeled_data_list]
-
-        config_logger.info(f"Filter pages for training: total {len(page_numbers_list)} documents.")
-        config_logger.info(f"Filter: {page_numbers_list}")
-        return page_numbers_list
-
     def set_pdf_data_for_training(self):
         start = time()
         config_logger.info(f"Loading data to create model for {str(self.extraction_identifier)}")
         labeled_data_list = self.get_labeled_data()
-        for labeled_data, page_numbers_to_keep in zip(labeled_data_list, self.get_page_numbers_to_keep(labeled_data_list)):
+        page_numbers_list = FilterValidSegmentsPages(self.extraction_identifier).for_training(labeled_data_list)
+        for labeled_data, page_numbers_to_keep in zip(labeled_data_list, page_numbers_list):
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             extraction_identifier = ExtractionIdentifier(run_name=labeled_data.tenant, extraction_name=labeled_data.id)
             xml_file = XmlFile(

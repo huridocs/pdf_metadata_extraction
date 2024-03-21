@@ -46,6 +46,7 @@ def add_row(table: Table, method: MultiOptionExtractionMethod = None, time: int 
     if not method:
         table.add_row("", "", "", "")
     else:
-        table.add_row(method.extraction_identifier.extraction_name, method.get_name(), f"{round(time / 60, 1)}",
-                      f"{round(score, 2)}%")
+        table.add_row(
+            method.extraction_identifier.extraction_name, method.get_name(), f"{round(time / 60, 1)}", f"{round(score, 2)}%"
+        )
     print(table)

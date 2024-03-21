@@ -19,7 +19,7 @@ class CleanBeginningDigits3000(FilterSegmentsMethod):
             total_text += " " + pdf_data_segment_copy.text_content
             filtered_segments.append(pdf_data_segment_copy)
 
-        if not pdf_data_segments or ''.join([x.text_content.strip() for x in filtered_segments]) == "":
+        if not pdf_data_segments or "".join([x.text_content.strip() for x in filtered_segments]) == "":
             return [PdfDataSegment(1, Rectangle(0, 0, 0, 0), "no text")]
 
         return filtered_segments

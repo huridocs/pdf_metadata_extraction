@@ -30,7 +30,6 @@ from multi_option_extraction.multi_option_extraction_methods.FuzzyLastCleanLabel
 
 
 class MultiOptionExtractor:
-
     MULTI_LABEL_METHODS: list[MultiOptionExtractionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),

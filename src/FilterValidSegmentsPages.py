@@ -4,10 +4,11 @@ import re
 from os.path import join, exists
 
 
-from config import DATA_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
+
+MAX_PAGES = 99999
 
 
 class FilterValidSegmentsPages:
@@ -17,7 +18,10 @@ class FilterValidSegmentsPages:
         self.end_gaps = []
         self.valid_pages_ranges = []
 
-    def get_valid_pages(self, total_number_pages_per_document):
+    def get_valid_pages(self, total_number_pages_per_document: list[int]) -> list[list[int]]:
+        if self.valid_pages_ranges == [MAX_PAGES]:
+            return self.get_valid_pages_when_no_labeled_data(total_number_pages_per_document)
+
         if min(self.start_gaps) <= min(self.end_gaps):
             start = min(self.start_gaps)
             end = max(self.start_gaps) + max(self.valid_pages_ranges)
@@ -61,10 +65,10 @@ class FilterValidSegmentsPages:
         return self.get_valid_pages(number_pages_per_document)
 
     def set_parameters(self, labeled_data_list):
-        if not labeled_data_list or not labeled_data_list[0].label_segments_boxes:
+        if not labeled_data_list or sum([len(x.label_segments_boxes) for x in labeled_data_list]) == 0:
             self.start_gaps = [0]
             self.end_gaps = [0]
-            self.valid_pages_ranges = [99999]
+            self.valid_pages_ranges = [MAX_PAGES]
             return
 
         for labeled_data in labeled_data_list:
@@ -84,7 +88,7 @@ class FilterValidSegmentsPages:
             self.valid_pages_ranges = [0]
 
     @staticmethod
-    def get_range(start: int, end: int, number_pages: int):
+    def get_range(start: int, end: int, number_pages: int) -> list[int]:
         start = max(0, start - 1)
         end = min(end + 1, number_pages)
         return list(range(start + 1, end + 1))
@@ -137,3 +141,14 @@ class FilterValidSegmentsPages:
             xml_content = "".join([xml_content[: page_tag.start()], removed_texts, xml_content[ends[0] :]])
 
         return xml_content
+
+    @staticmethod
+    def get_valid_pages_when_no_labeled_data(total_number_pages_per_document: list[int]) -> list[list[int]]:
+        valid_page_numbers = []
+        for number_of_pages in total_number_pages_per_document:
+            valid_page_number = list(range(1, min(5, number_of_pages + 1)))
+            valid_page_number += list(range(number_of_pages - 3, number_of_pages + 1))
+            valid_page_number = list(set([x for x in valid_page_number if x > 0]))
+            valid_page_numbers.append(valid_page_number)
+
+        return valid_page_numbers

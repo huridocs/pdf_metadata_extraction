@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from metadata_extraction.FilterValidSegmentsPages import FilterValidSegmentsPages
+from FilterValidSegmentsPages import FilterValidSegmentsPages
 
 
 class TestFilterXmlPages(TestCase):

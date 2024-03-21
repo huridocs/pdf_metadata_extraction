@@ -55,14 +55,14 @@ class MultiOptionExtractionMethod:
             samples=train_set,
             options=multi_option_data.options,
             multi_value=multi_option_data.multi_value,
-            extraction_identifier=multi_option_data.extraction_identifier
+            extraction_identifier=multi_option_data.extraction_identifier,
         )
 
         test_data = MultiOptionData(
             samples=test_set,
             options=multi_option_data.options,
             multi_value=multi_option_data.multi_value,
-            extraction_identifier=multi_option_data.extraction_identifier
+            extraction_identifier=multi_option_data.extraction_identifier,
         )
 
         return train_data, test_data

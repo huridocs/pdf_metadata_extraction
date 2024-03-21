@@ -66,11 +66,13 @@ class TestFilterSegments(TestCase):
         return multi_option_data
 
     def test_filters(self):
-        methods = [CleanBeginningDigits3000(),
-                   CleanBeginningDot250(),
-                   CleanEndDot250(),
-                   CleanBeginningDot1000(),
-                   CleanEndDot1000()]
+        methods = [
+            CleanBeginningDigits3000(),
+            CleanBeginningDot250(),
+            CleanEndDot250(),
+            CleanBeginningDot1000(),
+            CleanEndDot1000(),
+        ]
 
         for method in methods:
             multi_option_data_filtered = method.filter(self.get_data())
@@ -87,11 +89,13 @@ class TestFilterSegments(TestCase):
             self.assertTrue(third_pdf_data_segments[0].text_content in ["point 3", "point"])
 
     def test_empty_text(self):
-        methods = [CleanBeginningDigits3000(),
-                   CleanBeginningDot250(),
-                   CleanEndDot250(),
-                   CleanBeginningDot1000(),
-                   CleanEndDot1000()]
+        methods = [
+            CleanBeginningDigits3000(),
+            CleanBeginningDot250(),
+            CleanEndDot250(),
+            CleanBeginningDot1000(),
+            CleanEndDot1000(),
+        ]
 
         for method in methods:
             multi_option_data_filtered = method.filter(self.get_empty_segments())
@@ -102,11 +106,13 @@ class TestFilterSegments(TestCase):
             self.assertEqual("no text", first_pdf_data_segments[0].text_content)
 
     def test_no_segments(self):
-        methods = [CleanBeginningDigits3000(),
-                   CleanBeginningDot250(),
-                   CleanEndDot250(),
-                   CleanBeginningDot1000(),
-                   CleanEndDot1000()]
+        methods = [
+            CleanBeginningDigits3000(),
+            CleanBeginningDot250(),
+            CleanEndDot250(),
+            CleanBeginningDot1000(),
+            CleanEndDot1000(),
+        ]
 
         for method in methods:
             multi_option_data_filtered = method.filter(self.get_no_segments())
