@@ -73,7 +73,7 @@ class MultiOptionExtractionMethod:
         seeds = [22, 23, 24, 25]
         for i in range(repetitions):
             train_set, test_set = self.get_train_test_sets(multi_option_data, seeds[i])
-            truth_one_hot = self.one_hot_to_options_list([x.values for x in test_set.samples])
+            truth_one_hot = self.one_hot_to_options_list([x.values for x in test_set.samples], self.options)
 
             self.train(train_set)
             predictions = self.predict(test_set)
@@ -81,18 +81,19 @@ class MultiOptionExtractionMethod:
             if not self.multi_value:
                 predictions = [x[:1] for x in predictions]
 
-            predictions_one_hot = self.one_hot_to_options_list(predictions)
+            predictions_one_hot = self.one_hot_to_options_list(predictions, self.options)
             score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
             scores.append(100 * score)
             print(f"Score for seed={seeds[i]} {self.extraction_identifier} {self.get_name()}: {100 * score}")
 
         return sum(scores) / len(scores)
 
-    def one_hot_to_options_list(self, pdfs_options: list[list[Option]]) -> list[list[int]]:
+    @staticmethod
+    def one_hot_to_options_list(pdfs_options: list[list[Option]], options: list[Option]) -> list[list[int]]:
         options_one_hot: list[list[int]] = list()
-        option_labels = [x.label for x in self.options]
+        option_labels = [x.label for x in options]
         for pdf_options in pdfs_options:
-            pdf_options_one_hot = [0] * len(self.options)
+            pdf_options_one_hot = [0] * len(options)
 
             for pdf_option in pdf_options:
                 if pdf_option.label in option_labels:

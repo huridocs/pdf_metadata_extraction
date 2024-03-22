@@ -5,11 +5,15 @@ from os.path import join
 from pathlib import Path
 from time import time
 
+import rich
+from sklearn.metrics import f1_score
+
 from config import ROOT_PATH, APP_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from metadata_extraction.PdfData import PdfData
 from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
+from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
@@ -64,7 +68,7 @@ def get_samples(task_name):
         labels_dict: dict[str, list[str]] = json.load(file)
 
     multi_option_samples: list[MultiOptionSample] = list()
-    for pdf_name in get_task_pdf_names()[task_name]:
+    for pdf_name in sorted(get_task_pdf_names()[task_name]):
         with open(join(PDF_DATA_FOLDER_PATH, f"{pdf_name}.pickle"), mode="rb") as file:
             pdf_data: PdfData = pickle.load(file)
 
@@ -100,7 +104,7 @@ def loop_datasets_methods():
             yield multi_option_data, method
 
 
-def get_benchmark(repetitions: int = 4):
+def get_benchmark_custom_methods(repetitions: int = 4):
     results_table = get_results_table()
 
     for multi_option_extractions_data, method in loop_datasets_methods():
@@ -110,5 +114,31 @@ def get_benchmark(repetitions: int = 4):
         add_row(results_table, method, round(time() - start), performance)
 
 
+def get_one_hot(multi_option_samples: list[MultiOptionSample], options: list[Option]):
+    values = [x.values for x in multi_option_samples]
+    return MultiOptionExtractionMethod.one_hot_to_options_list(values, options)
+
+
+def get_multi_option_extractor_benchmark():
+    results_table = get_results_table()
+
+    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data()
+    for multi_option_data in multi_option_extractions_data:
+        start = time()
+        multi_option_extractor = MultiOptionExtractor(extraction_identifier=multi_option_data.extraction_identifier)
+        train_set, test_set = MultiOptionExtractionMethod.get_train_test_sets(multi_option_data, 22)
+        truth_one_hot = get_one_hot(test_set.samples, multi_option_data.options)
+
+        multi_option_extractor.create_model(train_set)
+        test_data = [x.pdf_data for x in test_set.samples]
+        multi_option_predictions = multi_option_extractor.get_multi_option_predictions(test_data)
+        predictions_one_hot = get_one_hot(multi_option_predictions, multi_option_data.options)
+
+        performance = 100 * f1_score(truth_one_hot, predictions_one_hot, average="micro")
+
+        results_table.add_row("Benchmark", "extractor", f"{round(time() - start / 60, 1)}", f"{round(performance, 2)}%")
+        rich.print(results_table)
+
+
 if __name__ == "__main__":
-    get_benchmark()
+    get_multi_option_extractor_benchmark()

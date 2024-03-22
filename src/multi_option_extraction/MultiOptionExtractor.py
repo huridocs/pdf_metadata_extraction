@@ -43,7 +43,6 @@ class MultiOptionExtractor:
         MultiOptionExtractionMethod(CleanEndDot250, BertBatch1),
         MultiOptionExtractionMethod(CleanBeginningDot1000, BertBatch1),
         MultiOptionExtractionMethod(CleanEndDot1000, BertBatch1),
-        MultiOptionExtractionMethod(CleanEndDot1000, BertBatch1),
     ]
 
     SINGLE_LABEL_METHODS: list[MultiOptionExtractionMethod] = [
@@ -58,7 +57,6 @@ class MultiOptionExtractor:
         MultiOptionExtractionMethod(CleanBeginningDot250, SingleLabelBert),
         MultiOptionExtractionMethod(CleanEndDot250, SingleLabelBert),
         MultiOptionExtractionMethod(CleanBeginningDot1000, SingleLabelBert),
-        MultiOptionExtractionMethod(CleanEndDot1000, SingleLabelBert),
         MultiOptionExtractionMethod(CleanEndDot1000, SingleLabelBert),
     ]
 
