@@ -34,7 +34,7 @@ class TestEndToEnd(TestCase):
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
 
-    def test_create_model(self):
+    def test_get_suggestions(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
 
@@ -76,12 +76,6 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(expected_result, results_message)
 
-    def test_get_suggestions(self):
-        tenant = "end_to_end_test"
-        extraction_id = "extraction_id"
-
-        test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
-
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
@@ -114,7 +108,7 @@ class TestEndToEnd(TestCase):
             data_url=f"{SERVER_URL}/get_suggestions/{tenant}/{extraction_id}",
         )
 
-        self.assertEqual(results_message, expected_result)
+        self.assertEqual(expected_result, results_message )
 
         response = requests.get(results_message.data_url)
 

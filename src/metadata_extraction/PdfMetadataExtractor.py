@@ -66,7 +66,7 @@ class PdfMetadataExtractor:
         config_logger.info("get_metadata_predictions")
         segment_selector = SegmentSelector(self.extraction_identifier)
 
-        if not segment_selector.model:
+        if not segment_selector.model or not self.pdfs_data:
             return []
 
         segment_selector.set_extraction_segments(self.pdfs_data)
@@ -80,4 +80,4 @@ class PdfMetadataExtractor:
         semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
 
         config_logger.info(f"get_semantic_predictions {round(time() - start, 2)} seconds")
-        return semantic_predictions_texts
+        return semantic_predictions_texts if semantic_predictions_texts else []

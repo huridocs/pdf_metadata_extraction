@@ -98,6 +98,9 @@ class MultiOptionExtractor:
             json.dump(data, file)
 
     def get_multi_option_predictions(self, pdfs_data: list[PdfData]) -> list[MultiOptionSample]:
+        if not pdfs_data:
+            return []
+
         self.load_options()
         multi_option_samples = [MultiOptionSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
         multi_option_data = MultiOptionData(

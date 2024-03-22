@@ -32,8 +32,8 @@ class CleanEndDot1000(FilterSegmentsMethod):
         if character_limit <= 0:
             return None
 
+        pdf_data_segment.ml_label = 1
         pdf_data_segment_copy = deepcopy(pdf_data_segment)
-        pdf_data_segment_copy.ml_label = 1
         words = list()
         text = ""
         for word in pdf_data_segment_copy.text_content.split():

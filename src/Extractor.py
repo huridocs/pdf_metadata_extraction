@@ -130,34 +130,38 @@ class Extractor:
 
         return True, ""
 
+    def get_multi_option_suggestions(self):
+        suggestions = self.get_empty_suggestions()
+        multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
+        multi_option_predictions = multi_option_extractor.get_multi_option_predictions(self.pdfs_data)
+        for suggestion, multi_option_sample in zip(suggestions, multi_option_predictions):
+            suggestion.add_prediction_multi_option(multi_option_sample)
+
+        return suggestions
+
     def get_suggestions(self) -> list[Suggestion]:
         self.set_pdf_data_for_predictions()
 
-        if not self.pdfs_data:
+        if MultiOptionExtractor.is_multi_option_extraction(self.extraction_identifier):
+            return self.get_multi_option_suggestions()
+
+        pdf_metadata_extractor = PdfMetadataExtractor(self.extraction_identifier, self.pdfs_data)
+        semantic_predictions_texts = pdf_metadata_extractor.get_metadata_predictions()
+
+        if not semantic_predictions_texts:
             return []
 
+        suggestions = self.get_empty_suggestions()
+
+        for suggestion, semantic_prediction, pdf_data in zip(suggestions, semantic_predictions_texts, self.pdfs_data):
+            suggestion.add_prediction(semantic_prediction, pdf_data)
+
+        return suggestions
+
+    def get_empty_suggestions(self):
         suggestions = []
         for prediction_data in self.predictions_data:
             suggestions.append(Suggestion.get_empty(self.extraction_identifier, prediction_data.xml_file_name))
-
-        if MultiOptionExtractor.is_multi_option_extraction(self.extraction_identifier):
-            multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
-            multi_option_predictions = multi_option_extractor.get_multi_option_predictions(self.pdfs_data)
-            for suggestion, multi_option_sample in zip(suggestions, multi_option_predictions):
-                suggestion.add_prediction_multi_option(multi_option_sample.values)
-                suggestion.add_segments(multi_option_sample.pdf_data)
-        else:
-            pdf_metadata_extractor = PdfMetadataExtractor(self.extraction_identifier, self.pdfs_data)
-            semantic_predictions_texts = pdf_metadata_extractor.get_metadata_predictions()
-
-            if not semantic_predictions_texts:
-                return []
-
-            for suggestion, semantic_prediction, pdf_data in zip(suggestions, semantic_predictions_texts, self.pdfs_data):
-                suggestion.add_prediction(semantic_prediction)
-                suggestion.add_segments(pdf_data)
-
-        shutil.rmtree(self.extraction_identifier.get_path(), ignore_errors=True)
         return suggestions
 
     def get_multi_option_data(self):
@@ -179,9 +183,8 @@ class Extractor:
 
     @staticmethod
     def calculate_task(extraction_task: ExtractionTask) -> (bool, str):
-        tenant = extraction_task.tenant
-        extraction_id = extraction_task.params.id
-        extractor_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
+        extraction_name = extraction_task.params.id
+        extractor_identifier = ExtractionIdentifier(run_name=extraction_task.tenant, extraction_name=extraction_name)
 
         if extraction_task.task == Extractor.CREATE_MODEL_TASK_NAME:
             options = extraction_task.params.options
@@ -193,6 +196,7 @@ class Extractor:
             config_logger.info("Calculating suggestions")
             extractor = Extractor(extractor_identifier)
             suggestions = extractor.get_suggestions()
+            shutil.rmtree(extractor_identifier.get_path(), ignore_errors=True)
             return extractor.insert_suggestions_in_db(suggestions)
 
         return False, "Error"
