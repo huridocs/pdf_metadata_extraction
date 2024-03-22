@@ -75,6 +75,9 @@ class MultiLabelMethod(ABC):
         options_ids = [option.id for option in self.options]
         one_hot_encoding = list()
         for sample in multi_option_data.samples:
+            if not sample.values:
+                sample.values = []
+
             one_hot_encoding.append([0] * len(options_ids))
 
             for option in sample.values:

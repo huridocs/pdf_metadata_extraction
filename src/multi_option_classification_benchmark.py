@@ -16,8 +16,18 @@ from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtra
 from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
 from multi_option_extraction.data.MultiOptionData import MultiOptionData
 from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from multi_option_extraction.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
+from multi_option_extraction.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
 from multi_option_extraction.multi_labels_methods.SingleLabelBert import SingleLabelBert
+from multi_option_extraction.multi_labels_methods.TfIdfMethod import TfIdfMethod
+from multi_option_extraction.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
+from multi_option_extraction.multi_option_extraction_methods.FuzzyAll75 import FuzzyAll75
+from multi_option_extraction.multi_option_extraction_methods.FuzzyAll88 import FuzzyAll88
+from multi_option_extraction.multi_option_extraction_methods.FuzzyFirst import FuzzyFirst
+from multi_option_extraction.multi_option_extraction_methods.FuzzyFirstCleanLabel import FuzzyFirstCleanLabel
+from multi_option_extraction.multi_option_extraction_methods.FuzzyLast import FuzzyLast
+from multi_option_extraction.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
 
 from multi_option_extraction.results import get_results_table, add_row
 
@@ -26,15 +36,22 @@ PDF_DATA_FOLDER_PATH = join(ROOT_PATH, "data", "pdf_data_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 
-text_extractors = [CleanBeginningDot500]
-multi_option_extractors = [SingleLabelBert]
+text_extractors = [CleanBeginningDigits3000, CleanEndDot1000]
+multi_option_extractors = [TfIdfMethod]
 PDF_TOPIC_CLASSIFICATION_METHODS = [
     MultiOptionExtractionMethod(x, y) for x in text_extractors for y in multi_option_extractors
 ]
 
-# fuzzy_methods = [FirstFuzzyCountry(), All75FuzzyMethod(), All88FuzzyMethod(), All100FuzzyMethod(), FirstFuzzyMethod(), LastFuzzyMethod()]
-# fuzzy_methods = [FuzzyFirstCleanLabel()]
-# PDF_TOPIC_CLASSIFICATION_METHODS = [FuzzyLast(), FuzzyLastCleanLabel()]
+
+# PDF_TOPIC_CLASSIFICATION_METHODS = [
+#         FuzzyFirst(),
+#         FuzzyLast(),
+#         FuzzyFirstCleanLabel(),
+#         FuzzyLastCleanLabel(),
+#         FuzzyAll75(),
+#         FuzzyAll88(),
+#         FuzzyAll100(),
+#     ]
 
 
 def get_multi_option_benchmark_data(filter_names: list[str] = None) -> list[MultiOptionData]:
@@ -97,7 +114,7 @@ def loop_datasets_methods():
     # cejil_secretary
     # cyrilla_keywords
     # d4la_document_type
-    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data(["d4la_document_type"])
+    multi_option_extractions_data: list[MultiOptionData] = get_multi_option_benchmark_data()
 
     for multi_option_data in multi_option_extractions_data:
         for method in PDF_TOPIC_CLASSIFICATION_METHODS:
@@ -136,7 +153,10 @@ def get_multi_option_extractor_benchmark():
 
         performance = 100 * f1_score(truth_one_hot, predictions_one_hot, average="micro")
 
-        results_table.add_row("Benchmark", "extractor", f"{round(time() - start / 60, 1)}", f"{round(performance, 2)}%")
+        results_table.add_row("Extractor",
+                              multi_option_data.extraction_identifier.extraction_name,
+                              f"{round((time() - start) / 60, 1)}",
+                              f"{round(performance, 2)}%")
         rich.print(results_table)
 
 

@@ -1,4 +1,13 @@
-Task                  Method name                                 Time(m) Score   
+Task                  Method name                                 Time(m) Score
+
+d4la_document_type    extractor                                         -  40.0%
+cejil_president       extractor                                         - 100.0%
+cejil_secretary       extractor                                         - 86.67%
+cejil_countries       extractor                                         - 76.47%
+cyrilla_keywords      extractor                                         - 63.41%
+cejil_date            extractor                                         - 31.25%
+cejil_judge           extractor                                         - 100.0%
+
 d4la_document_type    CleanBeginningDot1500_SingleLabelDeber…        35.3 56.25%
 d4la_document_type    CleanBeginningDot500_SingleLabelBertBa…        13.2 54.17%
 d4la_document_type    CleanBeginningDot1500_SingleLabelDisti…        12.5 48.96%
@@ -36,6 +45,7 @@ cyrilla_keywords      CleanBeginningDot2500_BertBatch1Tokens350      10.6 48.23%
 cyrilla_keywords      NounsBeginning500_BertBatch1                    9.8 43.57%
 cyrilla_keywords      CleanNumbersBeginningDot500_BertBatch1          9.0 52.51%
 cyrilla_keywords      LastFuzzyMethod                                 0.0 49.41%
+cyrilla_keywords      FuzzyAll100                                     0.0 57.05%
 cyrilla_keywords      All88FuzzyMethod                                0.0  58.1%
 cyrilla_keywords      CleanBeginningDot1500_DebertaDeepSpeed          19.2  0.0%
 
@@ -60,7 +70,7 @@ cejil_judge           All88FuzzyMethod                                0.0 75.71%
 cejil_judge           All100FuzzyMethod                               0.0 75.71%
 cejil_judge           FirstFuzzyMethod                                0.0 67.86%
 
-cejil_countries       FuzzyCleanLabel                                 0.0 69.61%
+cejil_countries       FuzzyCleanLabel                                 0.0 70.08%
 cejil_countries       FuzzyFirstCleanTo80Label                        0.0 50.00%
 cejil_countries       FirstFuzzyMethod                                0.0 42.65%
 cejil_countries       FirstFuzzyCountry                               0.0 54.41%
