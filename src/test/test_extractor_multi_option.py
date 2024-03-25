@@ -1,6 +1,6 @@
 import json
 import shutil
-from os.path import join, exists
+from os.path import join
 from unittest import TestCase
 
 import mongomock
@@ -90,7 +90,6 @@ class TestExtractorMultiOption(TestCase):
         self.assertEqual([Option(id="id15", label="15")], suggestions[0].values)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id)))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_context_multi_option_suggestions(self):
@@ -163,4 +162,3 @@ class TestExtractorMultiOption(TestCase):
         self.assertEqual([Option(id="id15", label="15")], suggestions[0].values)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
-        self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id)))

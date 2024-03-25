@@ -1,12 +1,13 @@
+import os
 import shutil
-from os.path import join
+from os.path import join, exists
 from pathlib import Path
 from time import time
 
 import pymongo
 from langcodes import standardize_tag
 
-from config import config_logger, MONGO_PORT, MONGO_HOST
+from config import config_logger, MONGO_PORT, MONGO_HOST, DATA_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.Option import Option
@@ -182,9 +183,24 @@ class Extractor:
         )
 
     @staticmethod
+    def remove_old_models(extractor_identifier: ExtractionIdentifier):
+        if exists(extractor_identifier.get_path()):
+            os.utime(extractor_identifier.get_path())
+
+        for run_name in os.listdir(DATA_PATH):
+            if run_name == "cache":
+                continue
+
+            for extraction_name in os.listdir(join(DATA_PATH, run_name)):
+                extractor_identifier_to_check = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name)
+                if extractor_identifier_to_check.is_old():
+                    shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
+
+    @staticmethod
     def calculate_task(extraction_task: ExtractionTask) -> (bool, str):
         extraction_name = extraction_task.params.id
         extractor_identifier = ExtractionIdentifier(run_name=extraction_task.tenant, extraction_name=extraction_name)
+        Extractor.remove_old_models(extractor_identifier)
 
         if extraction_task.task == Extractor.CREATE_MODEL_TASK_NAME:
             options = extraction_task.params.options
@@ -196,7 +212,6 @@ class Extractor:
             config_logger.info("Calculating suggestions")
             extractor = Extractor(extractor_identifier)
             suggestions = extractor.get_suggestions()
-            shutil.rmtree(extractor_identifier.get_path(), ignore_errors=True)
             return extractor.insert_suggestions_in_db(suggestions)
 
         return False, "Error"

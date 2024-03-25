@@ -1,4 +1,6 @@
-from os.path import join
+import os
+from os.path import join, exists
+from time import time
 
 from pydantic import BaseModel
 
@@ -11,3 +13,7 @@ class ExtractionIdentifier(BaseModel):
 
     def get_path(self):
         return join(DATA_PATH, self.run_name, self.extraction_name)
+
+    def is_old(self):
+        path = self.get_path()
+        return exists(path) and os.path.isdir(path) and os.path.getmtime(path) < (time() - (2 * 24 * 3600))
