@@ -16,7 +16,7 @@ check_format:
 	. .venv/bin/activate; command black --line-length 125 . --check
 
 test:
-	. .venv/bin/activate; command cd src; command pytest
+	. .venv/bin/activate; command cd src; command python -m pytest
 
 remove_docker_containers:
 	docker compose ps -q | xargs docker rm
