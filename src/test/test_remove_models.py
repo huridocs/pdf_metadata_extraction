@@ -74,4 +74,3 @@ class TestRemoveModels(TestCase):
         self.assertFalse(task_calculated)
 
         shutil.rmtree(join(DATA_PATH, tenant_extractor_to_keep), ignore_errors=True)
-
