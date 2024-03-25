@@ -15,7 +15,7 @@ class TestFilterSegments(TestCase):
     TENANT = "multi_option_extraction_test"
     extraction_id = "extraction_id"
 
-    def get_data(self):
+    def get_data(self) -> MultiOptionData:
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 
@@ -27,6 +27,22 @@ class TestFilterSegments(TestCase):
             MultiOptionSample(pdf_data_1, [options[0]], "en"),
             MultiOptionSample(pdf_data_2, [options[1]], "en"),
             MultiOptionSample(pdf_data_3, [options[2]], "en"),
+        ]
+
+        multi_option_data = MultiOptionData(
+            multi_value=False, options=options, samples=samples, extraction_identifier=extraction_identifier
+        )
+
+        return multi_option_data
+
+    def get_data_for_context(self) -> MultiOptionData:
+        extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
+        options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
+
+        pdf_data = PdfData.from_texts(["point 1"] * 3000)
+
+        samples = [
+            MultiOptionSample(pdf_data, [options[0]], "en"),
         ]
 
         multi_option_data = MultiOptionData(
@@ -121,3 +137,35 @@ class TestFilterSegments(TestCase):
             self.assertEqual(1, len(multi_option_data_filtered.samples))
             self.assertEqual(1, len(first_pdf_data_segments))
             self.assertEqual("no text", first_pdf_data_segments[0].text_content)
+
+    def test_context_beginning(self):
+        methods = [
+            CleanBeginningDigits3000(),
+            CleanBeginningDot250(),
+            CleanBeginningDot1000(),
+        ]
+
+        for method in methods:
+            multi_option_data = self.get_data_for_context()
+            method.filter(multi_option_data)
+            original_data_segments = multi_option_data.samples[0].pdf_data.pdf_data_segments
+
+            for i in range(1, 45):
+                self.assertEqual(1, original_data_segments[i].ml_label)
+
+            for i in range(375, 3000):
+                self.assertEqual(0, original_data_segments[i].ml_label)
+
+    def test_context_end(self):
+        methods = [CleanEndDot250(), CleanEndDot1000()]
+
+        for method in methods:
+            multi_option_data = self.get_data_for_context()
+            method.filter(multi_option_data)
+            original_data_segments = multi_option_data.samples[0].pdf_data.pdf_data_segments
+
+            for i in range(1, 2000):
+                self.assertEqual(0, original_data_segments[i].ml_label)
+
+            for i in range(2955, 3000):
+                self.assertEqual(1, original_data_segments[i].ml_label)

@@ -153,10 +153,12 @@ def get_multi_option_extractor_benchmark():
 
         performance = 100 * f1_score(truth_one_hot, predictions_one_hot, average="micro")
 
-        results_table.add_row("Extractor",
-                              multi_option_data.extraction_identifier.extraction_name,
-                              f"{round((time() - start) / 60, 1)}",
-                              f"{round(performance, 2)}%")
+        results_table.add_row(
+            "Extractor",
+            multi_option_data.extraction_identifier.extraction_name,
+            f"{round((time() - start) / 60, 1)}",
+            f"{round(performance, 2)}%",
+        )
         rich.print(results_table)
 
 

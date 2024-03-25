@@ -108,7 +108,7 @@ class TestEndToEnd(TestCase):
             data_url=f"{SERVER_URL}/get_suggestions/{tenant}/{extraction_id}",
         )
 
-        self.assertEqual(expected_result, results_message )
+        self.assertEqual(expected_result, results_message)
 
         response = requests.get(results_message.data_url)
 
