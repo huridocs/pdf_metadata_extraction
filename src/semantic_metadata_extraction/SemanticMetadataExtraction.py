@@ -2,10 +2,11 @@ import os
 from os.path import exists, join
 from typing import Type
 
-from config import config_logger, DATA_PATH
+from config import config_logger
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
-from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.SemanticMethod import SemanticMethod
 from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
 from semantic_metadata_extraction.methods.DateParserWithBreaksMethod import DateParserWithBreaksMethod
 from semantic_metadata_extraction.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
@@ -17,7 +18,7 @@ from semantic_metadata_extraction.methods.SameInputOutputMethod import SameInput
 class SemanticMetadataExtraction:
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-    METHODS: list[Type[Method]] = [
+    METHODS: list[Type[SemanticMethod]] = [
         SameInputOutputMethod,
         RegexMethod,
         RegexSubtractionMethod,
@@ -26,9 +27,8 @@ class SemanticMetadataExtraction:
         MT5TrueCaseEnglishSpanishMethod,
     ]
 
-    def __init__(self, tenant: str, extraction_id: str):
-        self.tenant = tenant
-        self.extraction_id = extraction_id
+    def __init__(self, extraction_identifier: ExtractionIdentifier):
+        self.extraction_identifier = extraction_identifier
 
     def create_model(self, semantic_extraction_data: list[SemanticExtractionData]):
         if len(semantic_extraction_data) < 2:
@@ -42,9 +42,9 @@ class SemanticMetadataExtraction:
         performance_semantic_extraction_data = [x for x in semantic_extraction_data if x.pdf_tags]
 
         best_performance = 0
-        best_method_instance = self.METHODS[0](self.tenant, self.extraction_id)
+        best_method_instance = self.METHODS[0](self.extraction_identifier)
         for method in self.METHODS[:-1]:
-            method_instance = method(self.tenant, self.extraction_id)
+            method_instance = method(self.extraction_identifier)
             config_logger.info(f"\nChecking {method_instance.get_name()}")
             performance, _ = method_instance.performance(performance_semantic_extraction_data, 30)
             config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
@@ -61,14 +61,14 @@ class SemanticMetadataExtraction:
     def decide_best_method_or_t5(
         self,
         best_performance: float,
-        best_method_instance: Method,
+        best_method_instance: SemanticMethod,
         semantic_extraction_data: list[SemanticExtractionData],
     ):
         if best_performance > 85:
             config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
             return best_method_instance
 
-        t5 = MT5TrueCaseEnglishSpanishMethod(self.tenant, self.extraction_id)
+        t5 = MT5TrueCaseEnglishSpanishMethod(self.extraction_identifier)
 
         if best_performance < 60:
             config_logger.info(f"\nBest method {t5.get_name()} because the others were bad")
@@ -86,8 +86,8 @@ class SemanticMetadataExtraction:
 
     def get_semantic_predictions(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
         for method in self.METHODS:
-            method_instance = method(self.tenant, self.extraction_id)
-            method_path = join(DATA_PATH, self.tenant, self.extraction_id, method_instance.get_name())
+            method_instance = method(self.extraction_identifier)
+            method_path = join(self.extraction_identifier.get_path(), method_instance.get_name())
             config_logger.info(f"Checking {method_path}")
 
             if exists(method_path):
@@ -97,9 +97,9 @@ class SemanticMetadataExtraction:
                 return method_instance.predict(semantic_predictions_data)
 
         config_logger.info(f"Predicting {len(semantic_predictions_data)} documents with SameInputOutputMethod")
-        return self.METHODS[0](self.tenant, self.extraction_id).predict(semantic_predictions_data)
+        return self.METHODS[0](self.extraction_identifier).predict(semantic_predictions_data)
 
     def remove_models(self):
         for method in self.METHODS:
-            method_instance = method(self.tenant, self.extraction_id)
+            method_instance = method(self.extraction_identifier)
             method_instance.remove_model()

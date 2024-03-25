@@ -2,15 +2,17 @@ import json
 import time
 from unittest import TestCase
 
+from pdf_token_type_labels.TokenType import TokenType
 from rsmq import RedisSMQ
 
 import requests
 
 from config import APP_PATH
-from data.MetadataExtractionTask import MetadataExtractionTask
+from data.ExtractionTask import ExtractionTask
 from data.Option import Option
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
+from data.SegmentBox import SegmentBox
 from data.Suggestion import Suggestion
 
 ROOT_PATH = "./"
@@ -32,7 +34,7 @@ class TestEndToEnd(TestCase):
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
 
-    def test_create_model(self):
+    def test_get_suggestions(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
 
@@ -55,7 +57,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id),
@@ -74,12 +76,6 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(expected_result, results_message)
 
-    def test_get_suggestions(self):
-        tenant = "end_to_end_test"
-        extraction_id = "extraction_id"
-
-        test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
-
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
@@ -95,7 +91,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id),
@@ -112,7 +108,7 @@ class TestEndToEnd(TestCase):
             data_url=f"{SERVER_URL}/get_suggestions/{tenant}/{extraction_id}",
         )
 
-        self.assertEqual(results_message, expected_result)
+        self.assertEqual(expected_result, results_message)
 
         response = requests.get(results_message.data_url)
 
@@ -138,7 +134,7 @@ class TestEndToEnd(TestCase):
     def test_create_model_error(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id),
@@ -152,13 +148,13 @@ class TestEndToEnd(TestCase):
             task="create_model",
             params=Params(id=extraction_id),
             success=False,
-            error_message="No labeled data to create model",
+            error_message="No data to create model",
             data_url=None,
         )
 
-        self.assertEqual(results_message, expected_result)
+        self.assertEqual(expected_result, results_message)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id),
@@ -175,9 +171,9 @@ class TestEndToEnd(TestCase):
             data_url=None,
         )
 
-        self.assertEqual(results_message, expected_result)
+        self.assertEqual(expected_result, results_message)
 
-    def test_get_suggestions_multi_select(self):
+    def test_get_suggestions_multi_option(self):
         tenant = "end_to_end_test"
         extraction_id = "multi_select_name"
 
@@ -194,19 +190,10 @@ class TestEndToEnd(TestCase):
             "tenant": tenant,
             "xml_file_name": "test.xml",
             "language_iso": "en",
-            "options": [{"id": "1", "label": "United Nations"}],
+            "values": [{"id": "1", "label": "United Nations"}],
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [
-                {
-                    "left": round(123 / 0.75, 0),
-                    "top": round(45 / 0.75, 0),
-                    "width": round(87 / 0.75, 0),
-                    "height": round(16 / 0.75, 0),
-                    "page_number": 1,
-                }
-            ],
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
@@ -226,17 +213,17 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id, options=options, muti_value=False),
+            params=Params(id=extraction_id, options=options, multi_value=False),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
         self.get_results_message()
 
-        task = MetadataExtractionTask(
+        task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id),
@@ -255,16 +242,12 @@ class TestEndToEnd(TestCase):
         self.assertEqual(tenant, suggestion.tenant)
         self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
-        self.assertEqual([Option(id="1", label="United Nations")], suggestion.options)
         self.assertEqual("United Nations", suggestion.segment_text)
-        self.assertEqual(1, suggestion.page_number)
-
-        self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertEqual(round(123 / 0.75, 0), suggestion.segments_boxes[0].left)
-        self.assertEqual(round(45 / 0.75, 0), suggestion.segments_boxes[0].top)
-        self.assertEqual(round(87 / 0.75, 0), suggestion.segments_boxes[0].width)
-        self.assertEqual(round(16 / 0.75, 0), suggestion.segments_boxes[0].height)
-        self.assertEqual(1, suggestion.segments_boxes[0].page_number)
+        self.assertEqual(
+            [SegmentBox(left=164.0, top=60.0, width=116.0, height=21.0, page_number=1, segment_type=TokenType.TEXT)],
+            suggestion.segments_boxes,
+        )
+        self.assertEqual([Option(id="1", label="United Nations")], suggestion.values)
 
     @staticmethod
     def get_results_message() -> ResultsMessage:

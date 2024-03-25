@@ -473,7 +473,7 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
         for i in range(len(model_inputs["input_ids"])):
             # One example can give several spans, this is the index of the example containing this span of text.
             sample_index = sample_mapping[i]
-            model_inputs["example_id"].append(examples["id"][sample_index])
+            model_inputs["example_id"].append(examples["extraction_name"][sample_index])
 
         # If we are padding here, replace all tokenizer.pad_token_id in the labels by -100 when we want to ignore
         # padding in the loss.
@@ -594,14 +594,14 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
         decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
 
         # Build a map example to its corresponding features.
-        example_id_to_index = {k: i for i, k in enumerate(examples["id"])}
+        example_id_to_index = {k: i for i, k in enumerate(examples["extraction_name"])}
         feature_per_example = {example_id_to_index[feature["example_id"]]: i for i, feature in enumerate(features)}
         predictions = {}
         # Let's loop over all the examples!
         for example_index, example in enumerate(examples):
             # This is the index of the feature associated to the current example.
             feature_index = feature_per_example[example_index]
-            predictions[example["id"]] = decoded_preds[feature_index]
+            predictions[example["extraction_name"]] = decoded_preds[feature_index]
 
         # Format the result to the format the metric expects.
         if data_args.version_2_with_negative:
@@ -611,7 +611,7 @@ def run(model_args: ModelArguments, data_args: DataTrainingArguments, training_a
         else:
             formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
 
-        references = [{"id": ex["id"], "answers": ex[answer_column]} for ex in examples]
+        references = [{"id": ex["extraction_name"], "answers": ex[answer_column]} for ex in examples]
         return EvalPrediction(predictions=formatted_predictions, label_ids=references)
 
     callbacks = []

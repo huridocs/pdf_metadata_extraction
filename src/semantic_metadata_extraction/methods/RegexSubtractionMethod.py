@@ -3,12 +3,12 @@ import re
 
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
-from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.SemanticMethod import SemanticMethod
 
 from tdda import *
 
 
-class RegexSubtractionMethod(Method):
+class RegexSubtractionMethod(SemanticMethod):
     def performance(self, semantic_extraction_data: list[SemanticExtractionData], training_set_length: int):
         if not semantic_extraction_data:
             return 0, []
@@ -41,7 +41,7 @@ class RegexSubtractionMethod(Method):
 
     def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
         regex_list = self.load_json("regex_subtraction_list.json")
-        predictions = [self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_predictions_data]
+        predictions = [self.get_text_from_pdf_tags(x.pdf_tags_data) for x in semantic_predictions_data]
         for i, prediction in enumerate(predictions):
             for regex in regex_list:
                 matches = re.search(regex, prediction)

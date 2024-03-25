@@ -1,10 +1,14 @@
+from pdf_token_type_labels.TokenType import TokenType
 from pydantic import BaseModel
 
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
-from metadata_extraction.PdfSegment import PdfSegment
-from metadata_extraction.PdfSegments import PdfSegments
+from metadata_extraction.PdfDataSegment import PdfDataSegment
+from metadata_extraction.PdfData import PdfData
+from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from multi_option_extraction.filter_segments_methods.Beginning750 import Beginning750
 
 
 class Suggestion(BaseModel):
@@ -12,7 +16,7 @@ class Suggestion(BaseModel):
     id: str
     xml_file_name: str
     text: str = ""
-    options: list[Option] = list()
+    values: list[Option] = list()
     segment_text: str
     page_number: int
     segments_boxes: list[SegmentBox]
@@ -28,9 +32,9 @@ class Suggestion(BaseModel):
         extraction_id: str,
         semantic_prediction_data: SemanticPredictionData,
         prediction: str,
-        pdf_segments: PdfSegments,
+        pdf_segments: PdfData,
     ):
-        segments = [x for x in pdf_segments.pdf_segments if x.ml_label]
+        segments = [x for x in pdf_segments.pdf_data_segments if x.ml_label]
 
         if segments:
             page_number = segments[0].page_number
@@ -42,16 +46,16 @@ class Suggestion(BaseModel):
             id=extraction_id,
             xml_file_name=semantic_prediction_data.xml_file_name,
             text=prediction,
-            segment_text=" ".join([x.text for x in semantic_prediction_data.pdf_tags]),
+            segment_text=" ".join([x.text for x in semantic_prediction_data.pdf_tags_data]),
             page_number=page_number,
             segments_boxes=[x.bounding_box.to_segment_box(x.page_number).correct_output_data_scale() for x in segments],
         )
 
     @staticmethod
-    def get_empty(tenant: str, extraction_id: str, xml_file_name: str) -> "Suggestion":
+    def get_empty(extraction_identifier: ExtractionIdentifier, xml_file_name: str) -> "Suggestion":
         return Suggestion(
-            tenant=tenant,
-            id=extraction_id,
+            tenant=extraction_identifier.run_name,
+            id=extraction_identifier.extraction_name,
             xml_file_name=xml_file_name,
             text="",
             segment_text=" ",
@@ -59,25 +63,27 @@ class Suggestion(BaseModel):
             segments_boxes=list(),
         )
 
-    def add_prediction(self, text: str):
+    def add_prediction(self, text: str, prediction_pdf_data: PdfData):
+        self.add_segments(prediction_pdf_data)
         self.text = text
-        return self
 
-    def add_prediction_multi_option(self, options: list[Option]):
-        self.options = options
-        return self
+    def add_prediction_multi_option(self, prediction_sample: MultiOptionSample):
+        self.add_segments(prediction_sample.pdf_data)
+        self.values = prediction_sample.values
 
-    def add_segments(self, pdf_features):
-        segments: list[PdfSegment] = [x for x in pdf_features.pdf_segments if x.ml_label]
+    def add_segments(self, pdf_data: PdfData):
+        context_segments: list[PdfDataSegment] = [x for x in pdf_data.pdf_data_segments if x.ml_label]
+        valid_types = [TokenType.TEXT, TokenType.TITLE, TokenType.HEADER]
+        context_segments = [x for x in context_segments if x.segment_type in valid_types]
 
-        if segments:
-            self.page_number = segments[0].page_number
-        else:
+        if not context_segments:
             self.page_number = 1
+            return
 
-        self.segments_boxes = [pdf_segment.get_segment_box() for pdf_segment in segments]
-        self.segment_text = " ".join([pdf_segment.text_content for pdf_segment in segments])
-        return self
+        context_segments = Beginning750().filter_segments(context_segments)
+        self.page_number = context_segments[0].page_number
+        self.segments_boxes = [SegmentBox.from_pdf_segment(pdf_segment) for pdf_segment in context_segments]
+        self.segment_text = " ... ".join([pdf_segment.text_content for pdf_segment in context_segments])
 
     def scale_up(self):
         for segment_box in self.segments_boxes:

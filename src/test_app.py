@@ -144,7 +144,7 @@ class TestApp(TestCase):
             "id": extraction_id,
             "xml_file_name": "xml_file_name",
             "language_iso": "en",
-            "options": options_json,
+            "values": options_json,
             "page_width": 1.1,
             "page_height": 2.1,
             "xml_segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 5}],
@@ -159,7 +159,7 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
         self.assertEqual(extraction_id, labeled_data_document["id"])
-        self.assertEqual(options_json, labeled_data_document["options"])
+        self.assertEqual(options_json, labeled_data_document["values"])
         self.assertEqual("en", labeled_data_document["language_iso"])
         self.assertEqual(1.1, labeled_data_document["page_width"])
         self.assertEqual(2.1, labeled_data_document["page_height"])
@@ -311,7 +311,7 @@ class TestApp(TestCase):
                 "tenant": "wrong tenant",
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
-                "options": [{"id": "one_id", "label": "one_label"}],
+                "values": [{"id": "one_id", "label": "one_label"}],
                 "segment_text": "one_segment_text",
                 "page_number": 1,
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}],
@@ -320,7 +320,7 @@ class TestApp(TestCase):
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
-                "options": [{"id": "one_id", "label": "one_label"}],
+                "values": [{"id": "one_id", "label": "one_label"}],
                 "segment_text": "one_segment_text",
                 "page_number": 2,
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 2}],
@@ -329,7 +329,10 @@ class TestApp(TestCase):
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "other_file_name",
-                "options": [{"id": "other_id", "label": "other_label"}, {"id": "other_id_2", "label": "other_label_2"}],
+                "values": [
+                    {"id": "other_id", "label": "other_label"},
+                    {"id": "other_id_2", "label": "other_label_2"},
+                ],
                 "segment_text": "other_segment_text",
                 "page_number": 3,
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 3}],
@@ -338,7 +341,7 @@ class TestApp(TestCase):
                 "tenant": tenant,
                 "id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
-                "options": [{"id": "other_id", "label": "other_label"}],
+                "values": [{"id": "other_id", "label": "other_label"}],
                 "segment_text": "other_segment_text",
                 "page_number": 4,
                 "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 4}],
@@ -360,14 +363,17 @@ class TestApp(TestCase):
 
         self.assertEqual("one_file_name", suggestions[0]["xml_file_name"])
         self.assertEqual("one_segment_text", suggestions[0]["segment_text"])
-        self.assertEqual([{"id": "one_id", "label": "one_label"}], suggestions[0]["options"])
+        self.assertEqual([{"id": "one_id", "label": "one_label"}], suggestions[0]["values"])
         self.assertEqual(2, suggestions[0]["page_number"])
 
         self.assertEqual("other_file_name", suggestions[1]["xml_file_name"])
         self.assertEqual("other_segment_text", suggestions[1]["segment_text"])
         self.assertEqual(
-            [{"id": "other_id", "label": "other_label"}, {"id": "other_id_2", "label": "other_label_2"}],
-            suggestions[1]["options"],
+            [
+                {"id": "other_id", "label": "other_label"},
+                {"id": "other_id_2", "label": "other_label_2"},
+            ],
+            suggestions[1]["values"],
         )
         self.assertEqual(3, suggestions[1]["page_number"])
 

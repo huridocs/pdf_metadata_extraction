@@ -6,6 +6,7 @@
 *.log
 nohup.out
 /venv/
+/.venv/
 *.cache
 db
 graylog.yml
@@ -18,3 +19,4 @@ outputs
 /huggingface/
 /.ruff_cache/
 /data/
+/src/checkpoints/

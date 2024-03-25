@@ -5,20 +5,15 @@ from os import makedirs
 from os.path import join, exists
 from pathlib import Path
 
-from config import DATA_PATH
-from metadata_extraction.PdfSegments import PdfSegments
+from data.ExtractionIdentifier import ExtractionIdentifier
+from metadata_extraction.PdfData import PdfData
 from segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
 
 
 class SegmentSelector:
-    def __init__(self, tenant: str, extraction_id: str):
-        self.tenant = tenant
-        self.extraction_id = extraction_id
-
-        self.base_path = join(DATA_PATH, tenant, extraction_id)
-
-        self.model_path = join(self.base_path, "segment_predictor_model", "model.model")
-
+    def __init__(self, extraction_identifier: ExtractionIdentifier):
+        self.extraction_identifier = extraction_identifier
+        self.model_path = join(self.extraction_identifier.get_path(), "segment_predictor_model", "model.model")
         self.model = self.load_model()
 
     def load_model(self):
@@ -37,10 +32,10 @@ class SegmentSelector:
 
         return model_path
 
-    def create_model(self, pdfs_segments: list[PdfSegments]) -> (bool, str):
+    def create_model(self, pdfs_data: list[PdfData]) -> (bool, str):
         model_path = self.prepare_model_folder()
 
-        self.model = LightgbmFrequentWords().create_model(pdfs_segments, model_path)
+        self.model = LightgbmFrequentWords().create_model(pdfs_data, model_path)
 
         if not self.model:
             return False, "No data to create model"
@@ -49,10 +44,10 @@ class SegmentSelector:
 
         return True, ""
 
-    def set_extraction_segments(self, pdfs_segments: list[PdfSegments]):
-        predictions = LightgbmFrequentWords().predict(self.model, pdfs_segments, self.model_path)
+    def set_extraction_segments(self, pdfs_data: list[PdfData]):
+        predictions = LightgbmFrequentWords().predict(self.model, pdfs_data, self.model_path)
         index = 0
-        for pdf_features in pdfs_segments:
-            for segment in pdf_features.pdf_segments:
+        for pdf_metadata in pdfs_data:
+            for segment in pdf_metadata.pdf_data_segments:
                 segment.ml_label = 1 if predictions[index] > 0.5 else 0
                 index += 1

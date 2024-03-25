@@ -4,6 +4,7 @@ from os.path import join
 from unittest import TestCase
 
 from config import APP_PATH
+from data.ExtractionIdentifier import ExtractionIdentifier
 from metadata_extraction.XmlFile import XmlFile
 
 DOCKER_VOLUME_PATH = (
@@ -23,8 +24,7 @@ class TestXmlFile(TestCase):
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
-                tenant=tenant,
-                extraction_id=extraction_id,
+                extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
                 to_train=True,
                 xml_file_name="test.xml",
             )
@@ -44,8 +44,7 @@ class TestXmlFile(TestCase):
         shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
         with open(self.test_file_path, "rb") as file:
             xml_file = XmlFile(
-                tenant=tenant,
-                extraction_id=extraction_id,
+                extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
                 to_train=False,
                 xml_file_name="test.xml",
             )

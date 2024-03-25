@@ -3,12 +3,12 @@ import re
 
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
-from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.SemanticMethod import SemanticMethod
 
 from tdda import *
 
 
-class RegexMethod(Method):
+class RegexMethod(SemanticMethod):
     def performance(self, semantic_extraction_data: list[SemanticExtractionData], training_set_length: int):
         if not semantic_extraction_data:
             return 0, []
@@ -32,7 +32,7 @@ class RegexMethod(Method):
         regex_list = self.load_json("regex_list.json")
         for regex in regex_list:
             for index, semantic_prediction_data in enumerate(semantic_predictions_data):
-                text = self.get_text_from_pdf_tags(semantic_prediction_data.pdf_tags)
+                text = self.get_text_from_pdf_tags(semantic_prediction_data.pdf_tags_data)
                 if predictions[index]:
                     break
 

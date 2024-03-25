@@ -1,9 +1,9 @@
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
-from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.SemanticMethod import SemanticMethod
 
 
-class SameInputOutputMethod(Method):
+class SameInputOutputMethod(SemanticMethod):
     def performance(self, semantic_extraction_data: list[SemanticExtractionData], training_set_length: int):
         if not semantic_extraction_data:
             return 0, []
@@ -17,4 +17,4 @@ class SameInputOutputMethod(Method):
         pass
 
     def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
-        return [self.clean(self.get_text_from_pdf_tags(x.pdf_tags)) for x in semantic_predictions_data]
+        return [self.clean(self.get_text_from_pdf_tags(x.pdf_tags_data)) for x in semantic_predictions_data]

@@ -10,9 +10,9 @@ from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 
 from config import config_logger, SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, TASK_QUEUE_NAME, RESULTS_QUEUE_NAME
-from data.MetadataExtractionTask import MetadataExtractionTask
+from data.ExtractionTask import ExtractionTask
 from data.ResultsMessage import ResultsMessage
-from metadata_extraction.MetadataExtraction import MetadataExtraction
+from Extractor import Extractor
 
 
 class QueueProcessor:
@@ -33,7 +33,7 @@ class QueueProcessor:
 
     def process(self, id, message, rc, ts):
         try:
-            task = MetadataExtractionTask(**message)
+            task = ExtractionTask(**message)
             config_logger.info(f"New task {task.model_dump()}")
         except ValidationError:
             config_logger.error(f"Not a valid Redis message: {message}")
@@ -41,7 +41,7 @@ class QueueProcessor:
 
         self.log_process_information(message)
 
-        task_calculated, error_message = MetadataExtraction.calculate_task(task)
+        task_calculated, error_message = Extractor.calculate_task(task)
         if error_message:
             config_logger.info(f"Error: {error_message}")
 
@@ -55,7 +55,7 @@ class QueueProcessor:
             )
 
         else:
-            if task.task == MetadataExtraction.SUGGESTIONS_TASK_NAME:
+            if task.task == Extractor.SUGGESTIONS_TASK_NAME:
                 data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.params.id}"
             else:
                 data_url = None

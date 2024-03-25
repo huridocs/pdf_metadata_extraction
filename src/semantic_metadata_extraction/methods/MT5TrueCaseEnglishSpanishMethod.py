@@ -17,7 +17,7 @@ from config import DATA_PATH, config_logger
 from data.PdfTagData import PdfTagData
 from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
-from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.SemanticMethod import SemanticMethod
 
 from semantic_metadata_extraction.methods.TrueCaser import TrueCaser
 from semantic_metadata_extraction.methods.run_seq_2_seq import (
@@ -35,18 +35,21 @@ logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.ERROR
 logging_hf.set_verbosity(40)
 
 
-class MT5TrueCaseEnglishSpanishMethod(Method):
+class MT5TrueCaseEnglishSpanishMethod(SemanticMethod):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
     def get_model_path(self):
-        return join(self.base_path, self.get_name(), "model")
+        return join(self.extraction_identifier.get_path(), self.get_name(), "model")
 
     def get_max_length_path(self):
-        return Path(join(self.base_path, self.get_name(), "max_length_output"))
+        return Path(join(self.extraction_identifier.get_path(), self.get_name(), "max_length_output"))
 
     def get_max_input_length(self, semantic_extraction_data: list[SemanticExtractionData]):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
-        texts = [self.extraction_id + ": " + self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_extraction_data]
+        texts = [
+            self.extraction_identifier.run_name + ": " + self.get_text_from_pdf_tags(x.pdf_tags)
+            for x in semantic_extraction_data
+        ]
         tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
         input_length = min(int((max(tokens_number) + 5) * 1.5), 512)
         config_logger.info(f"Max input length: {str(input_length)}")
@@ -60,7 +63,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         return output_length
 
     def prepare_dataset(self, semantic_extractions_data: list[SemanticExtractionData]):
-        data_path = join(self.base_path, self.get_name(), "t5_transformers_data.csv")
+        data_path = join(self.extraction_identifier.get_path(), self.get_name(), "t5_transformers_data.csv")
 
         if exists(data_path):
             os.remove(data_path)
@@ -68,13 +71,13 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         text_inputs = [self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_extractions_data]
 
         data = [
-            [str(index), f"{self.extraction_id}: {segment_text}", semantic_data.text]
+            [str(index), f"{self.extraction_identifier.run_name}: {segment_text}", semantic_data.text]
             for index, segment_text, semantic_data in zip(range(len(text_inputs)), text_inputs, semantic_extractions_data)
         ]
         if not data:
             return None
         df = pd.DataFrame(data)
-        df.columns = ["id", "input_with_prefix", "target"]
+        df.columns = ["extraction_name", "input_with_prefix", "target"]
         df["not_used"] = ""
 
         os.makedirs(dirname(data_path), exist_ok=True)
@@ -147,7 +150,7 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         return exists(self.get_model_path())
 
     def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
-        texts = [self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_predictions_data]
+        texts = [self.get_text_from_pdf_tags(x.pdf_tags_data) for x in semantic_predictions_data]
         if not self.exists_model():
             return texts
 
@@ -198,12 +201,12 @@ class MT5TrueCaseEnglishSpanishMethod(Method):
         true_case_english, true_case_spanish = self.get_true_case()
 
         if semantic_extraction_data.language_iso == "en":
-            return true_case_english.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags))
+            return true_case_english.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.texts))
 
         if semantic_extraction_data.language_iso == "es":
-            return true_case_spanish.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags))
+            return true_case_spanish.get_true_case(self.get_text_from_pdf_tags(semantic_extraction_data.texts))
 
-        return self.get_text_from_pdf_tags(semantic_extraction_data.pdf_tags)
+        return self.get_text_from_pdf_tags(semantic_extraction_data.texts)
 
     def delete_checkpoints(self):
         for file_name in os.listdir(self.get_model_path()):

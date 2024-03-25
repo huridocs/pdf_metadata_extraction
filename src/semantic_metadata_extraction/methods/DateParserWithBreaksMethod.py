@@ -1,5 +1,5 @@
 from data.PdfTagData import PdfTagData
-from semantic_metadata_extraction.Method import Method
+from semantic_metadata_extraction.SemanticMethod import SemanticMethod
 from dateparser.search import search_dates
 
 from semantic_metadata_extraction.methods.DateParserMethod import DateParserMethod
@@ -8,7 +8,7 @@ from semantic_metadata_extraction.methods.DateParserMethod import DateParserMeth
 class DateParserWithBreaksMethod(DateParserMethod):
     @staticmethod
     def get_date(pdf_tags: list[PdfTagData], languages):
-        text = Method.get_text_from_pdf_tags(pdf_tags)
+        text = SemanticMethod.get_text_from_pdf_tags(pdf_tags)
         text_with_breaks = "\n".join([pdf_tag_data.text for pdf_tag_data in pdf_tags])
 
         try:

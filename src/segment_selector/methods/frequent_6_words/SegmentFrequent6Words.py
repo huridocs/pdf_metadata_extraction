@@ -6,15 +6,15 @@ import numpy as np
 from pdf_features.PdfToken import PdfToken
 from pdf_token_type_labels.TokenType import TokenType
 
-from metadata_extraction.PdfSegment import PdfSegment
-from metadata_extraction.PdfSegments import PdfSegments
+from metadata_extraction.PdfDataSegment import PdfDataSegment
+from metadata_extraction.PdfData import PdfData
 from segment_selector.methods.Modes import Modes
 
 nltk.download("punkt")
 
 
 class SegmentFrequent6Words:
-    def __init__(self, segment_index: int, pdf_segment: PdfSegment, pdf_segments: PdfSegments, modes: Modes):
+    def __init__(self, segment_index: int, pdf_segment: PdfDataSegment, pdf_segments: PdfData, modes: Modes):
         self.modes = modes
         self.previous_title_segment = None
         self.previous_segment = None
@@ -36,7 +36,7 @@ class SegmentFrequent6Words:
                 self.segment_tokens = [pdf_token]
                 break
 
-        self.pdf_segments: PdfSegments = pdf_segments
+        self.pdf_segments: PdfData = pdf_segments
         self.page_width = self.pdf_segments.pdf_features.pages[0].page_width
         self.page_height = self.pdf_segments.pdf_features.pages[0].page_height
         self.text_content: str = ""
@@ -60,7 +60,7 @@ class SegmentFrequent6Words:
         self.starts_with_square_brackets: bool = False
         self.starts_with_roman_numbers: bool = False
         self.uppercase: bool = False
-        self.last_token: PdfSegment = None
+        self.last_token: PdfDataSegment = None
         self.bold: float = False
         self.bold_token_number: int = 0
         self.italics: float = False
@@ -126,7 +126,8 @@ class SegmentFrequent6Words:
 
         return [
             self.previous_title_segment.segment_index,
-            len(self.previous_title_segment.pdf_segments.pdf_segments) - self.previous_title_segment.segment_index,
+            len(self.previous_title_segment.multi_option_samples.multi_option_samples)
+            - self.previous_title_segment.segment_index,
             self.previous_title_segment.page_index,
             len(self.pdf_segments.pdf_features.pages) - self.previous_title_segment.page_index,
             self.previous_title_segment.bold,
@@ -158,7 +159,7 @@ class SegmentFrequent6Words:
 
         return [
             segment.segment_index,
-            len(segment.pdf_segments.pdf_segments) - segment.segment_index,
+            len(segment.pdf_segments.pdf_data_segments) - segment.segment_index,
             segment.page_index,
             len(segment.pdf_segments.pdf_features.pages) - segment.page_index,
             segment.bold,
@@ -212,7 +213,7 @@ class SegmentFrequent6Words:
                 self.starts_letter_dot,
                 self.dots_percentage,
                 1 if self.uppercase else 0,
-                len(self.pdf_segments.pdf_segments) - self.segment_index,
+                len(self.pdf_segments.pdf_data_segments) - self.segment_index,
                 len(self.pdf_segments.pdf_features.pages) - self.page_index,
                 self.pdf_segment.segment_type.get_index(),
             ]
@@ -236,10 +237,10 @@ class SegmentFrequent6Words:
         return False
 
     @staticmethod
-    def from_pdf_features(pdf_features: PdfSegments) -> list["SegmentFrequent6Words"]:
+    def from_pdf_features(pdf_features: PdfData) -> list["SegmentFrequent6Words"]:
         modes = Modes(pdf_features)
         segments: list["SegmentFrequent6Words"] = list()
-        for index, pdf_segment in enumerate(pdf_features.pdf_segments):
+        for index, pdf_segment in enumerate(pdf_features.pdf_data_segments):
             segment_landmarks = SegmentFrequent6Words(index, pdf_segment, pdf_features, modes)
             segments.append(segment_landmarks)
 
