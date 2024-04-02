@@ -40,8 +40,8 @@ class Extractor:
         self.mongo_filter = {"tenant": self.extraction_identifier.run_name, "id": self.extraction_identifier.extraction_name}
 
         self.pdfs_data: list[PdfData] = list()
-        self.labeled_data: list[LabeledData] = list()
-        self.predictions_data: list[PredictionData] = list()
+        self.labeled_data_list: list[LabeledData] = list()
+        self.predictions_data_list: list[PredictionData] = list()
 
     def get_labeled_data(self):
         labeled_data_list = []
@@ -69,7 +69,7 @@ class Extractor:
             if not pdf_segments:
                 continue
 
-            self.labeled_data.append(labeled_data)
+            self.labeled_data_list.append(labeled_data)
             self.pdfs_data.append(pdf_segments)
 
         config_logger.info(f"Set pdf data {round(time() - start, 2)} seconds")
@@ -86,7 +86,7 @@ class Extractor:
         config_logger.info(f"Filter: {page_numbers_list}")
 
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
-            self.predictions_data.append(prediction_data)
+            self.predictions_data_list.append(prediction_data)
             segmentation_data = SegmentationData.from_prediction_data(prediction_data)
 
             xml_file = XmlFile(
@@ -106,7 +106,7 @@ class Extractor:
             pdf_metadata_extractor = PdfMetadataExtractor(
                 extraction_identifier=self.extraction_identifier, pdfs_data=self.pdfs_data
             )
-            model_created = pdf_metadata_extractor.create_model(self.labeled_data)
+            model_created = pdf_metadata_extractor.create_model(self.labeled_data_list)
 
         self.delete_training_data()
         return model_created
@@ -161,13 +161,13 @@ class Extractor:
 
     def get_empty_suggestions(self):
         suggestions = []
-        for prediction_data in self.predictions_data:
+        for prediction_data in self.predictions_data_list:
             suggestions.append(Suggestion.get_empty(self.extraction_identifier, prediction_data.xml_file_name))
         return suggestions
 
     def get_multi_option_data(self):
         multi_option_samples: list[MultiOptionSample] = list()
-        for pdf_data, labeled_data in zip(self.pdfs_data, self.labeled_data):
+        for pdf_data, labeled_data in zip(self.pdfs_data, self.labeled_data_list):
             multi_option_sample = MultiOptionSample(
                 pdf_data=pdf_data,
                 values=labeled_data.values,

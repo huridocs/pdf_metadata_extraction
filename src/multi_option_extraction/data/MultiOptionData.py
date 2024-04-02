@@ -11,3 +11,4 @@ class MultiOptionData:
     options: list[Option]
     multi_value: bool
     extraction_identifier: ExtractionIdentifier = None
+

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from data.LabeledData import LabeledData
 from data.Option import Option
 from metadata_extraction.PdfData import PdfData
 
@@ -9,6 +10,7 @@ class MultiOptionSample:
     pdf_data: PdfData
     values: list[Option] = None
     language_iso: str = ""
+    labeled_data: LabeledData = None
 
     def get_text(self):
         texts = list()
