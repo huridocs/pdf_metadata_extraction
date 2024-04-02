@@ -17,7 +17,9 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 from data.ExtractionData import ExtractionData
 from data.ExtractionSample import ExtractionSample
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.AvoidEvaluation import AvoidEvaluation
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.EarlyStoppingAfterInitialTraining import (
+    EarlyStoppingAfterInitialTraining,
+)
 
 MODEL_NAME = "google-bert/bert-base-uncased"
 

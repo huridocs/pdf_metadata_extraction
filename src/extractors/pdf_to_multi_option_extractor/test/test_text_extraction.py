@@ -5,7 +5,9 @@ from data.Option import Option
 from data.PdfData import PdfData
 from data.ExtractionData import ExtractionData
 from data.ExtractionSample import ExtractionSample
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
+    CleanBeginningDigits3000,
+)
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000

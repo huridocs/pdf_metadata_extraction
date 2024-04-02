@@ -16,7 +16,9 @@ from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 from data.ExtractionData import ExtractionData
 from data.ExtractionSample import ExtractionSample
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
+    CleanBeginningDigits3000,
+)
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
 
