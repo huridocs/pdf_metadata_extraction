@@ -18,7 +18,7 @@ from sklearn.metrics import f1_score
 from config import ROOT_PATH, DATA_PATH
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
-from metadata_extraction.PdfData import PdfData
+from data.PdfData import PdfData
 from performance.Results import Results
 from segment_selector.Paragraphs import Paragraphs
 from segment_selector.evaluate_config import SIZES, SEED, LABELED_DATA_TO_USE, METHODS_TO_EXECUTE, PDF_LABELED_DATA_PATH

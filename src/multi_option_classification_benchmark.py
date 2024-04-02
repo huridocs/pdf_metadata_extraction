@@ -11,16 +11,16 @@ from sklearn.metrics import f1_score
 from config import ROOT_PATH, APP_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
-from metadata_extraction.PdfData import PdfData
-from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
-from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
+from data.PdfData import PdfData
+from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
+from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 from data.ExtractionData import ExtractionData
 from data.ExtractionSample import ExtractionSample
-from multi_option_extraction.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
-from multi_option_extraction.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
-from multi_option_extraction.multi_labels_methods.TfIdfMethod import TfIdfMethod
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
 
-from multi_option_extraction.results import get_results_table, add_row
+from extractors.pdf_to_multi_option_extractor.results import get_results_table, add_row
 
 PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH = join(Path(__file__).parent, "multi_option_extraction", "labeled_data")
 PDF_DATA_FOLDER_PATH = join(ROOT_PATH, "data", "pdf_data_cache")
@@ -133,7 +133,7 @@ def get_multi_option_extractor_benchmark():
     multi_option_extractions_data: list[ExtractionData] = get_multi_option_benchmark_data()
     for multi_option_data in multi_option_extractions_data:
         start = time()
-        multi_option_extractor = MultiOptionExtractor(extraction_identifier=multi_option_data.extraction_identifier)
+        multi_option_extractor = PdfToMultiOptionExtractor(extraction_identifier=multi_option_data.extraction_identifier)
         train_set, test_set = MultiOptionExtractionMethod.get_train_test_sets(multi_option_data, 22)
         truth_one_hot = get_one_hot(test_set.samples, multi_option_data.options)
 

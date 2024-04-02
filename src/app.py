@@ -15,7 +15,7 @@ from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
-from metadata_extraction.XmlFile import XmlFile
+from XmlFile import XmlFile
 
 
 @asynccontextmanager

@@ -1,6 +1,5 @@
 import json
 from collections import Counter
-from os.path import exists
 from pathlib import Path
 from time import time
 
@@ -12,7 +11,7 @@ import lightgbm as lgb
 from sklearn.metrics import f1_score
 
 from config import config_logger
-from metadata_extraction.PdfData import PdfData
+from data.PdfData import PdfData
 from segment_selector.methods.lightgbm_frequent_words.SegmentLightgbmFrequentWords import SegmentLightgbmFrequentWords
 
 from nltk.tokenize import word_tokenize

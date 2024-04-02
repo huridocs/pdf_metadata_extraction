@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from data.LabeledData import LabeledData
-from metadata_extraction.PdfData import PdfData
+from data.PdfData import PdfData
 
 
 @dataclass

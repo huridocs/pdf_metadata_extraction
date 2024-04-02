@@ -10,7 +10,7 @@ import lightgbm as lgb
 from sklearn.metrics import f1_score
 
 from config import config_logger
-from metadata_extraction.PdfData import PdfData
+from data.PdfData import PdfData
 from segment_selector.methods.avoiding_words.SegmentAvoidingWords import SegmentAvoidingWords
 
 from nltk.tokenize import word_tokenize

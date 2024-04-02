@@ -5,7 +5,6 @@ from pathlib import Path
 from time import time
 
 import pymongo
-from langcodes import standardize_tag
 
 from config import config_logger, MONGO_PORT, MONGO_HOST, DATA_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
@@ -17,13 +16,13 @@ from data.SegmentationData import SegmentationData
 from data.Suggestion import Suggestion
 from data.ExtractionTask import ExtractionTask
 from FilterValidSegmentsPages import FilterValidSegmentsPages
-from metadata_extraction.PdfMetadataExtractor import PdfMetadataExtractor
-from metadata_extraction.PdfData import PdfData
+from extractors.pdf_to_text_extractor.PdfToTextExtractor import PdfToTextExtractor
+from data.PdfData import PdfData
 
-from metadata_extraction.XmlFile import XmlFile
+from XmlFile import XmlFile
 from data.ExtractionData import ExtractionData
 from data.ExtractionSample import ExtractionSample
-from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
+from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 
 
 class Extractor:
@@ -100,10 +99,10 @@ class Extractor:
         self.set_pdf_data_for_training()
         is_multi_option = len(self.options) > 1
         if is_multi_option:
-            multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
+            multi_option_extractor = PdfToMultiOptionExtractor(self.extraction_identifier)
             model_created = multi_option_extractor.create_model(self.get_multi_option_data())
         else:
-            pdf_metadata_extractor = PdfMetadataExtractor(
+            pdf_metadata_extractor = PdfToTextExtractor(
                 extraction_identifier=self.extraction_identifier, pdfs_data=self.pdfs_data
             )
             model_created = pdf_metadata_extractor.create_model(self.labeled_data_list)
@@ -134,11 +133,11 @@ class Extractor:
     def get_suggestions(self) -> list[Suggestion]:
         self.set_pdf_data_for_predictions()
 
-        if MultiOptionExtractor.is_multi_option_extraction(self.extraction_identifier):
-            multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
+        if PdfToMultiOptionExtractor.is_multi_option_extraction(self.extraction_identifier):
+            multi_option_extractor = PdfToMultiOptionExtractor(self.extraction_identifier)
             return multi_option_extractor.get_suggestions(self.pdfs_data)
 
-        pdf_metadata_extractor = PdfMetadataExtractor(self.extraction_identifier, self.pdfs_data)
+        pdf_metadata_extractor = PdfToTextExtractor(self.extraction_identifier, self.pdfs_data)
         semantic_predictions_texts = pdf_metadata_extractor.get_metadata_predictions()
 
         if not semantic_predictions_texts:

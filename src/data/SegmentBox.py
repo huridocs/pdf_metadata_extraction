@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from pdf_token_type_labels.TokenType import TokenType
 from pdf_features.Rectangle import Rectangle
 
-from metadata_extraction.PdfDataSegment import PdfDataSegment
+from data.PdfDataSegment import PdfDataSegment
 
 SCALE_RATIO = 0.75
 

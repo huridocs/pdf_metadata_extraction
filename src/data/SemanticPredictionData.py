@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from data.PdfTagData import PdfTagData
-from metadata_extraction.PdfDataSegment import PdfDataSegment
+from data.PdfDataSegment import PdfDataSegment
 
 
 @dataclass

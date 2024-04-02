@@ -1,7 +1,7 @@
 import rich
 
 from multi_option_classification_benchmark import loop_datasets_methods
-from multi_option_extraction.results import get_predictions_table, add_prediction_row
+from extractors.pdf_to_multi_option_extractor.results import get_predictions_table, add_prediction_row
 
 
 def check_mistakes():

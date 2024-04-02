@@ -1,13 +1,12 @@
 import re
-from copy import deepcopy
 
 import nltk
 import numpy as np
 from pdf_features.PdfToken import PdfToken
 from pdf_token_type_labels.TokenType import TokenType
 
-from metadata_extraction.PdfDataSegment import PdfDataSegment
-from metadata_extraction.PdfData import PdfData
+from data.PdfDataSegment import PdfDataSegment
+from data.PdfData import PdfData
 from segment_selector.methods.Modes import Modes
 
 nltk.download("punkt")

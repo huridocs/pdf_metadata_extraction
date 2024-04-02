@@ -11,7 +11,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics import f1_score
 
 from config import ROOT_PATH
-from multi_option_extraction.PdfLabels import PdfLabels
+from extractors.pdf_to_multi_option_extractor.PdfLabels import PdfLabels
 from pdf_topic_classification.pdf_topic_classification_data import get_labeled_data
 import lightgbm as lgb
 

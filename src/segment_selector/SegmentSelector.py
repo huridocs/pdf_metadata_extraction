@@ -6,7 +6,7 @@ from os.path import join, exists
 from pathlib import Path
 
 from data.ExtractionIdentifier import ExtractionIdentifier
-from metadata_extraction.PdfData import PdfData
+from data.PdfData import PdfData
 from segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
 
 

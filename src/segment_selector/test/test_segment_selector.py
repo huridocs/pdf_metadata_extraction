@@ -10,8 +10,8 @@ from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
-from metadata_extraction.PdfData import PdfData
-from metadata_extraction.XmlFile import XmlFile
+from data.PdfData import PdfData
+from XmlFile import XmlFile
 from segment_selector.SegmentSelector import SegmentSelector
 from pdf_token_type_labels.TokenType import TokenType
 

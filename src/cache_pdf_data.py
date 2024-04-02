@@ -13,7 +13,7 @@ from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
 from config import ROOT_PATH
-from metadata_extraction.PdfData import PdfData
+from data.PdfData import PdfData
 from multi_option_classification_benchmark import get_task_pdf_names, PDF_DATA_FOLDER_PATH
 
 LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")

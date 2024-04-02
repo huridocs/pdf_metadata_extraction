@@ -2,7 +2,7 @@ import dataclasses
 import hashlib
 from statistics import mode
 
-from metadata_extraction.PdfData import PdfData
+from data.PdfData import PdfData
 
 
 @dataclasses.dataclass

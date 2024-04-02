@@ -5,10 +5,10 @@ from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
-from metadata_extraction.PdfDataSegment import PdfDataSegment
-from metadata_extraction.PdfData import PdfData
+from data.PdfDataSegment import PdfDataSegment
+from data.PdfData import PdfData
 from data.ExtractionSample import ExtractionSample
-from multi_option_extraction.filter_segments_methods.Beginning750 import Beginning750
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.Beginning750 import Beginning750
 
 
 class Suggestion(BaseModel):
