@@ -4,11 +4,11 @@ from data.SegmentBox import SegmentBox
 
 
 class PredictionData(BaseModel):
-    tenant: str
-    id: str
-    xml_file_name: str
-    page_width: float
-    page_height: float
+    tenant: str = ""
+    id: str = ""
+    xml_file_name: str = ""
+    page_width: float = 0
+    page_height: float = 0
     xml_segments_boxes: list[SegmentBox]
 
     def to_dict(self):

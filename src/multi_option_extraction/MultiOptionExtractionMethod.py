@@ -5,8 +5,8 @@ from sklearn.metrics import f1_score
 
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
-from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from data.ExtractionData import ExtractionData
+from data.ExtractionSample import ExtractionSample
 from multi_option_extraction.MultiLabelMethod import MultiLabelMethod
 from multi_option_extraction.FilterSegmentsMethod import FilterSegmentsMethod
 
@@ -24,7 +24,7 @@ class MultiOptionExtractionMethod:
         self.multi_value = False
         self.base_path = ""
 
-    def set_parameters(self, multi_option_data: MultiOptionData):
+    def set_parameters(self, multi_option_data: ExtractionData):
         self.extraction_identifier = multi_option_data.extraction_identifier
         self.options = multi_option_data.options
         self.multi_value = multi_option_data.multi_value
@@ -41,24 +41,24 @@ class MultiOptionExtractionMethod:
         return self.__class__.__name__
 
     @staticmethod
-    def get_train_test_sets(multi_option_data: MultiOptionData, seed: int) -> (MultiOptionData, MultiOptionData):
+    def get_train_test_sets(multi_option_data: ExtractionData, seed: int) -> (ExtractionData, ExtractionData):
         if len(multi_option_data.samples) < 15:
             return multi_option_data, multi_option_data
 
         train_size = int(len(multi_option_data.samples) * 0.8)
         random.seed(seed)
 
-        train_set: list[MultiOptionSample] = random.sample(multi_option_data.samples, k=train_size)[:80]
-        test_set: list[MultiOptionSample] = [x for x in multi_option_data.samples if x not in train_set][:30]
+        train_set: list[ExtractionSample] = random.sample(multi_option_data.samples, k=train_size)[:80]
+        test_set: list[ExtractionSample] = [x for x in multi_option_data.samples if x not in train_set][:30]
 
-        train_data = MultiOptionData(
+        train_data = ExtractionData(
             samples=train_set,
             options=multi_option_data.options,
             multi_value=multi_option_data.multi_value,
             extraction_identifier=multi_option_data.extraction_identifier,
         )
 
-        test_data = MultiOptionData(
+        test_data = ExtractionData(
             samples=test_set,
             options=multi_option_data.options,
             multi_value=multi_option_data.multi_value,
@@ -67,13 +67,13 @@ class MultiOptionExtractionMethod:
 
         return train_data, test_data
 
-    def get_performance(self, multi_option_data: MultiOptionData, repetitions: int = 1) -> float:
+    def get_performance(self, multi_option_data: ExtractionData, repetitions: int = 1) -> float:
         self.set_parameters(multi_option_data)
         scores = list()
         seeds = [22, 23, 24, 25]
         for i in range(repetitions):
             train_set, test_set = self.get_train_test_sets(multi_option_data, seeds[i])
-            truth_one_hot = self.one_hot_to_options_list([x.values for x in test_set.samples], self.options)
+            truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples], self.options)
 
             self.train(train_set)
             predictions = self.predict(test_set)
@@ -103,7 +103,7 @@ class MultiOptionExtractionMethod:
 
         return options_one_hot
 
-    def train(self, multi_option_data: MultiOptionData):
+    def train(self, multi_option_data: ExtractionData):
         self.set_parameters(multi_option_data)
 
         print("Filtering segments")
@@ -113,7 +113,7 @@ class MultiOptionExtractionMethod:
         multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value)
         multi_label.train(filtered_multi_option_data)
 
-    def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
+    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         self.set_parameters(multi_option_data)
 
         print("Filtering segments")

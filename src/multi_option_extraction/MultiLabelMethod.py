@@ -12,7 +12,7 @@ from numpy import argmax
 
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
+from data.ExtractionData import ExtractionData
 
 
 class MultiLabelMethod(ABC):
@@ -26,11 +26,11 @@ class MultiLabelMethod(ABC):
             os.makedirs(self.base_path)
 
     @abstractmethod
-    def train(self, multi_option_data: MultiOptionData):
+    def train(self, multi_option_data: ExtractionData):
         pass
 
     @abstractmethod
-    def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
+    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         pass
 
     def get_name(self):
@@ -53,7 +53,7 @@ class MultiLabelMethod(ABC):
     def remove_model(self):
         shutil.rmtree(join(self.base_path, self.get_name()), ignore_errors=True)
 
-    def get_texts_labels(self, multi_option_data: MultiOptionData) -> (list[str], list[list[int]]):
+    def get_texts_labels(self, multi_option_data: ExtractionData) -> (list[str], list[list[int]]):
         texts = list()
         for sample in multi_option_data.samples:
             texts.append(" ".join([x.text_content.strip() for x in sample.pdf_data.pdf_data_segments]))
@@ -71,16 +71,12 @@ class MultiLabelMethod(ABC):
 
         return [self.options[i] for i, value in enumerate(prediction) if value > 0.5]
 
-    def get_one_hot_encoding(self, multi_option_data: MultiOptionData):
+    def get_one_hot_encoding(self, multi_option_data: ExtractionData):
         options_ids = [option.id for option in self.options]
         one_hot_encoding = list()
         for sample in multi_option_data.samples:
-            if not sample.values:
-                sample.values = []
-
             one_hot_encoding.append([0] * len(options_ids))
-
-            for option in sample.values:
+            for option in sample.labeled_data.values:
                 if option.id not in options_ids:
                     print(f"option {option.id} not in {options_ids}")
                     continue
@@ -88,7 +84,7 @@ class MultiLabelMethod(ABC):
         return one_hot_encoding
 
     @staticmethod
-    def get_batch_size(multi_option_data: MultiOptionData):
+    def get_batch_size(multi_option_data: ExtractionData):
         samples_count = len(multi_option_data.samples)
         batch_size_by_samples = math.ceil(samples_count / 100)
         memory_available = torch.cuda.get_device_properties(0).total_memory / 1000000000
@@ -96,6 +92,6 @@ class MultiLabelMethod(ABC):
         return min(limit_batch, batch_size_by_samples)
 
     @staticmethod
-    def get_max_steps(multi_option_data: MultiOptionData):
+    def get_max_steps(multi_option_data: ExtractionData):
         steps = math.ceil(23 * len(multi_option_data.samples) / 200) * 200
         return min(steps, 2000)

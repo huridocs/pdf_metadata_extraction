@@ -125,8 +125,9 @@ class TestExtractorMetadata(TestCase):
             "xml_segments_boxes": [],
             "label_segments_boxes": [
                 json.loads(
-                    SegmentBox(left=400, top=115, width=74, height=9, page_number=1,
-                               segment_type=TokenType.TEXT).model_dump_json()
+                    SegmentBox(
+                        left=400, top=115, width=74, height=9, page_number=1, segment_type=TokenType.TEXT
+                    ).model_dump_json()
                 )
             ],
         }

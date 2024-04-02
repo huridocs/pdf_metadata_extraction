@@ -6,7 +6,7 @@ import fasttext
 
 from data.Option import Option
 from data.SemanticPredictionData import SemanticPredictionData
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
+from data.ExtractionData import ExtractionData
 from multi_option_extraction.TextToMultiOptionMethod import MultiLabelMethods
 
 
@@ -34,14 +34,14 @@ class FastTextMethod(MultiLabelMethods):
 
         return join(model_folder_path, "fast.model")
 
-    def prepare_data(self, multi_option_data: MultiOptionData):
+    def prepare_data(self, multi_option_data: ExtractionData):
         texts = [self.get_text_from_pdf_segments(sample.pdf_data) for sample in multi_option_data.samples]
         texts = [text.replace("\n", " ") for text in texts]
         labels = ["__label__" + " __label__".join(self.clean_labels(sample.values)) for sample in multi_option_data.samples]
         data = [f"{label} {text}" for label, text in zip(labels, texts)]
         Path(self.get_data_path()).write_text("\n".join(data))
 
-    def train(self, multi_option_data: MultiOptionData):
+    def train(self, multi_option_data: ExtractionData):
         self.prepare_data(multi_option_data)
         fasttext_params = {
             "input": self.get_data_path(),

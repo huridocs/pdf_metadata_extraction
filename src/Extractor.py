@@ -21,8 +21,8 @@ from metadata_extraction.PdfMetadataExtractor import PdfMetadataExtractor
 from metadata_extraction.PdfData import PdfData
 
 from metadata_extraction.XmlFile import XmlFile
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
-from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from data.ExtractionData import ExtractionData
+from data.ExtractionSample import ExtractionSample
 from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
 
 
@@ -64,13 +64,13 @@ class Extractor:
                 xml_file_name=labeled_data.xml_file_name,
             )
 
-            pdf_segments = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers_to_keep)
+            pdf_data = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers_to_keep)
 
-            if not pdf_segments:
+            if not pdf_data:
                 continue
 
             self.labeled_data_list.append(labeled_data)
-            self.pdfs_data.append(pdf_segments)
+            self.pdfs_data.append(pdf_data)
 
         config_logger.info(f"Set pdf data {round(time() - start, 2)} seconds")
 
@@ -131,20 +131,12 @@ class Extractor:
 
         return True, ""
 
-    def get_multi_option_suggestions(self):
-        suggestions = self.get_empty_suggestions()
-        multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
-        multi_option_predictions = multi_option_extractor.get_multi_option_predictions(self.pdfs_data)
-        for suggestion, multi_option_sample in zip(suggestions, multi_option_predictions):
-            suggestion.add_prediction_multi_option(multi_option_sample)
-
-        return suggestions
-
     def get_suggestions(self) -> list[Suggestion]:
         self.set_pdf_data_for_predictions()
 
         if MultiOptionExtractor.is_multi_option_extraction(self.extraction_identifier):
-            return self.get_multi_option_suggestions()
+            multi_option_extractor = MultiOptionExtractor(self.extraction_identifier)
+            return multi_option_extractor.get_suggestions(self.pdfs_data)
 
         pdf_metadata_extractor = PdfMetadataExtractor(self.extraction_identifier, self.pdfs_data)
         semantic_predictions_texts = pdf_metadata_extractor.get_metadata_predictions()
@@ -166,16 +158,12 @@ class Extractor:
         return suggestions
 
     def get_multi_option_data(self):
-        multi_option_samples: list[MultiOptionSample] = list()
+        multi_option_samples: list[ExtractionSample] = list()
         for pdf_data, labeled_data in zip(self.pdfs_data, self.labeled_data_list):
-            multi_option_sample = MultiOptionSample(
-                pdf_data=pdf_data,
-                values=labeled_data.values,
-                language_iso=standardize_tag(labeled_data.language_iso),
-            )
+            multi_option_sample = ExtractionSample(pdf_data=pdf_data, labeled_data=labeled_data)
             multi_option_samples.append(multi_option_sample)
 
-        return MultiOptionData(
+        return ExtractionData(
             samples=multi_option_samples,
             options=self.options,
             multi_value=self.multi_value,

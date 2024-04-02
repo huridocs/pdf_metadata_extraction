@@ -1,15 +1,12 @@
 from dataclasses import dataclass
 
 from data.LabeledData import LabeledData
-from data.Option import Option
 from metadata_extraction.PdfData import PdfData
 
 
 @dataclass
-class MultiOptionSample:
+class ExtractionSample:
     pdf_data: PdfData
-    values: list[Option] = None
-    language_iso: str = ""
     labeled_data: LabeledData = None
 
     def get_text(self):

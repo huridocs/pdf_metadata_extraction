@@ -8,10 +8,11 @@ from pathlib import Path
 from config import config_logger
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
+from data.Suggestion import Suggestion
 from metadata_extraction.PdfData import PdfData
 from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
-from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from data.ExtractionData import ExtractionData
+from data.ExtractionSample import ExtractionSample
 from multi_option_extraction.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
@@ -73,7 +74,7 @@ class MultiOptionExtractor:
         self.options: list[Option] = list()
         self.multi_value = False
 
-    def create_model(self, multi_option_data: MultiOptionData):
+    def create_model(self, multi_option_data: ExtractionData):
         self.options = multi_option_data.options
         self.multi_value = multi_option_data.multi_value
 
@@ -97,13 +98,24 @@ class MultiOptionExtractor:
         with open(path, "w") as file:
             json.dump(data, file)
 
-    def get_multi_option_predictions(self, pdfs_data: list[PdfData]) -> list[MultiOptionSample]:
+    def get_suggestions(self, pdfs_data: list[PdfData]) -> list[Suggestion]:
         if not pdfs_data:
             return []
 
+        multi_option_samples, predictions = self.get_predictions(pdfs_data)
+
+        suggestions = list()
+        for multi_option_sample, prediction in zip(multi_option_samples, predictions):
+            suggestion = Suggestion.get_empty(self.extraction_identifier, multi_option_sample.pdf_data.file_name)
+            suggestion.add_prediction_multi_option(multi_option_sample, prediction)
+            suggestions.append(suggestion)
+
+        return suggestions
+
+    def get_predictions(self, pdfs_data):
         self.load_options()
-        multi_option_samples = [MultiOptionSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
-        multi_option_data = MultiOptionData(
+        multi_option_samples = [ExtractionSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
+        multi_option_data = ExtractionData(
             multi_value=self.multi_value,
             options=self.options,
             samples=multi_option_samples,
@@ -116,10 +128,7 @@ class MultiOptionExtractor:
         if not self.multi_value:
             prediction = [x[:1] for x in prediction]
 
-        for prediction, multi_option_sample in zip(prediction, multi_option_samples):
-            multi_option_sample.values = prediction
-
-        return multi_option_samples
+        return multi_option_samples, prediction
 
     def load_options(self):
         if not exists(self.options_path) or not exists(self.multi_value_path):
@@ -131,18 +140,20 @@ class MultiOptionExtractor:
         with open(self.multi_value_path, "r") as file:
             self.multi_value = json.load(file)
 
-    def get_best_method(self, multi_option_data: MultiOptionData) -> MultiOptionExtractionMethod:
+    def get_best_method(self, multi_option_data: ExtractionData) -> MultiOptionExtractionMethod:
         best_method_instance = self.SINGLE_LABEL_METHODS[0]
         best_performance = 0
         methods_to_loop = self.MULTI_LABEL_METHODS if self.multi_value else self.SINGLE_LABEL_METHODS
         for method in methods_to_loop:
             method.set_parameters(multi_option_data)
             config_logger.info(f"\nChecking {method.get_name()}")
+
             try:
                 performance = method.get_performance(multi_option_data)
             except Exception as e:
                 config_logger.error(f"Error checking {method.get_name()}: {e}")
                 performance = 0
+
             config_logger.info(f"\nPerformance {method.get_name()}: {performance}%")
             if performance == 100:
                 config_logger.info(f"\nBest method {method.get_name()} with {performance}%")

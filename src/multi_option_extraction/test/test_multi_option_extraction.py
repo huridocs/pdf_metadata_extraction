@@ -1,9 +1,10 @@
 from unittest import TestCase
 from data.ExtractionIdentifier import ExtractionIdentifier
+from data.LabeledData import LabeledData
 from data.Option import Option
 from metadata_extraction.PdfData import PdfData
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
-from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from data.ExtractionData import ExtractionData
+from data.ExtractionSample import ExtractionSample
 from multi_option_extraction.MultiOptionExtractor import MultiOptionExtractor
 
 
@@ -20,19 +21,19 @@ class TestMultiOptionExtraction(TestCase):
         pdf_data_3 = PdfData.from_texts(["point 3"])
 
         samples = [
-            MultiOptionSample(pdf_data_1, [options[0]], "en"),
-            MultiOptionSample(pdf_data_2, [options[1]], "en"),
-            MultiOptionSample(pdf_data_3, [options[2]], "en"),
+            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
+            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
+            ExtractionSample(pdf_data_3, LabeledData(values=[options[2]])),
         ]
 
-        multi_option_data = MultiOptionData(
+        multi_option_data = ExtractionData(
             multi_value=False, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
 
         multi_option_extraction = MultiOptionExtractor(extraction_identifier)
         multi_option_extraction.create_model(multi_option_data)
 
-        predictions = multi_option_extraction.get_multi_option_predictions([pdf_data_1, pdf_data_3])
+        predictions = multi_option_extraction.get_suggestions([pdf_data_1, pdf_data_3])
 
         self.assertEqual(2, len(predictions))
         self.assertEqual([Option(id="1", label="1")], predictions[0].values)
@@ -47,27 +48,27 @@ class TestMultiOptionExtraction(TestCase):
         pdf_data_3 = PdfData.from_texts(["point 3 point 1"])
 
         samples = [
-            MultiOptionSample(pdf_data_1, [options[0], options[1]], "en"),
-            MultiOptionSample(pdf_data_2, [options[1]], "en"),
-            MultiOptionSample(pdf_data_3, [options[2], options[0]], "en"),
+            ExtractionSample(pdf_data_1, LabeledData(values=[options[0], options[1]])),
+            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
+            ExtractionSample(pdf_data_3, LabeledData(values=[options[2], options[0]])),
         ]
 
-        multi_option_data = MultiOptionData(
+        multi_option_data = ExtractionData(
             multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
 
         multi_option_extraction = MultiOptionExtractor(extraction_identifier)
         multi_option_extraction.create_model(multi_option_data)
 
-        predictions = multi_option_extraction.get_multi_option_predictions([pdf_data_1, pdf_data_3])
+        suggestions = multi_option_extraction.get_suggestions([pdf_data_1, pdf_data_3])
 
-        self.assertEqual(2, len(predictions))
-        self.assertTrue(Option(id="1", label="1") in predictions[0].values)
-        self.assertTrue(Option(id="2", label="2") in predictions[0].values)
-        self.assertTrue(Option(id="3", label="3") not in predictions[0].values)
-        self.assertTrue(Option(id="3", label="3") in predictions[1].values)
-        self.assertTrue(Option(id="2", label="2") not in predictions[1].values)
-        self.assertTrue(Option(id="1", label="1") in predictions[1].values)
+        self.assertEqual(2, len(suggestions))
+        self.assertTrue(Option(id="1", label="1") in suggestions[0].values)
+        self.assertTrue(Option(id="2", label="2") in suggestions[0].values)
+        self.assertTrue(Option(id="3", label="3") not in suggestions[0].values)
+        self.assertTrue(Option(id="3", label="3") in suggestions[1].values)
+        self.assertTrue(Option(id="2", label="2") not in suggestions[1].values)
+        self.assertTrue(Option(id="1", label="1") in suggestions[1].values)
 
     def test_tf_idf(self):
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
@@ -78,27 +79,27 @@ class TestMultiOptionExtraction(TestCase):
         pdf_data_3 = PdfData.from_texts(["point three point one"])
 
         samples = [
-            MultiOptionSample(pdf_data_1, [options[0], options[1]], "en"),
-            MultiOptionSample(pdf_data_2, [options[1]], "en"),
-            MultiOptionSample(pdf_data_3, [options[2], options[0]], "en"),
+            ExtractionSample(pdf_data_1, LabeledData(values=[options[0], options[1]])),
+            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
+            ExtractionSample(pdf_data_3, LabeledData(values=[options[2], options[0]])),
         ]
 
-        multi_option_data = MultiOptionData(
+        multi_option_data = ExtractionData(
             multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
 
         multi_option_extraction = MultiOptionExtractor(extraction_identifier)
         multi_option_extraction.create_model(multi_option_data)
 
-        predictions = multi_option_extraction.get_multi_option_predictions([pdf_data_1, pdf_data_3])
+        suggestions = multi_option_extraction.get_suggestions([pdf_data_1, pdf_data_3])
 
-        self.assertEqual(2, len(predictions))
-        self.assertTrue(Option(id="1", label="1") in predictions[0].values)
-        self.assertTrue(Option(id="2", label="2") in predictions[0].values)
-        self.assertTrue(Option(id="3", label="3") not in predictions[0].values)
-        self.assertTrue(Option(id="3", label="3") in predictions[1].values)
-        self.assertTrue(Option(id="2", label="2") not in predictions[1].values)
-        self.assertTrue(Option(id="1", label="1") in predictions[1].values)
+        self.assertEqual(2, len(suggestions))
+        self.assertTrue(Option(id="1", label="1") in suggestions[0].values)
+        self.assertTrue(Option(id="2", label="2") in suggestions[0].values)
+        self.assertTrue(Option(id="3", label="3") not in suggestions[0].values)
+        self.assertTrue(Option(id="3", label="3") in suggestions[1].values)
+        self.assertTrue(Option(id="2", label="2") not in suggestions[1].values)
+        self.assertTrue(Option(id="1", label="1") in suggestions[1].values)
 
     def test_no_prediction_data(self):
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
@@ -109,18 +110,18 @@ class TestMultiOptionExtraction(TestCase):
         pdf_data_3 = PdfData.from_texts(["point three point one"])
 
         samples = [
-            MultiOptionSample(pdf_data_1, [options[0], options[1]], "en"),
-            MultiOptionSample(pdf_data_2, [options[1]], "en"),
-            MultiOptionSample(pdf_data_3, [options[2], options[0]], "en"),
+            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
+            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
+            ExtractionSample(pdf_data_3, LabeledData(values=[options[2]])),
         ]
 
-        multi_option_data = MultiOptionData(
+        multi_option_data = ExtractionData(
             multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
 
         multi_option_extraction = MultiOptionExtractor(extraction_identifier)
         multi_option_extraction.create_model(multi_option_data)
 
-        predictions = multi_option_extraction.get_multi_option_predictions([])
+        suggestions = multi_option_extraction.get_suggestions([])
 
-        self.assertEqual(0, len(predictions))
+        self.assertEqual(0, len(suggestions))

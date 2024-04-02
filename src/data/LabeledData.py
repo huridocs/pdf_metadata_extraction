@@ -5,16 +5,16 @@ from data.SegmentBox import SegmentBox
 
 
 class LabeledData(BaseModel):
-    tenant: str
-    id: str
-    xml_file_name: str
-    language_iso: str
+    tenant: str = ""
+    id: str = ""
+    xml_file_name: str = ""
+    language_iso: str = ""
     label_text: str = ""
     values: list[Option] = list()
     source_text: str = ""
-    page_width: float
-    page_height: float
-    xml_segments_boxes: list[SegmentBox]
+    page_width: float = 0
+    page_height: float = 0
+    xml_segments_boxes: list[SegmentBox] = list()
     label_segments_boxes: list[SegmentBox] = list()
 
     def to_dict(self):

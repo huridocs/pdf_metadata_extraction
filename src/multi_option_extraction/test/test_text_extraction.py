@@ -1,9 +1,10 @@
 from unittest import TestCase
 from data.ExtractionIdentifier import ExtractionIdentifier
+from data.LabeledData import LabeledData
 from data.Option import Option
 from metadata_extraction.PdfData import PdfData
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
-from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from data.ExtractionData import ExtractionData
+from data.ExtractionSample import ExtractionSample
 from multi_option_extraction.filter_segments_methods.CleanBeginningDigits3000 import CleanBeginningDigits3000
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
 from multi_option_extraction.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
@@ -15,7 +16,7 @@ class TestFilterSegments(TestCase):
     TENANT = "multi_option_extraction_test"
     extraction_id = "extraction_id"
 
-    def get_data(self) -> MultiOptionData:
+    def get_data(self) -> ExtractionData:
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 
@@ -24,28 +25,28 @@ class TestFilterSegments(TestCase):
         pdf_data_3 = PdfData.from_texts(["point 3", "point 3", "point 3"])
 
         samples = [
-            MultiOptionSample(pdf_data_1, [options[0]], "en"),
-            MultiOptionSample(pdf_data_2, [options[1]], "en"),
-            MultiOptionSample(pdf_data_3, [options[2]], "en"),
+            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
+            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
+            ExtractionSample(pdf_data_3, LabeledData(values=[options[2]])),
         ]
 
-        multi_option_data = MultiOptionData(
+        multi_option_data = ExtractionData(
             multi_value=False, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
 
         return multi_option_data
 
-    def get_data_for_context(self) -> MultiOptionData:
+    def get_data_for_context(self) -> ExtractionData:
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 
         pdf_data = PdfData.from_texts(["point 1"] * 3000)
 
         samples = [
-            MultiOptionSample(pdf_data, [options[0]], "en"),
+            ExtractionSample(pdf_data, LabeledData(values=[options[0]])),
         ]
 
-        multi_option_data = MultiOptionData(
+        multi_option_data = ExtractionData(
             multi_value=False, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
 
@@ -58,10 +59,10 @@ class TestFilterSegments(TestCase):
         pdf_data_1 = PdfData.from_texts([""])
 
         samples = [
-            MultiOptionSample(pdf_data_1, [options[0]], "en"),
+            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
         ]
 
-        multi_option_data = MultiOptionData(
+        multi_option_data = ExtractionData(
             multi_value=False, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
         return multi_option_data
@@ -73,10 +74,10 @@ class TestFilterSegments(TestCase):
         pdf_data_1 = PdfData(pdf_features=None)
 
         samples = [
-            MultiOptionSample(pdf_data_1, [options[0]], "en"),
+            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
         ]
 
-        multi_option_data = MultiOptionData(
+        multi_option_data = ExtractionData(
             multi_value=False, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
         return multi_option_data

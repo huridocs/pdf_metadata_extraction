@@ -13,7 +13,10 @@ from metadata_extraction.XmlFile import XmlFile
 class PdfData:
     def __init__(self, pdf_features: Optional[PdfFeatures], file_name="", file_type: str = ""):
         self.pdf_features: PdfFeatures = pdf_features
-        self.file_name = file_name
+        if not file_name and pdf_features:
+            self.file_name = pdf_features.file_name
+        else:
+            self.file_name = file_name
         self.file_type = file_type
         self.pdf_path = ""
         self.pdf_data_segments: list[PdfDataSegment] = list()
@@ -81,11 +84,11 @@ class PdfData:
         if not pdf_features:
             return PdfData.get_blank()
 
-        pdf_segments = PdfData(pdf_features)
-        pdf_segments.set_segments_from_segmentation_data(segmentation_data)
-        pdf_segments.set_ml_label_from_segmentation_data(segmentation_data)
+        pdf_data = PdfData(pdf_features)
+        pdf_data.set_segments_from_segmentation_data(segmentation_data)
+        pdf_data.set_ml_label_from_segmentation_data(segmentation_data)
 
-        return pdf_segments
+        return pdf_data
 
     @staticmethod
     def from_texts(texts: list[str]):

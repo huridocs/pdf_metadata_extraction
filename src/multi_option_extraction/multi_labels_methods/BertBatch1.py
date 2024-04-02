@@ -7,7 +7,7 @@ import pandas as pd
 from transformers import TrainingArguments, AutoTokenizer
 
 from data.Option import Option
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
+from data.ExtractionData import ExtractionData
 from multi_option_extraction.MultiLabelMethod import MultiLabelMethod
 
 from multi_option_extraction.multi_labels_methods.multi_label_sequence_classification_trainer import (
@@ -43,7 +43,7 @@ class BertBatch1(MultiLabelMethod):
 
         return str(model_path)
 
-    def create_dataset(self, multi_option_data: MultiOptionData, name: str):
+    def create_dataset(self, multi_option_data: ExtractionData, name: str):
         texts, labels = self.get_texts_labels(multi_option_data)
 
         rows = list()
@@ -60,7 +60,7 @@ class BertBatch1(MultiLabelMethod):
         output_df.to_csv(self.get_data_path(name))
         return self.get_data_path(name)
 
-    def train(self, multi_option_data: MultiOptionData):
+    def train(self, multi_option_data: ExtractionData):
         shutil.rmtree(self.get_model_path(), ignore_errors=True)
 
         training_csv_path = self.create_dataset(multi_option_data, "train")
@@ -106,7 +106,7 @@ class BertBatch1(MultiLabelMethod):
         odds = [1 / (1 + exp(-logit)) for logit in logits]
         return odds
 
-    def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
+    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         labels_number = len(self.options)
         predict_path = self.create_dataset(multi_option_data, "predict")
         model_arguments = ModelArguments(self.get_model_path(), ignore_mismatched_sizes=True)

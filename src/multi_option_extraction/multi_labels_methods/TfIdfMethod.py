@@ -11,7 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from data.Option import Option
 from multi_option_extraction.MultiLabelMethod import MultiLabelMethod
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
+from data.ExtractionData import ExtractionData
 
 nltk.download("wordnet")
 nltk.download("stopwords")
@@ -40,7 +40,7 @@ class TfIdfMethod(MultiLabelMethod):
 
         return join(model_folder_path, "fast.model")
 
-    def train(self, multi_option_data: MultiOptionData):
+    def train(self, multi_option_data: ExtractionData):
         texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
         dump(texts, self.get_data_path())
 
@@ -52,7 +52,7 @@ class TfIdfMethod(MultiLabelMethod):
         one_vs_rest_classifier = one_vs_rest_classifier.fit(tfidf_train_vectors, labels)
         dump(one_vs_rest_classifier, self.get_model_path())
 
-    def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
+    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         train_texts = load(self.get_data_path())
 
         vectorized = TfidfVectorizer()

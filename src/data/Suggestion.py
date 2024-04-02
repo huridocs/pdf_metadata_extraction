@@ -7,14 +7,14 @@ from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
 from metadata_extraction.PdfDataSegment import PdfDataSegment
 from metadata_extraction.PdfData import PdfData
-from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from data.ExtractionSample import ExtractionSample
 from multi_option_extraction.filter_segments_methods.Beginning750 import Beginning750
 
 
 class Suggestion(BaseModel):
     tenant: str
     id: str
-    xml_file_name: str
+    xml_file_name: str = ""
     text: str = ""
     values: list[Option] = list()
     segment_text: str
@@ -67,9 +67,9 @@ class Suggestion(BaseModel):
         self.add_segments(prediction_pdf_data)
         self.text = text
 
-    def add_prediction_multi_option(self, prediction_sample: MultiOptionSample):
+    def add_prediction_multi_option(self, prediction_sample: ExtractionSample, values: list[Option]):
         self.add_segments(prediction_sample.pdf_data)
-        self.values = prediction_sample.values
+        self.values = values
 
     def add_segments(self, pdf_data: PdfData):
         context_segments: list[PdfDataSegment] = [x for x in pdf_data.pdf_data_segments if x.ml_label]

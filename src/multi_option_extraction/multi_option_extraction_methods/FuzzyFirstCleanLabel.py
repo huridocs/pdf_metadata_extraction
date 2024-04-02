@@ -5,7 +5,7 @@ from rapidfuzz import fuzz
 from data.Option import Option
 from metadata_extraction.PdfDataSegment import PdfDataSegment
 from multi_option_extraction.MultiOptionExtractionMethod import MultiOptionExtractionMethod
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
+from data.ExtractionData import ExtractionData
 
 
 class FuzzyFirstCleanLabel(MultiOptionExtractionMethod):
@@ -22,7 +22,7 @@ class FuzzyFirstCleanLabel(MultiOptionExtractionMethod):
 
         return []
 
-    def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
+    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         predictions = list()
         clean_options = self.get_cleaned_options(multi_option_data.options)
         for multi_option_sample in multi_option_data.samples:
@@ -35,7 +35,7 @@ class FuzzyFirstCleanLabel(MultiOptionExtractionMethod):
 
         return predictions
 
-    def train(self, multi_option_data: MultiOptionData):
+    def train(self, multi_option_data: ExtractionData):
         pass
 
     @staticmethod

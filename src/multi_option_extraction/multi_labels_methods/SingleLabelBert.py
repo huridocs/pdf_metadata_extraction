@@ -14,8 +14,8 @@ from transformers import (
 )
 from data.Option import Option
 from multi_option_extraction.MultiLabelMethod import MultiLabelMethod
-from multi_option_extraction.data.MultiOptionData import MultiOptionData
-from multi_option_extraction.data.MultiOptionSample import MultiOptionSample
+from data.ExtractionData import ExtractionData
+from data.ExtractionSample import ExtractionSample
 from multi_option_extraction.multi_labels_methods.AvoidEvaluation import AvoidEvaluation
 from multi_option_extraction.multi_labels_methods.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 
@@ -46,7 +46,7 @@ class SingleLabelBert(MultiLabelMethod):
 
         return str(model_path)
 
-    def create_dataset(self, multi_option_data: MultiOptionData, name: str):
+    def create_dataset(self, multi_option_data: ExtractionData, name: str):
         texts, labels = self.get_texts_labels(multi_option_data)
 
         rows = list()
@@ -70,7 +70,7 @@ class SingleLabelBert(MultiLabelMethod):
         predictions_list = [np.argmax(x) if x[np.argmax(x)] >= 0.5 else -1 for x in probabilities]
         return clf_metrics.compute(predictions=predictions_list, references=labels)
 
-    def preprocess_function(self, multi_option_sample: MultiOptionSample):
+    def preprocess_function(self, multi_option_sample: ExtractionSample):
         text = multi_option_sample.get_text()
         if multi_option_sample.values:
             labels = self.options.index(multi_option_sample.values[0])
@@ -81,7 +81,7 @@ class SingleLabelBert(MultiLabelMethod):
         example["labels"] = labels
         return example
 
-    def train(self, multi_option_data: MultiOptionData):
+    def train(self, multi_option_data: ExtractionData):
         shutil.rmtree(self.get_model_path(), ignore_errors=True)
 
         self.create_dataset(multi_option_data, "train")
@@ -136,7 +136,7 @@ class SingleLabelBert(MultiLabelMethod):
         odds = [1 / (1 + exp(-logit)) for logit in logits]
         return odds
 
-    def predict(self, multi_option_data: MultiOptionData) -> list[list[Option]]:
+    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         id2class = {index: label for index, label in enumerate([x.label for x in self.options])}
         class2id = {label: index for index, label in enumerate([x.label for x in self.options])}
 
