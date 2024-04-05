@@ -1,93 +1,94 @@
 from unittest import TestCase
 
+from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
-from data.PdfTagData import PdfTagData
-from data.SemanticExtractionData import SemanticExtractionData
-from data.SemanticPredictionData import SemanticPredictionData
+from data.LabeledData import LabeledData
+from data.PredictionSample import PredictionSample
+from data.TrainingSample import TrainingSample
 from extractors.text_to_text_extractor.methods.RegexMethod import RegexMethod
+
+extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
 
 
 class TestRegexMethod(TestCase):
     def test_performance_100(self):
-        semantic_information_data = [
-            SemanticExtractionData(text="12", pdf_tags=[PdfTagData.from_text("one 12")], language_iso="en") for _ in range(6)
-        ]
-        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        sample = TrainingSample(labeled_data=LabeledData(label_text="12", language_iso="en"), tags_texts=["one 12"])
+
+        extraction_data = ExtractionData(samples=[sample for _ in range(6)], extraction_identifier=extraction_identifier)
         regex_method = RegexMethod(extraction_identifier)
-        self.assertEqual(100, regex_method.performance(semantic_information_data, 3)[0])
+
+        self.assertEqual(100, regex_method.performance(extraction_data)[0])
 
     def test_performance_0(self):
-        semantic_information_data = [
-            SemanticExtractionData(text="12", pdf_tags=[PdfTagData.from_text("one two")], language_iso="en")
-            for _ in range(6)
-        ]
-        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
-        regex_method = RegexMethod(extraction_identifier)
-        self.assertEqual(0, regex_method.performance(semantic_information_data, 3)[0])
+        sample = TrainingSample(labeled_data=LabeledData(label_text="12", language_iso="en"), tags_texts=["one two"])
 
-    def test_performance_50(self):
-        semantic_information_data = [
-            SemanticExtractionData(text="12", pdf_tags=[PdfTagData.from_text("one 12")], language_iso="en") for _ in range(3)
-        ]
-
-        semantic_information_data += [
-            SemanticExtractionData(text="no regex", pdf_tags=[PdfTagData.from_text("one two")], language_iso="en")
-            for _ in range(1)
-        ]
-        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        extraction_data = ExtractionData(samples=[sample for _ in range(6)], extraction_identifier=extraction_identifier)
         regex_method = RegexMethod(extraction_identifier)
 
-        self.assertEqual(75, regex_method.performance(semantic_information_data, 3)[0])
+        self.assertEqual(0, regex_method.performance(extraction_data)[0])
+
+    def test_performance_75(self):
+        sample_1 = [TrainingSample(labeled_data=LabeledData(label_text="12", language_iso="en"), tags_texts=["one 12"])]
+        sample_2 = [TrainingSample(labeled_data=LabeledData(label_text="no regex", language_iso="en"), tags_texts=["one"])]
+        extraction_data = ExtractionData(samples=sample_1 * 3 + sample_2, extraction_identifier=extraction_identifier)
+
+        regex_method = RegexMethod(extraction_identifier)
+
+        self.assertEqual(75, regex_method.performance(extraction_data)[0])
 
     def test_performance_no_samples(self):
-        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
         regex_method = RegexMethod(extraction_identifier)
-
-        self.assertEqual((0, []), regex_method.performance([], 3))
+        extraction_data = ExtractionData(samples=[], extraction_identifier=extraction_identifier)
+        self.assertEqual((0, []), regex_method.performance(extraction_data))
 
     def test_performance_one_sample(self):
-        semantic_information_data = [
-            SemanticExtractionData(text="12", pdf_tags=[PdfTagData.from_text("one 12")], language_iso="en")
-        ]
-        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
-        regex_method = RegexMethod(extraction_identifier)
+        sample = [TrainingSample(labeled_data=LabeledData(label_text="12", language_iso="en"), tags_texts=["one 12"])]
+        extraction_data = ExtractionData(samples=sample, extraction_identifier=extraction_identifier)
 
-        self.assertEqual(100, regex_method.performance(semantic_information_data, 3)[0])
+        regex_method = RegexMethod(extraction_identifier)
+        self.assertEqual(100, regex_method.performance(extraction_data)[0])
 
     def test_predict(self):
-        semantic_information_data = [SemanticExtractionData(text="12", pdf_tags=[], language_iso="")]
-        semantic_information_data += [SemanticExtractionData(text="34", pdf_tags=[], language_iso="")]
-        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        sample_1 = [TrainingSample(labeled_data=LabeledData(label_text="12", language_iso="en"), tags_texts=[""])]
+        sample_2 = [TrainingSample(labeled_data=LabeledData(label_text="34", language_iso="en"), tags_texts=[""])]
+        extraction_data = ExtractionData(samples=sample_1 + sample_2, extraction_identifier=extraction_identifier)
+
         regex_method = RegexMethod(extraction_identifier)
 
-        regex_method.train(semantic_information_data)
-        predictions = regex_method.predict(SemanticPredictionData.from_texts(["one 12", "13", "14 foo"]))
+        regex_method.train(extraction_data)
+        texts = ["one 12", "13", "14 foo"]
+        predictions = regex_method.predict([PredictionSample.from_text(text) for text in texts])
         self.assertEqual(3, len(predictions))
         self.assertEqual("12", predictions[0])
         self.assertEqual("13", predictions[1])
         self.assertEqual("14", predictions[2])
 
     def test_predict_void(self):
-        semantic_information_data = [SemanticExtractionData(text="124", pdf_tags=[], language_iso="")]
-        semantic_information_data += [SemanticExtractionData(text="344", pdf_tags=[], language_iso="")]
-        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        sample_1 = [TrainingSample(labeled_data=LabeledData(label_text="124", language_iso="en"), tags_texts=[""])]
+        sample_2 = [TrainingSample(labeled_data=LabeledData(label_text="344", language_iso="en"), tags_texts=[""])]
+        extraction_data = ExtractionData(samples=sample_1 + sample_2, extraction_identifier=extraction_identifier)
+
         regex_method = RegexMethod(extraction_identifier)
 
-        regex_method.train(semantic_information_data)
-        predictions = regex_method.predict([SemanticPredictionData.from_text("14 foo" "")])
+        regex_method.train(extraction_data)
+
+        texts = ["14 foo", ""]
+        predictions = regex_method.predict([PredictionSample.from_texts(texts)])
         self.assertEqual(1, len(predictions))
         self.assertEqual("", predictions[0])
 
     def test_retrain(self):
-        semantic_information_data = [SemanticExtractionData(text="1", pdf_tags=[], language_iso="")]
-        extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+        sample = [TrainingSample(labeled_data=LabeledData(label_text="1", language_iso="en"), tags_texts=[""])]
+        extraction_data = ExtractionData(samples=sample, extraction_identifier=extraction_identifier)
+
         regex_method = RegexMethod(extraction_identifier)
-        regex_method.train(semantic_information_data)
+        regex_method.train(extraction_data)
 
-        semantic_information_data = [SemanticExtractionData(text="111", pdf_tags=[], language_iso="")]
+        sample = [TrainingSample(labeled_data=LabeledData(label_text="111", language_iso="en"), tags_texts=["one 12"])]
+        extraction_data = ExtractionData(samples=sample, extraction_identifier=extraction_identifier)
 
-        regex_method.train(semantic_information_data)
+        regex_method.train(extraction_data)
 
-        predictions = regex_method.predict([SemanticPredictionData.from_text("111")])
+        predictions = regex_method.predict([PredictionSample.from_text("111")])
         self.assertEqual(1, len(predictions))
         self.assertEqual("111", predictions[0])

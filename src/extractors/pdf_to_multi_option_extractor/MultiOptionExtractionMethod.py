@@ -40,33 +40,6 @@ class MultiOptionExtractionMethod:
 
         return self.__class__.__name__
 
-    @staticmethod
-    def get_train_test_sets(multi_option_data: ExtractionData, seed: int) -> (ExtractionData, ExtractionData):
-        if len(multi_option_data.samples) < 15:
-            return multi_option_data, multi_option_data
-
-        train_size = int(len(multi_option_data.samples) * 0.8)
-        random.seed(seed)
-
-        train_set: list[TrainingSample] = random.sample(multi_option_data.samples, k=train_size)[:80]
-        test_set: list[TrainingSample] = [x for x in multi_option_data.samples if x not in train_set][:30]
-
-        train_data = ExtractionData(
-            samples=train_set,
-            options=multi_option_data.options,
-            multi_value=multi_option_data.multi_value,
-            extraction_identifier=multi_option_data.extraction_identifier,
-        )
-
-        test_data = ExtractionData(
-            samples=test_set,
-            options=multi_option_data.options,
-            multi_value=multi_option_data.multi_value,
-            extraction_identifier=multi_option_data.extraction_identifier,
-        )
-
-        return train_data, test_data
-
     def get_performance(self, multi_option_data: ExtractionData, repetitions: int = 1) -> float:
         self.set_parameters(multi_option_data)
         scores = list()

@@ -21,7 +21,13 @@ from data.SegmentationData import SegmentationData
 from data.PdfData import PdfData
 from performance.Results import Results
 from extractors.segment_selector.Paragraphs import Paragraphs
-from extractors.segment_selector.evaluate_config import SIZES, SEED, LABELED_DATA_TO_USE, METHODS_TO_EXECUTE, PDF_LABELED_DATA_PATH
+from extractors.segment_selector.evaluate_config import (
+    SIZES,
+    SEED,
+    LABELED_DATA_TO_USE,
+    METHODS_TO_EXECUTE,
+    PDF_LABELED_DATA_PATH,
+)
 
 RANDOM_SEED = 42
 

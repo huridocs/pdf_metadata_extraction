@@ -15,5 +15,5 @@ class NaiveExtractor(ExtractorBase):
 
         return suggestions
 
-    def is_used(self):
+    def exists_model(self):
         return True

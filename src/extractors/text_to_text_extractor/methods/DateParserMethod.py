@@ -1,13 +1,15 @@
 import re
 
+from data.ExtractionData import ExtractionData
 from data.PdfTagData import PdfTagData
-from data.SemanticExtractionData import SemanticExtractionData
-from data.SemanticPredictionData import SemanticPredictionData
+from data.PredictionSample import PredictionSample
+from extractors.ExtractorBase import ExtractorBase
 from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 from dateparser.search import search_dates
 
 
 class DateParserMethod(TextToTextMethod):
+
     @staticmethod
     def get_best_date(dates):
         if not dates:
@@ -20,8 +22,8 @@ class DateParserMethod(TextToTextMethod):
         return dates[0][1]
 
     @staticmethod
-    def get_date(pdf_tags: list[PdfTagData], languages):
-        text = TextToTextMethod.get_text_from_pdf_tags(pdf_tags)
+    def get_date(tags_texts: list[str], languages):
+        text = " ".join(tags_texts)
         try:
             dates = search_dates(text, languages=languages)
 
@@ -35,30 +37,14 @@ class DateParserMethod(TextToTextMethod):
         except IndexError:
             return None
 
-    def performance(self, semantic_extraction_data: list[SemanticExtractionData], training_set_length: int):
-        if not semantic_extraction_data:
-            return 0, []
-
-        performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
-
-        self.train(semantic_extraction_data)
-
-        predictions = self.predict([x.to_semantic_prediction() for x in performance_test_set])
-        self.log_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
-
-        correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
-        self.remove_model()
-        return 100 * len(correct) / len(performance_test_set), predictions
-
-    def train(self, semantic_extraction_data: list[SemanticExtractionData]):
-        languages = [x.language_iso for x in semantic_extraction_data]
+    def train(self, extraction_data: ExtractionData):
+        languages = [x.labeled_data.language_iso for x in extraction_data.samples]
         self.save_json("languages.json", list(set(languages)))
 
-    def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
+    def predict(self, predictions_samples: list[PredictionSample]) -> list[str]:
         languages = self.load_json("languages.json")
         predictions_dates = [
-            self.get_date(semantic_prediction_data.pdf_tags_data, languages)
-            for semantic_prediction_data in semantic_predictions_data
+            self.get_date(prediction_sample.tags_texts, languages) for prediction_sample in predictions_samples
         ]
         predictions = [date.strftime("%Y-%m-%d") if date else "" for date in predictions_dates]
         return predictions

@@ -12,7 +12,9 @@ from sklearn.metrics import f1_score
 
 from config import config_logger
 from data.PdfData import PdfData
-from extractors.segment_selector.methods.lightgbm_frequent_words.SegmentLightgbmFrequentWords import SegmentLightgbmFrequentWords
+from extractors.segment_selector.methods.lightgbm_frequent_words.SegmentLightgbmFrequentWords import (
+    SegmentLightgbmFrequentWords,
+)
 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords

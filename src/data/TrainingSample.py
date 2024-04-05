@@ -6,8 +6,9 @@ from data.PdfData import PdfData
 
 @dataclass
 class TrainingSample:
-    pdf_data: PdfData
+    pdf_data: PdfData = None
     labeled_data: LabeledData = None
+    tags_texts: list[str] = None
 
     def get_text(self):
         texts = list()

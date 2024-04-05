@@ -8,6 +8,6 @@ from data.TrainingSample import TrainingSample
 @dataclass
 class ExtractionData:
     samples: list[TrainingSample]
-    options: list[Option]
-    multi_value: bool
+    options: list[Option] = None
+    multi_value: bool = False
     extraction_identifier: ExtractionIdentifier = None
