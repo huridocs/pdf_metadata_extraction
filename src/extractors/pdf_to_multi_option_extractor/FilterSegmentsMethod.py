@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from data.PdfData import PdfData
 from data.PdfDataSegment import PdfDataSegment
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 
 
 class FilterSegmentsMethod(ABC):
@@ -12,7 +12,7 @@ class FilterSegmentsMethod(ABC):
         pass
 
     def filter(self, multi_option_data: ExtractionData) -> ExtractionData:
-        filtered_samples: list[ExtractionSample] = list()
+        filtered_samples: list[TrainingSample] = list()
         for sample in multi_option_data.samples:
             filtered_pdf_data = PdfData(
                 pdf_features=sample.pdf_data.pdf_features,
@@ -22,7 +22,7 @@ class FilterSegmentsMethod(ABC):
 
             filtered_pdf_data.pdf_data_segments = self.filter_segments(sample.pdf_data.pdf_data_segments)
 
-            filtered_samples.append(ExtractionSample(pdf_data=filtered_pdf_data, labeled_data=sample.labeled_data))
+            filtered_samples.append(TrainingSample(pdf_data=filtered_pdf_data, labeled_data=sample.labeled_data))
 
         return ExtractionData(
             samples=filtered_samples, options=multi_option_data.options, multi_value=multi_option_data.multi_value

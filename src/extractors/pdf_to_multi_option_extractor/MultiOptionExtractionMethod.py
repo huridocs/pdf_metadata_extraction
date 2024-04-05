@@ -6,7 +6,7 @@ from sklearn.metrics import f1_score
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import FilterSegmentsMethod
 
@@ -48,8 +48,8 @@ class MultiOptionExtractionMethod:
         train_size = int(len(multi_option_data.samples) * 0.8)
         random.seed(seed)
 
-        train_set: list[ExtractionSample] = random.sample(multi_option_data.samples, k=train_size)[:80]
-        test_set: list[ExtractionSample] = [x for x in multi_option_data.samples if x not in train_set][:30]
+        train_set: list[TrainingSample] = random.sample(multi_option_data.samples, k=train_size)[:80]
+        test_set: list[TrainingSample] = [x for x in multi_option_data.samples if x not in train_set][:30]
 
         train_data = ExtractionData(
             samples=train_set,

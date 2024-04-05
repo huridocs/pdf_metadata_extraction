@@ -12,7 +12,7 @@ from data.Suggestion import Suggestion
 from data.PdfData import PdfData
 from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
     CleanBeginningDigits3000,
 )
@@ -118,7 +118,7 @@ class PdfToMultiOptionExtractor:
 
     def get_predictions(self, pdfs_data):
         self.load_options()
-        multi_option_samples = [ExtractionSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
+        multi_option_samples = [TrainingSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
         multi_option_data = ExtractionData(
             multi_value=self.multi_value,
             options=self.options,

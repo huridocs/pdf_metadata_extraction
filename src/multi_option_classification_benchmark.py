@@ -15,7 +15,7 @@ from data.PdfData import PdfData
 from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
     CleanBeginningDigits3000,
 )
@@ -77,13 +77,13 @@ def get_samples(task_name):
     with open(join(PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH, task_name, "labels.json"), mode="r") as file:
         labels_dict: dict[str, list[str]] = json.load(file)
 
-    multi_option_samples: list[ExtractionSample] = list()
+    multi_option_samples: list[TrainingSample] = list()
     for pdf_name in sorted(get_task_pdf_names()[task_name]):
         with open(join(PDF_DATA_FOLDER_PATH, f"{pdf_name}.pickle"), mode="rb") as file:
             pdf_data: PdfData = pickle.load(file)
 
         values = [Option(id=x, label=x) for x in labels_dict[pdf_name]]
-        extraction_sample = ExtractionSample(pdf_data=pdf_data, values=values)
+        extraction_sample = TrainingSample(pdf_data=pdf_data, values=values)
         multi_option_samples.append(extraction_sample)
     return multi_option_samples
 
@@ -124,7 +124,7 @@ def get_benchmark_custom_methods(repetitions: int = 4):
         add_row(results_table, method, round(time() - start), performance)
 
 
-def get_one_hot(multi_option_samples: list[ExtractionSample], options: list[Option]):
+def get_one_hot(multi_option_samples: list[TrainingSample], options: list[Option]):
     values = [x.values for x in multi_option_samples]
     return MultiOptionExtractionMethod.one_hot_to_options_list(values, options)
 

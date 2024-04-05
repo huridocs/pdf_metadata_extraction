@@ -15,7 +15,7 @@ from transformers import (
 from data.Option import Option
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.AvoidEvaluation import AvoidEvaluation
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.EarlyStoppingAfterInitialTraining import (
     EarlyStoppingAfterInitialTraining,
@@ -72,7 +72,7 @@ class SingleLabelBert(MultiLabelMethod):
         predictions_list = [np.argmax(x) if x[np.argmax(x)] >= 0.5 else -1 for x in probabilities]
         return clf_metrics.compute(predictions=predictions_list, references=labels)
 
-    def preprocess_function(self, multi_option_sample: ExtractionSample):
+    def preprocess_function(self, multi_option_sample: TrainingSample):
         text = multi_option_sample.get_text()
         if multi_option_sample.values:
             labels = self.options.index(multi_option_sample.values[0])

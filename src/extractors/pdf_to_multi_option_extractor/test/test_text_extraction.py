@@ -4,7 +4,7 @@ from data.LabeledData import LabeledData
 from data.Option import Option
 from data.PdfData import PdfData
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
     CleanBeginningDigits3000,
 )
@@ -27,9 +27,9 @@ class TestFilterSegments(TestCase):
         pdf_data_3 = PdfData.from_texts(["point 3", "point 3", "point 3"])
 
         samples = [
-            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
-            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
-            ExtractionSample(pdf_data_3, LabeledData(values=[options[2]])),
+            TrainingSample(pdf_data_1, LabeledData(values=[options[0]])),
+            TrainingSample(pdf_data_2, LabeledData(values=[options[1]])),
+            TrainingSample(pdf_data_3, LabeledData(values=[options[2]])),
         ]
 
         multi_option_data = ExtractionData(
@@ -45,7 +45,7 @@ class TestFilterSegments(TestCase):
         pdf_data = PdfData.from_texts(["point 1"] * 3000)
 
         samples = [
-            ExtractionSample(pdf_data, LabeledData(values=[options[0]])),
+            TrainingSample(pdf_data, LabeledData(values=[options[0]])),
         ]
 
         multi_option_data = ExtractionData(
@@ -61,7 +61,7 @@ class TestFilterSegments(TestCase):
         pdf_data_1 = PdfData.from_texts([""])
 
         samples = [
-            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
+            TrainingSample(pdf_data_1, LabeledData(values=[options[0]])),
         ]
 
         multi_option_data = ExtractionData(
@@ -76,7 +76,7 @@ class TestFilterSegments(TestCase):
         pdf_data_1 = PdfData(pdf_features=None)
 
         samples = [
-            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
+            TrainingSample(pdf_data_1, LabeledData(values=[options[0]])),
         ]
 
         multi_option_data = ExtractionData(

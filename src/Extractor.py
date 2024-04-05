@@ -21,7 +21,7 @@ from data.PdfData import PdfData
 
 from XmlFile import XmlFile
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 
 
@@ -157,9 +157,9 @@ class Extractor:
         return suggestions
 
     def get_multi_option_data(self):
-        multi_option_samples: list[ExtractionSample] = list()
+        multi_option_samples: list[TrainingSample] = list()
         for pdf_data, labeled_data in zip(self.pdfs_data, self.labeled_data_list):
-            multi_option_sample = ExtractionSample(pdf_data=pdf_data, labeled_data=labeled_data)
+            multi_option_sample = TrainingSample(pdf_data=pdf_data, labeled_data=labeled_data)
             multi_option_samples.append(multi_option_sample)
 
         return ExtractionData(

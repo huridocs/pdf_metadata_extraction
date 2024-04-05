@@ -10,7 +10,7 @@ from data.SemanticExtractionData import SemanticExtractionData
 from data.SemanticPredictionData import SemanticPredictionData
 from data.PdfData import PdfData
 from data.PdfDataSegment import PdfDataSegment
-from segment_selector.SegmentSelector import SegmentSelector
+from extractors.segment_selector.SegmentSelector import SegmentSelector
 from extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
 
 

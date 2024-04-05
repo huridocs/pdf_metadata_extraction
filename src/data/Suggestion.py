@@ -7,7 +7,7 @@ from data.SegmentBox import SegmentBox
 from data.SemanticPredictionData import SemanticPredictionData
 from data.PdfDataSegment import PdfDataSegment
 from data.PdfData import PdfData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.Beginning750 import Beginning750
 
 
@@ -15,6 +15,7 @@ class Suggestion(BaseModel):
     tenant: str
     id: str
     xml_file_name: str = ""
+    entity_name: str = ""
     text: str = ""
     values: list[Option] = list()
     segment_text: str
@@ -52,11 +53,12 @@ class Suggestion(BaseModel):
         )
 
     @staticmethod
-    def get_empty(extraction_identifier: ExtractionIdentifier, xml_file_name: str) -> "Suggestion":
+    def get_empty(extraction_identifier: ExtractionIdentifier, entity_name: str) -> "Suggestion":
         return Suggestion(
             tenant=extraction_identifier.run_name,
             id=extraction_identifier.extraction_name,
-            xml_file_name=xml_file_name,
+            xml_file_name=entity_name,
+            entity_name=entity_name,
             text="",
             segment_text=" ",
             page_number=1,
@@ -67,7 +69,7 @@ class Suggestion(BaseModel):
         self.add_segments(prediction_pdf_data)
         self.text = text
 
-    def add_prediction_multi_option(self, prediction_sample: ExtractionSample, values: list[Option]):
+    def add_prediction_multi_option(self, prediction_sample: TrainingSample, values: list[Option]):
         self.add_segments(prediction_sample.pdf_data)
         self.values = values
 

@@ -15,7 +15,7 @@ from transformers import (
 from data.Option import Option
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.AvoidEvaluation import AvoidEvaluation
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.EarlyStoppingAfterInitialTraining import (
     EarlyStoppingAfterInitialTraining,
@@ -72,7 +72,7 @@ class BertSeqSteps(MultiLabelMethod):
         predictions = (predictions > 0.5).astype(int).reshape(-1)
         return clf_metrics.compute(predictions=predictions, references=labels.astype(int).reshape(-1))
 
-    def preprocess_function(self, multi_option_sample: ExtractionSample):
+    def preprocess_function(self, multi_option_sample: TrainingSample):
         text = multi_option_sample.get_text()
         labels = [1.0 if value in multi_option_sample.values else 0.0 for value in self.options]
 

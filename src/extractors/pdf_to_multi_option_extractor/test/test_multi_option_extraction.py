@@ -4,7 +4,7 @@ from data.LabeledData import LabeledData
 from data.Option import Option
 from data.PdfData import PdfData
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 
 
@@ -21,9 +21,9 @@ class TestMultiOptionExtraction(TestCase):
         pdf_data_3 = PdfData.from_texts(["point 3"])
 
         samples = [
-            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
-            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
-            ExtractionSample(pdf_data_3, LabeledData(values=[options[2]])),
+            TrainingSample(pdf_data_1, LabeledData(values=[options[0]])),
+            TrainingSample(pdf_data_2, LabeledData(values=[options[1]])),
+            TrainingSample(pdf_data_3, LabeledData(values=[options[2]])),
         ]
 
         multi_option_data = ExtractionData(
@@ -48,9 +48,9 @@ class TestMultiOptionExtraction(TestCase):
         pdf_data_3 = PdfData.from_texts(["point 3 point 1"])
 
         samples = [
-            ExtractionSample(pdf_data_1, LabeledData(values=[options[0], options[1]])),
-            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
-            ExtractionSample(pdf_data_3, LabeledData(values=[options[2], options[0]])),
+            TrainingSample(pdf_data_1, LabeledData(values=[options[0], options[1]])),
+            TrainingSample(pdf_data_2, LabeledData(values=[options[1]])),
+            TrainingSample(pdf_data_3, LabeledData(values=[options[2], options[0]])),
         ]
 
         multi_option_data = ExtractionData(
@@ -79,9 +79,9 @@ class TestMultiOptionExtraction(TestCase):
         pdf_data_3 = PdfData.from_texts(["point three point one"])
 
         samples = [
-            ExtractionSample(pdf_data_1, LabeledData(values=[options[0], options[1]])),
-            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
-            ExtractionSample(pdf_data_3, LabeledData(values=[options[2], options[0]])),
+            TrainingSample(pdf_data_1, LabeledData(values=[options[0], options[1]])),
+            TrainingSample(pdf_data_2, LabeledData(values=[options[1]])),
+            TrainingSample(pdf_data_3, LabeledData(values=[options[2], options[0]])),
         ]
 
         multi_option_data = ExtractionData(
@@ -110,9 +110,9 @@ class TestMultiOptionExtraction(TestCase):
         pdf_data_3 = PdfData.from_texts(["point three point one"])
 
         samples = [
-            ExtractionSample(pdf_data_1, LabeledData(values=[options[0]])),
-            ExtractionSample(pdf_data_2, LabeledData(values=[options[1]])),
-            ExtractionSample(pdf_data_3, LabeledData(values=[options[2]])),
+            TrainingSample(pdf_data_1, LabeledData(values=[options[0]])),
+            TrainingSample(pdf_data_2, LabeledData(values=[options[1]])),
+            TrainingSample(pdf_data_3, LabeledData(values=[options[2]])),
         ]
 
         multi_option_data = ExtractionData(
