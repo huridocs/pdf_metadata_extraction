@@ -7,6 +7,7 @@ from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
+from extractors.ExtractorBase import ExtractorBase
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import FilterSegmentsMethod
 
@@ -45,7 +46,7 @@ class MultiOptionExtractionMethod:
         scores = list()
         seeds = [22, 23, 24, 25]
         for i in range(repetitions):
-            train_set, test_set = self.get_train_test_sets(multi_option_data, seeds[i])
+            train_set, test_set = ExtractorBase.get_train_test_sets(multi_option_data, seeds[i])
             truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples], self.options)
 
             self.train(train_set)

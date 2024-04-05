@@ -157,7 +157,7 @@ def run_one_method(
     method = importlib.import_module(import_from, method_class_name)
     method_class = getattr(method, method_class_name)
     method_instance = method_class()
-    model = method_instance.create_model(training_pdfs_segments, model_path)
+    model = method_instance.is_valid(training_pdfs_segments, model_path)
     predictions = method_instance.predict(model, testing_pdfs_segments, model_path)
 
     y_true = [x.ml_label for test in testing_pdfs_segments for x in test.pdf_data_segments]

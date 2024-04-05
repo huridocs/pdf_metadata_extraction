@@ -4,6 +4,7 @@ from data.LabeledData import LabeledData
 from data.Option import Option
 from data.PdfData import PdfData
 from data.ExtractionData import ExtractionData
+from data.PredictionSample import PredictionSample
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 
@@ -33,11 +34,13 @@ class TestMultiOptionExtraction(TestCase):
         multi_option_extraction = PdfToMultiOptionExtractor(extraction_identifier)
         multi_option_extraction.create_model(multi_option_data)
 
-        predictions = multi_option_extraction.get_suggestions([pdf_data_1, pdf_data_3])
+        prediction_sample_1 = PredictionSample(pdf_data=pdf_data_1)
+        prediction_sample_3 = PredictionSample(pdf_data=pdf_data_3)
+        suggestions = multi_option_extraction.get_suggestions([prediction_sample_1, prediction_sample_3])
 
-        self.assertEqual(2, len(predictions))
-        self.assertEqual([Option(id="1", label="1")], predictions[0].values)
-        self.assertEqual([Option(id="3", label="3")], predictions[1].values)
+        self.assertEqual(2, len(suggestions))
+        self.assertEqual([Option(id="1", label="1")], suggestions[0].values)
+        self.assertEqual([Option(id="3", label="3")], suggestions[1].values)
 
     def test_multi_value(self):
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
@@ -60,7 +63,9 @@ class TestMultiOptionExtraction(TestCase):
         multi_option_extraction = PdfToMultiOptionExtractor(extraction_identifier)
         multi_option_extraction.create_model(multi_option_data)
 
-        suggestions = multi_option_extraction.get_suggestions([pdf_data_1, pdf_data_3])
+        prediction_sample_1 = PredictionSample(pdf_data=pdf_data_1)
+        prediction_sample_3 = PredictionSample(pdf_data=pdf_data_3)
+        suggestions = multi_option_extraction.get_suggestions([prediction_sample_1, prediction_sample_3])
 
         self.assertEqual(2, len(suggestions))
         self.assertTrue(Option(id="1", label="1") in suggestions[0].values)
@@ -91,7 +96,9 @@ class TestMultiOptionExtraction(TestCase):
         multi_option_extraction = PdfToMultiOptionExtractor(extraction_identifier)
         multi_option_extraction.create_model(multi_option_data)
 
-        suggestions = multi_option_extraction.get_suggestions([pdf_data_1, pdf_data_3])
+        prediction_sample_1 = PredictionSample(pdf_data=pdf_data_1)
+        prediction_sample_3 = PredictionSample(pdf_data=pdf_data_3)
+        suggestions = multi_option_extraction.get_suggestions([prediction_sample_1, prediction_sample_3])
 
         self.assertEqual(2, len(suggestions))
         self.assertTrue(Option(id="1", label="1") in suggestions[0].values)

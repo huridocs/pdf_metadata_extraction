@@ -15,7 +15,6 @@ from transformers import AutoTokenizer, MT5ForConditionalGeneration
 
 from config import DATA_PATH, config_logger
 from data.ExtractionData import ExtractionData
-from data.PdfTagData import PdfTagData
 from data.PredictionSample import PredictionSample
 from data.TrainingSample import TrainingSample
 from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod

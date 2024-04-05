@@ -8,8 +8,10 @@ from pathlib import Path
 from config import config_logger
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
+from data.PredictionSample import PredictionSample
 from data.Suggestion import Suggestion
 from data.PdfData import PdfData
+from extractors.ExtractorBase import ExtractorBase
 from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
@@ -34,7 +36,9 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
 
 
-class PdfToMultiOptionExtractor:
+class PdfToMultiOptionExtractor(ExtractorBase):
+
+
     MULTI_LABEL_METHODS: list[MultiOptionExtractionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),
@@ -68,8 +72,7 @@ class PdfToMultiOptionExtractor:
     ]
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):
-        self.extraction_identifier = extraction_identifier
-
+        super().__init__(extraction_identifier)
         self.base_path = join(self.extraction_identifier.get_path(), "multi_option_extractor")
         self.options_path = join(self.base_path, "options.json")
         self.multi_value_path = join(self.base_path, "multi_value.json")
@@ -78,18 +81,18 @@ class PdfToMultiOptionExtractor:
         self.options: list[Option] = list()
         self.multi_value = False
 
-    def create_model(self, multi_option_data: ExtractionData):
-        self.options = multi_option_data.options
-        self.multi_value = multi_option_data.multi_value
+    def create_model(self, extraction_data: ExtractionData):
+        self.options = extraction_data.options
+        self.multi_value = extraction_data.multi_value
 
-        method = self.get_best_method(multi_option_data)
+        method = self.get_best_method(extraction_data)
 
         shutil.rmtree(self.base_path, ignore_errors=True)
-        method.train(multi_option_data)
+        method.train(extraction_data)
 
         os.makedirs(self.method_name_path.parent, exist_ok=True)
-        self.save_json(self.options_path, [x.model_dump() for x in multi_option_data.options])
-        self.save_json(self.multi_value_path, multi_option_data.multi_value)
+        self.save_json(self.options_path, [x.model_dump() for x in extraction_data.options])
+        self.save_json(self.multi_value_path, extraction_data.multi_value)
         self.method_name_path.write_text(method.get_name())
 
         return True, ""
@@ -102,11 +105,11 @@ class PdfToMultiOptionExtractor:
         with open(path, "w") as file:
             json.dump(data, file)
 
-    def get_suggestions(self, pdfs_data: list[PdfData]) -> list[Suggestion]:
-        if not pdfs_data:
+    def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
+        if not predictions_samples:
             return []
 
-        multi_option_samples, predictions = self.get_predictions(pdfs_data)
+        multi_option_samples, predictions = self.get_predictions(predictions_samples)
 
         suggestions = list()
         for multi_option_sample, prediction in zip(multi_option_samples, predictions):
@@ -116,9 +119,9 @@ class PdfToMultiOptionExtractor:
 
         return suggestions
 
-    def get_predictions(self, pdfs_data):
+    def get_predictions(self, predictions_samples: list[PredictionSample]):
         self.load_options()
-        multi_option_samples = [TrainingSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
+        multi_option_samples = [TrainingSample(pdf_data=sample.pdf_data) for sample in predictions_samples]
         multi_option_data = ExtractionData(
             multi_value=self.multi_value,
             options=self.options,
@@ -169,12 +172,6 @@ class PdfToMultiOptionExtractor:
 
         return best_method_instance
 
-    @staticmethod
-    def is_multi_option_extraction(extraction_identifier: ExtractionIdentifier):
-        multi_option_extractor = PdfToMultiOptionExtractor(extraction_identifier)
-        multi_option_extractor.load_options()
-        return len(multi_option_extractor.options) > 0
-
     def get_predictions_method(self):
         method_name = self.method_name_path.read_text()
         for method in self.MULTI_LABEL_METHODS + self.SINGLE_LABEL_METHODS:
@@ -182,3 +179,13 @@ class PdfToMultiOptionExtractor:
                 return method
 
         return self.SINGLE_LABEL_METHODS[0]
+
+    def is_valid(self, extraction_data: ExtractionData) -> bool:
+        if not extraction_data.options:
+            return False
+
+        for sample in extraction_data.samples:
+            if sample.pdf_data:
+                return True
+
+        return False

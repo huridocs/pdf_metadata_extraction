@@ -1,9 +1,7 @@
 import re
 
 from data.ExtractionData import ExtractionData
-from data.PdfTagData import PdfTagData
 from data.PredictionSample import PredictionSample
-from extractors.ExtractorBase import ExtractorBase
 from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 from dateparser.search import search_dates
 

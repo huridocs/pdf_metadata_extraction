@@ -1,9 +1,10 @@
+from data.ExtractionData import ExtractionData
 from data.Suggestion import Suggestion
 from extractors.ExtractorBase import ExtractorBase
 
 
 class NaiveExtractor(ExtractorBase):
-    def create_model(self, extraction_data):
+    def create_model(self, extraction_data: ExtractionData) -> tuple[bool, str]:
         pass
 
     def get_suggestions(self, predictions_samples):
@@ -15,5 +16,5 @@ class NaiveExtractor(ExtractorBase):
 
         return suggestions
 
-    def exists_model(self):
+    def is_valid(self, extraction_data: ExtractionData) -> bool:
         return True

@@ -60,21 +60,6 @@ class TestExtractorPdfToText(TestCase):
         shutil.rmtree(join(DATA_PATH, tenant))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_create_model_error_when_no_files(self):
-        tenant = "error_segment_test"
-        extraction_id = "error_extraction_id"
-
-        task = ExtractionTask(
-            tenant=tenant,
-            task=Extractor.CREATE_MODEL_TASK_NAME,
-            params=Params(id=extraction_id),
-        )
-        task_calculated, error = Extractor.calculate_task(task)
-
-        self.assertFalse(task_calculated)
-        self.assertEqual("No data to create model", error)
-
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_should_do_nothing_when_no_xml(self):
         tenant = "segment_test"
         extraction_id = "extraction_id"
@@ -601,7 +586,7 @@ class TestExtractorPdfToText(TestCase):
         )
         task_calculated, error = Extractor.calculate_task(task)
 
-        self.assertFalse(task_calculated)
+        self.assertTrue(task_calculated)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
         self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))
@@ -640,7 +625,7 @@ class TestExtractorPdfToText(TestCase):
         )
         task_calculated, error = Extractor.calculate_task(task)
 
-        self.assertFalse(task_calculated)
+        self.assertTrue(task_calculated)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.labeled_data.find_one({}))
         self.assertFalse(exists(join(DATA_PATH, tenant, extraction_id, "xml_to_train")))

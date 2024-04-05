@@ -114,5 +114,9 @@ class TextToTextExtractor(ExtractorBase):
             method_instance = method(self.extraction_identifier)
             method_instance.remove_model()
 
-    def exists_model(self) -> bool:
-        pass
+    def is_valid(self, extraction_data: ExtractionData) -> bool:
+        for sample in extraction_data.samples:
+            if sample.tags_texts:
+                return True
+
+        return True

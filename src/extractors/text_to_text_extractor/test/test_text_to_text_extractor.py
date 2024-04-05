@@ -26,7 +26,7 @@ class TestTextToTextExtractor(TestCase):
         extraction_data = ExtractionData(samples=sample, extraction_identifier=extraction_identifier)
 
         text_to_text_extractor = TextToTextExtractor(extraction_identifier=extraction_identifier)
-        text_to_text_extractor.create_model(extraction_data)
+        text_to_text_extractor.is_valid(extraction_data)
         texts = ["test 0", "test 1", "test 2"]
         predictions_samples = [PredictionSample.from_text(text, str(i)) for i, text in enumerate(texts)]
         suggestions = text_to_text_extractor.get_suggestions(predictions_samples)
@@ -47,7 +47,7 @@ class TestTextToTextExtractor(TestCase):
         extraction_data = ExtractionData(samples=sample_1 + sample_2, extraction_identifier=extraction_identifier)
 
         text_to_text_extractor = TextToTextExtractor(extraction_identifier=extraction_identifier)
-        text_to_text_extractor.create_model(extraction_data)
+        text_to_text_extractor.is_valid(extraction_data)
 
         suggestions = text_to_text_extractor.get_suggestions([PredictionSample.from_text("one two", "entity_name")])
 

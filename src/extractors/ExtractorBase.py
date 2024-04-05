@@ -12,6 +12,9 @@ class ExtractorBase:
     def __init__(self, extraction_identifier: ExtractionIdentifier):
         self.extraction_identifier = extraction_identifier
 
+    def get_name(self):
+        return self.__class__.__name__
+
     @abstractmethod
     def create_model(self, extraction_data: ExtractionData) -> tuple[bool, str]:
         pass
@@ -21,7 +24,7 @@ class ExtractorBase:
         pass
 
     @abstractmethod
-    def exists_model(self) -> bool:
+    def is_valid(self, extraction_data: ExtractionData) -> bool:
         pass
 
     @staticmethod
