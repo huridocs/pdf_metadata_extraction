@@ -17,7 +17,7 @@ extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=ex
 
 
 class TestTextToTextExtractor(TestCase):
-    
+
     def setUp(self):
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -56,5 +56,3 @@ class TestTextToTextExtractor(TestCase):
         self.assertEqual(extraction_id, suggestions[0].id)
         self.assertEqual("entity_name", suggestions[0].entity_name)
         self.assertEqual("one", suggestions[0].text)
-
-

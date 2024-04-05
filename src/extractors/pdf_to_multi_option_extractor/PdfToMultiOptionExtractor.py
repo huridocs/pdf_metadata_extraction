@@ -38,7 +38,6 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 
 class PdfToMultiOptionExtractor(ExtractorBase):
 
-
     MULTI_LABEL_METHODS: list[MultiOptionExtractionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),

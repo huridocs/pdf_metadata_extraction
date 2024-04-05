@@ -34,7 +34,8 @@ class Extractor:
         PdfToMultiOptionExtractor,
         PdfToTextExtractor,
         TextToTextExtractor,
-        NaiveExtractor]
+        NaiveExtractor,
+    ]
 
     CREATE_MODEL_TASK_NAME = "create_model"
     SUGGESTIONS_TASK_NAME = "suggestions"

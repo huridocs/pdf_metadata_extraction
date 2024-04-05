@@ -88,22 +88,22 @@ class TextToTextExtractor(ExtractorBase):
             config_logger.info(f"Checking {method_path}")
 
             if exists(method_path):
-                config_logger.info(
-                    f"Predicting {len(predictions_samples)} documents with {method_instance.get_name()}"
-                )
+                config_logger.info(f"Predicting {len(predictions_samples)} documents with {method_instance.get_name()}")
                 return self.suggestions_from_predictions(method_instance, predictions_samples)
 
         config_logger.info(f"Predicting {len(predictions_samples)} documents with SameInputOutputMethod")
         naive_method = self.METHODS[0](self.extraction_identifier)
         return self.suggestions_from_predictions(naive_method, predictions_samples)
 
-    def suggestions_from_predictions(self, method_instance: type[TextToTextMethod], predictions_samples: list[PredictionSample]) -> list[Suggestion]:
+    def suggestions_from_predictions(
+        self, method_instance: type[TextToTextMethod], predictions_samples: list[PredictionSample]
+    ) -> list[Suggestion]:
         suggestions = list()
         prediction = method_instance.predict(predictions_samples)
 
         for prediction, prediction_sample in zip(prediction, predictions_samples):
             suggestion = Suggestion.from_prediction_text(
-                self.extraction_identifier, prediction_sample.entity_name , prediction
+                self.extraction_identifier, prediction_sample.entity_name, prediction
             )
             suggestions.append(suggestion)
 
@@ -119,4 +119,4 @@ class TextToTextExtractor(ExtractorBase):
             if sample.tags_texts:
                 return True
 
-        return True
+        return False
