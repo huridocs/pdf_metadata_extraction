@@ -131,7 +131,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(round(16 / 0.75, 0), suggestion.segments_boxes[0].height)
         self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
-    def test_create_model_error(self):
+    def test_create_model_without_data(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
         task = ExtractionTask(

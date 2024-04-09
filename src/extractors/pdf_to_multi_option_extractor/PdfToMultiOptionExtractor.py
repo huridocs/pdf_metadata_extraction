@@ -1,7 +1,5 @@
 import json
-import os
 import shutil
-from os import makedirs
 from os.path import join, exists
 from pathlib import Path
 
@@ -10,9 +8,9 @@ from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.PredictionSample import PredictionSample
 from data.Suggestion import Suggestion
-from data.PdfData import PdfData
 from extractors.ExtractorBase import ExtractorBase
-from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
+from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
+
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
@@ -22,7 +20,7 @@ from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBegin
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot250 import CleanEndDot250
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.BertBatch1 import BertBatch1
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.BertMethod import BertMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelBert import SingleLabelBert
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
@@ -38,7 +36,7 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 
 class PdfToMultiOptionExtractor(ExtractorBase):
 
-    MULTI_LABEL_METHODS: list[MultiOptionExtractionMethod] = [
+    MULTI_LABEL_METHODS: list[PdfMultiOptionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),
         FuzzyFirstCleanLabel(),
@@ -46,15 +44,15 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
-        MultiOptionExtractionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        MultiOptionExtractionMethod(CleanEndDot1000, TfIdfMethod),
-        MultiOptionExtractionMethod(CleanBeginningDot250, BertBatch1),
-        MultiOptionExtractionMethod(CleanEndDot250, BertBatch1),
-        MultiOptionExtractionMethod(CleanBeginningDot1000, BertBatch1),
-        MultiOptionExtractionMethod(CleanEndDot1000, BertBatch1),
+        PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanBeginningDot250, BertMethod),
+        PdfMultiOptionMethod(CleanEndDot250, BertMethod),
+        PdfMultiOptionMethod(CleanBeginningDot1000, BertMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, BertMethod),
     ]
 
-    SINGLE_LABEL_METHODS: list[MultiOptionExtractionMethod] = [
+    SINGLE_LABEL_METHODS: list[PdfMultiOptionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),
         FuzzyFirstCleanLabel(),
@@ -62,12 +60,12 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
-        MultiOptionExtractionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        MultiOptionExtractionMethod(CleanEndDot1000, TfIdfMethod),
-        MultiOptionExtractionMethod(CleanBeginningDot250, SingleLabelBert),
-        MultiOptionExtractionMethod(CleanEndDot250, SingleLabelBert),
-        MultiOptionExtractionMethod(CleanBeginningDot1000, SingleLabelBert),
-        MultiOptionExtractionMethod(CleanEndDot1000, SingleLabelBert),
+        PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanBeginningDot250, SingleLabelBert),
+        PdfMultiOptionMethod(CleanEndDot250, SingleLabelBert),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelBert),
+        PdfMultiOptionMethod(CleanEndDot1000, SingleLabelBert),
     ]
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):
@@ -89,20 +87,11 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         shutil.rmtree(self.base_path, ignore_errors=True)
         method.train(extraction_data)
 
-        os.makedirs(self.method_name_path.parent, exist_ok=True)
         self.save_json(self.options_path, [x.model_dump() for x in extraction_data.options])
         self.save_json(self.multi_value_path, extraction_data.multi_value)
-        self.method_name_path.write_text(method.get_name())
+        self.save_json(str(self.method_name_path), method.get_name())
 
         return True, ""
-
-    @staticmethod
-    def save_json(path: str, data: any):
-        if not exists(Path(path).parent):
-            makedirs(Path(path).parent)
-
-        with open(path, "w") as file:
-            json.dump(data, file)
 
     def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
         if not predictions_samples:
@@ -146,7 +135,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         with open(self.multi_value_path, "r") as file:
             self.multi_value = json.load(file)
 
-    def get_best_method(self, multi_option_data: ExtractionData) -> MultiOptionExtractionMethod:
+    def get_best_method(self, multi_option_data: ExtractionData) -> PdfMultiOptionMethod:
         best_method_instance = self.SINGLE_LABEL_METHODS[0]
         best_performance = 0
         methods_to_loop = self.MULTI_LABEL_METHODS if self.multi_value else self.SINGLE_LABEL_METHODS

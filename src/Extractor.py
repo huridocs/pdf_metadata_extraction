@@ -26,11 +26,13 @@ from XmlFile import XmlFile
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
+from extractors.text_to_multi_option_extractor.TextToMultiOptionExtractor import TextToMultiOptionExtractor
 from extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
 
 
 class Extractor:
     EXTRACTORS: list[type[ExtractorBase]] = [
+        TextToMultiOptionExtractor,
         PdfToMultiOptionExtractor,
         PdfToTextExtractor,
         TextToTextExtractor,

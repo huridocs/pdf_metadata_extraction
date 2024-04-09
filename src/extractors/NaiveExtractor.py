@@ -5,7 +5,7 @@ from extractors.ExtractorBase import ExtractorBase
 
 class NaiveExtractor(ExtractorBase):
     def create_model(self, extraction_data: ExtractionData) -> tuple[bool, str]:
-        pass
+        return True, ""
 
     def get_suggestions(self, predictions_samples):
         suggestions = list()

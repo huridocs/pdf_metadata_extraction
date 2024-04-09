@@ -12,7 +12,7 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import FilterSegmentsMethod
 
 
-class MultiOptionExtractionMethod:
+class PdfMultiOptionMethod:
     def __init__(
         self,
         filter_segments_method: Type[FilterSegmentsMethod] = None,

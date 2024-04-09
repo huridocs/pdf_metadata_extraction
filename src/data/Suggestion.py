@@ -72,3 +72,9 @@ class Suggestion(BaseModel):
         suggestion = Suggestion.get_empty(extraction_identifier, entity_name)
         suggestion.text = text
         return suggestion
+
+    @staticmethod
+    def from_prediction_multi_option(extraction_identifier: ExtractionIdentifier, entity_name: str, values: list[Option]):
+        suggestion = Suggestion.get_empty(extraction_identifier, entity_name)
+        suggestion.values = values
+        return suggestion

@@ -4,11 +4,12 @@ from rapidfuzz import fuzz
 
 from data.Option import Option
 from data.PdfDataSegment import PdfDataSegment
-from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
+from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
+
 from data.ExtractionData import ExtractionData
 
 
-class FuzzyFirstCleanLabel(MultiOptionExtractionMethod):
+class FuzzyFirstCleanLabel(PdfMultiOptionMethod):
     @staticmethod
     def get_first_appearance(pdf_segments: list[PdfDataSegment], options: list[str]) -> list[str]:
         for pdf_segment in pdf_segments:

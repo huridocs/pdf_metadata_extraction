@@ -1,6 +1,5 @@
 import os
 from os.path import exists, join
-from typing import Type
 
 from config import config_logger
 from data.ExtractionData import ExtractionData
@@ -18,8 +17,7 @@ from extractors.text_to_text_extractor.methods.SameInputOutputMethod import Same
 
 class TextToTextExtractor(ExtractorBase):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
-
-    METHODS: list[Type[TextToTextMethod]] = [
+    METHODS: list[type[TextToTextMethod]] = [
         SameInputOutputMethod,
         RegexMethod,
         RegexSubtractionMethod,
@@ -27,6 +25,20 @@ class TextToTextExtractor(ExtractorBase):
         DateParserMethod,
         MT5TrueCaseEnglishSpanishMethod,
     ]
+
+    def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
+        for method in self.METHODS:
+            method_instance = method(self.extraction_identifier)
+            method_path = join(self.extraction_identifier.get_path(), method_instance.get_name())
+            config_logger.info(f"Checking {method_path}")
+
+            if exists(method_path):
+                config_logger.info(f"Predicting {len(predictions_samples)} documents with {method_instance.get_name()}")
+                return self.suggestions_from_predictions(method_instance, predictions_samples)
+
+        config_logger.info(f"Predicting {len(predictions_samples)} documents with SameInputOutputMethod")
+        naive_method = self.METHODS[0](self.extraction_identifier)
+        return self.suggestions_from_predictions(naive_method, predictions_samples)
 
     def create_model(self, extraction_data: ExtractionData) -> tuple[bool, str]:
         if len(extraction_data.samples) < 2:
@@ -37,13 +49,18 @@ class TextToTextExtractor(ExtractorBase):
         best_method_instance.train(extraction_data)
         return True, ""
 
+    def remove_models(self):
+        for method in self.METHODS:
+            method_instance = method(self.extraction_identifier)
+            method_instance.remove_model()
+
     def get_best_method(self, extraction_data: ExtractionData):
         best_performance = 0
         best_method_instance = self.METHODS[0](self.extraction_identifier)
         for method in self.METHODS[:-1]:
             method_instance = method(self.extraction_identifier)
             config_logger.info(f"\nChecking {method_instance.get_name()}")
-            performance, _ = method_instance.performance(extraction_data)
+            performance = method_instance.performance(extraction_data)
             config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
             if performance == 100:
                 config_logger.info(f"\nBest method {method_instance.get_name()} with {performance}%")
@@ -81,20 +98,6 @@ class TextToTextExtractor(ExtractorBase):
         config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
         return best_method_instance
 
-    def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
-        for method in self.METHODS:
-            method_instance = method(self.extraction_identifier)
-            method_path = join(self.extraction_identifier.get_path(), method_instance.get_name())
-            config_logger.info(f"Checking {method_path}")
-
-            if exists(method_path):
-                config_logger.info(f"Predicting {len(predictions_samples)} documents with {method_instance.get_name()}")
-                return self.suggestions_from_predictions(method_instance, predictions_samples)
-
-        config_logger.info(f"Predicting {len(predictions_samples)} documents with SameInputOutputMethod")
-        naive_method = self.METHODS[0](self.extraction_identifier)
-        return self.suggestions_from_predictions(naive_method, predictions_samples)
-
     def suggestions_from_predictions(
         self, method_instance: type[TextToTextMethod], predictions_samples: list[PredictionSample]
     ) -> list[Suggestion]:
@@ -108,11 +111,6 @@ class TextToTextExtractor(ExtractorBase):
             suggestions.append(suggestion)
 
         return suggestions
-
-    def remove_models(self):
-        for method in self.METHODS:
-            method_instance = method(self.extraction_identifier)
-            method_instance.remove_model()
 
     def is_valid(self, extraction_data: ExtractionData) -> bool:
         for sample in extraction_data.samples:

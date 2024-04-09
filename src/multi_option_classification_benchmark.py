@@ -12,7 +12,8 @@ from config import ROOT_PATH, APP_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.PdfData import PdfData
-from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
+from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
+
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
@@ -31,9 +32,7 @@ LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 text_extractors = [CleanBeginningDigits3000, CleanEndDot1000]
 multi_option_extractors = [TfIdfMethod]
-PDF_TOPIC_CLASSIFICATION_METHODS = [
-    MultiOptionExtractionMethod(x, y) for x in text_extractors for y in multi_option_extractors
-]
+PDF_TOPIC_CLASSIFICATION_METHODS = [PdfMultiOptionMethod(x, y) for x in text_extractors for y in multi_option_extractors]
 
 
 # PDF_TOPIC_CLASSIFICATION_METHODS = [
@@ -126,7 +125,7 @@ def get_benchmark_custom_methods(repetitions: int = 4):
 
 def get_one_hot(multi_option_samples: list[TrainingSample], options: list[Option]):
     values = [x.values for x in multi_option_samples]
-    return MultiOptionExtractionMethod.one_hot_to_options_list(values, options)
+    return PdfMultiOptionMethod.one_hot_to_options_list(values, options)
 
 
 def get_multi_option_extractor_benchmark():
@@ -136,7 +135,7 @@ def get_multi_option_extractor_benchmark():
     for multi_option_data in multi_option_extractions_data:
         start = time()
         multi_option_extractor = PdfToMultiOptionExtractor(extraction_identifier=multi_option_data.extraction_identifier)
-        train_set, test_set = MultiOptionExtractionMethod.get_train_test_sets(multi_option_data, 22)
+        train_set, test_set = PdfMultiOptionMethod.get_train_test_sets(multi_option_data, 22)
         truth_one_hot = get_one_hot(test_set.samples, multi_option_data.options)
 
         multi_option_extractor.create_model(train_set)

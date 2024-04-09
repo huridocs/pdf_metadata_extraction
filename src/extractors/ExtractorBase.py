@@ -1,5 +1,9 @@
+import json
 import random
 from abc import abstractmethod
+from os import makedirs
+from os.path import exists
+from pathlib import Path
 
 from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
@@ -53,3 +57,11 @@ class ExtractorBase:
         )
 
         return train_data, test_data
+
+    @staticmethod
+    def save_json(path: str, data: any):
+        if not exists(Path(path).parent):
+            makedirs(Path(path).parent)
+
+        with open(path, "w") as file:
+            json.dump(data, file)

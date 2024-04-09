@@ -2,7 +2,7 @@ from rich.table import Table
 from rich import print
 
 from data.Option import Option
-from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
+from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
 
 
 def get_results_table() -> Table:
@@ -42,7 +42,7 @@ def add_prediction_row(table: Table, pdf_name: str = "", truth: list[Option] = N
     table.add_row(pdf_name, format_list(truth), format_list(predictions))
 
 
-def add_row(table: Table, method: MultiOptionExtractionMethod = None, time: int = 0, score: float = None):
+def add_row(table: Table, method: PdfMultiOptionMethod = None, time: int = 0, score: float = None):
     if not method:
         table.add_row("", "", "", "")
     else:

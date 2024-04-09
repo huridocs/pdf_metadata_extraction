@@ -9,7 +9,7 @@ from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 
 
-class TestMultiOptionExtraction(TestCase):
+class TestPdfToMultiOptionExtraction(TestCase):
     TENANT = "multi_option_extraction_test"
     extraction_id = "extraction_id"
 

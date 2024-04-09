@@ -16,8 +16,8 @@ from data.Option import Option
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.AvoidEvaluation import AvoidEvaluation
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.EarlyStoppingAfterInitialTraining import (
+from extractors.bert_method.AvoidEvaluation import AvoidEvaluation
+from extractors.bert_method.EarlyStoppingAfterInitialTraining import (
     EarlyStoppingAfterInitialTraining,
 )
 
