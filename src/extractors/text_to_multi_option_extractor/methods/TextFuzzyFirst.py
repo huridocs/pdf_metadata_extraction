@@ -11,7 +11,11 @@ from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import Te
 class TextFuzzyFirst(TextToMultiOptionMethod):
     @staticmethod
     def get_first_appearance(texts: list[str], options: list[str]) -> list[str]:
-        for text in texts:
+        all_text = " ".join(texts).lower()
+        max_words = max([len(option.split()) for option in options])
+        words = all_text.split()
+        window_texts = [" ".join(words[i : i + max_words]) for i in range(len(words) - max_words + 1)]
+        for text in window_texts:
             for ratio_threshold in range(100, 69, -10):
                 for option in options:
                     if len(text) < math.ceil(len(option) * ratio_threshold / 100):

@@ -9,6 +9,7 @@ from transformers import TrainingArguments, AutoTokenizer
 from data.Option import Option
 from data.ExtractionData import ExtractionData
 from data.PredictionSample import PredictionSample
+from extractors.bert_method_scripts.get_batch_size import get_batch_size
 
 from extractors.bert_method_scripts.multi_label_sequence_classification_trainer import (
     multi_label_run,
@@ -18,7 +19,6 @@ from extractors.bert_method_scripts.multi_label_sequence_classification_trainer 
 from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import TextToMultiOptionMethod
 
 MODEL_NAME = "google-bert/bert-base-uncased"
-
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
@@ -79,7 +79,7 @@ class TextBert(TextToMultiOptionMethod):
             labels_number=labels_number,
         )
 
-        batch_size = self.get_batch_size(multi_option_data)
+        batch_size = get_batch_size(len(multi_option_data.samples))
         t5_training_arguments = TrainingArguments(
             report_to=[],
             output_dir=self.get_model_path(),
@@ -126,7 +126,7 @@ class TextBert(TextToMultiOptionMethod):
             labels_number=labels_number,
         )
 
-        batch_size = self.get_batch_size(multi_option_data)
+        batch_size = get_batch_size(len(predictions_samples))
         t5_training_arguments = TrainingArguments(
             report_to=[],
             output_dir=self.get_model_path(),

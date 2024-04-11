@@ -13,6 +13,7 @@ from transformers import (
     AutoModelForSequenceClassification,
 )
 from data.Option import Option
+from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
@@ -102,9 +103,9 @@ class BertSeqSteps(MultiLabelMethod):
         training_args = TrainingArguments(
             output_dir=self.get_model_path(),
             learning_rate=2e-5,
-            per_device_train_batch_size=self.get_batch_size(multi_option_data),
-            per_device_eval_batch_size=self.get_batch_size(multi_option_data),
-            max_steps=self.get_max_steps(multi_option_data),
+            per_device_train_batch_size=get_batch_size(len(multi_option_data.samples)),
+            per_device_eval_batch_size=get_batch_size(len(multi_option_data.samples)),
+            max_steps=get_max_steps(len(multi_option_data.samples)),
             weight_decay=0.01,
             eval_steps=200,
             save_steps=200,

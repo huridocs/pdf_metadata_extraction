@@ -8,6 +8,7 @@ from transformers import TrainingArguments, AutoTokenizer
 
 from data.Option import Option
 from data.ExtractionData import ExtractionData
+from extractors.bert_method_scripts.get_batch_size import get_batch_size
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 
 from extractors.bert_method_scripts.multi_label_sequence_classification_trainer import (
@@ -75,7 +76,7 @@ class BertMethod(MultiLabelMethod):
             labels_number=labels_number,
         )
 
-        batch_size = self.get_batch_size(multi_option_data)
+        batch_size = get_batch_size(len(multi_option_data.samples))
         t5_training_arguments = TrainingArguments(
             report_to=[],
             output_dir=self.get_model_path(),
@@ -118,7 +119,7 @@ class BertMethod(MultiLabelMethod):
             labels_number=labels_number,
         )
 
-        batch_size = self.get_batch_size(multi_option_data)
+        batch_size = get_batch_size(len(multi_option_data.samples))
         t5_training_arguments = TrainingArguments(
             report_to=[],
             output_dir=self.get_model_path(),

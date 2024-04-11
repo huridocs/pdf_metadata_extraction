@@ -53,7 +53,7 @@ class PdfToTextExtractor(ExtractorBase):
         for pdf_segment in predicted_pdf_segments:
             for page, token in pdf_data.pdf_features.loop_tokens():
                 if pdf_segment.intersects(PdfDataSegment.from_pdf_token(token)):
-                    tags_texts.append(token.content)
+                    tags_texts.append(token.content.strip())
 
         return tags_texts
 

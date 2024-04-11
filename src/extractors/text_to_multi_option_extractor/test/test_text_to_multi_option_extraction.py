@@ -48,7 +48,7 @@ class TestTextToMultiOptionExtraction(TestCase):
         self.assertEqual(2, len(suggestions))
         self.assertEqual([Option(id="1", label="1")], suggestions[0].values)
         self.assertEqual("entity_name_1", suggestions[0].entity_name)
-        self.assertEqual([Option(id="2", label="2")], suggestions[1].values)
+        self.assertEqual([Option(id="3", label="3")], suggestions[1].values)
         self.assertEqual("entity_name_3", suggestions[1].entity_name)
 
     def test_multi_value(self):

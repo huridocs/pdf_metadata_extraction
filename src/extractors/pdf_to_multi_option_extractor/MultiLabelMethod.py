@@ -82,16 +82,3 @@ class MultiLabelMethod(ABC):
                     continue
                 one_hot_encoding[-1][options_ids.index(option.id)] = 1
         return one_hot_encoding
-
-    @staticmethod
-    def get_batch_size(multi_option_data: ExtractionData):
-        samples_count = len(multi_option_data.samples)
-        batch_size_by_samples = math.ceil(samples_count / 100)
-        memory_available = torch.cuda.get_device_properties(0).total_memory / 1000000000
-        limit_batch = max(int(memory_available / 5), 1)
-        return min(limit_batch, batch_size_by_samples)
-
-    @staticmethod
-    def get_max_steps(multi_option_data: ExtractionData):
-        steps = math.ceil(23 * len(multi_option_data.samples) / 200) * 200
-        return min(steps, 2000)
