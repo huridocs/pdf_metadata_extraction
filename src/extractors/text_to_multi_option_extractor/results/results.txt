@@ -1,0 +1,7 @@
+Task                  Method name                                 Time(m) Score
+Extractor             d4la_document_type                              6.0  50.0%
+Extractor             cejil_president                                 0.7 90.91%
+Extractor             cejil_secretary                                 1.6  80.0%
+Extractor             cejil_countries                                 5.5 94.12%
+Extractor             cyrilla_keywords                                4.0 68.29%
+Extractor             cejil_judge                                     0.0 100.0%

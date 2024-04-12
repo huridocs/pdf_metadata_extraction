@@ -17,9 +17,9 @@ class Suggestion(BaseModel):
     entity_name: str = ""
     text: str = ""
     values: list[Option] = list()
-    segment_text: str
-    page_number: int
-    segments_boxes: list[SegmentBox]
+    segment_text: str = ""
+    page_number: int = 1
+    segments_boxes: list[SegmentBox] = list()
 
     def to_dict(self):
         suggestion_dict = self.model_dump()
@@ -33,10 +33,6 @@ class Suggestion(BaseModel):
             id=extraction_identifier.extraction_name,
             xml_file_name=entity_name,
             entity_name=entity_name,
-            text="",
-            segment_text=" ",
-            page_number=1,
-            segments_boxes=list(),
         )
 
     def add_prediction(self, text: str, prediction_pdf_data: PdfData):

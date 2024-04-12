@@ -40,7 +40,7 @@ class FuzzyFirstCleanLabel(PdfMultiOptionMethod):
         pass
 
     @staticmethod
-    def get_cleaned_options(options: list[Option]):
+    def get_cleaned_options(options: list[Option]) -> list[str]:
         options_labels = [x.label.lower() for x in options]
         words_counter = Counter()
         for option in options_labels:

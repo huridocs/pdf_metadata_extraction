@@ -8,14 +8,14 @@ from data.PredictionSample import PredictionSample
 from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import TextToMultiOptionMethod
 
 
-class TextFuzzyFirst(TextToMultiOptionMethod):
+class TextFuzzyLast(TextToMultiOptionMethod):
     @staticmethod
     def get_appearance(texts: list[str], options: list[str]) -> list[str]:
         all_text = " ".join(texts).lower()
         max_words = max([len(option.split()) for option in options])
         words = all_text.split()
         window_texts = [" ".join(words[i : i + max_words]) for i in range(len(words) - max_words + 1)]
-        for text in window_texts:
+        for text in reversed(window_texts):
             for ratio_threshold in range(100, 69, -10):
                 for option in options:
                     if len(text) < math.ceil(len(option) * ratio_threshold / 100):

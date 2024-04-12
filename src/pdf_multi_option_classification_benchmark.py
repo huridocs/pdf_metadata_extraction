@@ -1,0 +1,180 @@
+import json
+import pickle
+from os import listdir
+from os.path import join
+from pathlib import Path
+from time import time
+
+import rich
+from sklearn.metrics import f1_score
+
+from config import ROOT_PATH, APP_PATH
+from data.ExtractionIdentifier import ExtractionIdentifier
+from data.LabeledData import LabeledData
+from data.Option import Option
+from data.PdfData import PdfData
+from data.PredictionSample import PredictionSample
+from extractors.ExtractorBase import ExtractorBase
+from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
+
+from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
+from data.ExtractionData import ExtractionData
+from data.TrainingSample import TrainingSample
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.Beginning750 import Beginning750
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
+    CleanBeginningDigits3000,
+)
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.End750 import End750
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll75 import FuzzyAll75
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll88 import FuzzyAll88
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyFirst import FuzzyFirst
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyFirstCleanLabel import (
+    FuzzyFirstCleanLabel,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLast import FuzzyLast
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
+
+from extractors.pdf_to_multi_option_extractor.results import get_results_table, add_row
+
+PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH = join(
+    Path(__file__).parent, "extractors", "pdf_to_multi_option_extractor", "labeled_data"
+)
+PDF_DATA_FOLDER_PATH = join(ROOT_PATH, "data", "pdf_data_cache")
+LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
+
+
+# text_extractors = [CleanBeginningDigits3000, CleanEndDot1000]
+# multi_option_extractors = [TfIdfMethod]
+# PDF_TOPIC_CLASSIFICATION_METHODS = [PdfMultiOptionMethod(x, y) for x in text_extractors for y in multi_option_extractors]
+
+
+PDF_TOPIC_CLASSIFICATION_METHODS = [
+    # FuzzyFirst(),
+    # FuzzyLast(),
+    FuzzyFirstCleanLabel(),
+    # FuzzyLastCleanLabel(),
+    # FuzzyAll75(),
+    # FuzzyAll88(),
+    # FuzzyAll100(),
+]
+
+
+def get_multi_option_benchmark_data(filter_by: list[str] = None) -> list[ExtractionData]:
+    benchmark_data: list[ExtractionData] = list()
+    for task_name in listdir(str(PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH)):
+        if filter_by and task_name not in filter_by:
+            continue
+
+        print(f"Loading task {task_name}")
+
+        with open(join(PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH, task_name, "options.json"), mode="r") as file:
+            options = [Option(id=x, label=x) for x in json.load(file)]
+
+        multi_option_samples = get_samples(task_name)
+        multi_value: bool = len([sample for sample in multi_option_samples if len(sample.labeled_data.values) > 1]) != 0
+        extraction_identifier = ExtractionIdentifier(run_name="benchmark", extraction_name=task_name)
+        benchmark_data.append(
+            ExtractionData(
+                samples=multi_option_samples,
+                options=options,
+                multi_value=multi_value,
+                extraction_identifier=extraction_identifier,
+            )
+        )
+
+    return benchmark_data
+
+
+def get_samples(task_name):
+    with open(join(PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH, task_name, "labels.json"), mode="r") as file:
+        labels_dict: dict[str, list[str]] = json.load(file)
+
+    multi_option_samples: list[TrainingSample] = list()
+    for pdf_name in sorted(get_task_pdf_names()[task_name]):
+        with open(join(PDF_DATA_FOLDER_PATH, f"{pdf_name}.pickle"), mode="rb") as file:
+            pdf_data: PdfData = pickle.load(file)
+
+        values = [Option(id=x, label=x) for x in labels_dict[pdf_name]]
+        extraction_sample = TrainingSample(pdf_data=pdf_data, labeled_data=LabeledData(values=values))
+        multi_option_samples.append(extraction_sample)
+    return multi_option_samples
+
+
+def get_task_pdf_names():
+    task_pdf_names: dict[str, set[str]] = dict()
+
+    for task_name in listdir(str(PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH)):
+        with open(join(PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH, task_name, "labels.json"), mode="r") as file:
+            labels_dict: dict[str, list[str]] = json.load(file)
+            task_pdf_names.setdefault(task_name, set()).update(labels_dict.keys())
+
+    return task_pdf_names
+
+
+def loop_datasets_methods(datasets: list[str] = None):
+    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data(datasets)
+
+    for extraction_data in extractions_data:
+        for method in PDF_TOPIC_CLASSIFICATION_METHODS:
+            yield extraction_data, method
+
+
+def get_benchmark_custom_methods(repetitions: int = 4):
+    results_table = get_results_table()
+
+    # cejil_countries
+    # cejil_date
+    # cejil_judge
+    # cejil_president
+    # cejil_secretary
+    # cyrilla_keywords
+    # d4la_document_type
+    for extraction_data, method in loop_datasets_methods(["cejil_countries"]):
+        start = time()
+        print("Calculating", extraction_data.extraction_identifier, method.get_name())
+        performance = method.get_performance(extraction_data, repetitions)
+        add_row(results_table, method, round(time() - start), performance)
+
+
+def get_multi_option_extractor_benchmark():
+    results_table = get_results_table()
+
+    # cejil_countries
+    # cejil_date
+    # cejil_judge
+    # cejil_president
+    # cejil_secretary
+    # cyrilla_keywords
+    # d4la_document_type
+    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data()
+    for extraction_data in extractions_data:
+        start = time()
+        extractor = PdfToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22)
+        values_list = [x.labeled_data.values for x in test_set.samples]
+        truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, extraction_data.options)
+        extractor.create_model(train_set)
+
+        test_data = [PredictionSample(pdf_data=x.pdf_data) for x in test_set.samples]
+        suggestions = extractor.get_suggestions(test_data)
+        values_list = [x.values for x in suggestions]
+        predictions_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, extraction_data.options)
+
+        performance = 100 * f1_score(truth_one_hot, predictions_one_hot, average="micro")
+
+        results_table.add_row(
+            "Extractor",
+            extraction_data.extraction_identifier.extraction_name,
+            f"{round((time() - start) / 60, 1)}",
+            f"{round(performance, 2)}%",
+        )
+        rich.print(results_table)
+
+
+if __name__ == "__main__":
+    # get_benchmark_custom_methods(4)
+    get_multi_option_extractor_benchmark()

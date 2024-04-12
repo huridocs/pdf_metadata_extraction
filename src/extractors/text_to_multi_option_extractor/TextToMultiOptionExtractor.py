@@ -11,9 +11,17 @@ from data.PredictionSample import PredictionSample
 from data.Suggestion import Suggestion
 from extractors.ExtractorBase import ExtractorBase
 from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import TextToMultiOptionMethod
+from extractors.text_to_multi_option_extractor.methods.TextBert import TextBert
+from extractors.text_to_multi_option_extractor.methods.TextFastTextMethod import TextFastTextMethod
+from extractors.text_to_multi_option_extractor.methods.TextFuzzyAll100 import TextFuzzyAll100
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyAll75 import TextFuzzyAll75
+from extractors.text_to_multi_option_extractor.methods.TextFuzzyAll88 import TextFuzzyAll88
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyFirst import TextFuzzyFirst
 from extractors.text_to_multi_option_extractor.methods.NaiveTextToMultiOptionMethod import NaiveTextToMultiOptionMethod
+from extractors.text_to_multi_option_extractor.methods.TextFuzzyFirstCleanLabels import TextFuzzyFirstCleanLabels
+from extractors.text_to_multi_option_extractor.methods.TextFuzzyLast import TextFuzzyLast
+from extractors.text_to_multi_option_extractor.methods.TextFuzzyLastCleanLabels import TextFuzzyLastCleanLabels
+from extractors.text_to_multi_option_extractor.methods.TextSingleLabelBert import TextSingleLabelBert
 from extractors.text_to_multi_option_extractor.methods.TextTfIdf import TextTfIdf
 
 
@@ -23,16 +31,35 @@ class TextToMultiOptionExtractor(ExtractorBase):
     MULTI_LABEL_METHODS: list[Type[TextToMultiOptionMethod]] = [
         NaiveTextToMultiOptionMethod,
         TextFuzzyAll75,
+        TextFuzzyAll88,
+        TextFuzzyAll100,
         TextFuzzyFirst,
+        TextFuzzyFirstCleanLabels,
+        TextFuzzyLast,
+        TextFuzzyLastCleanLabels,
         TextTfIdf,
+        TextFastTextMethod,
+        TextBert,
     ]
 
-    SINGLE_LABEL_METHODS: list[Type[TextToMultiOptionMethod]] = [NaiveTextToMultiOptionMethod, TextFuzzyFirst, TextTfIdf]
+    SINGLE_LABEL_METHODS: list[Type[TextToMultiOptionMethod]] = [
+        NaiveTextToMultiOptionMethod,
+        TextFuzzyAll75,
+        TextFuzzyAll88,
+        TextFuzzyAll100,
+        TextFuzzyFirst,
+        TextFuzzyFirstCleanLabels,
+        TextFuzzyLast,
+        TextFuzzyLastCleanLabels,
+        TextTfIdf,
+        TextFastTextMethod,
+        TextSingleLabelBert,
+    ]
 
     def __init__(self, extraction_identifier):
         super().__init__(extraction_identifier)
 
-        self.base_path = join(self.extraction_identifier.get_path(), "multi_option_extractor")
+        self.base_path = join(self.extraction_identifier.get_path(), "text_to_multi_option")
         self.options_path = join(self.base_path, "options.json")
         self.multi_value_path = join(self.base_path, "multi_value.json")
         self.method_name_path = Path(join(self.base_path, "method_name.json"))
