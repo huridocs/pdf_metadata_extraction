@@ -55,7 +55,7 @@ class TextBert(TextToMultiOptionMethod):
                 if clean_word:
                     words.append(clean_word)
 
-        return ' '.join(words)
+        return " ".join(words)
 
     def create_dataset(self, multi_option_data: ExtractionData, name: str):
         texts = [self.get_text(sample.tags_texts) for sample in multi_option_data.samples]

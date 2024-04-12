@@ -35,7 +35,12 @@ class SegmentSelector:
     def create_model(self, pdfs_data: list[PdfData]) -> (bool, str):
         model_path = self.prepare_model_folder()
 
-        self.model = LightgbmFrequentWords().create_model(pdfs_data, model_path)
+        valid_pdf_data = self.get_valid_pdfs_data(pdfs_data)
+
+        if not valid_pdf_data:
+            return False, "No data to create model"
+
+        self.model = LightgbmFrequentWords().create_model(valid_pdf_data, model_path)
 
         if not self.model:
             return False, "No data to create model"
@@ -43,6 +48,15 @@ class SegmentSelector:
         self.model.save_model(model_path, num_iteration=self.model.best_iteration)
 
         return True, ""
+
+    @staticmethod
+    def get_valid_pdfs_data(pdfs_data: list[PdfData]) -> list[PdfData]:
+        valid_pdf_data = list()
+        for pdf_data in pdfs_data:
+            if not pdf_data.pdf_data_segments or not pdf_data.pdf_features:
+                continue
+            valid_pdf_data.append(pdf_data)
+        return valid_pdf_data
 
     def set_extraction_segments(self, pdfs_data: list[PdfData]):
         predictions = LightgbmFrequentWords().predict(self.model, pdfs_data, self.model_path)

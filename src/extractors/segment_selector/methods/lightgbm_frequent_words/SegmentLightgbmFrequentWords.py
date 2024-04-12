@@ -14,7 +14,7 @@ nltk.download("punkt")
 
 
 class SegmentLightgbmFrequentWords:
-    def __init__(self, segment_index: int, pdf_segment: PdfDataSegment, pdf_segments: PdfData, modes: Modes):
+    def __init__(self, segment_index: int, pdf_segment: PdfDataSegment, pdf_data: PdfData, modes: Modes):
         self.modes = modes
         self.previous_title_segment = None
         self.previous_segment = None
@@ -27,16 +27,16 @@ class SegmentLightgbmFrequentWords:
 
         self.segment_tokens: list[PdfToken] = [
             pdf_token
-            for _, pdf_token in pdf_segments.pdf_features.loop_tokens()
+            for _, pdf_token in pdf_data.pdf_features.loop_tokens()
             if self.page_number == pdf_token.page_number and pdf_segment.is_selected(pdf_token.bounding_box)
         ]
 
         if not self.segment_tokens:
-            for _, pdf_token in pdf_segments.pdf_features.loop_tokens():
+            for _, pdf_token in pdf_data.pdf_features.loop_tokens():
                 self.segment_tokens = [pdf_token]
                 break
 
-        self.pdf_segments: PdfData = pdf_segments
+        self.pdf_segments: PdfData = pdf_data
         self.page_width = self.pdf_segments.pdf_features.pages[0].page_width
         self.page_height = self.pdf_segments.pdf_features.pages[0].page_height
         self.text_content: str = ""

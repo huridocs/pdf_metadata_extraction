@@ -309,7 +309,7 @@ class TestEndToEnd(TestCase):
         suggestion_1 = Suggestion(**suggestions[0])
         suggestion_2 = Suggestion(**suggestions[1])
 
-        self.assertEqual(1, len(suggestions))
+        self.assertEqual(2, len(suggestions))
 
         self.assertEqual(tenant, suggestion_1.tenant)
         self.assertEqual(extraction_id, suggestion_1.id)

@@ -28,14 +28,18 @@ class PdfToTextExtractor(ExtractorBase):
         if not all_pdf_segments:
             return False, "No data to create model"
 
-        self.create_segment_selector_model(extraction_data)
-        self.create_semantic_model(extraction_data)
-        return True, ""
+        success, error = self.create_segment_selector_model(extraction_data)
+
+        if not success:
+            return False, error
+
+        success, error = self.create_semantic_model(extraction_data)
+        return success, error
 
     def create_segment_selector_model(self, extraction_data):
         segment_selector = SegmentSelector(self.extraction_identifier)
         pdfs_data = [sample.pdf_data for sample in extraction_data.samples]
-        segment_selector.create_model(pdfs_data=pdfs_data)
+        return segment_selector.create_model(pdfs_data=pdfs_data)
 
     def create_semantic_model(self, extraction_data: ExtractionData):
         semantic_metadata_extraction = TextToTextExtractor(self.extraction_identifier)
@@ -43,7 +47,7 @@ class PdfToTextExtractor(ExtractorBase):
         for sample in extraction_data.samples:
             sample.tags_texts = self.get_predicted_texts(sample.pdf_data)
 
-        semantic_metadata_extraction.create_model(extraction_data)
+        return semantic_metadata_extraction.create_model(extraction_data)
 
     @staticmethod
     def get_predicted_texts(pdf_data: PdfData) -> list[str]:

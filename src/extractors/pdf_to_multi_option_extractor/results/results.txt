@@ -8,6 +8,8 @@ cyrilla_keywords      extractor                                         - 63.41%
 cejil_date            extractor                                         - 31.25%
 cejil_judge           extractor                                         - 100.0%
 
+cyrilla_all_data      extractor                                      14.3  36.8%
+
 d4la_document_type    CleanBeginningDot1500_SingleLabelDeber…        35.3 56.25%
 d4la_document_type    CleanBeginningDot500_SingleLabelBertBa…        13.2 54.17%
 d4la_document_type    CleanBeginningDot1500_SingleLabelDisti…        12.5 48.96%

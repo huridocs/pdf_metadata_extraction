@@ -68,7 +68,10 @@ class Extractor:
                 xml_file_name=labeled_data.xml_file_name,
             )
 
-            pdf_data = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers_to_keep)
+            if exists(xml_file.xml_file_path) and not os.path.isdir(xml_file.xml_file_path):
+                pdf_data = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers_to_keep)
+            else:
+                pdf_data = PdfData.from_texts([""])
             sample = TrainingSample(pdf_data=pdf_data, labeled_data=labeled_data, tags_texts=[labeled_data.source_text])
             multi_option_samples.append(sample)
 
@@ -84,6 +87,10 @@ class Extractor:
         config_logger.info(f"Loading data to create model for {str(self.extraction_identifier)}")
         extraction_data: ExtractionData = self.get_extraction_data_for_training(self.get_labeled_data())
         config_logger.info(f"Set data in {round(time() - start, 2)} seconds")
+
+        if not extraction_data or not extraction_data.samples:
+            self.delete_training_data()
+            return False, "No data to create model"
 
         for extractor in self.EXTRACTORS:
             extractor_instance = extractor(self.extraction_identifier)
@@ -104,14 +111,20 @@ class Extractor:
         prediction_samples: list[PredictionSample] = []
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
             segmentation_data = SegmentationData.from_prediction_data(prediction_data)
+            entity_name = prediction_data.entity_name if prediction_data.entity_name else prediction_data.xml_file_name
+
             xml_file = XmlFile(
                 extraction_identifier=self.extraction_identifier,
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
-            pdfs_data = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers)
-            entity_name = prediction_data.entity_name if prediction_data.entity_name else prediction_data.xml_file_name
-            sample = PredictionSample(pdf_data=pdfs_data, entity_name=entity_name, tags_texts=[prediction_data.source_text])
+
+            if exists(xml_file.xml_file_path) and not os.path.isdir(xml_file.xml_file_path):
+                pdf_data = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers)
+            else:
+                pdf_data = PdfData.from_texts([""])
+
+            sample = PredictionSample(pdf_data=pdf_data, entity_name=entity_name, tags_texts=[prediction_data.source_text])
             prediction_samples.append(sample)
 
         return prediction_samples
@@ -136,9 +149,13 @@ class Extractor:
         self.pdf_metadata_extraction_db.suggestions.insert_many([x.to_dict() for x in suggestions])
         xml_folder_path = XmlFile.get_xml_folder_path(extraction_identifier=self.extraction_identifier, to_train=False)
         for suggestion in suggestions:
-            xml_name = {"xml_file_name": suggestion.xml_file_name}
-            self.pdf_metadata_extraction_db.prediction_data.delete_many({**self.mongo_filter, **xml_name})
-            Path(join(xml_folder_path, suggestion.xml_file_name)).unlink(missing_ok=True)
+            entity_name = {"entity_name": suggestion.entity_name, "xml_file_name": ""}
+            xml_file_name = {"xml_file_name": suggestion.xml_file_name, "entity_name": ""}
+            self.pdf_metadata_extraction_db.prediction_data.delete_many({**self.mongo_filter, **entity_name})
+            self.pdf_metadata_extraction_db.prediction_data.delete_many({**self.mongo_filter, **xml_file_name})
+            path = Path(join(xml_folder_path, suggestion.xml_file_name))
+            if not path.is_dir():
+                path.unlink(missing_ok=True)
 
         return True, ""
 

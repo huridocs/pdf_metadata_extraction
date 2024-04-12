@@ -75,8 +75,8 @@ class SingleLabelBert(MultiLabelMethod):
 
     def preprocess_function(self, multi_option_sample: TrainingSample):
         text = multi_option_sample.get_text()
-        if multi_option_sample.values:
-            labels = self.options.index(multi_option_sample.values[0])
+        if multi_option_sample.labeled_data.values:
+            labels = self.options.index(multi_option_sample.labeled_data.values[0])
         else:
             labels = -1
 

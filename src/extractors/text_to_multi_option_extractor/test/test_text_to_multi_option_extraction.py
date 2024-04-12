@@ -31,7 +31,7 @@ class TestTextToMultiOptionExtraction(TestCase):
         samples = [
             TrainingSample(tags_texts=["point 1"], labeled_data=LabeledData(values=[options[0]])),
             TrainingSample(tags_texts=["point 2"], labeled_data=LabeledData(values=[options[1]])),
-            TrainingSample(tags_texts=["point 3"], labeled_data=LabeledData(values=[options[2]])),
+            TrainingSample(tags_texts=["point 3  point 2"], labeled_data=LabeledData(values=[options[2]])),
         ]
 
         multi_option_data = ExtractionData(

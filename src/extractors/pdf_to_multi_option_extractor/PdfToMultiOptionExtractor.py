@@ -44,12 +44,12 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
-        # PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        # PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
-        # PdfMultiOptionMethod(CleanBeginningDot250, BertMethod),
-        # PdfMultiOptionMethod(CleanEndDot250, BertMethod),
-        # PdfMultiOptionMethod(CleanBeginningDot1000, BertMethod),
-        # PdfMultiOptionMethod(CleanEndDot1000, BertMethod),
+        PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanBeginningDot250, BertMethod),
+        PdfMultiOptionMethod(CleanEndDot250, BertMethod),
+        PdfMultiOptionMethod(CleanBeginningDot1000, BertMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, BertMethod),
     ]
 
     SINGLE_LABEL_METHODS: list[PdfMultiOptionMethod] = [
@@ -60,12 +60,12 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
-        # PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        # PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
-        # PdfMultiOptionMethod(CleanBeginningDot250, SingleLabelBert),
-        # PdfMultiOptionMethod(CleanEndDot250, SingleLabelBert),
-        # PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelBert),
-        # PdfMultiOptionMethod(CleanEndDot1000, SingleLabelBert),
+        PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanBeginningDot250, SingleLabelBert),
+        PdfMultiOptionMethod(CleanEndDot250, SingleLabelBert),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelBert),
+        PdfMultiOptionMethod(CleanEndDot1000, SingleLabelBert),
     ]
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):
