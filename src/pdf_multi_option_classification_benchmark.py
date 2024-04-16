@@ -38,7 +38,12 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLast import FuzzyLast
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
 
-from extractors.pdf_to_multi_option_extractor.results import get_results_table, add_row
+from extractors.pdf_to_multi_option_extractor.results import (
+    get_results_table,
+    add_row,
+    add_prediction_row,
+    get_predictions_table,
+)
 
 PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH = join(
     Path(__file__).parent, "extractors", "pdf_to_multi_option_extractor", "labeled_data"
@@ -150,7 +155,7 @@ def get_multi_option_extractor_benchmark():
     # cejil_secretary
     # cyrilla_keywords
     # d4la_document_type
-    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data()
+    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data(["d4la_document_type"])
     for extraction_data in extractions_data:
         start = time()
         extractor = PdfToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
@@ -175,6 +180,28 @@ def get_multi_option_extractor_benchmark():
         rich.print(results_table)
 
 
+def check_results():
+    prediction_table = get_predictions_table()
+    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data(["d4la_document_type"])
+    for extraction_data in extractions_data:
+        extractor = PdfToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
+
+        print(f"Calculating {extractor.extraction_identifier} {extractor.get_name()}")
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22)
+        labels = [x.labeled_data.values for x in test_set.samples]
+        test_data = [PredictionSample(pdf_data=x.pdf_data) for x in test_set.samples]
+        suggestions = extractor.get_suggestions(test_data)
+        pdfs_names = [x.pdf_data.file_name for x in test_set.samples]
+        predictions = [x.values for x in suggestions]
+        for label, prediction, pdf_name in zip(labels, predictions, pdfs_names):
+            add_prediction_row(prediction_table, pdf_name, label, prediction)
+
+        add_prediction_row(prediction_table)
+
+    rich.print(prediction_table)
+
+
 if __name__ == "__main__":
     # get_benchmark_custom_methods(4)
-    get_multi_option_extractor_benchmark()
+    # get_multi_option_extractor_benchmark()
+    check_results()

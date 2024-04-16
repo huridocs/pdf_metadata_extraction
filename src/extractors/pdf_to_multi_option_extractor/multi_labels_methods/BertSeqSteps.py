@@ -13,14 +13,12 @@ from transformers import (
     AutoModelForSequenceClassification,
 )
 from data.Option import Option
+from extractors.bert_method_scripts.AvoidEvaluation import AvoidEvaluation
+from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
-from extractors.bert_method.AvoidEvaluation import AvoidEvaluation
-from extractors.bert_method.EarlyStoppingAfterInitialTraining import (
-    EarlyStoppingAfterInitialTraining,
-)
 
 MODEL_NAME = "google-bert/bert-base-uncased"
 
@@ -73,9 +71,9 @@ class BertSeqSteps(MultiLabelMethod):
         predictions = (predictions > 0.5).astype(int).reshape(-1)
         return clf_metrics.compute(predictions=predictions, references=labels.astype(int).reshape(-1))
 
-    def preprocess_function(self, multi_option_sample: TrainingSample):
-        text = multi_option_sample.get_text()
-        labels = [1.0 if value in multi_option_sample.values else 0.0 for value in self.options]
+    def preprocess_function(self, sample: TrainingSample):
+        text = sample.get_text()
+        labels = [1.0 if value in sample.labeled_data.values else 0.0 for value in self.options]
 
         example = tokenizer(text, padding="max_length", truncation="only_first", max_length=self.get_token_length())
         example["labels"] = labels

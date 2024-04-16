@@ -17,11 +17,10 @@ from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBegin
     CleanBeginningDigits3000,
 )
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot250 import CleanEndDot250
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.BertMethod import BertMethod
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelBert import SingleLabelBert
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import SingleLabelSetFitMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll75 import FuzzyAll75
@@ -44,12 +43,8 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
-        PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
-        PdfMultiOptionMethod(CleanBeginningDot250, BertMethod),
-        PdfMultiOptionMethod(CleanEndDot250, BertMethod),
-        PdfMultiOptionMethod(CleanBeginningDot1000, BertMethod),
-        PdfMultiOptionMethod(CleanEndDot1000, BertMethod),
+        PdfMultiOptionMethod(CleanBeginningDot500, SetFitMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, SetFitMethod),
     ]
 
     SINGLE_LABEL_METHODS: list[PdfMultiOptionMethod] = [
@@ -60,12 +55,11 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
+        PdfMultiOptionMethod(CleanBeginningDot500, SetFitMethod),
         PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
         PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
-        PdfMultiOptionMethod(CleanBeginningDot250, SingleLabelBert),
-        PdfMultiOptionMethod(CleanEndDot250, SingleLabelBert),
-        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelBert),
-        PdfMultiOptionMethod(CleanEndDot1000, SingleLabelBert),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelSetFitMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, SingleLabelSetFitMethod),
     ]
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):
@@ -141,6 +135,9 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         methods_to_loop = self.MULTI_LABEL_METHODS if self.multi_value else self.SINGLE_LABEL_METHODS
         for method in methods_to_loop:
             method.set_parameters(multi_option_data)
+            if len(methods_to_loop) == 1:
+                return method
+
             config_logger.info(f"\nChecking {method.get_name()}")
 
             try:

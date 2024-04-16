@@ -1,17 +1,19 @@
 Task                  Method name                                 Time(m) Score
 
-d4la_document_type    extractor                                         -  40.0%
+d4la_document_type    extractor                                         - 53.33%
 cejil_president       extractor                                         - 100.0%
 cejil_secretary       extractor                                         - 86.67%
 cejil_countries       extractor                                         - 76.47%
-cyrilla_keywords      extractor                                         - 63.41%
+cyrilla_keywords      extractor                                         - 80.00%
 cejil_date            extractor                                         - 31.25%
 cejil_judge           extractor                                         - 100.0%
 
-cyrilla_all_data      extractor                                      14.3  36.8%
+cyrilla_benchmark     CleanBeginningDot500_SetFit                     4.1 48.22%
+cyrilla_benchmark     CleanEndDot1000_SetFit                          5.5 43.63%
 
 d4la_document_type    CleanBeginningDot1500_SingleLabelDeber…        35.3 56.25%
 d4la_document_type    CleanBeginningDot500_SingleLabelBertBa…        13.2 54.17%
+d4la_document_type    CleanBeginningDot500_SetFit                     6.8 53.33%
 d4la_document_type    CleanBeginningDot1500_SingleLabelDisti…        12.5 48.96%
 d4la_document_type    CleanBeginningDot1500_SingleLabelBertB…        22.7 44.79%
 d4la_document_type    CleanBeginningDot500_BertBatch1                15.4 49.82%

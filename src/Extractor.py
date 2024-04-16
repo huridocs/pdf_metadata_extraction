@@ -6,9 +6,10 @@ from time import time
 
 import pymongo
 
-from config import config_logger, MONGO_PORT, MONGO_HOST, DATA_PATH
+from config import MONGO_PORT, MONGO_HOST, DATA_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
+from data.LogsMessage import Severity
 from data.Option import Option
 
 from data.PredictionData import PredictionData
@@ -28,6 +29,7 @@ from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 from extractors.text_to_multi_option_extractor.TextToMultiOptionExtractor import TextToMultiOptionExtractor
 from extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
+from send_logs import send_logs
 
 
 class Extractor:
@@ -84,9 +86,9 @@ class Extractor:
 
     def create_models(self) -> (bool, str):
         start = time()
-        config_logger.info(f"Loading data to create model for {str(self.extraction_identifier)}")
+        send_logs(self.extraction_identifier, "Loading data to create model")
         extraction_data: ExtractionData = self.get_extraction_data_for_training(self.get_labeled_data())
-        config_logger.info(f"Set data in {round(time() - start, 2)} seconds")
+        send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
 
         if not extraction_data or not extraction_data.samples:
             self.delete_training_data()
@@ -98,11 +100,15 @@ class Extractor:
             if not extractor_instance.is_valid(extraction_data):
                 continue
 
+            send_logs(self.extraction_identifier, f"Using extractor {extractor_instance.get_name()}")
+            send_logs(self.extraction_identifier, f"Creating models")
             self.extraction_identifier.get_extractor_used_path().write_text(extractor_instance.get_name())
             self.delete_training_data()
             return extractor_instance.create_model(extraction_data)
 
         self.delete_training_data()
+        send_logs(self.extraction_identifier, "Error creating extractor", Severity.error)
+
         return False, "Error creating extractor"
 
     def get_prediction_samples(self, prediction_data_list: list[PredictionData] = None) -> list[PredictionSample]:
@@ -144,7 +150,7 @@ class Extractor:
         if not suggestions:
             return False, "No data to calculate suggestions"
 
-        config_logger.info(f"Calculated and inserting {len(suggestions)} suggestions")
+        send_logs(self.extraction_identifier, f"Calculated and inserting {len(suggestions)} suggestions")
 
         self.pdf_metadata_extraction_db.suggestions.insert_many([x.to_dict() for x in suggestions])
         xml_folder_path = XmlFile.get_xml_folder_path(extraction_identifier=self.extraction_identifier, to_train=False)
@@ -160,9 +166,12 @@ class Extractor:
         return True, ""
 
     def get_suggestions(self) -> list[Suggestion]:
+        send_logs(self.extraction_identifier, f"Gathering data to calculate suggestions")
+
         prediction_samples = self.get_prediction_samples(self.get_prediction_data_from_db())
 
         if not self.extraction_identifier.get_extractor_used_path().exists():
+            send_logs(self.extraction_identifier, f"No extractor available", Severity.error)
             return []
 
         extractor_name = self.extraction_identifier.get_extractor_used_path().read_text()
@@ -171,7 +180,11 @@ class Extractor:
             if extractor_instance.get_name() != extractor_name:
                 continue
 
+            send_logs(self.extraction_identifier, f"Calculating suggestions with {extractor_instance.get_name()}")
             return extractor_instance.get_suggestions(prediction_samples)
+
+        send_logs(self.extraction_identifier, f"No extractor available", Severity.error)
+        return []
 
     @staticmethod
     def remove_old_models(extractor_identifier: ExtractionIdentifier):
@@ -200,7 +213,6 @@ class Extractor:
             return extractor.create_models()
 
         if extraction_task.task == Extractor.SUGGESTIONS_TASK_NAME:
-            config_logger.info("Calculating suggestions")
             extractor = Extractor(extractor_identifier)
             suggestions = extractor.get_suggestions()
             return extractor.insert_suggestions_in_db(suggestions)

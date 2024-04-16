@@ -9,7 +9,16 @@ from rsmq import RedisSMQ, cmd
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 
-from config import config_logger, SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, TASK_QUEUE_NAME, RESULTS_QUEUE_NAME
+from config import (
+    config_logger,
+    SERVICE_HOST,
+    SERVICE_PORT,
+    REDIS_HOST,
+    REDIS_PORT,
+    TASK_QUEUE_NAME,
+    RESULTS_QUEUE_NAME,
+    logs_queue,
+)
 from data.ExtractionTask import ExtractionTask
 from data.ResultsMessage import ResultsMessage
 from Extractor import Extractor
@@ -86,6 +95,7 @@ class QueueProcessor:
             try:
                 self.task_queue.getQueueAttributes().exec_command()
                 self.results_queue.getQueueAttributes().exec_command()
+                logs_queue.getQueueAttributes().exec_command()
 
                 redis_smq_consumer = RedisSMQConsumer(
                     qname=TASK_QUEUE_NAME,
@@ -101,6 +111,7 @@ class QueueProcessor:
                 config_logger.info("Creating queues")
                 self.task_queue.createQueue().exceptions(False).execute()
                 self.results_queue.createQueue().exceptions(False).execute()
+                logs_queue.createQueue().exceptions(False).execute()
                 config_logger.info("Queues have been created")
 
 
