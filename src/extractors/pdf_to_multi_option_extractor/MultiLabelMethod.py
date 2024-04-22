@@ -84,15 +84,5 @@ class MultiLabelMethod(ABC):
         return one_hot_encoding
 
     @staticmethod
-    def is_multilingual(multi_option_data: ExtractionData) -> bool:
-        not_multilingual_languages = ["", "en", "eng"]
-
-        for sample in multi_option_data.samples:
-            if sample.labeled_data.language_iso not in not_multilingual_languages:
-                return True
-
-        return False
-
-    @staticmethod
     def can_be_used(extraction_data: ExtractionData) -> bool:
         pass

@@ -9,6 +9,7 @@ from transformers import TrainingArguments, AutoTokenizer
 from data.Option import Option
 from data.ExtractionData import ExtractionData
 from data.PredictionSample import PredictionSample
+from extractors.ExtractorBase import ExtractorBase
 from extractors.bert_method_scripts.get_batch_size import get_batch_size
 
 from extractors.bert_method_scripts.multi_label_sequence_classification_trainer import (
@@ -24,6 +25,15 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
 class TextBert(TextToMultiOptionMethod):
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        if not extraction_data.multi_value:
+            return False
+
+        if not ExtractorBase.is_multilingual(extraction_data):
+            return True
+
+        return False
+
     def get_data_path(self, name):
         model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 

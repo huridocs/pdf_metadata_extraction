@@ -8,6 +8,7 @@ from data.ExtractionData import ExtractionData
 from data.Option import Option
 from setfit import SetFitModel, TrainingArguments, Trainer
 
+from extractors.ExtractorBase import ExtractorBase
 from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
 from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
@@ -105,7 +106,7 @@ class SetFitMethod(MultiLabelMethod):
         if not extraction_data.multi_value:
             return False
 
-        if self.is_multilingual(extraction_data):
+        if ExtractorBase.is_multilingual(extraction_data):
             return False
 
         return True

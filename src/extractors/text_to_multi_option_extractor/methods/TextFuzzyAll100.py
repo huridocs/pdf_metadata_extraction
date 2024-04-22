@@ -12,6 +12,9 @@ class TextFuzzyAll100(TextToMultiOptionMethod):
 
     threshold = 100
 
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return True
+
     def get_appearances(self, texts: list[str], options: list[str]) -> list[str]:
         appearances = []
         for text in texts:

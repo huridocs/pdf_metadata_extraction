@@ -9,6 +9,7 @@ from data.Option import Option
 from setfit import SetFitModel, TrainingArguments, Trainer
 
 from data.PredictionSample import PredictionSample
+from extractors.ExtractorBase import ExtractorBase
 from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
 from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
@@ -18,6 +19,15 @@ from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import Te
 class TextSingleLabelSetFit(TextToMultiOptionMethod):
 
     model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        if extraction_data.multi_value:
+            return False
+
+        if not ExtractorBase.is_multilingual(extraction_data):
+            return True
+
+        return False
 
     def get_data_path(self):
         model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
@@ -80,7 +90,7 @@ class TextSingleLabelSetFit(TextToMultiOptionMethod):
         return dataset
 
     def train(self, extraction_data: ExtractionData):
-        if self.is_multilingual(extraction_data):
+        if ExtractorBase.is_multilingual(extraction_data):
             return
 
         train_dataset = self.get_dataset_from_data(extraction_data)

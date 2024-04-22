@@ -11,5 +11,12 @@ def get_batch_size(samples_count: int):
 
 
 def get_max_steps(samples_count):
-    steps = math.ceil(23 * samples_count / 200) * 200
-    return min(steps, 2000)
+    if samples_count * 25 < 2000:
+        return math.ceil(25 * samples_count / 200) * 200
+
+    min_epochs = 3
+
+    if samples_count < (2000 / min_epochs):
+        return 2000
+
+    return math.ceil(min_epochs * samples_count / 200) * 200

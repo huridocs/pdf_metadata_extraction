@@ -9,6 +9,10 @@ from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import Te
 
 
 class TextFuzzyLast(TextToMultiOptionMethod):
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return True
+
     @staticmethod
     def get_appearance(texts: list[str], options: list[str]) -> list[str]:
         all_text = " ".join(texts).lower()

@@ -11,6 +11,10 @@ from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import Te
 
 
 class TextFastTextMethod(TextToMultiOptionMethod):
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return True
+
     @staticmethod
     def clean_label(label: str):
         return "_".join(label.split()).lower().replace(",", "")

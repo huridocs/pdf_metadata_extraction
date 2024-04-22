@@ -27,6 +27,9 @@ lemmatize = lru_cache(maxsize=50000)(lemmatizer.lemmatize)
 
 class TextTfIdf(TextToMultiOptionMethod):
 
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return True
+
     def get_data_path(self):
         model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 

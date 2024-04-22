@@ -12,7 +12,7 @@ from data.ExtractionData import ExtractionData
 
 class FuzzyFirstCleanLabel(PdfMultiOptionMethod):
 
-    def get_first_appearance(self, pdf_segments: list[PdfDataSegment], options: list[str]) -> list[str]:
+    def get_appearance(self, pdf_segments: list[PdfDataSegment], options: list[str]) -> list[str]:
         for pdf_segment in pdf_segments:
             for ratio_threshold in range(100, 95, -1):
                 for option in options:
@@ -30,7 +30,7 @@ class FuzzyFirstCleanLabel(PdfMultiOptionMethod):
         clean_options = self.get_cleaned_options(multi_option_data.options)
         for multi_option_sample in multi_option_data.samples:
             pdf_segments: list[PdfDataSegment] = [x for x in multi_option_sample.pdf_data.pdf_data_segments]
-            prediction = self.get_first_appearance(pdf_segments, clean_options)
+            prediction = self.get_appearance(pdf_segments, clean_options)
             if prediction:
                 predictions.append([multi_option_data.options[clean_options.index(prediction[0])]])
             else:

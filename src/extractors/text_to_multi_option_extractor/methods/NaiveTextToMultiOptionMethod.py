@@ -5,6 +5,10 @@ from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import Te
 
 
 class NaiveTextToMultiOptionMethod(TextToMultiOptionMethod):
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return True
+
     def predict(self, predictions_samples: list[PredictionSample]) -> list[list[Option]]:
         return [[] for _ in predictions_samples]
 

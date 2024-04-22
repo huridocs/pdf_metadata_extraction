@@ -14,6 +14,7 @@ from transformers import (
 )
 from data.Option import Option
 from data.PredictionSample import PredictionSample
+from extractors.ExtractorBase import ExtractorBase
 from extractors.bert_method_scripts.get_batch_size import get_max_steps, get_batch_size
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
@@ -30,6 +31,16 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
 class TextSingleLabelBert(TextToMultiOptionMethod):
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        if extraction_data.multi_value:
+            return False
+
+        if not ExtractorBase.is_multilingual(extraction_data):
+            return True
+
+        return False
+
     def get_data_path(self, name):
         model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 

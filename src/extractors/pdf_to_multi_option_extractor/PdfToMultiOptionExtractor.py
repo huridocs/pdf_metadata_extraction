@@ -68,6 +68,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         self.options = extraction_data.options
         self.multi_value = extraction_data.multi_value
 
+        shutil.rmtree(self.extraction_identifier.get_path(), ignore_errors=True)
         method = self.get_best_method(extraction_data)
 
         shutil.rmtree(self.base_path, ignore_errors=True)

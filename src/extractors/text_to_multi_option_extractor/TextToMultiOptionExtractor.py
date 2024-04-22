@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from os.path import join, exists
 from pathlib import Path
 from typing import Type
@@ -23,15 +24,17 @@ from extractors.text_to_multi_option_extractor.methods.TextFuzzyLast import Text
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyLastCleanLabels import TextFuzzyLastCleanLabels
 from extractors.text_to_multi_option_extractor.methods.TextSetFit import TextSetFit
 from extractors.text_to_multi_option_extractor.methods.TextSetFitMultilingual import TextSetFitMultilingual
-from extractors.text_to_multi_option_extractor.methods.TextSingleLabelBert import TextSingleLabelBert
 from extractors.text_to_multi_option_extractor.methods.TextSingleLabelSetFit import TextSingleLabelSetFit
+from extractors.text_to_multi_option_extractor.methods.TextSingleLabelSetFitMultilingual import (
+    TextSingleLabelSetFitMultilingual,
+)
 from extractors.text_to_multi_option_extractor.methods.TextTfIdf import TextTfIdf
 
 
 class TextToMultiOptionExtractor(ExtractorBase):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-    MULTI_LABEL_METHODS: list[Type[TextToMultiOptionMethod]] = [
+    METHODS: list[Type[TextToMultiOptionMethod]] = [
         NaiveTextToMultiOptionMethod,
         TextFuzzyAll75,
         TextFuzzyAll88,
@@ -42,24 +45,10 @@ class TextToMultiOptionExtractor(ExtractorBase):
         TextFuzzyLastCleanLabels,
         TextTfIdf,
         TextFastTextMethod,
-        TextBert,
         TextSetFit,
         TextSetFitMultilingual,
-    ]
-
-    SINGLE_LABEL_METHODS: list[Type[TextToMultiOptionMethod]] = [
-        # NaiveTextToMultiOptionMethod,
-        # TextFuzzyAll75,
-        # TextFuzzyAll88,
-        # TextFuzzyAll100,
-        # TextFuzzyFirst,
-        # TextFuzzyFirstCleanLabels,
-        # TextFuzzyLast,
-        # TextFuzzyLastCleanLabels,
-        # TextTfIdf,
-        # TextFastTextMethod,
         TextSingleLabelSetFit,
-        TextSingleLabelBert,
+        TextSingleLabelSetFitMultilingual,
     ]
 
     def __init__(self, extraction_identifier):
@@ -94,12 +83,12 @@ class TextToMultiOptionExtractor(ExtractorBase):
     def get_predictions_method(self):
         self.load_options()
         method_name = json.loads(self.method_name_path.read_text())
-        for method in self.MULTI_LABEL_METHODS + self.SINGLE_LABEL_METHODS:
+        for method in self.METHODS:
             method_instance = method(self.extraction_identifier, self.options, self.multi_value)
             if method_instance.get_name() == method_name:
                 return method_instance
 
-        return self.SINGLE_LABEL_METHODS[0](self.extraction_identifier, self.options, self.multi_value)
+        return self.METHODS[0](self.extraction_identifier, self.options, self.multi_value)
 
     def load_options(self):
         if not exists(self.options_path) or not exists(self.multi_value_path):
@@ -115,6 +104,8 @@ class TextToMultiOptionExtractor(ExtractorBase):
         self.options = extraction_data.options
         self.multi_value = extraction_data.multi_value
 
+        shutil.rmtree(self.extraction_identifier.get_path(), ignore_errors=True)
+
         best_method_instance = self.get_best_method(extraction_data)
         best_method_instance.train(extraction_data)
 
@@ -125,18 +116,14 @@ class TextToMultiOptionExtractor(ExtractorBase):
 
     def get_best_method(self, extraction_data: ExtractionData):
         best_performance = 0
-        methods_to_loop = self.MULTI_LABEL_METHODS if self.multi_value else self.SINGLE_LABEL_METHODS
-
-        best_method_instance = methods_to_loop[0](self.extraction_identifier, self.options, self.multi_value)
-        for method in methods_to_loop:
+        best_method_instance = self.METHODS[0](self.extraction_identifier, self.options, self.multi_value)
+        for method in self.METHODS:
             method_instance = method(self.extraction_identifier, self.options, self.multi_value)
 
-            if len(methods_to_loop) == 1:
+            if len(self.METHODS) == 1:
                 return method_instance
 
-            config_logger.info(f"\nChecking {method_instance.get_name()}")
-            performance = method_instance.performance(extraction_data)
-            config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
+            performance = self.get_performance(extraction_data, method_instance)
             if performance == 100:
                 config_logger.info(f"\nBest method {method_instance.get_name()} with {performance}%")
                 return method_instance
@@ -147,8 +134,18 @@ class TextToMultiOptionExtractor(ExtractorBase):
 
         return best_method_instance
 
+    @staticmethod
+    def get_performance(extraction_data, method_instance):
+        config_logger.info(f"\nChecking {method_instance.get_name()}")
+        try:
+            performance = method_instance.performance(extraction_data)
+        except:
+            performance = 0
+        config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
+        return performance
+
     def remove_models(self):
-        for method in self.MULTI_LABEL_METHODS + self.SINGLE_LABEL_METHODS:
+        for method in self.METHODS:
             method_instance = method(self.extraction_identifier, self.options, self.multi_value)
             method_instance.remove_model()
 
