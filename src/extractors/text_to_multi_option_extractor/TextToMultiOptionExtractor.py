@@ -21,7 +21,10 @@ from extractors.text_to_multi_option_extractor.methods.NaiveTextToMultiOptionMet
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyFirstCleanLabels import TextFuzzyFirstCleanLabels
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyLast import TextFuzzyLast
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyLastCleanLabels import TextFuzzyLastCleanLabels
+from extractors.text_to_multi_option_extractor.methods.TextSetFit import TextSetFit
+from extractors.text_to_multi_option_extractor.methods.TextSetFitMultilingual import TextSetFitMultilingual
 from extractors.text_to_multi_option_extractor.methods.TextSingleLabelBert import TextSingleLabelBert
+from extractors.text_to_multi_option_extractor.methods.TextSingleLabelSetFit import TextSingleLabelSetFit
 from extractors.text_to_multi_option_extractor.methods.TextTfIdf import TextTfIdf
 
 
@@ -40,19 +43,22 @@ class TextToMultiOptionExtractor(ExtractorBase):
         TextTfIdf,
         TextFastTextMethod,
         TextBert,
+        TextSetFit,
+        TextSetFitMultilingual,
     ]
 
     SINGLE_LABEL_METHODS: list[Type[TextToMultiOptionMethod]] = [
-        NaiveTextToMultiOptionMethod,
-        TextFuzzyAll75,
-        TextFuzzyAll88,
-        TextFuzzyAll100,
-        TextFuzzyFirst,
-        TextFuzzyFirstCleanLabels,
-        TextFuzzyLast,
-        TextFuzzyLastCleanLabels,
-        TextTfIdf,
-        TextFastTextMethod,
+        # NaiveTextToMultiOptionMethod,
+        # TextFuzzyAll75,
+        # TextFuzzyAll88,
+        # TextFuzzyAll100,
+        # TextFuzzyFirst,
+        # TextFuzzyFirstCleanLabels,
+        # TextFuzzyLast,
+        # TextFuzzyLastCleanLabels,
+        # TextTfIdf,
+        # TextFastTextMethod,
+        TextSingleLabelSetFit,
         TextSingleLabelBert,
     ]
 
@@ -124,6 +130,10 @@ class TextToMultiOptionExtractor(ExtractorBase):
         best_method_instance = methods_to_loop[0](self.extraction_identifier, self.options, self.multi_value)
         for method in methods_to_loop:
             method_instance = method(self.extraction_identifier, self.options, self.multi_value)
+
+            if len(methods_to_loop) == 1:
+                return method_instance
+
             config_logger.info(f"\nChecking {method_instance.get_name()}")
             performance = method_instance.performance(extraction_data)
             config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
@@ -142,7 +152,7 @@ class TextToMultiOptionExtractor(ExtractorBase):
             method_instance = method(self.extraction_identifier, self.options, self.multi_value)
             method_instance.remove_model()
 
-    def is_valid(self, extraction_data: ExtractionData) -> bool:
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
         if not extraction_data.options:
             return False
 

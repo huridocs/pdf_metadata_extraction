@@ -5,3 +5,10 @@ Extractor             cejil_secretary                                 1.6  80.0%
 Extractor             cejil_countries                                 5.5 94.12%
 Extractor             cyrilla_keywords                                4.0 68.29%
 Extractor             cejil_judge                                     0.0 100.0%
+
+Extractor             cejil_descriptors[setfit]                      14.9 27.41%
+Extractor             cejil_descriptors[setfitMultilingual]           8.3 51.72%
+Extractor             cejil_mechanism                                 0.3 100.0%
+Extractor             rightdocs_vote_type[tfidf]                      0.0 93.55%
+
+cejil_descriptors     bertMultilingual                               15.5 11.24%

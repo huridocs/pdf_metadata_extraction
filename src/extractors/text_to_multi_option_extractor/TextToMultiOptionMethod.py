@@ -90,3 +90,13 @@ class TextToMultiOptionMethod:
             return [self.options[best_score_index]] if prediction_scores[best_score_index] > 0.5 else []
 
         return [self.options[i] for i, value in enumerate(prediction_scores) if value > 0.5]
+
+    @staticmethod
+    def is_multilingual(multi_option_data: ExtractionData) -> bool:
+        not_multilingual_languages = ["", "en", "eng"]
+
+        for sample in multi_option_data.samples:
+            if sample.labeled_data.language_iso not in not_multilingual_languages:
+                return False
+
+        return True

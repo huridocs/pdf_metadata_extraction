@@ -20,9 +20,9 @@ class TestTextToMultiOptionExtraction(TestCase):
         samples_no_text = [TrainingSample(labeled_data=LabeledData(source_text=""))]
 
         multi_option_extraction = TextToMultiOptionExtractor(extraction_identifier)
-        self.assertFalse(multi_option_extraction.is_valid(ExtractionData(samples=samples_text)))
-        self.assertFalse(multi_option_extraction.is_valid(ExtractionData(options=options, samples=samples_no_text)))
-        self.assertTrue(multi_option_extraction.is_valid(ExtractionData(options=options, samples=samples_text)))
+        self.assertFalse(multi_option_extraction.can_be_used(ExtractionData(samples=samples_text)))
+        self.assertFalse(multi_option_extraction.can_be_used(ExtractionData(options=options, samples=samples_no_text)))
+        self.assertTrue(multi_option_extraction.can_be_used(ExtractionData(options=options, samples=samples_text)))
 
     def test_single_value(self):
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)

@@ -155,11 +155,11 @@ def get_multi_option_extractor_benchmark():
     # cejil_secretary
     # cyrilla_keywords
     # d4la_document_type
-    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data(["d4la_document_type"])
+    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data(["cyrilla_keywords"])
     for extraction_data in extractions_data:
         start = time()
         extractor = PdfToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
-        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 23)
         values_list = [x.labeled_data.values for x in test_set.samples]
         truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, extraction_data.options)
         extractor.create_model(train_set)
@@ -182,12 +182,12 @@ def get_multi_option_extractor_benchmark():
 
 def check_results():
     prediction_table = get_predictions_table()
-    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data(["d4la_document_type"])
+    extractions_data: list[ExtractionData] = get_multi_option_benchmark_data(["cejil_countries"])
     for extraction_data in extractions_data:
         extractor = PdfToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
 
         print(f"Calculating {extractor.extraction_identifier} {extractor.get_name()}")
-        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 23)
         labels = [x.labeled_data.values for x in test_set.samples]
         test_data = [PredictionSample(pdf_data=x.pdf_data) for x in test_set.samples]
         suggestions = extractor.get_suggestions(test_data)
@@ -203,5 +203,5 @@ def check_results():
 
 if __name__ == "__main__":
     # get_benchmark_custom_methods(4)
-    # get_multi_option_extractor_benchmark()
-    check_results()
+    get_multi_option_extractor_benchmark()
+    # check_results()

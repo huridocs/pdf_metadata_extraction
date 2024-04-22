@@ -1,4 +1,5 @@
 import random
+from abc import abstractmethod
 from typing import Type
 
 from sklearn.metrics import f1_score
@@ -98,3 +99,10 @@ class PdfMultiOptionMethod:
         predictions = multi_label.predict(filtered_multi_option_data)
 
         return predictions
+
+    def can_be_used(self, multi_option_data: ExtractionData) -> bool:
+        if self.multi_label_method:
+            multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value)
+            return multi_label.can_be_used(multi_option_data)
+
+        return True

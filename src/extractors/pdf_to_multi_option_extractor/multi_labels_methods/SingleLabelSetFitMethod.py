@@ -10,22 +10,25 @@ from data.ExtractionData import ExtractionData
 from data.Option import Option
 from setfit import SetFitModel, SetFitTrainer, TrainingArguments, Trainer
 
+from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
 from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 
 
-class AvoidEvaluation(DefaultFlowCallback):
-    def on_step_end(self, args, state, control, **kwargs):
-        super().on_step_end(args, state, control, **kwargs)
-
-        if state.global_step <= 3000:
-            control.should_evaluate = False
-
-        return control
-
-
 class SingleLabelSetFitMethod(MultiLabelMethod):
+
+    model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        if extraction_data.multi_value:
+            return False
+
+        if self.is_multilingual(extraction_data):
+            return False
+
+        return True
+
     def get_data_path(self):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -79,11 +82,12 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
         batch_size = get_batch_size(len(extraction_data.samples))
 
         model = SetFitModel.from_pretrained(
-            "sentence-transformers/paraphrase-mpnet-base-v2",
+            self.model_name,
             labels=[x.label for x in self.options],
         )
 
         args = TrainingArguments(
+            output_dir=self.get_model_path(),
             batch_size=batch_size,
             max_steps=get_max_steps(len(extraction_data.samples)),
             evaluation_strategy="steps",
@@ -99,7 +103,7 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             metric="accuracy",
-            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidEvaluation()],
+            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidAllEvaluation()],
         )
 
         trainer.train()

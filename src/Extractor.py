@@ -97,7 +97,7 @@ class Extractor:
         for extractor in self.EXTRACTORS:
             extractor_instance = extractor(self.extraction_identifier)
 
-            if not extractor_instance.is_valid(extraction_data):
+            if not extractor_instance.can_be_used(extraction_data):
                 continue
 
             send_logs(self.extraction_identifier, f"Using extractor {extractor_instance.get_name()}")

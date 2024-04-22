@@ -1,4 +1,5 @@
 import os
+import shutil
 from os.path import join, exists
 
 import pandas as pd
@@ -8,17 +9,16 @@ from data.ExtractionData import ExtractionData
 from data.Option import Option
 from setfit import SetFitModel, TrainingArguments, Trainer
 
+from data.PredictionSample import PredictionSample
 from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
 from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
-from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
+from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import TextToMultiOptionMethod
 
 
-class SetFitMethod(MultiLabelMethod):
-    model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
-
+class TextSetFit(TextToMultiOptionMethod):
     def get_data_path(self):
-        model_folder_path = join(self.base_path, self.get_name())
+        model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 
         if not exists(model_folder_path):
             os.makedirs(model_folder_path)
@@ -26,7 +26,7 @@ class SetFitMethod(MultiLabelMethod):
         return join(model_folder_path, "data.csv")
 
     def get_model_path(self):
-        model_folder_path = join(self.base_path, self.get_name())
+        model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 
         if not exists(model_folder_path):
             os.makedirs(model_folder_path)
@@ -44,7 +44,7 @@ class SetFitMethod(MultiLabelMethod):
 
     def get_dataset_from_data(self, extraction_data: ExtractionData):
         data = list()
-        texts = [sample.pdf_data.get_text() for sample in extraction_data.samples]
+        texts = [self.get_text(sample.tags_texts) for sample in extraction_data.samples]
         labels = self.get_one_hot_encoding(extraction_data)
 
         for text, label in zip(texts, labels):
@@ -61,11 +61,16 @@ class SetFitMethod(MultiLabelMethod):
         return dataset
 
     def train(self, extraction_data: ExtractionData):
+        if self.is_multilingual(extraction_data):
+            return
+
+        shutil.rmtree(self.get_model_path(), ignore_errors=True)
+
         train_dataset = self.get_dataset_from_data(extraction_data)
         batch_size = get_batch_size(len(extraction_data.samples))
 
         model = SetFitModel.from_pretrained(
-            self.model_name,
+            "sentence-transformers/paraphrase-mpnet-base-v2",
             labels=[x.label for x in self.options],
             multi_target_strategy="one-vs-rest",
         )
@@ -94,18 +99,22 @@ class SetFitMethod(MultiLabelMethod):
 
         trainer.model.save_pretrained(self.get_model_path())
 
-    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
+    @staticmethod
+    def get_text(texts: list[str]):
+        words = list()
+        for text in texts:
+            text_words = text.split()
+            for word in text_words:
+                clean_word = "".join([x for x in word if x.isalpha() or x.isdigit()])
+
+                if clean_word:
+                    words.append(clean_word)
+
+        return " ".join(words)
+
+    def predict(self, predictions_samples: list[PredictionSample]) -> list[list[Option]]:
         model = SetFitModel.from_pretrained(self.get_model_path())
-        predict_texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
-        predictions = model.predict(predict_texts)
+        texts = [self.get_text(sample.tags_texts) for sample in predictions_samples]
+        predictions = model.predict(texts)
 
         return self.predictions_to_options_list(predictions.tolist())
-
-    def can_be_used(self, extraction_data: ExtractionData) -> bool:
-        if not extraction_data.multi_value:
-            return False
-
-        if self.is_multilingual(extraction_data):
-            return False
-
-        return True

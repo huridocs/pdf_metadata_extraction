@@ -1,4 +1,6 @@
-from time import time, sleep
+from time import time
+
+import redis
 
 from config import config_logger, logs_queue
 from data.ExtractionIdentifier import ExtractionIdentifier
@@ -27,5 +29,7 @@ def send_logs(extraction_identifier: ExtractionIdentifier, message: str, severit
             message=message,
         )
         logs_queue.sendMessage().message(log_message.dump()).execute()
+    except redis.ConnectionError:
+        print(severity, message)
     except Exception as e:
         config_logger.error(f"Error sending logs: {e}")

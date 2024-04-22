@@ -28,19 +28,25 @@ class ExtractorBase:
         pass
 
     @abstractmethod
-    def is_valid(self, extraction_data: ExtractionData) -> bool:
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
         pass
 
     @staticmethod
-    def get_train_test_sets(extraction_data: ExtractionData, seed: int = 22) -> (ExtractionData, ExtractionData):
+    def get_train_test_sets(
+        extraction_data: ExtractionData, seed: int = 22, limit_samples: bool = True
+    ) -> (ExtractionData, ExtractionData):
         if len(extraction_data.samples) < 15:
             return extraction_data, extraction_data
 
         train_size = int(len(extraction_data.samples) * 0.8)
         random.seed(seed)
 
-        train_set: list[TrainingSample] = random.sample(extraction_data.samples, k=train_size)[:80]
-        test_set: list[TrainingSample] = [x for x in extraction_data.samples if x not in train_set][:30]
+        if limit_samples:
+            train_set: list[TrainingSample] = random.sample(extraction_data.samples, k=train_size)[:80]
+            test_set: list[TrainingSample] = [x for x in extraction_data.samples if x not in train_set][:30]
+        else:
+            train_set: list[TrainingSample] = random.sample(extraction_data.samples, k=train_size)
+            test_set: list[TrainingSample] = [x for x in extraction_data.samples if x not in train_set]
 
         train_data = ExtractionData(
             samples=train_set,

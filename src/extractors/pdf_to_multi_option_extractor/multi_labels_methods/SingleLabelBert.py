@@ -13,11 +13,11 @@ from transformers import (
     AutoModelForSequenceClassification,
 )
 from data.Option import Option
+from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
 from extractors.bert_method_scripts.get_batch_size import get_max_steps, get_batch_size
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
-from extractors.bert_method_scripts.AvoidEvaluation import AvoidEvaluation
 from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import (
     EarlyStoppingAfterInitialTraining,
 )
@@ -29,6 +29,9 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
 class SingleLabelBert(MultiLabelMethod):
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return not extraction_data.multi_value
+
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -127,7 +130,7 @@ class SingleLabelBert(MultiLabelMethod):
             tokenizer=tokenizer,
             data_collator=data_collator,
             compute_metrics=self.compute_metrics,
-            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidEvaluation()],
+            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidAllEvaluation()],
         )
 
         trainer.train()

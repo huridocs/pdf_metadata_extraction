@@ -27,6 +27,10 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
 class BertSeqSteps(MultiLabelMethod):
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return extraction_data.multi_value
+
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 

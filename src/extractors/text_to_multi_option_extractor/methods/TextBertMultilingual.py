@@ -8,27 +8,24 @@ from transformers import TrainingArguments, AutoTokenizer
 
 from data.Option import Option
 from data.ExtractionData import ExtractionData
+from data.PredictionSample import PredictionSample
 from extractors.bert_method_scripts.get_batch_size import get_batch_size
-from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 
 from extractors.bert_method_scripts.multi_label_sequence_classification_trainer import (
     multi_label_run,
     MultiLabelDataTrainingArguments,
     ModelArguments,
 )
+from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import TextToMultiOptionMethod
 
-MODEL_NAME = "google-bert/bert-base-uncased"
-
+MODEL_NAME = "google-bert/bert-base-multilingual-cased"
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-class BertMethod(MultiLabelMethod):
-    def can_be_used(self, extraction_data: ExtractionData) -> bool:
-        return extraction_data.multi_value
-
+class TextBertMultilingual(TextToMultiOptionMethod):
     def get_data_path(self, name):
-        model_folder_path = join(self.base_path, self.get_name())
+        model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 
         if not exists(model_folder_path):
             os.makedirs(model_folder_path)
@@ -36,7 +33,7 @@ class BertMethod(MultiLabelMethod):
         return join(model_folder_path, f"{name}.csv")
 
     def get_model_path(self):
-        model_folder_path = join(self.base_path, self.get_name())
+        model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 
         if not exists(model_folder_path):
             os.makedirs(model_folder_path)
@@ -47,9 +44,25 @@ class BertMethod(MultiLabelMethod):
 
         return str(model_path)
 
-    def create_dataset(self, multi_option_data: ExtractionData, name: str):
-        texts, labels = self.get_texts_labels(multi_option_data)
+    @staticmethod
+    def get_text(texts: list[str]):
+        words = list()
+        for text in texts:
+            text_words = text.split()
+            for word in text_words:
+                clean_word = "".join([x for x in word if x.isalpha() or x.isdigit()])
 
+                if clean_word:
+                    words.append(clean_word)
+
+        return " ".join(words)
+
+    def create_dataset(self, multi_option_data: ExtractionData, name: str):
+        texts = [self.get_text(sample.tags_texts) for sample in multi_option_data.samples]
+        labels = self.get_one_hot_encoding(multi_option_data)
+        return self.save_dataset(texts, labels, name)
+
+    def save_dataset(self, texts, labels, name):
         rows = list()
 
         for text, label in zip(texts, labels):
@@ -61,7 +74,7 @@ class BertMethod(MultiLabelMethod):
         if name != "predict":
             output_df = output_df.sample(frac=1, random_state=22).reset_index(drop=True)
 
-        output_df.to_csv(self.get_data_path(name))
+        output_df.to_csv(str(self.get_data_path(name)))
         return self.get_data_path(name)
 
     def train(self, multi_option_data: ExtractionData):
@@ -110,9 +123,13 @@ class BertMethod(MultiLabelMethod):
         odds = [1 / (1 + exp(-logit)) for logit in logits]
         return odds
 
-    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
+    def predict(self, predictions_samples: list[PredictionSample]) -> list[list[Option]]:
         labels_number = len(self.options)
-        predict_path = self.create_dataset(multi_option_data, "predict")
+
+        texts = [self.get_text(sample.tags_texts) for sample in predictions_samples]
+        labels = [[0] * len(self.options) for _ in predictions_samples]
+
+        predict_path = self.save_dataset(texts, labels, "predict")
         model_arguments = ModelArguments(self.get_model_path(), ignore_mismatched_sizes=True)
         data_training_arguments = MultiLabelDataTrainingArguments(
             train_file=predict_path,
@@ -122,7 +139,7 @@ class BertMethod(MultiLabelMethod):
             labels_number=labels_number,
         )
 
-        batch_size = get_batch_size(len(multi_option_data.samples))
+        batch_size = get_batch_size(len(predictions_samples))
         t5_training_arguments = TrainingArguments(
             report_to=[],
             output_dir=self.get_model_path(),

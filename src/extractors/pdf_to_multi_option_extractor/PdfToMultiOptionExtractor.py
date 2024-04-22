@@ -3,8 +3,8 @@ import shutil
 from os.path import join, exists
 from pathlib import Path
 
-from config import config_logger
 from data.ExtractionIdentifier import ExtractionIdentifier
+from data.LogsMessage import Severity
 from data.Option import Option
 from data.PredictionSample import PredictionSample
 from data.Suggestion import Suggestion
@@ -16,9 +16,9 @@ from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
     CleanBeginningDigits3000,
 )
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.FastTextMethod import FastTextMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import SingleLabelSetFitMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
@@ -31,11 +31,12 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 )
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLast import FuzzyLast
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
+from send_logs import send_logs
 
 
 class PdfToMultiOptionExtractor(ExtractorBase):
 
-    MULTI_LABEL_METHODS: list[PdfMultiOptionMethod] = [
+    METHODS: list[PdfMultiOptionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),
         FuzzyFirstCleanLabel(),
@@ -43,22 +44,13 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
-        PdfMultiOptionMethod(CleanBeginningDot500, SetFitMethod),
-        PdfMultiOptionMethod(CleanEndDot1000, SetFitMethod),
-    ]
-
-    SINGLE_LABEL_METHODS: list[PdfMultiOptionMethod] = [
-        FuzzyFirst(),
-        FuzzyLast(),
-        FuzzyFirstCleanLabel(),
-        FuzzyLastCleanLabel(),
-        FuzzyAll75(),
-        FuzzyAll88(),
-        FuzzyAll100(),
-        PdfMultiOptionMethod(CleanBeginningDot500, SetFitMethod),
         PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
         PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
-        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelSetFitMethod),
+        PdfMultiOptionMethod(CleanBeginningDot500, FastTextMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, FastTextMethod),
+        PdfMultiOptionMethod(CleanBeginningDot500, SetFitMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, SetFitMethod),
+        PdfMultiOptionMethod(CleanBeginningDot500, SingleLabelSetFitMethod),
         PdfMultiOptionMethod(CleanEndDot1000, SingleLabelSetFitMethod),
     ]
 
@@ -112,6 +104,8 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         )
         method = self.get_predictions_method()
         method.set_parameters(multi_option_data)
+        send_logs(self.extraction_identifier, f"Using method {method.get_name()} for suggestions")
+
         prediction = method.predict(multi_option_data)
 
         if not self.multi_value:
@@ -130,42 +124,49 @@ class PdfToMultiOptionExtractor(ExtractorBase):
             self.multi_value = json.load(file)
 
     def get_best_method(self, multi_option_data: ExtractionData) -> PdfMultiOptionMethod:
-        best_method_instance = self.SINGLE_LABEL_METHODS[0]
+        best_method_instance = self.METHODS[0]
         best_performance = 0
-        methods_to_loop = self.MULTI_LABEL_METHODS if self.multi_value else self.SINGLE_LABEL_METHODS
-        for method in methods_to_loop:
-            method.set_parameters(multi_option_data)
-            if len(methods_to_loop) == 1:
-                return method
+        for method in self.METHODS:
+            performance = self.get_performance(method, multi_option_data)
 
-            config_logger.info(f"\nChecking {method.get_name()}")
-
-            try:
-                performance = method.get_performance(multi_option_data)
-            except Exception as e:
-                config_logger.error(f"Error checking {method.get_name()}: {e}")
-                performance = 0
-
-            config_logger.info(f"\nPerformance {method.get_name()}: {performance}%")
             if performance == 100:
-                config_logger.info(f"\nBest method {method.get_name()} with {performance}%")
+                send_logs(self.extraction_identifier, f"Best method {method.get_name()} with {performance}%")
                 return method
 
             if performance > best_performance:
                 best_performance = performance
                 best_method_instance = method
 
+        send_logs(self.extraction_identifier, f"Best method {best_method_instance.get_name()}")
         return best_method_instance
+
+    def get_performance(self, method, multi_option_data):
+        method.set_parameters(multi_option_data)
+
+        if len(self.METHODS) == 1 or not method.can_be_used(multi_option_data):
+            return 0
+
+        send_logs(self.extraction_identifier, f"Checking {method.get_name()}")
+
+        try:
+            performance = method.get_performance(multi_option_data)
+        except Exception as e:
+            send_logs(self.extraction_identifier, f"Error checking {method.get_name()}: {e}", Severity.error)
+
+            performance = 0
+
+        send_logs(self.extraction_identifier, f"Performance {method.get_name()}: {performance}%")
+        return performance
 
     def get_predictions_method(self):
         method_name = json.loads(self.method_name_path.read_text())
-        for method in self.MULTI_LABEL_METHODS + self.SINGLE_LABEL_METHODS:
+        for method in self.METHODS:
             if method.get_name() == method_name:
                 return method
 
-        return self.SINGLE_LABEL_METHODS[0]
+        return self.METHODS[0]
 
-    def is_valid(self, extraction_data: ExtractionData) -> bool:
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
         if not extraction_data.options:
             return False
 

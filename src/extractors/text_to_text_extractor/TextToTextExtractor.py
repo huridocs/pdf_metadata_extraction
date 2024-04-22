@@ -13,6 +13,7 @@ from extractors.text_to_text_extractor.methods.MT5TrueCaseEnglishSpanishMethod i
 from extractors.text_to_text_extractor.methods.RegexMethod import RegexMethod
 from extractors.text_to_text_extractor.methods.RegexSubtractionMethod import RegexSubtractionMethod
 from extractors.text_to_text_extractor.methods.SameInputOutputMethod import SameInputOutputMethod
+from send_logs import send_logs
 
 
 class TextToTextExtractor(ExtractorBase):
@@ -33,10 +34,13 @@ class TextToTextExtractor(ExtractorBase):
             config_logger.info(f"Checking {method_path}")
 
             if exists(method_path):
-                config_logger.info(f"Predicting {len(predictions_samples)} documents with {method_instance.get_name()}")
+                send_logs(
+                    self.extraction_identifier,
+                    f"Predicting {len(predictions_samples)} documents with {method_instance.get_name()}",
+                )
                 return self.suggestions_from_predictions(method_instance, predictions_samples)
 
-        config_logger.info(f"Predicting {len(predictions_samples)} documents with SameInputOutputMethod")
+        send_logs(self.extraction_identifier, f"Predicting {len(predictions_samples)} documents with SameInputOutputMethod")
         naive_method = self.METHODS[0](self.extraction_identifier)
         return self.suggestions_from_predictions(naive_method, predictions_samples)
 
@@ -59,11 +63,11 @@ class TextToTextExtractor(ExtractorBase):
         best_method_instance = self.METHODS[0](self.extraction_identifier)
         for method in self.METHODS[:-1]:
             method_instance = method(self.extraction_identifier)
-            config_logger.info(f"\nChecking {method_instance.get_name()}")
+            send_logs(self.extraction_identifier, f"Checking {method_instance.get_name()}")
             performance = method_instance.performance(extraction_data)
-            config_logger.info(f"\nPerformance {method_instance.get_name()}: {performance}%")
+            send_logs(self.extraction_identifier, f"Performance {method_instance.get_name()}: {performance}%")
             if performance == 100:
-                config_logger.info(f"\nBest method {method_instance.get_name()} with {performance}%")
+                send_logs(self.extraction_identifier, f"Best method {method_instance.get_name()} with {performance}%")
                 return method_instance
 
             if performance > best_performance:
@@ -79,23 +83,23 @@ class TextToTextExtractor(ExtractorBase):
         extraction_data: ExtractionData,
     ):
         if best_performance > 85:
-            config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
+            send_logs(self.extraction_identifier, f"Best method {best_method_instance.get_name()} with {best_performance}%")
             return best_method_instance
 
         t5 = MT5TrueCaseEnglishSpanishMethod(self.extraction_identifier)
 
         if best_performance < 60:
-            config_logger.info(f"\nBest method {t5.get_name()} because the others were bad")
+            send_logs(self.extraction_identifier, f"Best method {t5.get_name()} because the others were bad")
             return t5
 
         performance, _ = t5.performance(extraction_data)
-        config_logger.info(f"\nPerformance {t5.get_name()} with {performance}%")
+        send_logs(self.extraction_identifier, f"Performance {t5.get_name()} with {performance}%")
 
         if performance > best_performance:
-            config_logger.info(f"\nBest method {t5.get_name()} with {performance}%")
+            send_logs(self.extraction_identifier, f"Best method {t5.get_name()} with {performance}%")
             return t5
 
-        config_logger.info(f"\nBest method {best_method_instance.get_name()} with {best_performance}%")
+        send_logs(self.extraction_identifier, f"Best method {best_method_instance.get_name()} with {best_performance}%")
         return best_method_instance
 
     def suggestions_from_predictions(
@@ -112,7 +116,7 @@ class TextToTextExtractor(ExtractorBase):
 
         return suggestions
 
-    def is_valid(self, extraction_data: ExtractionData) -> bool:
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
         for sample in extraction_data.samples:
             if sample.tags_texts:
                 return True

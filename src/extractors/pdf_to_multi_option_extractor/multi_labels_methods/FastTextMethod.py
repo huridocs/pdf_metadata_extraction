@@ -10,6 +10,10 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 
 
 class FastTextMethod(MultiLabelMethod):
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return True
+
     @staticmethod
     def clean_label(label: str):
         return "_".join(label.split()).lower().replace(",", "")

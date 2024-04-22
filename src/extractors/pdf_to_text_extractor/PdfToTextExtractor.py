@@ -9,11 +9,12 @@ from data.Suggestion import Suggestion
 from extractors.ExtractorBase import ExtractorBase
 from extractors.segment_selector.SegmentSelector import SegmentSelector
 from extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
+from send_logs import send_logs
 
 
 class PdfToTextExtractor(ExtractorBase):
 
-    def is_valid(self, extraction_data: ExtractionData) -> bool:
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
         for sample in extraction_data.samples:
             if sample.pdf_data:
                 return True
@@ -28,6 +29,7 @@ class PdfToTextExtractor(ExtractorBase):
         if not all_pdf_segments:
             return False, "No data to create model"
 
+        send_logs(self.extraction_identifier, f"Training paragraph selector")
         success, error = self.create_segment_selector_model(extraction_data)
 
         if not success:
@@ -69,6 +71,7 @@ class PdfToTextExtractor(ExtractorBase):
         if not segment_selector.model or not predictions_samples:
             return []
 
+        send_logs(self.extraction_identifier, f"Getting paragraphs")
         segment_selector.set_extraction_segments([sample.pdf_data for sample in predictions_samples])
 
         for sample in predictions_samples:

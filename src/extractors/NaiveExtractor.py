@@ -16,5 +16,5 @@ class NaiveExtractor(ExtractorBase):
 
         return suggestions
 
-    def is_valid(self, extraction_data: ExtractionData) -> bool:
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
         return True

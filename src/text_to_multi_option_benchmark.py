@@ -59,11 +59,14 @@ def get_benchmark():
     # cejil_secretary
     # cyrilla_keywords
     # d4la_document_type
-    extractions_data: list[ExtractionData] = get_extraction_data()
+    # cejil_mechanism
+    # cejil_descriptors
+    # rightdocs_vote_type
+    extractions_data: list[ExtractionData] = get_extraction_data(filter_by=["d4la_document_type"])
     for extraction_data in extractions_data:
         start = time()
         extractor = TextToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
-        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22, limit_samples=False)
         values_list = [x.labeled_data.values for x in test_set.samples]
         truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, extraction_data.options)
         extractor.create_model(train_set)
@@ -83,6 +86,31 @@ def get_benchmark():
             f"{round(performance, 2)}%",
         )
         rich.print(results_table)
+
+
+def check_results():
+    # cejil_countries
+    # cejil_judge
+    # cejil_president
+    # cejil_secretary
+    # cyrilla_keywords
+    # d4la_document_type
+    # cejil_mechanism
+    # cejil_descriptors
+    # rightdocs_vote_type
+    extractions_data: list[ExtractionData] = get_extraction_data(filter_by=["rightdocs_vote_type"])
+    for extraction_data in extractions_data:
+        extractor = TextToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22, limit_samples=False)
+        test_data = [
+            PredictionSample(tags_texts=x.tags_texts, entity_name=x.labeled_data.entity_name) for x in test_set.samples
+        ]
+        suggestions = extractor.get_suggestions(test_data)
+        for suggestion, sample in zip(suggestions, test_set.samples):
+            print()
+            print(" ".join([x for x in sample.tags_texts]).replace("\n", " "))
+            print([x.label for x in sample.labeled_data.values])
+            print([x.label for x in suggestion.values])
 
 
 if __name__ == "__main__":
