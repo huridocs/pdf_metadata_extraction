@@ -74,8 +74,12 @@ class TextBert(TextToMultiOptionMethod):
     def save_dataset(self, texts, labels, name):
         rows = list()
 
-        for text, label in zip(texts[:10000], labels[:10000]):
-            rows.append([text, label])
+        if name == "predict":
+            for text, label in zip(texts, labels):
+                rows.append([text, label])
+        else:
+            for text, label in zip(texts[:10000], labels[:10000]):
+                rows.append([text, label])
 
         output_df = pd.DataFrame(rows)
         output_df.columns = ["text", "labels"]
