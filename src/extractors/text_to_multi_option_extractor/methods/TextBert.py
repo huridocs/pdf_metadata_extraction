@@ -10,7 +10,7 @@ from data.Option import Option
 from data.ExtractionData import ExtractionData
 from data.PredictionSample import PredictionSample
 from extractors.ExtractorBase import ExtractorBase
-from extractors.bert_method_scripts.get_batch_size import get_batch_size
+from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
 
 from extractors.bert_method_scripts.multi_label_sequence_classification_trainer import (
     multi_label_run,
@@ -86,11 +86,11 @@ class TextBert(TextToMultiOptionMethod):
         output_df.to_csv(str(self.get_data_path(name)))
         return self.get_data_path(name)
 
-    def train(self, multi_option_data: ExtractionData):
+    def train(self, extraction_data: ExtractionData):
         shutil.rmtree(self.get_model_path(), ignore_errors=True)
 
-        training_csv_path = self.create_dataset(multi_option_data, "train")
-        validation_csv_path = self.create_dataset(multi_option_data, "validation")
+        training_csv_path = self.create_dataset(extraction_data, "train")
+        validation_csv_path = self.create_dataset(extraction_data, "validation")
         model_arguments = ModelArguments(self.model_name)
         labels_number = len(self.options)
 
@@ -101,8 +101,8 @@ class TextBert(TextToMultiOptionMethod):
             labels_number=labels_number,
         )
 
-        batch_size = get_batch_size(len(multi_option_data.samples))
-        t5_training_arguments = TrainingArguments(
+        batch_size = get_batch_size(len(extraction_data.samples))
+        training_arguments = TrainingArguments(
             report_to=[],
             output_dir=self.get_model_path(),
             overwrite_output_dir=True,
@@ -110,13 +110,14 @@ class TextBert(TextToMultiOptionMethod):
             per_device_eval_batch_size=batch_size,
             gradient_accumulation_steps=batch_size,
             eval_accumulation_steps=batch_size,
+            max_steps=get_max_steps(len(extraction_data.samples)),
+            evaluation_strategy="steps",
+            save_strategy="steps",
             learning_rate=5e-05,
             do_train=True,
             do_eval=False,
             do_predict=False,
-            save_total_limit=2,
-            save_strategy="steps",
-            evaluation_strategy="steps",
+            save_total_limit=3,
             eval_steps=500000,
             save_steps=200,
             load_best_model_at_end=False,
@@ -125,7 +126,7 @@ class TextBert(TextToMultiOptionMethod):
             num_train_epochs=23,
         )
 
-        multi_label_run(model_arguments, data_training_arguments, t5_training_arguments)
+        multi_label_run(model_arguments, data_training_arguments, training_arguments)
 
     @staticmethod
     def logit_to_probabilities(logits):
