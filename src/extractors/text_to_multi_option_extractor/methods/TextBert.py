@@ -123,7 +123,7 @@ class TextBert(TextToMultiOptionMethod):
             load_best_model_at_end=False,
             logging_steps=50,
             metric_for_best_model="f1",
-            num_train_epochs=23,
+            num_train_epochs=3,
         )
 
         multi_label_run(model_arguments, data_training_arguments, training_arguments)
