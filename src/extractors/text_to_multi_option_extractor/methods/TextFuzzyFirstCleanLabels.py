@@ -1,4 +1,5 @@
 import math
+import unicodedata
 from collections import Counter
 
 from rapidfuzz import fuzz
@@ -14,9 +15,8 @@ class TextFuzzyFirstCleanLabels(TextToMultiOptionMethod):
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         return True
 
-    @staticmethod
-    def get_appearance(texts: list[str], options: list[str]) -> list[str]:
-        all_text = " ".join(texts).lower()
+    def get_appearance(self, texts: list[str], options: list[str]) -> list[str]:
+        all_text = " ".join([self.remove_accents(text) for text in texts]).lower()
         max_words = max([len(option.split()) for option in options])
         words = all_text.split()
         window_texts = [" ".join(words[i : i + max_words]) for i in range(len(words) - max_words + 1)]
@@ -48,8 +48,13 @@ class TextFuzzyFirstCleanLabels(TextToMultiOptionMethod):
         pass
 
     @staticmethod
-    def get_cleaned_labels(options: list[Option]) -> list[str]:
-        options_labels = [x.label.lower() for x in options]
+    def remove_accents(text: str):
+        nfkd_form = unicodedata.normalize("NFKD", text)
+        only_ascii = nfkd_form.encode("ASCII", "ignore")
+        return only_ascii.decode()
+
+    def get_cleaned_labels(self, options: list[Option]) -> list[str]:
+        options_labels = [self.remove_accents(x.label.lower()) for x in options]
         words_counter = Counter()
         for option in options_labels:
             words_counter.update(option.split())

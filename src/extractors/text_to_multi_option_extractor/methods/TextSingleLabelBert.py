@@ -82,7 +82,7 @@ class TextSingleLabelBert(TextToMultiOptionMethod):
     def save_dataset(self, texts, labels, name):
         rows = list()
 
-        for text, label in zip(texts, labels):
+        for text, label in zip(texts[:10000], labels[:10000]):
             rows.append([text, label])
 
         output_df = pd.DataFrame(rows)

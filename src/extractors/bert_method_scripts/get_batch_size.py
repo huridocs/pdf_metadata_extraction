@@ -19,4 +19,4 @@ def get_max_steps(samples_count):
     if samples_count < (2000 / min_epochs):
         return 2000
 
-    return math.ceil(min_epochs * samples_count / 200) * 200
+    return min(math.ceil(min_epochs * samples_count / 200) * 200, 6000)

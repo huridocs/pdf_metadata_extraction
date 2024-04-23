@@ -77,7 +77,7 @@ class TextSingleLabelSetFit(TextToMultiOptionMethod):
             if sample.labeled_data.values:
                 labels[-1] = self.options[self.options.index(sample.labeled_data.values[0])].label
 
-        for text, label in zip(texts, labels):
+        for text, label in zip(texts[:10000], labels[:10000]):
             data.append([text, label])
 
         df = pd.DataFrame(data)
@@ -115,7 +115,7 @@ class TextSingleLabelSetFit(TextToMultiOptionMethod):
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
             metric="accuracy",
-            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidAllEvaluation()],
+            callbacks=[AvoidAllEvaluation()],
         )
 
         trainer.train()

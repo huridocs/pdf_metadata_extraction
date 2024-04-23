@@ -13,6 +13,7 @@ from data.Suggestion import Suggestion
 from extractors.ExtractorBase import ExtractorBase
 from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import TextToMultiOptionMethod
 from extractors.text_to_multi_option_extractor.methods.TextBert import TextBert
+from extractors.text_to_multi_option_extractor.methods.TextBertLarge import TextBertLarge
 from extractors.text_to_multi_option_extractor.methods.TextFastTextMethod import TextFastTextMethod
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyAll100 import TextFuzzyAll100
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyAll75 import TextFuzzyAll75
@@ -24,6 +25,7 @@ from extractors.text_to_multi_option_extractor.methods.TextFuzzyLast import Text
 from extractors.text_to_multi_option_extractor.methods.TextFuzzyLastCleanLabels import TextFuzzyLastCleanLabels
 from extractors.text_to_multi_option_extractor.methods.TextSetFit import TextSetFit
 from extractors.text_to_multi_option_extractor.methods.TextSetFitMultilingual import TextSetFitMultilingual
+from extractors.text_to_multi_option_extractor.methods.TextSingleLabelBert import TextSingleLabelBert
 from extractors.text_to_multi_option_extractor.methods.TextSingleLabelSetFit import TextSingleLabelSetFit
 from extractors.text_to_multi_option_extractor.methods.TextSingleLabelSetFitMultilingual import (
     TextSingleLabelSetFitMultilingual,
@@ -35,20 +37,22 @@ class TextToMultiOptionExtractor(ExtractorBase):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
     METHODS: list[Type[TextToMultiOptionMethod]] = [
-        NaiveTextToMultiOptionMethod,
-        TextFuzzyAll75,
-        TextFuzzyAll88,
-        TextFuzzyAll100,
-        TextFuzzyFirst,
-        TextFuzzyFirstCleanLabels,
-        TextFuzzyLast,
-        TextFuzzyLastCleanLabels,
-        TextTfIdf,
-        TextFastTextMethod,
-        TextSetFit,
-        TextSetFitMultilingual,
-        TextSingleLabelSetFit,
-        TextSingleLabelSetFitMultilingual,
+        # NaiveTextToMultiOptionMethod,
+        # TextFuzzyAll75,
+        # TextFuzzyAll88,
+        # TextFuzzyAll100,
+        # TextFuzzyFirst,
+        # TextFuzzyFirstCleanLabels,
+        # TextFuzzyLast,
+        # TextFuzzyLastCleanLabels,
+        # TextTfIdf,
+        # TextFastTextMethod,
+        # TextSetFit,
+        # TextSetFitMultilingual,
+        # TextSingleLabelSetFit,
+        # TextSingleLabelSetFitMultilingual,
+        TextBertLarge,
+        # TextSingleLabelBert,
     ]
 
     def __init__(self, extraction_identifier):
@@ -122,6 +126,9 @@ class TextToMultiOptionExtractor(ExtractorBase):
 
             if len(self.METHODS) == 1:
                 return method_instance
+
+            if not method_instance.can_be_used(extraction_data):
+                continue
 
             performance = self.get_performance(extraction_data, method_instance)
             if performance == 100:

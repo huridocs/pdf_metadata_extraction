@@ -51,7 +51,6 @@ PDF_MULTI_OPTION_EXTRACTION_LABELED_DATA_PATH = join(
 PDF_DATA_FOLDER_PATH = join(ROOT_PATH, "data", "pdf_data_cache")
 LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
-
 # text_extractors = [CleanBeginningDigits3000, CleanEndDot1000]
 # multi_option_extractors = [TfIdfMethod]
 # PDF_TOPIC_CLASSIFICATION_METHODS = [PdfMultiOptionMethod(x, y) for x in text_extractors for y in multi_option_extractors]
@@ -104,7 +103,11 @@ def get_samples(task_name):
             pdf_data: PdfData = pickle.load(file)
 
         values = [Option(id=x, label=x) for x in labels_dict[pdf_name]]
-        extraction_sample = TrainingSample(pdf_data=pdf_data, labeled_data=LabeledData(values=values))
+        language_iso = "es" if "cejil" in task_name else "en"
+
+        extraction_sample = TrainingSample(
+            pdf_data=pdf_data, labeled_data=LabeledData(values=values, language_iso=language_iso)
+        )
         multi_option_samples.append(extraction_sample)
     return multi_option_samples
 

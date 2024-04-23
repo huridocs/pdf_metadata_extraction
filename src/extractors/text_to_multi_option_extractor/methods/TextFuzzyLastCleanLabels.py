@@ -11,9 +11,8 @@ class TextFuzzyLastCleanLabels(TextFuzzyFirstCleanLabels):
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         return True
 
-    @staticmethod
-    def get_appearance(texts: list[str], options: list[str]) -> list[str]:
-        all_text = " ".join(texts).lower()
+    def get_appearance(self, texts: list[str], options: list[str]) -> list[str]:
+        all_text = " ".join([self.remove_accents(text) for text in texts]).lower()
         max_words = max([len(option.split()) for option in options])
         words = all_text.split()
         window_texts = [" ".join(words[i : i + max_words]) for i in range(len(words) - max_words + 1)]

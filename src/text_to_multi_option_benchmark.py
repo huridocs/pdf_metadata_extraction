@@ -35,7 +35,8 @@ def get_extraction_data(filter_by: list[str] = None):
         samples: list[TrainingSample] = list()
         for i, text_value in enumerate(texts_values):
             values = [Option(id=x, label=x) for x in text_value["values"]]
-            labeled_data = LabeledData(values=values, entity_name=str(i))
+            language_iso = "es" if "cejil" in task_name else "en"
+            labeled_data = LabeledData(values=values, entity_name=str(i), language_iso=language_iso)
             extraction_sample = TrainingSample(tags_texts=[text_value["text"]], labeled_data=labeled_data)
             samples.append(extraction_sample)
 
@@ -62,7 +63,10 @@ def get_benchmark():
     # cejil_mechanism
     # cejil_descriptors
     # rightdocs_vote_type
-    extractions_data: list[ExtractionData] = get_extraction_data()
+    # action
+    # themes
+    # issues
+    extractions_data: list[ExtractionData] = get_extraction_data(filter_by=["themes", "issues"])
     for extraction_data in extractions_data:
         start = time()
         extractor = TextToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
@@ -115,3 +119,4 @@ def check_results():
 
 if __name__ == "__main__":
     get_benchmark()
+    # check_results()

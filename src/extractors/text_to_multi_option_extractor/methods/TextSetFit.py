@@ -19,6 +19,8 @@ from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import Te
 
 class TextSetFit(TextToMultiOptionMethod):
 
+    model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
+
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         if not extraction_data.multi_value:
             return False
@@ -58,7 +60,7 @@ class TextSetFit(TextToMultiOptionMethod):
         texts = [self.get_text(sample.tags_texts) for sample in extraction_data.samples]
         labels = self.get_one_hot_encoding(extraction_data)
 
-        for text, label in zip(texts, labels):
+        for text, label in zip(texts[:10000], labels[:10000]):
             data.append([text, label])
 
         df = pd.DataFrame(data)
@@ -81,7 +83,7 @@ class TextSetFit(TextToMultiOptionMethod):
         batch_size = get_batch_size(len(extraction_data.samples))
 
         model = SetFitModel.from_pretrained(
-            "sentence-transformers/paraphrase-mpnet-base-v2",
+            self.model_name,
             labels=[x.label for x in self.options],
             multi_target_strategy="one-vs-rest",
         )

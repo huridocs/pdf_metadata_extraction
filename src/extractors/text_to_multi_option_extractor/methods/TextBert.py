@@ -4,7 +4,7 @@ from math import exp
 from os.path import join, exists
 
 import pandas as pd
-from transformers import TrainingArguments, AutoTokenizer
+from transformers import TrainingArguments
 
 from data.Option import Option
 from data.ExtractionData import ExtractionData
@@ -19,12 +19,11 @@ from extractors.bert_method_scripts.multi_label_sequence_classification_trainer 
 )
 from extractors.text_to_multi_option_extractor.TextToMultiOptionMethod import TextToMultiOptionMethod
 
-MODEL_NAME = "google-bert/bert-base-uncased"
-
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-
 
 class TextBert(TextToMultiOptionMethod):
+
+    model_name = "google-bert/bert-base-uncased"
+
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         if not extraction_data.multi_value:
             return False
@@ -75,7 +74,7 @@ class TextBert(TextToMultiOptionMethod):
     def save_dataset(self, texts, labels, name):
         rows = list()
 
-        for text, label in zip(texts, labels):
+        for text, label in zip(texts[:10000], labels[:10000]):
             rows.append([text, label])
 
         output_df = pd.DataFrame(rows)
@@ -92,7 +91,7 @@ class TextBert(TextToMultiOptionMethod):
 
         training_csv_path = self.create_dataset(multi_option_data, "train")
         validation_csv_path = self.create_dataset(multi_option_data, "validation")
-        model_arguments = ModelArguments(MODEL_NAME)
+        model_arguments = ModelArguments(self.model_name)
         labels_number = len(self.options)
 
         data_training_arguments = MultiLabelDataTrainingArguments(

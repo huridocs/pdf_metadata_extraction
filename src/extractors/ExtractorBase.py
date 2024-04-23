@@ -50,13 +50,14 @@ class ExtractorBase:
 
         train_size = int(len(extraction_data.samples) * 0.8)
         random.seed(seed)
+        random.shuffle(extraction_data.samples)
 
         if limit_samples:
-            train_set: list[TrainingSample] = random.sample(extraction_data.samples, k=train_size)[:80]
-            test_set: list[TrainingSample] = [x for x in extraction_data.samples if x not in train_set][:30]
+            train_set: list[TrainingSample] = extraction_data.samples[:train_size][:80]
+            test_set: list[TrainingSample] = extraction_data.samples[train_size:][:30]
         else:
-            train_set: list[TrainingSample] = random.sample(extraction_data.samples, k=train_size)
-            test_set: list[TrainingSample] = [x for x in extraction_data.samples if x not in train_set]
+            train_set: list[TrainingSample] = extraction_data.samples[:train_size]
+            test_set: list[TrainingSample] = extraction_data.samples[train_size:]
 
         train_data = ExtractionData(
             samples=train_set,
