@@ -52,7 +52,8 @@ class TextToMultiOptionExtractor(ExtractorBase):
         # TextSingleLabelSetFit,
         # TextSingleLabelSetFitMultilingual,
         # TextBert,
-        TextSingleLabelBert,
+        TextBertLarge,
+        # TextSingleLabelBert,
     ]
 
     def __init__(self, extraction_identifier):

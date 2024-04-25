@@ -66,7 +66,7 @@ def get_benchmark():
     # action
     # themes
     # issues
-    extractions_data: list[ExtractionData] = get_extraction_data(filter_by=["themes"])
+    extractions_data: list[ExtractionData] = get_extraction_data(filter_by=["issues"])
     for extraction_data in extractions_data:
         start = time()
         extractor = TextToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
