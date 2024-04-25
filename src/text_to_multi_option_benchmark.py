@@ -73,7 +73,7 @@ def get_benchmark():
         train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22, limit_samples=False)
         values_list = [x.labeled_data.values for x in test_set.samples]
         truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, extraction_data.options)
-        # extractor.create_model(train_set)
+        extractor.create_model(train_set)
 
         tags_texts = [x.tags_texts for x in test_set.samples]
         test_data = [PredictionSample(tags_texts=tag_text, entity_name=str(i)) for i, tag_text in enumerate(tags_texts)]
