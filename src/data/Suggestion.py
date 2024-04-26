@@ -39,8 +39,8 @@ class Suggestion(BaseModel):
         self.add_segments(prediction_pdf_data)
         self.text = text
 
-    def add_prediction_multi_option(self, prediction_sample: TrainingSample, values: list[Option]):
-        self.add_segments(prediction_sample.pdf_data)
+    def add_prediction_multi_option(self, training_sample: TrainingSample, values: list[Option]):
+        self.add_segments(training_sample.pdf_data)
         self.values = values
 
     def add_segments(self, pdf_data: PdfData):

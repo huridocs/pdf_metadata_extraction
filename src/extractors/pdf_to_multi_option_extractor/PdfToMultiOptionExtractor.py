@@ -35,7 +35,6 @@ from send_logs import send_logs
 
 
 class PdfToMultiOptionExtractor(ExtractorBase):
-
     METHODS: list[PdfMultiOptionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),
@@ -68,10 +67,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         self.options = extraction_data.options
         self.multi_value = extraction_data.multi_value
 
-        shutil.rmtree(self.extraction_identifier.get_path(), ignore_errors=True)
         method = self.get_best_method(extraction_data)
-
-        shutil.rmtree(self.base_path, ignore_errors=True)
         method.train(extraction_data)
 
         self.save_json(self.options_path, [x.model_dump() for x in extraction_data.options])
@@ -84,35 +80,35 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         if not predictions_samples:
             return []
 
-        multi_option_samples, predictions = self.get_predictions(predictions_samples)
+        training_samples, predictions = self.get_predictions(predictions_samples)
 
         suggestions = list()
-        for multi_option_sample, prediction in zip(multi_option_samples, predictions):
-            suggestion = Suggestion.get_empty(self.extraction_identifier, multi_option_sample.pdf_data.file_name)
-            suggestion.add_prediction_multi_option(multi_option_sample, prediction)
+        for training_sample, prediction_sample, prediction in zip(training_samples, predictions_samples, predictions):
+            suggestion = Suggestion.get_empty(self.extraction_identifier, prediction_sample.entity_name)
+            suggestion.add_prediction_multi_option(training_sample, prediction)
             suggestions.append(suggestion)
 
         return suggestions
 
-    def get_predictions(self, predictions_samples: list[PredictionSample]):
+    def get_predictions(self, predictions_samples: list[PredictionSample]) -> (list[TrainingSample], list[list[Option]]):
         self.load_options()
-        multi_option_samples = [TrainingSample(pdf_data=sample.pdf_data) for sample in predictions_samples]
-        multi_option_data = ExtractionData(
+        training_samples = [TrainingSample(pdf_data=sample.pdf_data) for sample in predictions_samples]
+        extraction_data = ExtractionData(
             multi_value=self.multi_value,
             options=self.options,
-            samples=multi_option_samples,
+            samples=training_samples,
             extraction_identifier=self.extraction_identifier,
         )
         method = self.get_predictions_method()
-        method.set_parameters(multi_option_data)
+        method.set_parameters(extraction_data)
         send_logs(self.extraction_identifier, f"Using method {method.get_name()} for suggestions")
 
-        prediction = method.predict(multi_option_data)
+        prediction = method.predict(extraction_data)
 
         if not self.multi_value:
             prediction = [x[:1] for x in prediction]
 
-        return multi_option_samples, prediction
+        return training_samples, prediction
 
     def load_options(self):
         if not exists(self.options_path) or not exists(self.multi_value_path):

@@ -6,7 +6,7 @@ from time import time
 
 import pymongo
 
-from config import MONGO_PORT, MONGO_HOST, DATA_PATH
+from config import MONGO_PORT, MONGO_HOST, DATA_PATH, config_logger
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.LogsMessage import Severity
@@ -143,6 +143,7 @@ class Extractor:
 
     def delete_training_data(self):
         training_xml_path = XmlFile.get_xml_folder_path(extraction_identifier=self.extraction_identifier, to_train=True)
+        send_logs(self.extraction_identifier, f"Deleting training data in {training_xml_path}")
         shutil.rmtree(training_xml_path, ignore_errors=True)
         self.pdf_metadata_extraction_db.labeled_data.delete_many(self.mongo_filter)
 
@@ -198,6 +199,7 @@ class Extractor:
             for extraction_name in os.listdir(join(DATA_PATH, run_name)):
                 extractor_identifier_to_check = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name)
                 if extractor_identifier_to_check.is_old():
+                    config_logger.info(f"Removing old model folder {extractor_identifier_to_check.get_path()}")
                     shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
 
     @staticmethod

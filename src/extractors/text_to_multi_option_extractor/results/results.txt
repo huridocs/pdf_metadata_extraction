@@ -13,6 +13,7 @@ Extractor             cejil_judge                                     0.0 100.0%
 Extractor             action [TextSingleLabelSetFit]                 10.1  88.3%
 Extractor             issues [Setfit]                                13.0  76.7%
 Extractor             issues [BertBase]                                 -  70.8%
+Extractor             issues [BertLarge]                             98.3  90.2%
 Extractor             themes [Setfit]                                 5.3  66.1%
 Extractor             themes [BertBase]                              36.9  70.7%
 Extractor             themes [BertLarge]                             43.6  69.7%

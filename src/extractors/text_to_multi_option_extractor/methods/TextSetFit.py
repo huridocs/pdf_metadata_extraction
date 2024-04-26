@@ -74,9 +74,6 @@ class TextSetFit(TextToMultiOptionMethod):
         return dataset
 
     def train(self, extraction_data: ExtractionData):
-        if ExtractorBase.is_multilingual(extraction_data):
-            return
-
         shutil.rmtree(self.get_model_path(), ignore_errors=True)
 
         train_dataset = self.get_dataset_from_data(extraction_data)

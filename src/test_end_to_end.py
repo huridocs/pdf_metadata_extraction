@@ -175,7 +175,7 @@ class TestEndToEnd(TestCase):
 
     def test_pdf_to_multi_option(self):
         tenant = "end_to_end_test"
-        extraction_id = "multi_select_name"
+        extraction_id = "pdf_to_multi_option"
 
         test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
 

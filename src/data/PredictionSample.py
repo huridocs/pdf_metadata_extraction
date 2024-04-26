@@ -7,7 +7,7 @@ from data.PdfData import PdfData
 class PredictionSample:
     pdf_data: PdfData = None
     tags_texts: list[str] = None
-    entity_name: str = None
+    entity_name: str = ""
 
     def get_text(self):
         texts = list()

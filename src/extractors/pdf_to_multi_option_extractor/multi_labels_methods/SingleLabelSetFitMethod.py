@@ -1,4 +1,5 @@
 import os
+import shutil
 from os.path import join, exists
 
 import pandas as pd
@@ -79,6 +80,7 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
         return dataset
 
     def train(self, extraction_data: ExtractionData):
+        shutil.rmtree(self.get_model_path(), ignore_errors=True)
         train_dataset = self.get_dataset_from_data(extraction_data)
         batch_size = get_batch_size(len(extraction_data.samples))
 

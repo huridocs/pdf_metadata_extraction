@@ -1,4 +1,5 @@
 import os
+import shutil
 from os.path import join, exists
 from pathlib import Path
 
@@ -49,6 +50,7 @@ class TextFastTextMethod(TextToMultiOptionMethod):
         Path(self.get_data_path()).write_text("\n".join(data))
 
     def train(self, multi_option_data: ExtractionData):
+        shutil.rmtree(self.get_model_path(), ignore_errors=True)
         self.prepare_data(multi_option_data)
         fasttext_params = {
             "input": self.get_data_path(),
