@@ -24,6 +24,10 @@ lemmatize = lru_cache(maxsize=50000)(lemmatizer.lemmatize)
 
 
 class TfIdfMethod(MultiLabelMethod):
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return True
+
     def get_data_path(self):
         model_folder_path = join(self.base_path, self.get_name())
 

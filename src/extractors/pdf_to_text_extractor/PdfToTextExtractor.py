@@ -1,83 +1,87 @@
 from time import time
 
-from langcodes import standardize_tag
-
 from config import config_logger
-from data.ExtractionIdentifier import ExtractionIdentifier
-from data.LabeledData import LabeledData
-from data.PdfTagData import PdfTagData
-from data.SemanticExtractionData import SemanticExtractionData
-from data.SemanticPredictionData import SemanticPredictionData
+from data.ExtractionData import ExtractionData
 from data.PdfData import PdfData
 from data.PdfDataSegment import PdfDataSegment
-from segment_selector.SegmentSelector import SegmentSelector
+from data.PredictionSample import PredictionSample
+from data.Suggestion import Suggestion
+from extractors.ExtractorBase import ExtractorBase
+from extractors.segment_selector.SegmentSelector import SegmentSelector
 from extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
+from send_logs import send_logs
 
 
-class PdfToTextExtractor:
-    def __init__(self, extraction_identifier: ExtractionIdentifier, pdfs_data: list[PdfData]):
-        self.extraction_identifier = extraction_identifier
-        self.pdfs_data = pdfs_data
-        self.segment_selector = SegmentSelector(self.extraction_identifier)
+class PdfToTextExtractor(ExtractorBase):
 
-    def create_model(self, labeled_data: list[LabeledData]) -> (bool, str):
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        for sample in extraction_data.samples:
+            if sample.pdf_data:
+                return True
+
+        return False
+
+    def create_model(self, extraction_data: ExtractionData) -> tuple[bool, str]:
         all_pdf_segments: list[PdfDataSegment] = [
-            pdf_segment for pdf_segments in self.pdfs_data for pdf_segment in pdf_segments.pdf_data_segments
+            pdf_segment for sample in extraction_data.samples for pdf_segment in sample.pdf_data.pdf_data_segments
         ]
 
         if not all_pdf_segments:
             return False, "No data to create model"
 
+        send_logs(self.extraction_identifier, f"Training paragraph selector")
+        success, error = self.create_segment_selector_model(extraction_data)
+
+        if not success:
+            return False, error
+
+        success, error = self.create_semantic_model(extraction_data)
+        return success, error
+
+    def create_segment_selector_model(self, extraction_data):
         segment_selector = SegmentSelector(self.extraction_identifier)
-        segment_selector.create_model(pdfs_data=self.pdfs_data)
+        pdfs_data = [sample.pdf_data for sample in extraction_data.samples]
+        return segment_selector.create_model(pdfs_data=pdfs_data)
 
-        self.create_semantic_model(labeled_data)
-        return True, ""
-
-    def create_semantic_model(self, labeled_data: list[LabeledData]):
+    def create_semantic_model(self, extraction_data: ExtractionData):
         semantic_metadata_extraction = TextToTextExtractor(self.extraction_identifier)
         semantic_metadata_extraction.remove_models()
-        semantic_extractions_data: list[SemanticExtractionData] = list()
-        for pdf_features, labeled_data in zip(self.pdfs_data, labeled_data):
-            semantic_extraction_data = SemanticExtractionData(
-                text=labeled_data.label_text.strip(),
-                pdf_tags=(self.get_predicted_tags_data(pdf_features)),
-                language_iso=standardize_tag(labeled_data.language_iso),
-            )
+        for sample in extraction_data.samples:
+            sample.tags_texts = self.get_predicted_texts(sample.pdf_data)
 
-            semantic_extractions_data.append(semantic_extraction_data)
-
-        semantic_metadata_extraction.create_model(semantic_extractions_data)
+        return semantic_metadata_extraction.create_model(extraction_data)
 
     @staticmethod
-    def get_predicted_tags_data(pdf_data: PdfData) -> list[PdfTagData]:
+    def get_predicted_texts(pdf_data: PdfData) -> list[str]:
         predicted_pdf_segments = [x for x in pdf_data.pdf_data_segments if x.ml_label]
 
-        pdfs_tag_data: list[PdfTagData] = list()
+        tags_texts: list[str] = list()
         for pdf_segment in predicted_pdf_segments:
             for page, token in pdf_data.pdf_features.loop_tokens():
                 if pdf_segment.intersects(PdfDataSegment.from_pdf_token(token)):
-                    pdfs_tag_data.append(PdfTagData(text=token.content))
+                    tags_texts.append(token.content.strip())
 
-        return pdfs_tag_data
+        return tags_texts
 
-    def get_metadata_predictions(self) -> list[str]:
+    def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
         start = time()
         config_logger.info("get_metadata_predictions")
         segment_selector = SegmentSelector(self.extraction_identifier)
 
-        if not segment_selector.model or not self.pdfs_data:
+        if not segment_selector.model or not predictions_samples:
             return []
 
-        segment_selector.set_extraction_segments(self.pdfs_data)
+        send_logs(self.extraction_identifier, f"Getting paragraphs")
+        segment_selector.set_extraction_segments([sample.pdf_data for sample in predictions_samples])
 
-        semantic_predictions_data = list()
-        for pdf_data in self.pdfs_data:
-            selected_segments = [pdf_segment for pdf_segment in pdf_data.pdf_data_segments if pdf_segment.ml_label]
-            semantic_predictions_data.append(SemanticPredictionData.from_pdf_data_segments(selected_segments))
+        for sample in predictions_samples:
+            sample.tags_texts = self.get_predicted_texts(sample.pdf_data)
 
         semantic_metadata_extraction = TextToTextExtractor(self.extraction_identifier)
-        semantic_predictions_texts = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
+        suggestions = semantic_metadata_extraction.get_suggestions(predictions_samples)
+
+        for suggestion, sample in zip(suggestions, predictions_samples):
+            suggestion.add_segments(sample.pdf_data)
 
         config_logger.info(f"get_semantic_predictions {round(time() - start, 2)} seconds")
-        return semantic_predictions_texts if semantic_predictions_texts else []
+        return suggestions

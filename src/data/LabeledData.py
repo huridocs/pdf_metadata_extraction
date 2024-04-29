@@ -8,6 +8,7 @@ class LabeledData(BaseModel):
     tenant: str = ""
     id: str = ""
     xml_file_name: str = ""
+    entity_name: str = ""
     language_iso: str = ""
     label_text: str = ""
     values: list[Option] = list()

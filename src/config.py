@@ -4,17 +4,19 @@ from os.path import join
 from pathlib import Path
 
 import graypy
+from rsmq import RedisSMQ
 
 
 SERVICE_NAME = "information_extraction"
 TASK_QUEUE_NAME = SERVICE_NAME + "_tasks"
 RESULTS_QUEUE_NAME = SERVICE_NAME + "_results"
+LOGS_QUEUE_NAME = SERVICE_NAME + "_logs"
 
 SERVICE_HOST = os.environ.get("SERVICE_HOST", "http://127.0.0.1")
 SERVICE_PORT = os.environ.get("SERVICE_PORT", "5056")
 GRAYLOG_IP = os.environ.get("GRAYLOG_IP")
-REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
-REDIS_PORT = os.environ.get("REDIS_PORT", "6739")
+REDIS_HOST = os.environ.get("REDIS_HOST", "127.0.0.1")
+REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
 MONGO_HOST = os.environ.get("MONGO_HOST", "mongodb://127.0.0.1")
 MONGO_PORT = os.environ.get("MONGO_PORT", "29017")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
@@ -34,3 +36,9 @@ if GRAYLOG_IP:
 logging.root.handlers = []
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=handlers)
 config_logger = logging.getLogger(__name__)
+
+logs_queue = RedisSMQ(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    qname=LOGS_QUEUE_NAME,
+)

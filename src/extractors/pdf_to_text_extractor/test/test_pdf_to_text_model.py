@@ -11,7 +11,7 @@ class TestPdfToTextExtractor(TestCase):
     def test_no_prediction_data(self):
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
 
-        metadata_extractor = PdfToTextExtractor(extraction_identifier, [])
-        predictions = metadata_extractor.get_metadata_predictions()
+        pdf_to_text_extractor = PdfToTextExtractor(extraction_identifier)
+        predictions = pdf_to_text_extractor.get_suggestions([])
 
         self.assertEqual(0, len(predictions))

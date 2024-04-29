@@ -20,8 +20,14 @@ from data.SegmentBox import SegmentBox
 from data.SegmentationData import SegmentationData
 from data.PdfData import PdfData
 from performance.Results import Results
-from segment_selector.Paragraphs import Paragraphs
-from segment_selector.evaluate_config import SIZES, SEED, LABELED_DATA_TO_USE, METHODS_TO_EXECUTE, PDF_LABELED_DATA_PATH
+from extractors.segment_selector.Paragraphs import Paragraphs
+from extractors.segment_selector.evaluate_config import (
+    SIZES,
+    SEED,
+    LABELED_DATA_TO_USE,
+    METHODS_TO_EXECUTE,
+    PDF_LABELED_DATA_PATH,
+)
 
 RANDOM_SEED = 42
 
@@ -151,7 +157,7 @@ def run_one_method(
     method = importlib.import_module(import_from, method_class_name)
     method_class = getattr(method, method_class_name)
     method_instance = method_class()
-    model = method_instance.create_model(training_pdfs_segments, model_path)
+    model = method_instance.can_be_used(training_pdfs_segments, model_path)
     predictions = method_instance.predict(model, testing_pdfs_segments, model_path)
 
     y_true = [x.ml_label for test in testing_pdfs_segments for x in test.pdf_data_segments]

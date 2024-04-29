@@ -1,16 +1,20 @@
 import os
+import shutil
 from os.path import join, exists
 from pathlib import Path
 
 import fasttext
 
 from data.Option import Option
-from data.SemanticPredictionData import SemanticPredictionData
 from data.ExtractionData import ExtractionData
-from extractors.pdf_to_multi_option_extractor.TextToMultiOptionMethod import MultiLabelMethods
+from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 
 
-class FastTextMethod(MultiLabelMethods):
+class FastTextMethod(MultiLabelMethod):
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return True
+
     @staticmethod
     def clean_label(label: str):
         return "_".join(label.split()).lower().replace(",", "")
@@ -35,13 +39,17 @@ class FastTextMethod(MultiLabelMethods):
         return join(model_folder_path, "fast.model")
 
     def prepare_data(self, multi_option_data: ExtractionData):
-        texts = [self.get_text_from_pdf_segments(sample.pdf_data) for sample in multi_option_data.samples]
+        texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
         texts = [text.replace("\n", " ") for text in texts]
-        labels = ["__label__" + " __label__".join(self.clean_labels(sample.values)) for sample in multi_option_data.samples]
+        labels = [
+            "__label__" + " __label__".join(self.clean_labels(sample.labeled_data.values))
+            for sample in multi_option_data.samples
+        ]
         data = [f"{label} {text}" for label, text in zip(labels, texts)]
         Path(self.get_data_path()).write_text("\n".join(data))
 
     def train(self, multi_option_data: ExtractionData):
+        shutil.rmtree(self.get_model_path(), ignore_errors=True)
         self.prepare_data(multi_option_data)
         fasttext_params = {
             "input": self.get_data_path(),
@@ -56,8 +64,8 @@ class FastTextMethod(MultiLabelMethods):
         model = fasttext.train_supervised(**fasttext_params)
         model.save_model(self.get_model_path())
 
-    def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[list[Option]]:
-        texts = [self.get_text_from_pdf_segments(sample.pdf_tags_data) for sample in semantic_predictions_data]
+    def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
+        texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
         texts = [text.replace("\n", " ") for text in texts]
 
         model = fasttext.load_model(self.get_model_path())

@@ -4,10 +4,9 @@ from pydantic import BaseModel
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.SegmentBox import SegmentBox
-from data.SemanticPredictionData import SemanticPredictionData
 from data.PdfDataSegment import PdfDataSegment
 from data.PdfData import PdfData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.Beginning750 import Beginning750
 
 
@@ -15,11 +14,12 @@ class Suggestion(BaseModel):
     tenant: str
     id: str
     xml_file_name: str = ""
+    entity_name: str = ""
     text: str = ""
     values: list[Option] = list()
-    segment_text: str
-    page_number: int
-    segments_boxes: list[SegmentBox]
+    segment_text: str = ""
+    page_number: int = 1
+    segments_boxes: list[SegmentBox] = list()
 
     def to_dict(self):
         suggestion_dict = self.model_dump()
@@ -27,48 +27,20 @@ class Suggestion(BaseModel):
         return suggestion_dict
 
     @staticmethod
-    def from_prediction_data(
-        tenant: str,
-        extraction_id: str,
-        semantic_prediction_data: SemanticPredictionData,
-        prediction: str,
-        pdf_segments: PdfData,
-    ):
-        segments = [x for x in pdf_segments.pdf_data_segments if x.ml_label]
-
-        if segments:
-            page_number = segments[0].page_number
-        else:
-            page_number = 1
-
-        return Suggestion(
-            tenant=tenant,
-            id=extraction_id,
-            xml_file_name=semantic_prediction_data.xml_file_name,
-            text=prediction,
-            segment_text=" ".join([x.text for x in semantic_prediction_data.pdf_tags_data]),
-            page_number=page_number,
-            segments_boxes=[x.bounding_box.to_segment_box(x.page_number).correct_output_data_scale() for x in segments],
-        )
-
-    @staticmethod
-    def get_empty(extraction_identifier: ExtractionIdentifier, xml_file_name: str) -> "Suggestion":
+    def get_empty(extraction_identifier: ExtractionIdentifier, entity_name: str) -> "Suggestion":
         return Suggestion(
             tenant=extraction_identifier.run_name,
             id=extraction_identifier.extraction_name,
-            xml_file_name=xml_file_name,
-            text="",
-            segment_text=" ",
-            page_number=1,
-            segments_boxes=list(),
+            xml_file_name=entity_name,
+            entity_name=entity_name,
         )
 
     def add_prediction(self, text: str, prediction_pdf_data: PdfData):
         self.add_segments(prediction_pdf_data)
         self.text = text
 
-    def add_prediction_multi_option(self, prediction_sample: ExtractionSample, values: list[Option]):
-        self.add_segments(prediction_sample.pdf_data)
+    def add_prediction_multi_option(self, training_sample: TrainingSample, values: list[Option]):
+        self.add_segments(training_sample.pdf_data)
         self.values = values
 
     def add_segments(self, pdf_data: PdfData):
@@ -90,3 +62,15 @@ class Suggestion(BaseModel):
             segment_box.scale_up()
 
         return self
+
+    @staticmethod
+    def from_prediction_text(extraction_identifier: ExtractionIdentifier, entity_name: str, text: str):
+        suggestion = Suggestion.get_empty(extraction_identifier, entity_name)
+        suggestion.text = text
+        return suggestion
+
+    @staticmethod
+    def from_prediction_multi_option(extraction_identifier: ExtractionIdentifier, entity_name: str, values: list[Option]):
+        suggestion = Suggestion.get_empty(extraction_identifier, entity_name)
+        suggestion.values = values
+        return suggestion

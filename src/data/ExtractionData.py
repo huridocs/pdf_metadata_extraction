@@ -2,12 +2,12 @@ from dataclasses import dataclass
 
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 
 
 @dataclass
 class ExtractionData:
-    samples: list[ExtractionSample]
-    options: list[Option]
-    multi_value: bool
+    samples: list[TrainingSample]
+    options: list[Option] = None
+    multi_value: bool = False
     extraction_identifier: ExtractionIdentifier = None

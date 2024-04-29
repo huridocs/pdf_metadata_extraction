@@ -34,7 +34,7 @@ class TestEndToEnd(TestCase):
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
 
-    def test_get_suggestions(self):
+    def test_pdf_to_text(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
 
@@ -131,7 +131,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(round(16 / 0.75, 0), suggestion.segments_boxes[0].height)
         self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
-    def test_create_model_error(self):
+    def test_create_model_without_data(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
         task = ExtractionTask(
@@ -173,9 +173,9 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(expected_result, results_message)
 
-    def test_get_suggestions_multi_option(self):
+    def test_pdf_to_multi_option(self):
         tenant = "end_to_end_test"
-        extraction_id = "multi_select_name"
+        extraction_id = "pdf_to_multi_option"
 
         test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
 
@@ -248,6 +248,78 @@ class TestEndToEnd(TestCase):
             suggestion.segments_boxes,
         )
         self.assertEqual([Option(id="1", label="United Nations")], suggestion.values)
+
+    def test_text_to_multi_option(self):
+        tenant = "end_to_end_test"
+        extraction_id = "multi_select_name"
+
+        options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
+
+        labeled_data_json = {
+            "id": extraction_id,
+            "tenant": tenant,
+            "entity_name": "entity_name",
+            "language_iso": "en",
+            "values": [{"id": "1", "label": "1"}, {"id": "2", "label": "2"}],
+            "source_text": "Option 1 Option 2",
+        }
+
+        requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        task = ExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id, options=options, multi_value=True),
+        )
+
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        predict_data_json = {
+            "tenant": tenant,
+            "id": extraction_id,
+            "source_text": "Option 1",
+            "entity_name": "entity_name_1",
+        }
+
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        predict_data_json = {
+            "tenant": tenant,
+            "id": extraction_id,
+            "source_text": "Option 2 Option 3",
+            "entity_name": "entity_name_2",
+        }
+
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        self.get_results_message()
+
+        task = ExtractionTask(
+            tenant=tenant,
+            task="suggestions",
+            params=Params(id=extraction_id),
+        )
+
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        results_message = self.get_results_message()
+        response = requests.get(results_message.data_url)
+
+        suggestions = json.loads(response.json())
+        suggestion_1 = Suggestion(**suggestions[0])
+        suggestion_2 = Suggestion(**suggestions[1])
+
+        self.assertEqual(2, len(suggestions))
+
+        self.assertEqual(tenant, suggestion_1.tenant)
+        self.assertEqual(extraction_id, suggestion_1.id)
+        self.assertEqual("entity_name_1", suggestion_1.entity_name)
+        self.assertEqual([Option(id="1", label="1")], suggestion_1.values)
+
+        self.assertEqual(tenant, suggestion_2.tenant)
+        self.assertEqual(extraction_id, suggestion_2.id)
+        self.assertEqual("entity_name_2", suggestion_2.entity_name)
+        self.assertEqual([Option(id="2", label="2"), Option(id="3", label="3")], suggestion_2.values)
 
     @staticmethod
     def get_results_message() -> ResultsMessage:

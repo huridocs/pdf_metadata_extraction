@@ -1,15 +1,19 @@
 Task                  Method name                                 Time(m) Score
 
-d4la_document_type    extractor                                         -  40.0%
+d4la_document_type    extractor                                         - 56.67%
 cejil_president       extractor                                         - 100.0%
 cejil_secretary       extractor                                         - 86.67%
 cejil_countries       extractor                                         - 76.47%
-cyrilla_keywords      extractor                                         - 63.41%
+cyrilla_keywords      extractor                                         - 80.00%
 cejil_date            extractor                                         - 31.25%
 cejil_judge           extractor                                         - 100.0%
 
+cyrilla_benchmark     CleanBeginningDot500_SetFit                     4.1 48.22%
+cyrilla_benchmark     CleanEndDot1000_SetFit                          5.5 43.63%
+
 d4la_document_type    CleanBeginningDot1500_SingleLabelDeber…        35.3 56.25%
 d4la_document_type    CleanBeginningDot500_SingleLabelBertBa…        13.2 54.17%
+d4la_document_type    CleanBeginningDot500_SetFit                     6.8 53.33%
 d4la_document_type    CleanBeginningDot1500_SingleLabelDisti…        12.5 48.96%
 d4la_document_type    CleanBeginningDot1500_SingleLabelBertB…        22.7 44.79%
 d4la_document_type    CleanBeginningDot500_BertBatch1                15.4 49.82%
@@ -19,10 +23,12 @@ d4la_document_type    Beginning750_BertBatch1                        16.6 49.57%
 d4la_document_type    CleanBeginning750_BertBatch1                   15.6 47.71%
 d4la_document_type    CleanEndDot500_BertBatch1                      16.7 44.33%
 d4la_document_type    CleanEndDot500_DebertaBatch1                   27.7 11.75%
+d4la_document_type    CleanBeginningDot500_SetFitAllMpnetMethod       3.8 27.91%
 d4la_document_type    CleanBeginningDigits3000_TfIdf                  0.1  1.61%
 d4la_document_type    CleanBeginningDot500_BertSeqSteps               7.2 34.99%
 
 cyrilla_keywords      CleanBeginningDot500_BertBatch1                 9.0 80.82%
+cyrilla_keywords      CleanBeginningDot500_SetFitAllMpnetMethod       3.8 61.11%
 cyrilla_keywords      CleanBeginningDot500_BertSeqSteps               5.0 71.77%
 cyrilla_keywords      CleanBeginning750_BertBatch1                    9.9 76.19%
 cyrilla_keywords      BeginningEnd1500_BertBatch1                     9.6 76.88%

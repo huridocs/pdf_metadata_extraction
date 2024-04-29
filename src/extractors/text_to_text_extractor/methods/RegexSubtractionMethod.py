@@ -1,47 +1,34 @@
 import re
 
-
-from data.SemanticExtractionData import SemanticExtractionData
-from data.SemanticPredictionData import SemanticPredictionData
+from data.ExtractionData import ExtractionData
+from data.PredictionSample import PredictionSample
 from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 
 from tdda import *
 
 
 class RegexSubtractionMethod(TextToTextMethod):
-    def performance(self, semantic_extraction_data: list[SemanticExtractionData], training_set_length: int):
-        if not semantic_extraction_data:
-            return 0, []
 
-        performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
-
-        self.train(performance_train_set)
-        predictions = self.predict([x.to_semantic_prediction() for x in performance_test_set])
-        self.log_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
-        correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
-        self.remove_model()
-        return 100 * len(correct) / len(performance_test_set), predictions
-
-    def train(self, semantic_extraction_data: list[SemanticExtractionData]):
+    def train(self, extraction_data: ExtractionData):
         front_subtraction = [
-            self.get_first_subtraction_characters(self.get_text_from_pdf_tags(x.pdf_tags), x.text)
-            for x in semantic_extraction_data
+            self.get_first_subtraction_characters(" ".join(x.tags_texts), x.labeled_data.label_text)
+            for x in extraction_data.samples
         ]
         front_regex_list = rexpy.extract([x for x in front_subtraction if x])
         front_regex_list = [regex[:-1] for regex in front_regex_list]
 
         back_subtraction = [
-            self.get_last_subtraction_characters(self.get_text_from_pdf_tags(x.pdf_tags), x.text)
-            for x in semantic_extraction_data
+            self.get_last_subtraction_characters(" ".join(x.tags_texts), x.labeled_data.label_text)
+            for x in extraction_data.samples
         ]
         back_regex_list = rexpy.extract([x for x in back_subtraction if x])
         back_regex_list = [regex[1:] for regex in back_regex_list]
 
         self.save_json("regex_subtraction_list.json", front_regex_list + back_regex_list)
 
-    def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
+    def predict(self, predictions_samples: list[PredictionSample]) -> list[str]:
         regex_list = self.load_json("regex_subtraction_list.json")
-        predictions = [self.get_text_from_pdf_tags(x.pdf_tags_data) for x in semantic_predictions_data]
+        predictions = [" ".join(x.tags_texts) for x in predictions_samples]
         for i, prediction in enumerate(predictions):
             for regex in regex_list:
                 matches = re.search(regex, prediction)

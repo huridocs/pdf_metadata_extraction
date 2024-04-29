@@ -4,7 +4,6 @@ from typing import Type
 import pandas as pd
 from datetime import datetime
 
-from data.SemanticExtractionData import SemanticExtractionData
 from performance.Results import Results
 from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 from extractors.text_to_text_extractor.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod

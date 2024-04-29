@@ -1,27 +1,26 @@
 import json
-import os
 import shutil
-from os import makedirs
 from os.path import join, exists
 from pathlib import Path
 
-from config import config_logger
 from data.ExtractionIdentifier import ExtractionIdentifier
+from data.LogsMessage import Severity
 from data.Option import Option
+from data.PredictionSample import PredictionSample
 from data.Suggestion import Suggestion
-from data.PdfData import PdfData
-from extractors.pdf_to_multi_option_extractor.MultiOptionExtractionMethod import MultiOptionExtractionMethod
+from extractors.ExtractorBase import ExtractorBase
+from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
+
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
+from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
     CleanBeginningDigits3000,
 )
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot250 import CleanEndDot250
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.BertBatch1 import BertBatch1
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelBert import SingleLabelBert
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.FastTextMethod import FastTextMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import SingleLabelSetFitMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll75 import FuzzyAll75
@@ -32,10 +31,11 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 )
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLast import FuzzyLast
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
+from send_logs import send_logs
 
 
-class PdfToMultiOptionExtractor:
-    MULTI_LABEL_METHODS: list[MultiOptionExtractionMethod] = [
+class PdfToMultiOptionExtractor(ExtractorBase):
+    METHODS: list[PdfMultiOptionMethod] = [
         FuzzyFirst(),
         FuzzyLast(),
         FuzzyFirstCleanLabel(),
@@ -43,33 +43,18 @@ class PdfToMultiOptionExtractor:
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
-        MultiOptionExtractionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        MultiOptionExtractionMethod(CleanEndDot1000, TfIdfMethod),
-        MultiOptionExtractionMethod(CleanBeginningDot250, BertBatch1),
-        MultiOptionExtractionMethod(CleanEndDot250, BertBatch1),
-        MultiOptionExtractionMethod(CleanBeginningDot1000, BertBatch1),
-        MultiOptionExtractionMethod(CleanEndDot1000, BertBatch1),
-    ]
-
-    SINGLE_LABEL_METHODS: list[MultiOptionExtractionMethod] = [
-        FuzzyFirst(),
-        FuzzyLast(),
-        FuzzyFirstCleanLabel(),
-        FuzzyLastCleanLabel(),
-        FuzzyAll75(),
-        FuzzyAll88(),
-        FuzzyAll100(),
-        MultiOptionExtractionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        MultiOptionExtractionMethod(CleanEndDot1000, TfIdfMethod),
-        MultiOptionExtractionMethod(CleanBeginningDot250, SingleLabelBert),
-        MultiOptionExtractionMethod(CleanEndDot250, SingleLabelBert),
-        MultiOptionExtractionMethod(CleanBeginningDot1000, SingleLabelBert),
-        MultiOptionExtractionMethod(CleanEndDot1000, SingleLabelBert),
+        PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanBeginningDot500, FastTextMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, FastTextMethod),
+        PdfMultiOptionMethod(CleanBeginningDot500, SetFitMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, SetFitMethod),
+        PdfMultiOptionMethod(CleanBeginningDot500, SingleLabelSetFitMethod),
+        PdfMultiOptionMethod(CleanEndDot1000, SingleLabelSetFitMethod),
     ]
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):
-        self.extraction_identifier = extraction_identifier
-
+        super().__init__(extraction_identifier)
         self.base_path = join(self.extraction_identifier.get_path(), "multi_option_extractor")
         self.options_path = join(self.base_path, "options.json")
         self.multi_value_path = join(self.base_path, "multi_value.json")
@@ -78,61 +63,52 @@ class PdfToMultiOptionExtractor:
         self.options: list[Option] = list()
         self.multi_value = False
 
-    def create_model(self, multi_option_data: ExtractionData):
-        self.options = multi_option_data.options
-        self.multi_value = multi_option_data.multi_value
+    def create_model(self, extraction_data: ExtractionData):
+        self.options = extraction_data.options
+        self.multi_value = extraction_data.multi_value
 
-        method = self.get_best_method(multi_option_data)
+        method = self.get_best_method(extraction_data)
+        method.train(extraction_data)
 
-        shutil.rmtree(self.base_path, ignore_errors=True)
-        method.train(multi_option_data)
-
-        os.makedirs(self.method_name_path.parent, exist_ok=True)
-        self.save_json(self.options_path, [x.model_dump() for x in multi_option_data.options])
-        self.save_json(self.multi_value_path, multi_option_data.multi_value)
-        self.method_name_path.write_text(method.get_name())
+        self.save_json(self.options_path, [x.model_dump() for x in extraction_data.options])
+        self.save_json(self.multi_value_path, extraction_data.multi_value)
+        self.save_json(str(self.method_name_path), method.get_name())
 
         return True, ""
 
-    @staticmethod
-    def save_json(path: str, data: any):
-        if not exists(Path(path).parent):
-            makedirs(Path(path).parent)
-
-        with open(path, "w") as file:
-            json.dump(data, file)
-
-    def get_suggestions(self, pdfs_data: list[PdfData]) -> list[Suggestion]:
-        if not pdfs_data:
+    def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
+        if not predictions_samples:
             return []
 
-        multi_option_samples, predictions = self.get_predictions(pdfs_data)
+        training_samples, predictions = self.get_predictions(predictions_samples)
 
         suggestions = list()
-        for multi_option_sample, prediction in zip(multi_option_samples, predictions):
-            suggestion = Suggestion.get_empty(self.extraction_identifier, multi_option_sample.pdf_data.file_name)
-            suggestion.add_prediction_multi_option(multi_option_sample, prediction)
+        for training_sample, prediction_sample, prediction in zip(training_samples, predictions_samples, predictions):
+            suggestion = Suggestion.get_empty(self.extraction_identifier, prediction_sample.entity_name)
+            suggestion.add_prediction_multi_option(training_sample, prediction)
             suggestions.append(suggestion)
 
         return suggestions
 
-    def get_predictions(self, pdfs_data):
+    def get_predictions(self, predictions_samples: list[PredictionSample]) -> (list[TrainingSample], list[list[Option]]):
         self.load_options()
-        multi_option_samples = [ExtractionSample(pdf_data=pdf_data) for pdf_data in pdfs_data]
-        multi_option_data = ExtractionData(
+        training_samples = [TrainingSample(pdf_data=sample.pdf_data) for sample in predictions_samples]
+        extraction_data = ExtractionData(
             multi_value=self.multi_value,
             options=self.options,
-            samples=multi_option_samples,
+            samples=training_samples,
             extraction_identifier=self.extraction_identifier,
         )
         method = self.get_predictions_method()
-        method.set_parameters(multi_option_data)
-        prediction = method.predict(multi_option_data)
+        method.set_parameters(extraction_data)
+        send_logs(self.extraction_identifier, f"Using method {method.get_name()} for suggestions")
+
+        prediction = method.predict(extraction_data)
 
         if not self.multi_value:
             prediction = [x[:1] for x in prediction]
 
-        return multi_option_samples, prediction
+        return training_samples, prediction
 
     def load_options(self):
         if not exists(self.options_path) or not exists(self.multi_value_path):
@@ -144,41 +120,55 @@ class PdfToMultiOptionExtractor:
         with open(self.multi_value_path, "r") as file:
             self.multi_value = json.load(file)
 
-    def get_best_method(self, multi_option_data: ExtractionData) -> MultiOptionExtractionMethod:
-        best_method_instance = self.SINGLE_LABEL_METHODS[0]
+    def get_best_method(self, multi_option_data: ExtractionData) -> PdfMultiOptionMethod:
+        best_method_instance = self.METHODS[0]
         best_performance = 0
-        methods_to_loop = self.MULTI_LABEL_METHODS if self.multi_value else self.SINGLE_LABEL_METHODS
-        for method in methods_to_loop:
-            method.set_parameters(multi_option_data)
-            config_logger.info(f"\nChecking {method.get_name()}")
+        for method in self.METHODS:
+            performance = self.get_performance(method, multi_option_data)
 
-            try:
-                performance = method.get_performance(multi_option_data)
-            except Exception as e:
-                config_logger.error(f"Error checking {method.get_name()}: {e}")
-                performance = 0
-
-            config_logger.info(f"\nPerformance {method.get_name()}: {performance}%")
             if performance == 100:
-                config_logger.info(f"\nBest method {method.get_name()} with {performance}%")
+                send_logs(self.extraction_identifier, f"Best method {method.get_name()} with {performance}%")
                 return method
 
             if performance > best_performance:
                 best_performance = performance
                 best_method_instance = method
 
+        send_logs(self.extraction_identifier, f"Best method {best_method_instance.get_name()}")
         return best_method_instance
 
-    @staticmethod
-    def is_multi_option_extraction(extraction_identifier: ExtractionIdentifier):
-        multi_option_extractor = PdfToMultiOptionExtractor(extraction_identifier)
-        multi_option_extractor.load_options()
-        return len(multi_option_extractor.options) > 0
+    def get_performance(self, method, multi_option_data):
+        method.set_parameters(multi_option_data)
+
+        if len(self.METHODS) == 1 or not method.can_be_used(multi_option_data):
+            return 0
+
+        send_logs(self.extraction_identifier, f"Checking {method.get_name()}")
+
+        try:
+            performance = method.get_performance(multi_option_data)
+        except Exception as e:
+            send_logs(self.extraction_identifier, f"Error checking {method.get_name()}: {e}", Severity.error)
+
+            performance = 0
+
+        send_logs(self.extraction_identifier, f"Performance {method.get_name()}: {performance}%")
+        return performance
 
     def get_predictions_method(self):
-        method_name = self.method_name_path.read_text()
-        for method in self.MULTI_LABEL_METHODS + self.SINGLE_LABEL_METHODS:
+        method_name = json.loads(self.method_name_path.read_text())
+        for method in self.METHODS:
             if method.get_name() == method_name:
                 return method
 
-        return self.SINGLE_LABEL_METHODS[0]
+        return self.METHODS[0]
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        if not extraction_data.options:
+            return False
+
+        for sample in extraction_data.samples:
+            if sample.pdf_data:
+                return True
+
+        return False

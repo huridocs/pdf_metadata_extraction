@@ -1,5 +1,3 @@
-from data.PdfTagData import PdfTagData
-from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 from dateparser.search import search_dates
 
 from extractors.text_to_text_extractor.methods.DateParserMethod import DateParserMethod
@@ -7,9 +5,9 @@ from extractors.text_to_text_extractor.methods.DateParserMethod import DateParse
 
 class DateParserWithBreaksMethod(DateParserMethod):
     @staticmethod
-    def get_date(pdf_tags: list[PdfTagData], languages):
-        text = TextToTextMethod.get_text_from_pdf_tags(pdf_tags)
-        text_with_breaks = "\n".join([pdf_tag_data.text for pdf_tag_data in pdf_tags])
+    def get_date(tags_texts: list[str], languages):
+        text = " ".join(tags_texts)
+        text_with_breaks = "\n".join([text for text in tags_texts])
 
         try:
             dates = search_dates(text_with_breaks, languages=languages)

@@ -13,11 +13,12 @@ from transformers import (
     AutoModelForSequenceClassification,
 )
 from data.Option import Option
+from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
+from extractors.bert_method_scripts.get_batch_size import get_max_steps, get_batch_size
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from data.ExtractionData import ExtractionData
-from data.ExtractionSample import ExtractionSample
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.AvoidEvaluation import AvoidEvaluation
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.EarlyStoppingAfterInitialTraining import (
+from data.TrainingSample import TrainingSample
+from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import (
     EarlyStoppingAfterInitialTraining,
 )
 
@@ -28,6 +29,9 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
 class SingleLabelBert(MultiLabelMethod):
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        return not extraction_data.multi_value
+
     def get_data_path(self, name):
         model_folder_path = join(self.base_path, self.get_name())
 
@@ -72,10 +76,10 @@ class SingleLabelBert(MultiLabelMethod):
         predictions_list = [np.argmax(x) if x[np.argmax(x)] >= 0.5 else -1 for x in probabilities]
         return clf_metrics.compute(predictions=predictions_list, references=labels)
 
-    def preprocess_function(self, multi_option_sample: ExtractionSample):
+    def preprocess_function(self, multi_option_sample: TrainingSample):
         text = multi_option_sample.get_text()
-        if multi_option_sample.values:
-            labels = self.options.index(multi_option_sample.values[0])
+        if multi_option_sample.labeled_data.values:
+            labels = self.options.index(multi_option_sample.labeled_data.values[0])
         else:
             labels = -1
 
@@ -105,9 +109,9 @@ class SingleLabelBert(MultiLabelMethod):
         training_args = TrainingArguments(
             output_dir=self.get_model_path(),
             learning_rate=2e-5,
-            per_device_train_batch_size=self.get_batch_size(multi_option_data),
-            per_device_eval_batch_size=self.get_batch_size(multi_option_data),
-            max_steps=self.get_max_steps(multi_option_data),
+            per_device_train_batch_size=get_batch_size(multi_option_data),
+            per_device_eval_batch_size=get_batch_size(multi_option_data),
+            max_steps=get_max_steps(multi_option_data),
             weight_decay=0.01,
             eval_steps=200,
             save_steps=200,
@@ -126,7 +130,7 @@ class SingleLabelBert(MultiLabelMethod):
             tokenizer=tokenizer,
             data_collator=data_collator,
             compute_metrics=self.compute_metrics,
-            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidEvaluation()],
+            callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidAllEvaluation()],
         )
 
         trainer.train()

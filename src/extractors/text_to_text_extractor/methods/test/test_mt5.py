@@ -3,10 +3,11 @@ from unittest import TestCase
 
 import torch
 
+from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
-from data.PdfTagData import PdfTagData
-from data.SemanticExtractionData import SemanticExtractionData
-from data.SemanticPredictionData import SemanticPredictionData
+from data.LabeledData import LabeledData
+from data.PredictionSample import PredictionSample
+from data.TrainingSample import TrainingSample
 from extractors.text_to_text_extractor.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
 
 
@@ -16,18 +17,17 @@ class TestMT5(TestCase):
         print("GPU available?")
         print(torch.cuda.is_available())
         extraction_identifier = ExtractionIdentifier(run_name="test", extraction_name="test")
+
+        samples_1 = [TrainingSample(labeled_data=LabeledData(label_text="foo"), tags_texts=["1/ foo end"])] * 5
+        samples_2 = [TrainingSample(labeled_data=LabeledData(label_text="var"), tags_texts=["2/ var end"])] * 5
+
+        extraction_data = ExtractionData(samples=samples_1 + samples_2, extraction_identifier=extraction_identifier)
         mt5_true_case_english_spanish = MT5TrueCaseEnglishSpanishMethod(extraction_identifier)
 
-        semantic_information_data = [
-            SemanticExtractionData(text="foo", pdf_tags=[PdfTagData.from_text("1/ foo end")], language_iso="")
-        ] * 5
-        semantic_information_data += [
-            SemanticExtractionData(text="var", pdf_tags=[PdfTagData.from_text("2/ var end")], language_iso="")
-        ] * 5
+        mt5_true_case_english_spanish.train(extraction_data)
 
-        mt5_true_case_english_spanish.train(semantic_information_data)
+        predictions = mt5_true_case_english_spanish.predict([PredictionSample.from_text("1/ foo end")] * 10)
 
-        predictions = mt5_true_case_english_spanish.predict([SemanticPredictionData.from_text("1/ foo end")] * 10)
         self.assertEqual(10, len(predictions))
         self.assertEqual("foo", predictions[0])
         print(f"Predictions in {round(time() - start, 2)} seconds")

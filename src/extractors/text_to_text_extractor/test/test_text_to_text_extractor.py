@@ -1,98 +1,58 @@
-import os
 import shutil
 from os.path import join
 from unittest import TestCase
 
 from config import DATA_PATH
+from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
-from data.PdfTagData import PdfTagData
-from data.SemanticExtractionData import SemanticExtractionData
-from data.SemanticPredictionData import SemanticPredictionData
+from data.LabeledData import LabeledData
+from data.PredictionSample import PredictionSample
+from data.TrainingSample import TrainingSample
 from extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
+
+tenant = "semantic_tenant_to_be_removed"
+extraction_id = "extraction_id"
+
+extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
 
 
 class TestTextToTextExtractor(TestCase):
-    def test_predictions_one_sample(self):
-        tenant = "semantic_tenant_to_be_removed"
-        extraction_id = "extraction_id"
 
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-
-        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
-        semantic_metadata_extraction = TextToTextExtractor(extraction_identifier=extraction_identifier)
-
-        pdf_tags = [PdfTagData.from_text("two")]
-        semantic_information_data = [SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="en")]
-        semantic_metadata_extraction.create_model(semantic_information_data)
-        semantic_predictions_data = SemanticPredictionData.from_texts(["test 1", "test 2", "test 3"])
-        predictions = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
-
-        self.assertEqual(["test 1", "test 2", "test 3"], predictions)
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-
-    def test_predictions_two_samples(self):
-        tenant = "semantic_tenant_to_be_removed"
-        extraction_id = "extraction_id"
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-
-        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
-        semantic_metadata_extraction = TextToTextExtractor(extraction_identifier=extraction_identifier)
-
-        pdf_tags = [PdfTagData.from_text("one two")]
-        semantic_information_data = [
-            SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="en"),
-            SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="en"),
-        ]
-        semantic_metadata_extraction.create_model(semantic_information_data)
-        predictions = semantic_metadata_extraction.get_semantic_predictions(SemanticPredictionData.from_texts(["one"]))
-
-        self.assertEqual(1, len(predictions))
-
+    def setUp(self):
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
     def test_predictions_same_input_output(self):
-        tenant = "semantic_tenant_to_be_removed"
-        extraction_id = "extraction_id"
+        sample = [TrainingSample(labeled_data=LabeledData(label_text="one", language_iso="en"), tags_texts=["two"])]
+        extraction_data = ExtractionData(samples=sample, extraction_identifier=extraction_identifier)
 
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        text_to_text_extractor = TextToTextExtractor(extraction_identifier=extraction_identifier)
+        text_to_text_extractor.can_be_used(extraction_data)
+        texts = ["test 0", "test 1", "test 2"]
+        predictions_samples = [PredictionSample.from_text(text, str(i)) for i, text in enumerate(texts)]
+        suggestions = text_to_text_extractor.get_suggestions(predictions_samples)
 
-        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
-        semantic_metadata_extraction = TextToTextExtractor(extraction_identifier=extraction_identifier)
+        self.assertEqual(3, len(suggestions))
+        self.assertEqual(tenant, suggestions[0].tenant)
+        self.assertEqual(extraction_id, suggestions[0].id)
+        self.assertEqual("0", suggestions[0].entity_name)
+        self.assertEqual("test 0", suggestions[0].text)
+        self.assertEqual("1", suggestions[1].entity_name)
+        self.assertEqual("test 1", suggestions[1].text)
+        self.assertEqual("2", suggestions[2].entity_name)
+        self.assertEqual("test 2", suggestions[2].text)
 
-        pdf_tags = [PdfTagData.from_text("one")]
+    def test_predictions_two_samples(self):
+        sample_1 = [TrainingSample(labeled_data=LabeledData(label_text="one", language_iso="en"), tags_texts=["one two"])]
+        sample_2 = [TrainingSample(labeled_data=LabeledData(label_text="one", language_iso="en"), tags_texts=["one two"])]
+        extraction_data = ExtractionData(samples=sample_1 + sample_2, extraction_identifier=extraction_identifier)
 
-        semantic_information_data = [
-            SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="fr") for _ in range(2)
-        ]
-        semantic_metadata_extraction.create_model(semantic_information_data)
-        semantic_predictions_data = SemanticPredictionData.from_texts(["test 1", "test 2", "test 3"])
-        predictions = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
+        text_to_text_extractor = TextToTextExtractor(extraction_identifier=extraction_identifier)
+        text_to_text_extractor.create_model(extraction_data)
 
-        self.assertEqual(["test 1", "test 2", "test 3"], predictions)
+        suggestions = text_to_text_extractor.get_suggestions([PredictionSample.from_text("one two", "entity_name")])
 
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-
-    def test_predictions_regex(self):
-        tenant = "semantic_tenant_to_be_removed"
-        extraction_id = "extraction_id"
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-
-        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
-        semantic_metadata_extraction = TextToTextExtractor(extraction_identifier=extraction_identifier)
-
-        pdf_tags = [PdfTagData.from_text("one two")]
-        semantic_information_data = [
-            SemanticExtractionData(text="one", pdf_tags=pdf_tags, language_iso="en") for _ in range(5)
-        ]
-        semantic_metadata_extraction.create_model(semantic_information_data)
-        semantic_predictions_data = SemanticPredictionData.from_texts(["one two", "one three", "four"])
-
-        predictions = semantic_metadata_extraction.get_semantic_predictions(semantic_predictions_data)
-
-        self.assertTrue(os.path.exists(f"{DATA_PATH}/{tenant}/{extraction_id}/RegexMethod"))
-        self.assertEqual(["one", "one", ""], predictions)
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        self.assertEqual(1, len(suggestions))
+        self.assertEqual(tenant, suggestions[0].tenant)
+        self.assertEqual(extraction_id, suggestions[0].id)
+        self.assertEqual("entity_name", suggestions[0].entity_name)
+        self.assertEqual("one", suggestions[0].text)

@@ -14,9 +14,9 @@ from transformers.utils import logging as logging_hf
 from transformers import AutoTokenizer, MT5ForConditionalGeneration
 
 from config import DATA_PATH, config_logger
-from data.PdfTagData import PdfTagData
-from data.SemanticExtractionData import SemanticExtractionData
-from data.SemanticPredictionData import SemanticPredictionData
+from data.ExtractionData import ExtractionData
+from data.PredictionSample import PredictionSample
+from data.TrainingSample import TrainingSample
 from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 
 from extractors.text_to_text_extractor.methods.TrueCaser import TrueCaser
@@ -39,43 +39,43 @@ class MT5TrueCaseEnglishSpanishMethod(TextToTextMethod):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
     def get_model_path(self):
-        return join(self.extraction_identifier.get_path(), self.get_name(), "model")
+        return str(join(self.extraction_identifier.get_path(), self.get_name(), "model"))
 
     def get_max_length_path(self):
-        return Path(join(self.extraction_identifier.get_path(), self.get_name(), "max_length_output"))
+        return Path(str(join(self.extraction_identifier.get_path(), self.get_name(), "max_length_output")))
 
-    def get_max_input_length(self, semantic_extraction_data: list[SemanticExtractionData]):
+    def get_max_input_length(self, extraction_data: ExtractionData):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
-        texts = [
-            self.extraction_identifier.run_name + ": " + self.get_text_from_pdf_tags(x.pdf_tags)
-            for x in semantic_extraction_data
-        ]
+        texts = [self.extraction_identifier.run_name + ": " + " ".join(x.tags_texts) for x in extraction_data.samples]
         tokens_number = [len(tokenizer(text)["input_ids"]) for text in texts]
         input_length = min(int((max(tokens_number) + 5) * 1.5), 512)
         config_logger.info(f"Max input length: {str(input_length)}")
         return input_length
 
-    def get_max_output_length(self, semantic_extraction_data: list[SemanticExtractionData]):
+    def get_max_output_length(self, extraction_data: ExtractionData):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
-        tokens_number = [len(tokenizer(x.text)["input_ids"]) for x in semantic_extraction_data]
+        tokens_number = [len(tokenizer(" ".join(x.tags_texts))["input_ids"]) for x in extraction_data.samples]
         output_length = min(int((max(tokens_number) + 5) * 1.5), 256)
         config_logger.info(f"Max output length: {str(output_length)}")
         return output_length
 
-    def prepare_dataset(self, semantic_extractions_data: list[SemanticExtractionData]):
-        data_path = join(self.extraction_identifier.get_path(), self.get_name(), "t5_transformers_data.csv")
+    def prepare_dataset(self, extraction_data: ExtractionData):
+        data_path = str(join(self.extraction_identifier.get_path(), self.get_name(), "t5_transformers_data.csv"))
 
         if exists(data_path):
             os.remove(data_path)
 
-        text_inputs = [self.get_text_from_pdf_tags(x.pdf_tags) for x in semantic_extractions_data]
+        text_inputs = [" ".join(sample.tags_texts) for sample in extraction_data.samples]
+        text_target = [sample.labeled_data.label_text if sample.labeled_data else "" for sample in extraction_data.samples]
 
         data = [
-            [str(index), f"{self.extraction_identifier.run_name}: {segment_text}", semantic_data.text]
-            for index, segment_text, semantic_data in zip(range(len(text_inputs)), text_inputs, semantic_extractions_data)
+            [str(index + 1), f"Extract: {text_input}", text_target]
+            for index, (text_input, text_target) in enumerate(zip(text_inputs, text_target))
         ]
+
         if not data:
             return None
+
         df = pd.DataFrame(data)
         df.columns = ["extraction_name", "input_with_prefix", "target"]
         df["not_used"] = ""
@@ -84,30 +84,20 @@ class MT5TrueCaseEnglishSpanishMethod(TextToTextMethod):
         df.to_csv(data_path, quoting=csv.QUOTE_ALL)
         return data_path
 
-    def performance(self, semantic_extraction_data: list[SemanticExtractionData], training_set_length: int):
-        if not semantic_extraction_data:
-            return 0, []
-
-        performance_train_set, performance_test_set = self.get_train_test(semantic_extraction_data, training_set_length)
-        self.train(performance_train_set)
-        predictions = self.predict([x.to_semantic_prediction() for x in performance_test_set])
-        self.log_performance_sample(semantic_extractions_data=performance_test_set, predictions=predictions)
+    def train(self, extraction_data: ExtractionData):
         self.remove_model()
-        correct = [index for index, test in enumerate(performance_test_set) if test.text == predictions[index]]
-        return 100 * len(correct) / len(performance_test_set), predictions
+        train_path = self.prepare_dataset(extraction_data)
 
-    def train(self, semantic_extraction_data: list[SemanticExtractionData]):
-        self.remove_model()
-        train_path = self.prepare_dataset(semantic_extraction_data)
         if not train_path:
             return
+
         model_arguments = ModelArguments("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
-        output_length = self.get_max_output_length(semantic_extraction_data)
+        output_length = self.get_max_output_length(extraction_data)
         self.get_max_length_path().write_text(str(output_length))
         data_training_arguments = DataTrainingArguments(
             train_file=train_path,
             validation_file=train_path,
-            max_seq_length=self.get_max_input_length(semantic_extraction_data),
+            max_seq_length=self.get_max_input_length(extraction_data),
             max_answer_length=output_length,
             context_column="input_with_prefix",
             answer_column="target",
@@ -149,16 +139,14 @@ class MT5TrueCaseEnglishSpanishMethod(TextToTextMethod):
     def exists_model(self):
         return exists(self.get_model_path())
 
-    def predict(self, semantic_predictions_data: list[SemanticPredictionData]) -> list[str]:
-        texts = [self.get_text_from_pdf_tags(x.pdf_tags_data) for x in semantic_predictions_data]
+    def predict(self, predictions_samples: list[PredictionSample]) -> list[str]:
+        texts = [" ".join(x.tags_texts) for x in predictions_samples]
+
         if not self.exists_model():
             return texts
 
-        semantic_extraction_data = [
-            SemanticExtractionData(text="predict", pdf_tags=[PdfTagData.from_text(text)], language_iso="en")
-            for text in texts
-        ]
-        predict_data_path = self.prepare_dataset(semantic_extraction_data)
+        samples = [TrainingSample(tags_texts=sample.tags_texts) for sample in predictions_samples]
+        predict_data_path = self.prepare_dataset(ExtractionData(samples=samples))
 
         if not predict_data_path:
             return texts

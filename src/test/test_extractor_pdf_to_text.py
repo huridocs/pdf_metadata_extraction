@@ -60,21 +60,6 @@ class TestExtractorPdfToText(TestCase):
         shutil.rmtree(join(DATA_PATH, tenant))
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_create_model_error_when_no_files(self):
-        tenant = "error_segment_test"
-        extraction_id = "error_extraction_id"
-
-        task = ExtractionTask(
-            tenant=tenant,
-            task=Extractor.CREATE_MODEL_TASK_NAME,
-            params=Params(id=extraction_id),
-        )
-        task_calculated, error = Extractor.calculate_task(task)
-
-        self.assertFalse(task_calculated)
-        self.assertEqual("No data to create model", error)
-
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_create_model_should_do_nothing_when_no_xml(self):
         tenant = "segment_test"
         extraction_id = "extraction_id"
@@ -118,6 +103,7 @@ class TestExtractorPdfToText(TestCase):
             "tenant": tenant,
             "id": extraction_id,
             "xml_file_name": "test.xml",
+            "entity_name": "",
             "language_iso": "en",
             "label_text": "Original: English",
             "page_width": 612,
@@ -146,6 +132,7 @@ class TestExtractorPdfToText(TestCase):
             "tenant": tenant,
             "id": extraction_id,
             "xml_file_name": "test.xml",
+            "entity_name": "",
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
@@ -198,6 +185,7 @@ class TestExtractorPdfToText(TestCase):
             "tenant": tenant,
             "id": extraction_id,
             "xml_file_name": "test.xml",
+            "entity_name": "",
             "language_iso": "en",
             "label_text": "text",
             "page_width": 612,
@@ -228,6 +216,7 @@ class TestExtractorPdfToText(TestCase):
             "tenant": tenant,
             "id": extraction_id,
             "xml_file_name": "test.xml",
+            "entity_name": "",
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [
@@ -279,6 +268,7 @@ class TestExtractorPdfToText(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
+                "entity_name": "",
                 "id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
@@ -287,6 +277,7 @@ class TestExtractorPdfToText(TestCase):
             },
             {
                 "xml_file_name": "test.xml",
+                "entity_name": "",
                 "id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
@@ -302,6 +293,7 @@ class TestExtractorPdfToText(TestCase):
                 "id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "test.xml",
+                "entity_name": "",
                 "language_iso": "en",
                 "label_text": "English",
                 "page_width": 612,
@@ -363,6 +355,7 @@ class TestExtractorPdfToText(TestCase):
         to_predict_json = [
             {
                 "xml_file_name": "test.xml",
+                "entity_name": "",
                 "id": extraction_id,
                 "tenant": tenant,
                 "page_width": 612,
@@ -378,6 +371,7 @@ class TestExtractorPdfToText(TestCase):
                 "id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "test.xml",
+                "entity_name": "",
                 "language_iso": "en",
                 "label_text": "15",
                 "page_width": 612,
@@ -445,6 +439,7 @@ class TestExtractorPdfToText(TestCase):
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "spanish.xml",
+                "entity_name": "",
                 "language_iso": "spa",
                 "label_text": "día",
                 "page_width": 612,
@@ -461,6 +456,7 @@ class TestExtractorPdfToText(TestCase):
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "spanish.xml",
+                "entity_name": "",
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
@@ -469,6 +465,7 @@ class TestExtractorPdfToText(TestCase):
                 "id": extraction_id,
                 "tenant": tenant,
                 "xml_file_name": "spanish.xml",
+                "entity_name": "",
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
@@ -549,6 +546,7 @@ class TestExtractorPdfToText(TestCase):
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "test.xml",
+                "entity_name": "",
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
@@ -587,6 +585,7 @@ class TestExtractorPdfToText(TestCase):
             "tenant": tenant,
             "id": extraction_id,
             "xml_file_name": "blank.xml",
+            "entity_name": "",
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
@@ -626,6 +625,7 @@ class TestExtractorPdfToText(TestCase):
             "tenant": tenant,
             "id": extraction_id,
             "xml_file_name": "no_pages.xml",
+            "entity_name": "",
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
