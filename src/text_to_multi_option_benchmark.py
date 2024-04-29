@@ -102,7 +102,7 @@ def check_results():
     # cejil_mechanism
     # cejil_descriptors
     # rightdocs_vote_type
-    extractions_data: list[ExtractionData] = get_extraction_data(filter_by=["rightdocs_vote_type"])
+    extractions_data: list[ExtractionData] = get_extraction_data(filter_by=[""])
     for extraction_data in extractions_data:
         extractor = TextToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
         train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22, limit_samples=False)
