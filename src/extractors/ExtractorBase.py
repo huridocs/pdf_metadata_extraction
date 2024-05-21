@@ -1,6 +1,7 @@
 import json
 import random
 from abc import abstractmethod
+from collections import Counter
 from os import makedirs
 from os.path import exists
 from pathlib import Path
@@ -52,28 +53,25 @@ class ExtractorBase:
         random.seed(seed)
         random.shuffle(extraction_data.samples)
 
+        train_set: list[TrainingSample] = extraction_data.samples[:train_size]
+        test_set: list[TrainingSample] = extraction_data.samples[train_size:]
+
         if limit_samples:
-            train_set: list[TrainingSample] = extraction_data.samples[:train_size][:80]
-            test_set: list[TrainingSample] = extraction_data.samples[train_size:][:30]
-        else:
-            train_set: list[TrainingSample] = extraction_data.samples[:train_size]
-            test_set: list[TrainingSample] = extraction_data.samples[train_size:]
+            train_set = train_set[:80]
+            test_set = test_set[:30]
 
-        train_data = ExtractionData(
-            samples=train_set,
+        train_extraction_data = ExtractorBase.get_extraction_data_from_samples(extraction_data, train_set)
+        test_extraction_data = ExtractorBase.get_extraction_data_from_samples(extraction_data, test_set)
+        return train_extraction_data, test_extraction_data
+
+    @staticmethod
+    def get_extraction_data_from_samples(extraction_data: ExtractionData, samples: list[TrainingSample]) -> ExtractionData:
+        return ExtractionData(
+            samples=samples,
             options=extraction_data.options,
             multi_value=extraction_data.multi_value,
             extraction_identifier=extraction_data.extraction_identifier,
         )
-
-        test_data = ExtractionData(
-            samples=test_set,
-            options=extraction_data.options,
-            multi_value=extraction_data.multi_value,
-            extraction_identifier=extraction_data.extraction_identifier,
-        )
-
-        return train_data, test_data
 
     @staticmethod
     def save_json(path: str, data: any):
