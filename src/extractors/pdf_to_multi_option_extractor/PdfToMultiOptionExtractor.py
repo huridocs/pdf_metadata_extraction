@@ -1,5 +1,4 @@
 import json
-import shutil
 from os.path import join, exists
 from pathlib import Path
 
@@ -16,8 +15,10 @@ from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
     CleanBeginningDigits3000,
 )
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot500 import CleanBeginningDot500
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDot1000 import CleanEndDot1000
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDotDigits500 import (
+    CleanBeginningDotDigits500,
+)
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDotDigits1000 import CleanEndDotDigits1000
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.FastTextMethod import FastTextMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import SingleLabelSetFitMethod
@@ -44,13 +45,13 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll88(),
         FuzzyAll100(),
         PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        PdfMultiOptionMethod(CleanEndDot1000, TfIdfMethod),
-        PdfMultiOptionMethod(CleanBeginningDot500, FastTextMethod),
-        PdfMultiOptionMethod(CleanEndDot1000, FastTextMethod),
-        PdfMultiOptionMethod(CleanBeginningDot500, SetFitMethod),
-        PdfMultiOptionMethod(CleanEndDot1000, SetFitMethod),
-        PdfMultiOptionMethod(CleanBeginningDot500, SingleLabelSetFitMethod),
-        PdfMultiOptionMethod(CleanEndDot1000, SingleLabelSetFitMethod),
+        PdfMultiOptionMethod(CleanEndDotDigits1000, TfIdfMethod),
+        PdfMultiOptionMethod(CleanBeginningDotDigits500, FastTextMethod),
+        PdfMultiOptionMethod(CleanEndDotDigits1000, FastTextMethod),
+        PdfMultiOptionMethod(CleanBeginningDotDigits500, SetFitMethod),
+        PdfMultiOptionMethod(CleanEndDotDigits1000, SetFitMethod),
+        PdfMultiOptionMethod(CleanBeginningDotDigits500, SingleLabelSetFitMethod),
+        PdfMultiOptionMethod(CleanEndDotDigits1000, SingleLabelSetFitMethod),
     ]
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):
