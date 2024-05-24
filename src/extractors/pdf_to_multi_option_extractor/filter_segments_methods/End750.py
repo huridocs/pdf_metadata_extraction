@@ -1,10 +1,8 @@
-from copy import deepcopy
-
 from data.PdfDataSegment import PdfDataSegment
-from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import FilterSegmentsMethod
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.Beginning750 import Beginning750
 
 
-class End750(FilterSegmentsMethod):
+class End750(Beginning750):
     def get_first_tokens(self, pdf_data_segments: list[PdfDataSegment], text_length: int) -> list[PdfDataSegment]:
         total_text = ""
         filtered_segments: list[PdfDataSegment] = list()
@@ -18,25 +16,3 @@ class End750(FilterSegmentsMethod):
             filtered_segments.append(pdf_data_segment_copy)
 
         return list(reversed(filtered_segments))
-
-    @staticmethod
-    def get_segment(pdf_data_segment: PdfDataSegment, character_limit: int):
-        if character_limit <= 0:
-            return None
-
-        pdf_data_segment_copy = deepcopy(pdf_data_segment)
-
-        words = list()
-        text = ""
-        for word in pdf_data_segment_copy.text_content.split():
-            if len(text + " " + word) > character_limit:
-                break
-
-            words.append(word)
-            text += " " + word
-
-        pdf_data_segment_copy.text_content = " ".join(words)
-        return pdf_data_segment_copy
-
-    def filter_segments(self, pdf_data_segments: list[PdfDataSegment]) -> list[PdfDataSegment]:
-        return self.get_first_tokens(pdf_data_segments, 750)

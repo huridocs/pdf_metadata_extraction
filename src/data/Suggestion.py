@@ -8,6 +8,7 @@ from data.PdfDataSegment import PdfDataSegment
 from data.PdfData import PdfData
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.Beginning750 import Beginning750
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.End750 import End750
 
 
 class Suggestion(BaseModel):
@@ -39,11 +40,11 @@ class Suggestion(BaseModel):
         self.add_segments(prediction_pdf_data)
         self.text = text
 
-    def add_prediction_multi_option(self, training_sample: TrainingSample, values: list[Option]):
-        self.add_segments(training_sample.pdf_data)
+    def add_prediction_multi_option(self, training_sample: TrainingSample, values: list[Option], context_from_the_end: bool):
+        self.add_segments(training_sample.pdf_data, context_from_the_end)
         self.values = values
 
-    def add_segments(self, pdf_data: PdfData):
+    def add_segments(self, pdf_data: PdfData, context_from_the_end: bool = False):
         context_segments: list[PdfDataSegment] = [x for x in pdf_data.pdf_data_segments if x.ml_label]
         valid_types = [TokenType.TEXT, TokenType.TITLE, TokenType.HEADER]
         context_segments = [x for x in context_segments if x.segment_type in valid_types]
@@ -52,10 +53,14 @@ class Suggestion(BaseModel):
             self.page_number = 1
             return
 
-        context_segments = Beginning750().filter_segments(context_segments)
+        if context_from_the_end:
+            context_segments = End750().filter_segments(context_segments)
+        else:
+            context_segments = Beginning750().filter_segments(context_segments)
+
         self.page_number = context_segments[0].page_number
         self.segments_boxes = [SegmentBox.from_pdf_segment(pdf_segment) for pdf_segment in context_segments]
-        self.segment_text = " ... ".join([pdf_segment.text_content for pdf_segment in context_segments])
+        self.segment_text = " .. ".join([pdf_segment.text_content for pdf_segment in context_segments])
 
     def scale_up(self):
         for segment_box in self.segments_boxes:

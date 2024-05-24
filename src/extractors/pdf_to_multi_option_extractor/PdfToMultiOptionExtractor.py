@@ -82,11 +82,13 @@ class PdfToMultiOptionExtractor(ExtractorBase):
             return []
 
         training_samples, predictions = self.get_predictions(predictions_samples)
+        prediction_method = self.get_predictions_method()
 
+        context_from_the_end = "End" in prediction_method.get_name()
         suggestions = list()
         for training_sample, prediction_sample, prediction in zip(training_samples, predictions_samples, predictions):
             suggestion = Suggestion.get_empty(self.extraction_identifier, prediction_sample.entity_name)
-            suggestion.add_prediction_multi_option(training_sample, prediction)
+            suggestion.add_prediction_multi_option(training_sample, prediction, context_from_the_end)
             suggestions.append(suggestion)
 
         return suggestions
