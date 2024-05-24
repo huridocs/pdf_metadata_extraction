@@ -62,7 +62,7 @@ Containers with `make start_for_testing`
 
 ![Alt logo](readme_pictures/send_files.png?raw=true "Post xml files")
 
-3. Post labeled data
+4. Post labeled data
     
     Text, numeric or date cases:
 
@@ -97,7 +97,7 @@ Containers with `make start_for_testing`
 
 ![Alt logo](readme_pictures/send_json.png?raw=true "Post labeled data")
 
-4. Post data to predict
+5. Post data to predict
 
 ``` 
 curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name": "xml_file_name.xml",
@@ -111,7 +111,7 @@ curl -X POST --header "Content-Type: application/json" --data '{"xml_file_name":
 
 ![Alt logo](readme_pictures/send_json.png?raw=true "Post data to predict")
 
-5. Create model and calculate suggestions
+6. Create model and calculate suggestions
 
 To create the model or calculate the suggestions, a message to redis should be sent. The name for the tasks queue is "
 information_extraction_tasks"
@@ -136,7 +136,22 @@ information_extraction_tasks"
 
 ![Alt logo](readme_pictures/process.png?raw=true "Create model and calculate suggestions")
 
-6. Get results
+7. Get service logs
+
+A Redis queue stores the service logs for both training and prediction processes.
+
+    queue = RedisSMQ(host='127.0.0.1', port='6579', qname='information_extraction_logs', quiet=False)
+    results_message = queue.receiveMessage().exceptions(False).execute()
+
+    # The logs have the following format
+    # {"tenant": "tenant_name", 
+    # "extraction_name": "extraction_id", 
+    # "severity": "info" || "error", 
+    # "message": ""}
+
+
+
+8. Get results
 
 There is a redis queue where it is possible to get notified when the different tasks finish
 
@@ -214,7 +229,7 @@ Multi-option case:
 
 ```
 
-8. Stop the service
+9. Stop the service
 
     `make stop`
 
