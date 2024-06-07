@@ -23,6 +23,12 @@ from extractors.pdf_to_multi_option_extractor.multi_labels_methods.FastTextMetho
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import SingleLabelSetFitMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzy95 import (
+    FastSegmentSelectorFuzzy95,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzyCommas import (
+    FastSegmentSelectorFuzzyCommas,
+)
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll75 import FuzzyAll75
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll88 import FuzzyAll88
@@ -32,6 +38,9 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 )
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLast import FuzzyLast
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzySegmentSelector import (
+    FuzzySegmentSelector,
+)
 from send_logs import send_logs
 
 
@@ -44,6 +53,9 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
+        FastSegmentSelectorFuzzy95(),
+        FastSegmentSelectorFuzzyCommas(),
+        FuzzySegmentSelector(),
         PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
         PdfMultiOptionMethod(CleanEndDotDigits1000, TfIdfMethod),
         PdfMultiOptionMethod(CleanBeginningDotDigits500, FastTextMethod),

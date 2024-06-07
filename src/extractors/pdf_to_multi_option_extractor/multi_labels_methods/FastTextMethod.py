@@ -23,7 +23,7 @@ class FastTextMethod(MultiLabelMethod):
         return [self.clean_label(option.label) for option in options]
 
     def get_data_path(self):
-        model_folder_path = join(self.base_path, self.get_name())
+        model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 
         if not exists(model_folder_path):
             os.makedirs(model_folder_path)
@@ -31,7 +31,7 @@ class FastTextMethod(MultiLabelMethod):
         return join(model_folder_path, "data.txt")
 
     def get_model_path(self):
-        model_folder_path = join(self.base_path, self.get_name())
+        model_folder_path = join(self.extraction_identifier.get_path(), self.get_name())
 
         if not exists(model_folder_path):
             os.makedirs(model_folder_path)

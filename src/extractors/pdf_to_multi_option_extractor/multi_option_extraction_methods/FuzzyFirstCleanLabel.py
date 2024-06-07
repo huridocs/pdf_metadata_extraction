@@ -28,9 +28,11 @@ class FuzzyFirstCleanLabel(PdfMultiOptionMethod):
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         predictions = list()
         clean_options = self.get_cleaned_options(multi_option_data.options)
+        clean_options_sorted = list(sorted(clean_options, key=lambda x: len(x), reverse=True))
+
         for multi_option_sample in multi_option_data.samples:
             pdf_segments: list[PdfDataSegment] = [x for x in multi_option_sample.pdf_data.pdf_data_segments]
-            prediction = self.get_appearance(pdf_segments, clean_options)
+            prediction = self.get_appearance(pdf_segments, clean_options_sorted)
             if prediction:
                 predictions.append([multi_option_data.options[clean_options.index(prediction[0])]])
             else:

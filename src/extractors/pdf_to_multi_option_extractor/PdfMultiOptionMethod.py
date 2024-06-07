@@ -1,6 +1,3 @@
-import random
-import shutil
-from abc import abstractmethod
 from typing import Type
 
 from sklearn.metrics import f1_score
@@ -8,7 +5,6 @@ from sklearn.metrics import f1_score
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.ExtractionData import ExtractionData
-from data.TrainingSample import TrainingSample
 from extractors.ExtractorBase import ExtractorBase
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import FilterSegmentsMethod

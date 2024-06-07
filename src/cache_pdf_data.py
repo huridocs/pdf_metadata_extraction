@@ -14,7 +14,7 @@ from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
 from config import ROOT_PATH
 from data.PdfData import PdfData
-from multi_option_classification_benchmark import get_task_pdf_names, PDF_DATA_FOLDER_PATH
+from pdf_multi_option_classification_benchmark import get_task_pdf_names, PDF_DATA_FOLDER_PATH
 
 LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 
@@ -22,6 +22,9 @@ LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 def cache_pdf_data():
     task_pdf_names = get_task_pdf_names()
     for task, pdf_names in task_pdf_names.items():
+        if task != "countries_in_favor":
+            continue
+
         for pdf_name in pdf_names:
             pdf_data_pickle_path = Path(str(join(PDF_DATA_FOLDER_PATH, pdf_name + ".pickle")))
             os.makedirs(pdf_data_pickle_path.parent, exist_ok=True)
