@@ -46,6 +46,10 @@ class TextToTextMethod:
     def predict(self, predictions_samples: list[PredictionSample]) -> list[str]:
         pass
 
+    @staticmethod
+    def clean_text(text: str) -> str:
+        return " ".join(text.split())
+
     def performance(self, extraction_data: ExtractionData) -> float:
         if not extraction_data.samples:
             return 0
@@ -60,7 +64,7 @@ class TextToTextMethod:
         correct = [
             sample
             for sample, prediction in zip(performance_test_set.samples, predictions)
-            if sample.labeled_data.label_text == prediction
+            if self.clean_text(sample.labeled_data.label_text) == self.clean_text(prediction)
         ]
         self.remove_model()
         return 100 * len(correct) / len(performance_test_set.samples)

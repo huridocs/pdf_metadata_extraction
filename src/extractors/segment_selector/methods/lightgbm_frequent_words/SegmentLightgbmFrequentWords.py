@@ -120,13 +120,12 @@ class SegmentLightgbmFrequentWords:
 
     def get_last_title_features(self):
         if not self.previous_title_segment:
-            return list(np.zeros(22))
+            return list(np.zeros(21))
 
         font_size_mode = sum(self.previous_title_segment.font_sizes) / len(self.previous_title_segment.font_sizes)
 
         return [
             self.previous_title_segment.segment_index,
-            len(self.previous_title_segment.pdfs_data.multi_option_samples) - self.previous_title_segment.segment_index,
             self.previous_title_segment.page_index,
             len(self.pdf_segments.pdf_features.pages) - self.previous_title_segment.page_index,
             self.previous_title_segment.bold,

@@ -63,6 +63,10 @@ class PdfData:
                 if segment.is_selected(label_segment_box.get_bounding_box()):
                     segment.ml_label = 1
 
+    def clean_text(self):
+        for segment in self.pdf_data_segments:
+            segment.text_content = " ".join(segment.text_content.split())
+
     @staticmethod
     def get_blank():
         return PdfData(None)
@@ -87,7 +91,7 @@ class PdfData:
         pdf_data = PdfData(pdf_features)
         pdf_data.set_segments_from_segmentation_data(segmentation_data)
         pdf_data.set_ml_label_from_segmentation_data(segmentation_data)
-
+        pdf_data.clean_text()
         return pdf_data
 
     @staticmethod

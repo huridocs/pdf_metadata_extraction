@@ -1,5 +1,8 @@
 Task                  Method name                                 Time(m) Score
 
+countries_in_favor    extractor                                         - 36.85%
+countries_in_favor    FuzzySegmentSelector                              - 82.68%
+
 d4la_document_type    extractor                                         - 56.67%
 cejil_president       extractor                                         - 100.0%
 cejil_secretary       extractor                                         - 86.67%
