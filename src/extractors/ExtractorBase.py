@@ -46,7 +46,7 @@ class ExtractorBase:
     def get_train_test_sets(
         extraction_data: ExtractionData, seed: int = 22, limit_samples: bool = True
     ) -> (ExtractionData, ExtractionData):
-        if len(extraction_data.samples) < 15:
+        if len(extraction_data.samples) < 8:
             return extraction_data, extraction_data
 
         train_size = int(len(extraction_data.samples) * 0.8)
