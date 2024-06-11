@@ -35,7 +35,7 @@ LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 
 BASE_LINE = {'cejil_president': 76.47,
              'cyrilla_keywords': 47.71,
-             'cejil_date': 23.73,
+             'cejil_date': 30.51,
              'cejil_countries': 72.55,
              'd4la_document_type': 43.66,
              'cejil_secretary': 88.1,
@@ -136,7 +136,7 @@ def performance_report():
 
 def get_f1_scores():
     f1s = dict()
-    for dataset in get_multi_option_benchmark_data():
+    for dataset in get_multi_option_benchmark_data("countries_in_favor"):
         training_samples_number = int(len(dataset.samples) * 0.4) if len(dataset.samples) > 10 else 10
         training_samples = dataset.samples[:training_samples_number]
         test_samples = dataset.samples[training_samples_number:] if len(dataset.samples) > 20 else dataset.samples

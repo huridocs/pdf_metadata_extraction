@@ -26,7 +26,7 @@ class FuzzySegmentSelector(PdfMultiOptionMethod):
             if fuzz.partial_ratio(option, pdf_segment.text_content.lower()) >= threshold:
                 appearances.append(option)
 
-        return list(set(appearances))
+        return list(dict.fromkeys(appearances))
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         segment_selector = SegmentSelector(self.extraction_identifier)

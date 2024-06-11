@@ -31,7 +31,7 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
             if fuzz.partial_ratio(option, pdf_segment.text_content.lower()) >= self.threshold:
                 appearances.append(option)
 
-        return list(set(appearances))
+        return list(dict.fromkeys(appearances))
 
     def train(self, multi_option_data: ExtractionData):
         marked_segments = list()

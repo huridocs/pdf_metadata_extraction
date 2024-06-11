@@ -28,7 +28,7 @@ class FuzzyAll100(PdfMultiOptionMethod):
                 if option in text:
                     text = text.replace(option, "")
 
-        return list(set(appearances))
+        return list(dict.fromkeys(appearances))
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         predictions = list()

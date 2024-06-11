@@ -28,7 +28,7 @@ class FuzzyCommas(PdfMultiOptionMethod):
                         appearances.append(option)
                         break
 
-        return list(set(appearances))
+        return appearances
 
     @staticmethod
     def clean_option(option: str) -> str:

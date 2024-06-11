@@ -26,13 +26,18 @@ class FastSegmentSelector:
         self.next_words_path = join(self.fast_segment_selector_path, "next_words.txt")
         self.model_path = join(self.fast_segment_selector_path, "lightgbm_model.txt")
 
-    def get_features(self, segment: PdfDataSegment):
+    def get_features(self, segment: PdfDataSegment, segments: list[PdfDataSegment]):
         features = list()
         text = segment.text_content
 
-        index = self.text_segments.index(segment)
-        previous_segment_text = self.text_segments[index - 1].text_content if index > 0 else ""
-        next_segment_text = self.text_segments[index + 1].text_content if index + 1 < len(self.text_segments) else ""
+        if segment in self.text_segments:
+            index = self.text_segments.index(segment)
+            previous_segment_text = self.text_segments[index - 1].text_content if index > 0 else ""
+            next_segment_text = self.text_segments[index + 1].text_content if index + 1 < len(self.text_segments) else ""
+        else:
+            index = segments.index(segment)
+            previous_segment_text = segments[index - 1].text_content if index > 0 else ""
+            next_segment_text = segments[index + 1].text_content if index + 1 < len(segments) else ""
 
         for word in self.previous_words:
             features.append(1 if word in previous_segment_text.lower() else 0)
@@ -88,7 +93,7 @@ class FastSegmentSelector:
         y = []
 
         for segment in segments:
-            x_rows.append(self.get_features(segment))
+            x_rows.append(self.get_features(segment, segments))
             y.append(segment.ml_label)
 
         x_train = np.zeros((len(x_rows), len(x_rows[0]) if x_rows else 0))
