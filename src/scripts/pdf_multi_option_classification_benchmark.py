@@ -162,7 +162,7 @@ def get_multi_option_extractor_benchmark():
     for extraction_data in extractions_data:
         start = time()
         extractor = PdfToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
-        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 23)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data)
         values_list = [x.labeled_data.values for x in test_set.samples]
         truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, extraction_data.options)
         extractor.create_model(train_set)
@@ -190,7 +190,7 @@ def check_results():
         extractor = PdfToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
 
         print(f"Calculating {extractor.extraction_identifier} {extractor.get_name()}")
-        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 23)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data)
         labels = [x.labeled_data.values for x in test_set.samples]
         test_data = [PredictionSample(pdf_data=x.pdf_data) for x in test_set.samples]
         suggestions = extractor.get_suggestions(test_data)

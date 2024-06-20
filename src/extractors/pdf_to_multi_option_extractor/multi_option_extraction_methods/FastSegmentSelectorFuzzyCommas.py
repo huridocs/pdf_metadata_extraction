@@ -9,5 +9,10 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 class FastSegmentSelectorFuzzyCommas(FastSegmentSelectorFuzzy95):
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
-        predict_data = self.get_prediction_data(multi_option_data)
-        return FuzzyCommas().predict(predict_data)
+        self.set_parameters(multi_option_data)
+        self.extraction_data = self.get_prediction_data(multi_option_data)
+        return FuzzyCommas().predict(self.extraction_data)
+
+    def train(self, multi_option_data: ExtractionData):
+        super().train(multi_option_data)
+        FuzzyCommas().train(multi_option_data)

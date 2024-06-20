@@ -1,7 +1,6 @@
 import json
 import random
 from abc import abstractmethod
-from collections import Counter
 from os import makedirs
 from os.path import exists
 from pathlib import Path
@@ -44,17 +43,19 @@ class ExtractorBase:
 
     @staticmethod
     def get_train_test_sets(
-        extraction_data: ExtractionData, seed: int = 22, limit_samples: bool = True
+        extraction_data: ExtractionData, limit_samples: bool = True
     ) -> (ExtractionData, ExtractionData):
         if len(extraction_data.samples) < 8:
             return extraction_data, extraction_data
 
         train_size = int(len(extraction_data.samples) * 0.8)
-        random.seed(seed)
-        random.shuffle(extraction_data.samples)
 
         train_set: list[TrainingSample] = extraction_data.samples[:train_size]
-        test_set: list[TrainingSample] = extraction_data.samples[train_size:]
+
+        if len(extraction_data.samples) < 15:
+            test_set: list[TrainingSample] = extraction_data.samples[-10:]
+        else:
+            test_set = extraction_data.samples[train_size:]
 
         if limit_samples:
             train_set = train_set[:80]

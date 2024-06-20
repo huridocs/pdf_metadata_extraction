@@ -16,12 +16,13 @@ class FastSegmentSelector:
     def __init__(self, extraction_identifier: ExtractionIdentifier):
         self.extraction_identifier = extraction_identifier
         self.text_types = [TokenType.TEXT, TokenType.LIST, TokenType.TITLE]
-        self.previous_words, self.next_words, self.text_segments = [], [], []
+        self.previous_2_words, self.previous_words, self.next_words, self.text_segments = [], [], [], []
 
         self.fast_segment_selector_path = Path(join(self.extraction_identifier.get_path(), "fast_segment_selector"))
         if not self.fast_segment_selector_path.exists():
             os.makedirs(self.fast_segment_selector_path, exist_ok=True)
 
+        self.previous_2_words_path = join(self.fast_segment_selector_path, "previous_2_words.txt")
         self.previous_words_path = join(self.fast_segment_selector_path, "previous_words.txt")
         self.next_words_path = join(self.fast_segment_selector_path, "next_words.txt")
         self.model_path = join(self.fast_segment_selector_path, "lightgbm_model.txt")
@@ -32,18 +33,18 @@ class FastSegmentSelector:
 
         if segment in self.text_segments:
             index = self.text_segments.index(segment)
-            previous_segment_text = self.text_segments[index - 1].text_content if index > 0 else ""
-            next_segment_text = self.text_segments[index + 1].text_content if index + 1 < len(self.text_segments) else ""
+            previous_segment_texts = self.clean_texts(self.text_segments[index - 1]) if index > 0 else []
+            next_segment_texts = self.clean_texts(self.text_segments[index + 1]) if index + 1 < len(self.text_segments) else []
         else:
             index = segments.index(segment)
-            previous_segment_text = segments[index - 1].text_content if index > 0 else ""
-            next_segment_text = segments[index + 1].text_content if index + 1 < len(segments) else ""
+            previous_segment_texts = self.clean_texts(segments[index - 1]) if index > 0 else ""
+            next_segment_texts = self.clean_texts(segments[index + 1]) if index + 1 < len(segments) else ""
 
         for word in self.previous_words:
-            features.append(1 if word in previous_segment_text.lower() else 0)
+            features.append(1 if word in previous_segment_texts else 0)
 
         for word in self.next_words:
-            features.append(1 if word in next_segment_text.lower() else 0)
+            features.append(1 if word in next_segment_texts else 0)
 
         features.append(len([x for x in text if x == ","]) / len(text) if text else 0)
 
@@ -57,27 +58,39 @@ class FastSegmentSelector:
         return [x[0] for x in counter.most_common(30)]
 
     @staticmethod
-    def get_predictive_common_words(segments):
+    def clean_texts(pdf_segment: PdfDataSegment) -> list[str]:
+        clean_letters = [letter for letter in pdf_segment.text_content.lower() if letter.isalnum() or letter == " "]
+        return "".join(clean_letters).split()
+
+    def get_predictive_common_words(self, segments):
         most_common_words = FastSegmentSelector.get_most_common_words(segments)
+        counter_previous_2_segment = Counter()
         counter_previous_segment = Counter()
         counter_next_segment = Counter()
 
-        for previous_segment, segment, next_segment in zip(segments, segments[1:], segments[2:]):
-            if segment.ml_label:
-                counter_previous_segment.update(
-                    [x for x in previous_segment.text_content.strip().lower().split() if x not in most_common_words]
-                )
-                counter_next_segment.update(
-                    [x for x in next_segment.text_content.strip().lower().split() if x not in most_common_words]
-                )
-                break
+        for previous_2_segment, previous_segment, segment, next_segment in zip(segments, segments[1:], segments[2:], segments[3:]):
+            if not segment.ml_label:
+                continue
 
-        return ([x[0] for x in counter_previous_segment.most_common(3)], [x[0] for x in counter_next_segment.most_common(3)])
+            counter_previous_2_segment.update(
+                [x for x in self.clean_texts(previous_2_segment) if x not in most_common_words]
+            )
+
+            counter_previous_segment.update(
+                [x for x in self.clean_texts(previous_segment) if x not in most_common_words]
+            )
+            counter_next_segment.update([x for x in self.clean_texts(next_segment) if x not in most_common_words])
+            break
+
+        self.previous_2_words = [x[0] for x in counter_previous_2_segment.most_common(2)]
+        self.previous_words = [x[0] for x in counter_previous_segment.most_common(2)]
+        self.next_words = [x[0] for x in counter_next_segment.most_common(2)]
 
     def create_model(self, segments: list[PdfDataSegment]):
         self.text_segments = [x for x in segments if x.segment_type in self.text_types]
-        self.previous_words, self.next_words = self.get_predictive_common_words(self.text_segments)
+        self.get_predictive_common_words(self.text_segments)
 
+        Path(self.previous_2_words_path).write_text(json.dumps(self.previous_2_words))
         Path(self.previous_words_path).write_text(json.dumps(self.previous_words))
         Path(self.next_words_path).write_text(json.dumps(self.next_words))
 
@@ -115,8 +128,10 @@ class FastSegmentSelector:
 
     def load_repeated_words(self):
         try:
+            self.previous_2_words = json.loads(Path(self.previous_2_words_path).read_text())
             self.previous_words = json.loads(Path(self.previous_words_path).read_text())
             self.next_words = json.loads(Path(self.next_words_path).read_text())
         except:
+            self.previous_2_words = []
             self.previous_words = []
             self.next_words = []

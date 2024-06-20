@@ -4,6 +4,7 @@ import random
 from os import listdir
 from os.path import join
 from pathlib import Path
+from time import sleep, time
 
 from paragraph_extraction_trainer.Paragraph import Paragraph
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
@@ -33,14 +34,16 @@ LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 
 LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 
-BASE_LINE = {'cejil_president': 76.47,
-             'cyrilla_keywords': 47.71,
-             'cejil_date': 30.51,
-             'cejil_countries': 72.55,
-             'd4la_document_type': 43.66,
-             'cejil_secretary': 88.1,
-             'countries_in_favor': 72.74,
-             'cejil_judge': 54.55}
+BASE_LINE = {
+    "cejil_president": (95.24, "FuzzyLast"),
+    "cyrilla_keywords": (49.32, "FuzzyAll100"),
+    "cejil_date": (40.0, "FuzzyAll100"),
+    "cejil_countries": (87.88, "FuzzyFirstCleanLabel"),
+    "d4la_document_type": (57.45, "CleanBeginningDotDigits500_SingleLabelSetFit"),
+    "cejil_secretary": (76.32, "FuzzyAll88"),
+    "countries_in_favor": (86.31, "FastSegmentSelectorFuzzyCommas"),
+    "cejil_judge": (78.57, "FuzzyFirst"),
+}
 
 
 def get_task_pdf_names():
@@ -125,41 +128,84 @@ def get_multi_option_benchmark_data(filter_by: list[str] = None) -> list[Extract
 
 
 def performance_report():
-    f1s = get_f1_scores()
-
-    for key, value in f1s.items():
-        if value < BASE_LINE[key]:
-            print(f"PERFORMANCE DECREASED FOR {key} FROM {BASE_LINE[key]}% TO {value}%")
+    f1s_method_name = get_f1_scores_method_names()
+    sleep(1)
+    print()
+    print("REPORT:")
+    print("-------")
+    for key, (value, method_name) in f1s_method_name.items():
+        if value < BASE_LINE[key][0]:
+            print(f"{key}: PERFORMANCE DECREASED!!!!!")
         else:
-            print(f"Good performance {key}: {value}%")
+            print(f"{key}: Good performance")
+
+        print(f"Base performance: {BASE_LINE[key][0]}% with method {BASE_LINE[key][1]}")
+        print(f"Performance: {value}% with method {method_name}")
+        print()
 
 
-def get_f1_scores():
-    f1s = dict()
-    for dataset in get_multi_option_benchmark_data("countries_in_favor"):
-        training_samples_number = int(len(dataset.samples) * 0.4) if len(dataset.samples) > 10 else 10
-        training_samples = dataset.samples[:training_samples_number]
-        test_samples = dataset.samples[training_samples_number:] if len(dataset.samples) > 20 else dataset.samples
-        predictions = get_predictions(dataset, test_samples, training_samples)
-        values_list = [x.labeled_data.values for x in test_samples]
-        truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, dataset.options)
-        prediction_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(predictions, dataset.options)
-        f1 = round(100 * f1_score(truth_one_hot, prediction_one_hot, average='micro'), 2)
-        f1s[dataset.extraction_identifier.extraction_name] = f1
+def get_f1_scores_method_names() -> dict[str, (float, str)]:
+    f1s_method_name = dict()
+    for dataset in get_multi_option_benchmark_data(filter_by=["cejil_president", "countries_in_favor"]):
+        truth_one_hot, prediction_one_hot, method_name, _ = get_predictions(dataset)
+        f1 = round(100 * f1_score(truth_one_hot, prediction_one_hot, average="micro"), 2)
+        f1s_method_name[dataset.extraction_identifier.extraction_name] = (f1, method_name)
 
-    return f1s
+    return f1s_method_name
 
 
-def get_predictions(dataset, test_samples, training_samples):
-    training_dataset = ExtractionData(samples=training_samples, options=dataset.options,
-                                      multi_value=dataset.multi_value,
-                                      extraction_identifier=dataset.extraction_identifier)
+def get_predictions(dataset: ExtractionData) -> (list[list[int]], list[list[int]], str):
+    training_samples_number = int(len(dataset.samples) * 0.5) if len(dataset.samples) > 10 else 10
+    training_samples = dataset.samples[:training_samples_number]
+    test_samples = dataset.samples[training_samples_number:] if len(dataset.samples) > 20 else dataset.samples
+
+    training_dataset = ExtractionData(
+        samples=training_samples,
+        options=dataset.options,
+        multi_value=dataset.multi_value,
+        extraction_identifier=dataset.extraction_identifier,
+    )
     extractor = PdfToMultiOptionExtractor(dataset.extraction_identifier)
     extractor.create_model(training_dataset)
     prediction_samples = [PredictionSample(pdf_data=sample.pdf_data) for sample in test_samples]
-    _, predictions = extractor.get_predictions(prediction_samples)
-    return predictions
+    context_samples, predictions = extractor.get_predictions(prediction_samples)
+    values_list = [x.labeled_data.values for x in test_samples]
+    truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, dataset.options)
+    prediction_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(predictions, dataset.options)
+    return truth_one_hot, prediction_one_hot, extractor.get_best_method(training_dataset).get_name(), context_samples
 
 
-if __name__ == '__main__':
+def get_mistakes() -> dict[str, (float, str)]:
+    f1s_method_name = dict()
+    for dataset in get_multi_option_benchmark_data(["cejil_president"]):
+        truth_one_hot, prediction_one_hot, method_name, test_samples = get_predictions(dataset)
+
+        correct = 0
+        mistakes = 0
+        for truth, prediction, sample in zip(truth_one_hot, prediction_one_hot, test_samples):
+            text = ' '.join([x.text_content for x in sample.pdf_data.pdf_data_segments if x.ml_label])
+            missing = [dataset.options[i].label for i in range(len(truth)) if truth[i] and not prediction[i]]
+            wrong = [dataset.options[i].label for i in range(len(truth)) if not truth[i] and prediction[i]]
+
+            if missing or wrong:
+                print()
+                print(f"PDF: {sample.pdf_data.file_name}")
+                print(f"Text: {text}")
+                print(f"Missing: {missing}")
+                print(f"Wrong: {wrong}")
+                mistakes += 1
+            else:
+                correct += 1
+
+        print(f"\n\nCorrect predictions for: {correct} PDFs")
+        print(f"Incorrect predictions for {mistakes} PDFs")
+
+    return f1s_method_name
+
+
+if __name__ == "__main__":
+    start = time()
+    print("start")
     performance_report()
+    print("time", round(time() - start, 2), "s")
+    # get_mistakes()

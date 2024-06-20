@@ -61,6 +61,7 @@ class TestFuzzyMethods(TestCase):
             multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
         )
 
+        FuzzyCommas().train(multi_option_data)
         predictions = FuzzyCommas().predict(multi_option_data)
 
         self.assertEqual(2, len(predictions))
@@ -72,6 +73,31 @@ class TestFuzzyMethods(TestCase):
         self.assertTrue(Option(id="1", label="item 1") in predictions[1])
         self.assertTrue(Option(id="2", label="item 2") not in predictions[1])
         self.assertTrue(Option(id="10", label="item 10") in predictions[1])
+
+    def test_fuzzy_commas_aliases(self):
+        extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
+        options = [Option(id="1", label="  United Kingdom  ")]
+
+        pdf_data_1 = PdfData.from_texts(
+            ["blah,  United Kingdom of Great Britain and Northern Ireland  , 2 item, item 3, blah"]
+        )
+
+        pdf_data_1.pdf_data_segments[0].ml_label = 1
+
+        samples = [
+            TrainingSample(pdf_data_1, LabeledData(values=[options[0]])),
+        ]
+
+        multi_option_data = ExtractionData(
+            multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
+        )
+
+        FuzzyCommas().train(multi_option_data)
+        predictions = FuzzyCommas().predict(multi_option_data)
+
+        self.assertEqual(1, len(predictions))
+
+        self.assertTrue(Option(id="1", label="  United Kingdom  ") in predictions[0])
 
     def test_fast_segment_selector_fuzzy_95(self):
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)

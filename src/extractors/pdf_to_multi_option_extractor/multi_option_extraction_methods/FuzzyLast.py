@@ -10,7 +10,7 @@ from data.ExtractionData import ExtractionData
 
 class FuzzyLast(PdfMultiOptionMethod):
     @staticmethod
-    def get_first_appearance(pdf_segments: list[PdfDataSegment], options: list[str]) -> list[str]:
+    def get_last_appearance(pdf_segments: list[PdfDataSegment], options: list[str]) -> list[str]:
         for pdf_segment in reversed(pdf_segments):
             for ratio_threshold in range(100, 69, -10):
                 for option in options:
@@ -28,7 +28,7 @@ class FuzzyLast(PdfMultiOptionMethod):
         options_sorted = list(sorted(options_labels, key=lambda x: len(x), reverse=True))
         for multi_option_sample in multi_option_data.samples:
             pdf_segments: list[PdfDataSegment] = [x for x in multi_option_sample.pdf_data.pdf_data_segments]
-            prediction = self.get_first_appearance(pdf_segments, options_sorted)
+            prediction = self.get_last_appearance(pdf_segments, options_sorted)
             if prediction:
                 predictions.append([multi_option_data.options[options_labels.index(prediction[0])]])
             else:

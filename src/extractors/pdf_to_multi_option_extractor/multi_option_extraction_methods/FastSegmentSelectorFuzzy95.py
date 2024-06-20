@@ -41,18 +41,19 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
         FastSegmentSelector(self.extraction_identifier).create_model(marked_segments)
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
-        predict_data = self.get_prediction_data(multi_option_data)
-        return FuzzyAll95().predict(predict_data)
+        self.set_parameters(multi_option_data)
+        self.extraction_data = self.get_prediction_data(multi_option_data)
+        return FuzzyAll95().predict(self.extraction_data)
 
-    def get_prediction_data(self, multi_option_data):
+    def get_prediction_data(self, extraction_data: ExtractionData) -> ExtractionData:
         fast_segment_selector = FastSegmentSelector(self.extraction_identifier)
         predict_samples = list()
-        for sample in multi_option_data.samples:
+        for sample in extraction_data.samples:
             selected_segments = fast_segment_selector.predict(self.fix_two_pages_segments(sample))
 
-            self.mark_segments_for_context(sample.pdf_data.pdf_data_segments, selected_segments)
+            self.mark_segments_for_context(selected_segments)
 
-            pdf_data = PdfData(None)
+            pdf_data = PdfData(None, file_name=sample.pdf_data.file_name)
             pdf_data.pdf_data_segments = selected_segments
 
             training_sample = TrainingSample(pdf_data=pdf_data, labeled_data=sample.labeled_data)
@@ -60,8 +61,8 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
 
         return ExtractionData(
             samples=predict_samples,
-            options=multi_option_data.options,
-            multi_value=multi_option_data.multi_value,
+            options=self.extraction_data.options,
+            multi_value=self.extraction_data.multi_value,
             extraction_identifier=self.extraction_identifier,
         )
 
@@ -94,7 +95,7 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
 
     def get_marked_segments(self, training_sample: TrainingSample) -> list[PdfDataSegment]:
         cleaned_values = self.get_cleaned_options(training_sample.labeled_data.values)
-        appearances_threshold = math.ceil(len(cleaned_values) * self.threshold / 100)
+        appearances_threshold = math.ceil(len(cleaned_values) * 0.68)
 
         if not appearances_threshold:
             return training_sample.pdf_data.pdf_data_segments
@@ -117,7 +118,6 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
         merged_segment = None
         for segment in training_sample.pdf_data.pdf_data_segments:
             if segment == merged_segment:
-                fixed_segments.append(segment)
                 merged_segment = None
                 continue
 
@@ -138,19 +138,12 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
             return segment, None
 
         segment = deepcopy(segment)
-        text_type_segments[index + 1] = deepcopy(text_type_segments[index + 1])
-
         segment.text_content += " " + text_type_segments[index + 1].text_content
-        text_type_segments[index + 1].text_content = segment.text_content
+
         return segment, text_type_segments[index + 1]
 
     @staticmethod
-    def mark_segments_for_context(all_segments: list[PdfDataSegment], selected_segments: list[PdfDataSegment]):
-        for segment in all_segments:
-            for selected_segment in selected_segments:
-                if segment.page_number != selected_segment.page_number:
-                    continue
+    def mark_segments_for_context(segments: list[PdfDataSegment]):
+        for segment in segments:
+            segment.ml_label = 1
 
-                if segment.bounding_box.get_intersection_percentage(selected_segment.bounding_box) > 0.1:
-                    segment.ml_label = 1
-                    break

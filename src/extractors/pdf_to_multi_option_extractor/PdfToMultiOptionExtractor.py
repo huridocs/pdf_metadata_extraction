@@ -41,6 +41,8 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzySegmentSelector import (
     FuzzySegmentSelector,
 )
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import \
+    SentenceSelectorFuzzyCommas
 from send_logs import send_logs
 
 
@@ -53,6 +55,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
+        SentenceSelectorFuzzyCommas(),
         FastSegmentSelectorFuzzy95(),
         FastSegmentSelectorFuzzyCommas(),
         FuzzySegmentSelector(),
@@ -123,7 +126,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         if not self.multi_value:
             prediction = [x[:1] for x in prediction]
 
-        return training_samples, prediction
+        return method.get_samples_for_context(extraction_data), prediction
 
     def load_options(self):
         if not exists(self.options_path) or not exists(self.multi_value_path):
@@ -139,7 +142,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         best_method_instance = self.METHODS[0]
         best_performance = 0
         for method in self.METHODS:
-            performance = self.get_performance(method, multi_option_data)
+            performance = self.get_method_performance(method, multi_option_data)
 
             if performance == 100:
                 send_logs(self.extraction_identifier, f"Best method {method.get_name()} with {performance}%")
@@ -152,10 +155,10 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         send_logs(self.extraction_identifier, f"Best method {best_method_instance.get_name()}")
         return best_method_instance
 
-    def get_performance(self, method, multi_option_data):
+    def get_method_performance(self, method: PdfMultiOptionMethod, multi_option_data: ExtractionData):
         method.set_parameters(multi_option_data)
 
-        if len(self.METHODS) == 1 or not method.can_be_used(multi_option_data):
+        if not method.can_be_used(multi_option_data):
             return 0
 
         send_logs(self.extraction_identifier, f"Checking {method.get_name()}")
@@ -164,9 +167,9 @@ class PdfToMultiOptionExtractor(ExtractorBase):
             performance = method.get_performance(multi_option_data)
         except Exception as e:
             send_logs(self.extraction_identifier, f"Error checking {method.get_name()}: {e}", Severity.error)
-
             performance = 0
 
+        self.reset_extraction_data(multi_option_data)
         send_logs(self.extraction_identifier, f"Performance {method.get_name()}: {performance}%")
         return performance
 
@@ -187,3 +190,9 @@ class PdfToMultiOptionExtractor(ExtractorBase):
                 return True
 
         return False
+
+    @staticmethod
+    def reset_extraction_data(multi_option_data: ExtractionData):
+        for sample in multi_option_data.samples:
+            for segment in sample.pdf_data.pdf_data_segments:
+                segment.ml_label = 0

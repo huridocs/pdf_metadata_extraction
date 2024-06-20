@@ -16,7 +16,7 @@ class FuzzyAll100(PdfMultiOptionMethod):
     def get_appearances(self, pdf_segments: list[PdfDataSegment], options: list[str]) -> list[str]:
         appearances = []
         for pdf_segment in pdf_segments:
-            text = pdf_segment.text_content.lower()
+            text = " ".join(pdf_segment.text_content.lower().split())
             for option in options:
                 if len(text) < math.ceil(len(option) * self.threshold / 100):
                     continue

@@ -5,6 +5,7 @@ from sklearn.metrics import f1_score
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.ExtractionData import ExtractionData
+from data.TrainingSample import TrainingSample
 from extractors.ExtractorBase import ExtractorBase
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import FilterSegmentsMethod
@@ -19,15 +20,17 @@ class PdfMultiOptionMethod:
         self.multi_label_method = multi_label_method
         self.filter_segments_method = filter_segments_method
         self.extraction_identifier = ExtractionIdentifier(run_name="not set", extraction_name="not set")
-        self.options: list[Option] = []
+        self.options: list[Option] = list()
         self.multi_value = False
         self.base_path = ""
+        self.extraction_data = None
 
     def set_parameters(self, multi_option_data: ExtractionData):
         self.extraction_identifier = multi_option_data.extraction_identifier
         self.options = multi_option_data.options
         self.multi_value = multi_option_data.multi_value
         self.base_path = multi_option_data.extraction_identifier.get_path()
+        self.extraction_data = multi_option_data
 
     def get_name(self):
         if self.filter_segments_method and self.multi_label_method:
@@ -44,7 +47,7 @@ class PdfMultiOptionMethod:
         scores = list()
         seeds = [22, 23, 24, 25]
         for i in range(repetitions):
-            train_set, test_set = ExtractorBase.get_train_test_sets(multi_option_data, seeds[i])
+            train_set, test_set = ExtractorBase.get_train_test_sets(multi_option_data)
             truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples], self.options)
 
             self.train(train_set)
@@ -96,6 +99,12 @@ class PdfMultiOptionMethod:
         predictions = multi_label.predict(filtered_multi_option_data)
 
         return predictions
+
+    def get_samples_for_context(self, extraction_data: ExtractionData) -> list[TrainingSample]:
+        if self.extraction_data:
+            return self.extraction_data.samples
+
+        return extraction_data.samples
 
     def can_be_used(self, multi_option_data: ExtractionData) -> bool:
         if self.multi_label_method:
