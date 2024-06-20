@@ -115,7 +115,7 @@ class FuzzyCommas(PdfMultiOptionMethod):
         if not path.exists():
             os.makedirs(path, exist_ok=True)
 
-        return Path(join(path, "aliases.txt"))
+        return Path(join(path, "aliases.json"))
 
     def get_aliases(self, sample: TrainingSample) -> dict[str, str]:
         segments = [segment for segment in sample.pdf_data.pdf_data_segments if segment.ml_label]

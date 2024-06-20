@@ -1,7 +1,7 @@
 import json
 import os
 from collections import Counter
-from os.path import join
+from os.path import join, exists
 from pathlib import Path
 
 import numpy as np
@@ -16,13 +16,12 @@ class FastSegmentSelector:
     def __init__(self, extraction_identifier: ExtractionIdentifier):
         self.extraction_identifier = extraction_identifier
         self.text_types = [TokenType.TEXT, TokenType.LIST, TokenType.TITLE]
-        self.previous_2_words, self.previous_words, self.next_words, self.text_segments = [], [], [], []
+        self.previous_words, self.next_words, self.text_segments = [], [], []
 
         self.fast_segment_selector_path = Path(join(self.extraction_identifier.get_path(), "fast_segment_selector"))
         if not self.fast_segment_selector_path.exists():
             os.makedirs(self.fast_segment_selector_path, exist_ok=True)
 
-        self.previous_2_words_path = join(self.fast_segment_selector_path, "previous_2_words.txt")
         self.previous_words_path = join(self.fast_segment_selector_path, "previous_words.txt")
         self.next_words_path = join(self.fast_segment_selector_path, "next_words.txt")
         self.model_path = join(self.fast_segment_selector_path, "lightgbm_model.txt")
@@ -64,17 +63,12 @@ class FastSegmentSelector:
 
     def get_predictive_common_words(self, segments):
         most_common_words = FastSegmentSelector.get_most_common_words(segments)
-        counter_previous_2_segment = Counter()
         counter_previous_segment = Counter()
         counter_next_segment = Counter()
 
-        for previous_2_segment, previous_segment, segment, next_segment in zip(segments, segments[1:], segments[2:], segments[3:]):
+        for previous_segment, segment, next_segment in zip(segments, segments[1:], segments[2:]):
             if not segment.ml_label:
                 continue
-
-            counter_previous_2_segment.update(
-                [x for x in self.clean_texts(previous_2_segment) if x not in most_common_words]
-            )
 
             counter_previous_segment.update(
                 [x for x in self.clean_texts(previous_segment) if x not in most_common_words]
@@ -82,7 +76,6 @@ class FastSegmentSelector:
             counter_next_segment.update([x for x in self.clean_texts(next_segment) if x not in most_common_words])
             break
 
-        self.previous_2_words = [x[0] for x in counter_previous_2_segment.most_common(2)]
         self.previous_words = [x[0] for x in counter_previous_segment.most_common(2)]
         self.next_words = [x[0] for x in counter_next_segment.most_common(2)]
 
@@ -90,7 +83,6 @@ class FastSegmentSelector:
         self.text_segments = [x for x in segments if x.segment_type in self.text_types]
         self.get_predictive_common_words(self.text_segments)
 
-        Path(self.previous_2_words_path).write_text(json.dumps(self.previous_2_words))
         Path(self.previous_words_path).write_text(json.dumps(self.previous_words))
         Path(self.next_words_path).write_text(json.dumps(self.next_words))
 
@@ -127,11 +119,11 @@ class FastSegmentSelector:
         return [segment for i, segment in enumerate(segments) if predictions[i] > 0.5]
 
     def load_repeated_words(self):
-        try:
-            self.previous_2_words = json.loads(Path(self.previous_2_words_path).read_text())
+        self.previous_words = []
+        self.next_words = []
+
+        if exists(self.previous_words_path):
             self.previous_words = json.loads(Path(self.previous_words_path).read_text())
+
+        if exists(self.next_words_path):
             self.next_words = json.loads(Path(self.next_words_path).read_text())
-        except:
-            self.previous_2_words = []
-            self.previous_words = []
-            self.next_words = []

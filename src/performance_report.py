@@ -35,14 +35,14 @@ LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 
 BASE_LINE = {
-    "cejil_president": (95.24, "FuzzyLast"),
-    "cyrilla_keywords": (49.32, "FuzzyAll100"),
-    "cejil_date": (40.0, "FuzzyAll100"),
-    "cejil_countries": (87.88, "FuzzyFirstCleanLabel"),
-    "d4la_document_type": (57.45, "CleanBeginningDotDigits500_SingleLabelSetFit"),
-    "cejil_secretary": (76.32, "FuzzyAll88"),
-    "countries_in_favor": (86.31, "FastSegmentSelectorFuzzyCommas"),
-    "cejil_judge": (78.57, "FuzzyFirst"),
+    "cejil_president": (78.57, "FuzzyLast"),
+    "cyrilla_keywords": (53.49, "FuzzyFirstCleanLabel"),
+    "cejil_date": (20.83, "FuzzyAll88"),
+    "cejil_countries": (69.05, "FuzzyFirstCleanLabel"),
+    "d4la_document_type": (44.07, "CleanBeginningDotDigits500_SingleLabelSetFit"),
+    "cejil_secretary": (80.0, "FuzzyAll75"),
+    "countries_in_favor": (99.75, "PreviousWordsSentenceSelectorFuzzyCommas"),
+    "cejil_judge": (92.86, "FuzzyLast"),
 }
 
 
@@ -146,7 +146,7 @@ def performance_report():
 
 def get_f1_scores_method_names() -> dict[str, (float, str)]:
     f1s_method_name = dict()
-    for dataset in get_multi_option_benchmark_data(filter_by=["cejil_president", "countries_in_favor"]):
+    for dataset in get_multi_option_benchmark_data(filter_by=[]):
         truth_one_hot, prediction_one_hot, method_name, _ = get_predictions(dataset)
         f1 = round(100 * f1_score(truth_one_hot, prediction_one_hot, average="micro"), 2)
         f1s_method_name[dataset.extraction_identifier.extraction_name] = (f1, method_name)

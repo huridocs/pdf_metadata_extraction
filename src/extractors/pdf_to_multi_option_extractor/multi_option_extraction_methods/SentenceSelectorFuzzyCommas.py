@@ -1,6 +1,8 @@
 import re
 from copy import deepcopy
 
+from pdf_features.Rectangle import Rectangle
+
 from data.Option import Option
 from data.PdfData import PdfData
 from data.PdfDataSegment import PdfDataSegment
@@ -58,8 +60,7 @@ class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
 
         return sentences_across_pages
 
-    @staticmethod
-    def get_segments_merged(segments):
+    def get_segments_merged(self, segments):
         segments = [segment for segment in segments if segment.text_content.strip()]
         merged_sentences = [segments[0]]
         for segment in segments[1:]:
@@ -68,6 +69,8 @@ class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
             if previous_segment_text[-1] not in [".", ":"]:
                 merged_segment = deepcopy(merged_sentences[-1])
                 merged_segment.text_content = f"{previous_segment_text}, {' '.join(segment.text_content.split())}"
+                bounding_boxes = [merged_segment.bounding_box, segment.bounding_box]
+                merged_segment.bounding_box = Rectangle.merge_rectangles(bounding_boxes)
                 merged_sentences[-1] = merged_segment
                 continue
 
