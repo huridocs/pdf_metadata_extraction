@@ -2,8 +2,7 @@ import json
 from pathlib import Path
 from data.PdfDataSegment import PdfDataSegment
 
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelector import \
-    FastSegmentSelector
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelector import FastSegmentSelector
 
 
 class PreviousWordsSegmentSelector(FastSegmentSelector):
@@ -29,6 +28,3 @@ class PreviousWordsSegmentSelector(FastSegmentSelector):
                     break
 
         return predicted_segments
-
-
-

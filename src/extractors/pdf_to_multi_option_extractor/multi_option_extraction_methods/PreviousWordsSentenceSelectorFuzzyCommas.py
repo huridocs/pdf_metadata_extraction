@@ -1,13 +1,14 @@
-
 from data.Option import Option
 from data.ExtractionData import ExtractionData
 from data.PdfData import PdfData
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyCommas import FuzzyCommas
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsSegmentSelector import \
-    PreviousWordsSegmentSelector
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import \
-    SentenceSelectorFuzzyCommas
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsSegmentSelector import (
+    PreviousWordsSegmentSelector,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import (
+    SentenceSelectorFuzzyCommas,
+)
 
 
 class PreviousWordsSentenceSelectorFuzzyCommas(SentenceSelectorFuzzyCommas):

@@ -146,4 +146,3 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
     def mark_segments_for_context(segments: list[PdfDataSegment]):
         for segment in segments:
             segment.ml_label = 1
-

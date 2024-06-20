@@ -8,8 +8,9 @@ from data.PdfData import PdfData
 from data.PdfDataSegment import PdfDataSegment
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzyCommas import \
-    FastSegmentSelectorFuzzyCommas
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzyCommas import (
+    FastSegmentSelectorFuzzyCommas,
+)
 
 
 class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
@@ -32,7 +33,7 @@ class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
             samples=samples_by_sentence,
             options=multi_option_data.options,
             multi_value=multi_option_data.multi_value,
-            extraction_identifier=multi_option_data.extraction_identifier
+            extraction_identifier=multi_option_data.extraction_identifier,
         )
 
     def get_sentence_segment_list(self, pdf_data_segments) -> list[(str, PdfDataSegment)]:
@@ -41,7 +42,7 @@ class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
 
         sentence_segment_list = []
         for segment in merged_sentences:
-            segment_text = ' '.join(segment.text_content.split())
+            segment_text = " ".join(segment.text_content.split())
             for text in re.split(r"\.|:", segment_text):
                 if not text:
                     continue
@@ -52,7 +53,7 @@ class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
         sentences_across_pages.append(sentence_segment_list[0])
         for sentence, next_sentence in zip(sentence_segment_list, sentence_segment_list[1:]):
             if sentence[0][-1] == ",":
-                merged_sentences = ' '.join([sentences_across_pages[-1][0], next_sentence[0]])
+                merged_sentences = " ".join([sentences_across_pages[-1][0], next_sentence[0]])
                 sentences_across_pages[-1] = (merged_sentences, sentences_across_pages[-1][1])
                 continue
 
@@ -64,7 +65,7 @@ class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
         segments = [segment for segment in segments if segment.text_content.strip()]
         merged_sentences = [segments[0]]
         for segment in segments[1:]:
-            previous_segment_text = ' '.join(merged_sentences[-1].text_content.split())
+            previous_segment_text = " ".join(merged_sentences[-1].text_content.split())
 
             if previous_segment_text[-1] not in [".", ":"]:
                 merged_segment = deepcopy(merged_sentences[-1])

@@ -33,7 +33,9 @@ class FastSegmentSelector:
         if segment in self.text_segments:
             index = self.text_segments.index(segment)
             previous_segment_texts = self.clean_texts(self.text_segments[index - 1]) if index > 0 else []
-            next_segment_texts = self.clean_texts(self.text_segments[index + 1]) if index + 1 < len(self.text_segments) else []
+            next_segment_texts = (
+                self.clean_texts(self.text_segments[index + 1]) if index + 1 < len(self.text_segments) else []
+            )
         else:
             index = segments.index(segment)
             previous_segment_texts = self.clean_texts(segments[index - 1]) if index > 0 else ""
@@ -70,9 +72,7 @@ class FastSegmentSelector:
             if not segment.ml_label:
                 continue
 
-            counter_previous_segment.update(
-                [x for x in self.clean_texts(previous_segment) if x not in most_common_words]
-            )
+            counter_previous_segment.update([x for x in self.clean_texts(previous_segment) if x not in most_common_words])
             counter_next_segment.update([x for x in self.clean_texts(next_segment) if x not in most_common_words])
             break
 

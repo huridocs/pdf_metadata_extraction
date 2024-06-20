@@ -41,10 +41,12 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzySegmentSelector import (
     FuzzySegmentSelector,
 )
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsSentenceSelectorFuzzyCommas import \
-    PreviousWordsSentenceSelectorFuzzyCommas
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import \
-    SentenceSelectorFuzzyCommas
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsSentenceSelectorFuzzyCommas import (
+    PreviousWordsSentenceSelectorFuzzyCommas,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import (
+    SentenceSelectorFuzzyCommas,
+)
 from send_logs import send_logs
 
 

@@ -42,9 +42,7 @@ class ExtractorBase:
         return False
 
     @staticmethod
-    def get_train_test_sets(
-        extraction_data: ExtractionData, limit_samples: bool = True
-    ) -> (ExtractionData, ExtractionData):
+    def get_train_test_sets(extraction_data: ExtractionData, limit_samples: bool = True) -> (ExtractionData, ExtractionData):
         if len(extraction_data.samples) < 8:
             return extraction_data, extraction_data
 
