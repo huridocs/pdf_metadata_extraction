@@ -70,7 +70,7 @@ def get_benchmark():
     for extraction_data in extractions_data:
         start = time()
         extractor = TextToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
-        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22, limit_samples=False)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, limit_samples=False)
         values_list = [x.labeled_data.values for x in test_set.samples]
         truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, extraction_data.options)
         extractor.create_model(train_set)
@@ -105,7 +105,7 @@ def check_results():
     extractions_data: list[ExtractionData] = get_extraction_data(filter_by=[""])
     for extraction_data in extractions_data:
         extractor = TextToMultiOptionExtractor(extraction_identifier=extraction_data.extraction_identifier)
-        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, 22, limit_samples=False)
+        train_set, test_set = ExtractorBase.get_train_test_sets(extraction_data, limit_samples=False)
         test_data = [
             PredictionSample(tags_texts=x.tags_texts, entity_name=x.labeled_data.entity_name) for x in test_set.samples
         ]

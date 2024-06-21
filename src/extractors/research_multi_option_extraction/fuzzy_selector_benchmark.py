@@ -1,4 +1,3 @@
-from pdf_features.Rectangle import Rectangle
 from pdf_token_type_labels.TaskMistakes import TaskMistakes
 from sklearn.metrics import f1_score
 
@@ -7,7 +6,7 @@ from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMul
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
 from extractors.segment_selector.evaluate_config import PDF_LABELED_DATA_PATH
 
-from pdf_multi_option_classification_benchmark import get_multi_option_benchmark_data
+from scripts.pdf_multi_option_classification_benchmark import get_multi_option_benchmark_data
 
 
 def show_mistakes(prediction_samples):
