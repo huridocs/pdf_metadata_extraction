@@ -20,6 +20,7 @@ class PreviousWordsSentenceSelectorFuzzyCommas(SentenceSelectorFuzzyCommas):
             marked_segments.extend(self.get_marked_segments(sample))
 
         PreviousWordsSegmentSelector(self.extraction_identifier).create_model(marked_segments)
+        FuzzyCommas().train(extraction_data_by_sentences)
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         extraction_data_by_sentences = self.get_extraction_data_by_sentence(multi_option_data)

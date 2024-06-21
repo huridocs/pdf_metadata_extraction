@@ -63,7 +63,7 @@ class FastSegmentSelector:
         clean_letters = [letter for letter in pdf_segment.text_content.lower() if letter.isalnum() or letter == " "]
         return "".join(clean_letters).split()
 
-    def get_predictive_common_words(self, segments):
+    def save_predictive_common_words(self, segments):
         most_common_words = FastSegmentSelector.get_most_common_words(segments)
         counter_previous_segment = Counter()
         counter_next_segment = Counter()
@@ -79,12 +79,12 @@ class FastSegmentSelector:
         self.previous_words = [x[0] for x in counter_previous_segment.most_common(2)]
         self.next_words = [x[0] for x in counter_next_segment.most_common(2)]
 
-    def create_model(self, segments: list[PdfDataSegment]):
-        self.text_segments = [x for x in segments if x.segment_type in self.text_types]
-        self.get_predictive_common_words(self.text_segments)
-
         Path(self.previous_words_path).write_text(json.dumps(self.previous_words))
         Path(self.next_words_path).write_text(json.dumps(self.next_words))
+
+    def create_model(self, segments: list[PdfDataSegment]):
+        self.text_segments = [x for x in segments if x.segment_type in self.text_types]
+        self.save_predictive_common_words(self.text_segments)
 
         x, y = self.get_x_y(segments)
 

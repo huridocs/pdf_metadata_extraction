@@ -35,7 +35,7 @@ LABELED_DATA_PATH = join(APP_PATH, "pdf_topic_classification", "labeled_data")
 LABELED_DATA_PDFS_PATH = join(ROOT_PATH.parent, "pdf-labeled-data", "pdfs")
 
 BASE_LINE = {
-    "cejil_president": (78.57, "FuzzyLast"),
+    "cejil_president": (100.0, "NextWordsTokenSelectorFuzzy75"),
     "cyrilla_keywords": (53.49, "FuzzyFirstCleanLabel"),
     "cejil_date": (20.83, "FuzzyAll88"),
     "cejil_countries": (69.05, "FuzzyFirstCleanLabel"),
@@ -177,7 +177,7 @@ def get_predictions(dataset: ExtractionData) -> (list[list[int]], list[list[int]
 
 def get_mistakes() -> dict[str, (float, str)]:
     f1s_method_name = dict()
-    for dataset in get_multi_option_benchmark_data(["cejil_president"]):
+    for dataset in get_multi_option_benchmark_data(filter_by=["cejil_president"]):
         truth_one_hot, prediction_one_hot, method_name, test_samples = get_predictions(dataset)
 
         correct = 0
@@ -207,5 +207,5 @@ if __name__ == "__main__":
     start = time()
     print("start")
     performance_report()
-    print("time", round(time() - start, 2), "s")
     # get_mistakes()
+    print("time", round(time() - start, 2), "s")

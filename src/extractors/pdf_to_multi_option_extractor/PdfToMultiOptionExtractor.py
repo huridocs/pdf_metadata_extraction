@@ -41,8 +41,15 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzySegmentSelector import (
     FuzzySegmentSelector,
 )
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.NextWordsTokenSelectorFuzzy75 import (
+    NextWordsTokenSelectorFuzzy75,
+)
+
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsSentenceSelectorFuzzyCommas import (
     PreviousWordsSentenceSelectorFuzzyCommas,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsTokenSelectorFuzzy75 import (
+    PreviousWordsTokenSelectorFuzzy75,
 )
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import (
     SentenceSelectorFuzzyCommas,
@@ -59,6 +66,8 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzyAll75(),
         FuzzyAll88(),
         FuzzyAll100(),
+        PreviousWordsTokenSelectorFuzzy75(),
+        NextWordsTokenSelectorFuzzy75(),
         PreviousWordsSentenceSelectorFuzzyCommas(),
         SentenceSelectorFuzzyCommas(),
         FastSegmentSelectorFuzzy95(),

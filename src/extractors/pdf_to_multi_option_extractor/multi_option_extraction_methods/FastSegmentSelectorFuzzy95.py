@@ -107,7 +107,6 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
 
             if appearances_threshold <= appearances:
                 segment.ml_label = 1
-                break
 
         return fixed_segments
 
