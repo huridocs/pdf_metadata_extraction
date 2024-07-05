@@ -2,8 +2,8 @@ import pickle
 from os.path import join
 from pathlib import Path
 
-from paragraph_extraction_trainer.Paragraph import Paragraph
-from paragraph_extraction_trainer.PdfSegment import PdfSegment
+from fast_trainer.Paragraph import Paragraph
+from fast_trainer.PdfSegment import PdfSegment
 from pdf_token_type_labels.TaskMistakes import TaskMistakes
 from pdf_token_type_labels.TokenType import TokenType
 

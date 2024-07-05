@@ -46,7 +46,7 @@ class Suggestion(BaseModel):
 
     def add_segments(self, pdf_data: PdfData, context_from_the_end: bool = False):
         context_segments: list[PdfDataSegment] = [x for x in pdf_data.pdf_data_segments if x.ml_label]
-        valid_types = [TokenType.TEXT, TokenType.TITLE, TokenType.HEADER]
+        valid_types = [TokenType.LIST_ITEM, TokenType.TITLE, TokenType.TEXT, TokenType.SECTION_HEADER, TokenType.CAPTION]
         context_segments = [x for x in context_segments if x.segment_type in valid_types]
 
         if not context_segments:

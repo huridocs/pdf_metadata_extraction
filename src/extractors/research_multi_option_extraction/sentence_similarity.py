@@ -3,7 +3,7 @@ from os.path import join
 from time import time
 
 import numpy as np
-from paragraph_extraction_trainer.PdfSegment import PdfSegment
+from fast_trainer.PdfSegment import PdfSegment
 from pdf_token_type_labels.TokenType import TokenType
 from sentence_transformers.util import cos_sim
 
@@ -16,7 +16,7 @@ from pdf_topic_classification.pdf_topic_classification_data import get_labeled_d
 import lightgbm as lgb
 
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-valid_types = [TokenType.TEXT, TokenType.TITLE, TokenType.LIST]
+valid_types = [TokenType.TEXT, TokenType.LIST_ITEM, TokenType.TITLE, TokenType.SECTION_HEADER, TokenType.CAPTION]
 
 
 def one_hot_to_options_list(options, pdfs_options: list[list[str]]) -> list[list[int]]:

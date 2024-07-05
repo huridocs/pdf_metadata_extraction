@@ -1,6 +1,6 @@
 from typing import Optional
 
-from paragraph_extraction_trainer.Paragraph import Paragraph
+from fast_trainer.Paragraph import Paragraph
 
 from data.SegmentationData import SegmentationData
 from pdf_features.PdfFeatures import PdfFeatures

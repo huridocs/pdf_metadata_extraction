@@ -6,10 +6,9 @@ from os.path import join
 from pathlib import Path
 from time import sleep, time
 
-from paragraph_extraction_trainer.Paragraph import Paragraph
-from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
-from paragraph_extraction_trainer.download_models import paragraph_extraction_model_path
-from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
+from fast_trainer.Paragraph import Paragraph
+from fast_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
+from fast_trainer.model_configuration import MODEL_CONFIGURATION
 from pdf_features.PdfFeatures import PdfFeatures
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
@@ -58,20 +57,33 @@ def get_task_pdf_names():
 
 
 def cache_pdf_data(pdf_name: str, pickle_path: Path):
-    pdf_features = PdfFeatures.from_poppler_etree(join(LABELED_DATA_PDFS_PATH, pdf_name, "etree.xml"))
-
-    trainer = TokenTypeTrainer([pdf_features], ModelConfiguration())
-    trainer.set_token_types()
-    trainer = ParagraphExtractorTrainer(pdfs_features=[pdf_features], model_configuration=MODEL_CONFIGURATION)
-    paragraphs: list[Paragraph] = trainer.get_paragraphs(paragraph_extraction_model_path)
-
-    pdf_data = PdfData(pdf_features, file_name=pdf_name)
-    pdf_data.set_segments_from_paragraphs(paragraphs)
-
-    with open(pickle_path, mode="wb") as file:
-        pickle.dump(pdf_data, file)
-
-    return pdf_data
+    pass
+    # pdf_features = PdfFeatures.from_poppler_etree(join(LABELED_DATA_PDFS_PATH, pdf_name, "etree.xml"))
+    #
+    # trainer = TokenTypeTrainer([pdf_features], ModelConfiguration())
+    # trainer.set_token_types()
+    # trainer = ParagraphExtractorTrainer(pdfs_features=[pdf_features], model_configuration=MODEL_CONFIGURATION)
+    #
+    # # Replace with document-layout-analysis
+    # with open(pdf_file.get_path(task.params.filename), "rb") as stream:
+    #     files = {"file": stream}
+    #
+    #     results = requests.post(DOCUMENT_LAYOUT_ANALYSIS_URL, files=files)
+    #
+    # if results.status_code != 200:
+    #     raise Exception("Error extracting the paragraphs")
+    #
+    # segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in results.json()]
+    # segment_boxes =
+    # paragraphs: list[Paragraph] = trainer.get_paragraphs(paragraph_extraction_model_path)
+    #
+    # pdf_data = PdfData(pdf_features, file_name=pdf_name)
+    # pdf_data.set_segments_from_paragraphs(paragraphs)
+    #
+    # with open(pickle_path, mode="wb") as file:
+    #     pickle.dump(pdf_data, file)
+    #
+    # return pdf_data
 
 
 def get_samples(task_name):

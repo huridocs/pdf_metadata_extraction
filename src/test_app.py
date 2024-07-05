@@ -88,11 +88,11 @@ class TestApp(TestCase):
         self.assertEqual(2.1, labeled_data_document["page_height"])
         self.assertEqual("xml_file_name", labeled_data_document["xml_file_name"])
         self.assertEqual(
-            [{"height": 4.0, "left": 1.0, "page_number": 5, "top": 2.0, "width": 3.0, "segment_type": "TEXT"}],
+            [{"height": 4.0, "left": 1.0, "page_number": 5, "top": 2.0, "width": 3.0, "segment_type": "Text"}],
             labeled_data_document["xml_segments_boxes"],
         )
         self.assertEqual(
-            [{"height": 15, "left": 6, "page_number": 10, "top": 9, "width": 12, "segment_type": "TEXT"}],
+            [{"height": 15, "left": 6, "page_number": 10, "top": 9, "width": 12, "segment_type": "Text"}],
             labeled_data_document["label_segments_boxes"],
         )
 
@@ -172,7 +172,7 @@ class TestApp(TestCase):
                     "page_number": 5,
                     "top": 2.0,
                     "width": 3.0,
-                    "segment_type": "TEXT",
+                    "segment_type": "Text",
                 }
             ],
             labeled_data_document["xml_segments_boxes"],
@@ -185,7 +185,7 @@ class TestApp(TestCase):
                     "page_number": 10,
                     "top": 9,
                     "width": 12,
-                    "segment_type": "TEXT",
+                    "segment_type": "Text",
                 }
             ],
             labeled_data_document["label_segments_boxes"],
@@ -205,7 +205,7 @@ class TestApp(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [
-                {"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10, "segment_type": "FIGURE"}
+                {"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10, "segment_type": "Footnote"}
             ],
         }
 
@@ -221,7 +221,7 @@ class TestApp(TestCase):
         self.assertEqual(792, prediction_data_document["page_height"])
         self.assertEqual("xml_file_name", prediction_data_document["xml_file_name"])
         self.assertEqual(
-            [{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10, "segment_type": "FIGURE"}],
+            [{"left": 6, "top": 7, "width": 8, "height": 9, "page_number": 10, "segment_type": "Footnote"}],
             prediction_data_document["xml_segments_boxes"],
         )
 
