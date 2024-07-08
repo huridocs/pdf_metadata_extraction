@@ -15,6 +15,8 @@ class SegmentBox(BaseModel):
     width: float
     height: float
     page_number: int
+    page_width: int
+    page_height: int
     segment_type: TokenType = TokenType.TEXT
 
     def to_dict(self):

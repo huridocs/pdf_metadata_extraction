@@ -1,4 +1,4 @@
-git+https://github.com/huridocs/pdf-document-layout-analysis@67e9c3871de950b176889cdbd3f262ff836fdb43
+git+https://github.com/huridocs/pdf-document-layout-analysis@15b7116c10baa62d7278b870b6b87cd1f742695f
 slugify==0.0.1
 PyRSMQ==0.5.0
 python-Levenshtein==0.25.1
@@ -16,7 +16,6 @@ fasttext-wheel==0.9.2
 rich==13.7.1
 joblib==1.4.0
 tqdm==4.66.2
-spacy==3.7.4
 rapidfuzz==3.8.1
 sentry_sdk==1.44.0
 pymongo==4.6.3
