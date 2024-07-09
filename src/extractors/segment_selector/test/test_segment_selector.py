@@ -25,7 +25,9 @@ class TestSegmentSelector(TestCase):
     TEST_XML_PATH = join(APP_PATH, "tenant_test", extraction_id, "xml_to_train", TEST_XML_NAME)
     BASE_PATH = join(DATA_PATH, TENANT, extraction_id)
 
-    labels = SegmentBox(left=400, top=115, width=74, height=9, page_number=1, segment_type=TokenType.TITLE)
+    labels = SegmentBox(
+        left=400, top=115, width=74, height=9, page_number=1, page_width=612, page_height=792, segment_type=TokenType.TITLE
+    )
     LABELED_DATA_JSON = {
         "tenant": TENANT,
         "id": extraction_id,

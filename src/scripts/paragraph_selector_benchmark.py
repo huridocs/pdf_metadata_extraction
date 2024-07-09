@@ -56,6 +56,8 @@ def get_segmentation_data(pdf_path: str, pdf_name: str) -> SegmentationData:
             top=paragraph.top,
             width=paragraph.width,
             height=paragraph.height,
+            page_width=paragraphs.page_width,
+            page_height=paragraphs.page_height,
             page_number=paragraph.page_number,
             segment_type=paragraph.type,
         )
@@ -82,7 +84,15 @@ def load_pdf_segments(task: str, pdf_name: str) -> PdfData:
     labeled_data_path = join(labeled_data_root_path, "labeled_data", "paragraph_selector", task, pdf_name, "labels.json")
     pdf_labels = PdfLabels(**json.loads(Path(labeled_data_path).read_text()))
     segmentation_data.label_segments_boxes = [
-        SegmentBox(left=label.left, top=label.top, width=label.width, height=label.height, page_number=page.number)
+        SegmentBox(
+            left=label.left,
+            top=label.top,
+            width=label.width,
+            height=label.height,
+            page_width=pdf_features.pages[0].page_width,
+            page_height=pdf_features.pages[0].page_height,
+            page_number=page.number,
+        )
         for page in pdf_labels.pages
         for label in page.labels
     ]
