@@ -4,12 +4,10 @@ from os.path import join, exists
 
 import pandas as pd
 from datasets import load_dataset
-from sentence_transformers.losses import CosineSimilarityLoss
-from transformers import DefaultFlowCallback
 
 from data.ExtractionData import ExtractionData
 from data.Option import Option
-from setfit import SetFitModel, SetFitTrainer, TrainingArguments, Trainer
+from setfit import SetFitModel, TrainingArguments, Trainer
 
 from extractors.ExtractorBase import ExtractorBase
 from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation

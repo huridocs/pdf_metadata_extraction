@@ -37,7 +37,7 @@ start_local_gpu:
 start_detached:
 	docker compose up --build -d
 
-start_for_testing:
+start-test:
 	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
 stop:

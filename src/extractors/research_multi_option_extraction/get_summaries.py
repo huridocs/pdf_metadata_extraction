@@ -2,7 +2,7 @@ import os
 from os.path import join
 from pathlib import Path
 
-from paragraph_extraction_trainer.PdfSegment import PdfSegment
+from fast_trainer.PdfSegment import PdfSegment
 from pdf_token_type_labels.TokenType import TokenType
 from tqdm import tqdm
 

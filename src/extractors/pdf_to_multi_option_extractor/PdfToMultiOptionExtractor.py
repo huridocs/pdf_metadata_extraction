@@ -12,9 +12,6 @@ from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMul
 
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDigits3000 import (
-    CleanBeginningDigits3000,
-)
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDotDigits500 import (
     CleanBeginningDotDigits500,
 )
@@ -22,7 +19,6 @@ from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDo
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.FastTextMethod import FastTextMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import SingleLabelSetFitMethod
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.TfIdfMethod import TfIdfMethod
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzy95 import (
     FastSegmentSelectorFuzzy95,
 )
@@ -73,8 +69,6 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FastSegmentSelectorFuzzy95(),
         FastSegmentSelectorFuzzyCommas(),
         FuzzySegmentSelector(),
-        PdfMultiOptionMethod(CleanBeginningDigits3000, TfIdfMethod),
-        PdfMultiOptionMethod(CleanEndDotDigits1000, TfIdfMethod),
         PdfMultiOptionMethod(CleanBeginningDotDigits500, FastTextMethod),
         PdfMultiOptionMethod(CleanEndDotDigits1000, FastTextMethod),
         PdfMultiOptionMethod(CleanBeginningDotDigits500, SetFitMethod),

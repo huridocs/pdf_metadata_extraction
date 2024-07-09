@@ -244,7 +244,18 @@ class TestEndToEnd(TestCase):
         self.assertEqual("test.xml", suggestion.xml_file_name)
         self.assertEqual("United Nations", suggestion.segment_text)
         self.assertEqual(
-            [SegmentBox(left=164.0, top=60.0, width=116.0, height=21.0, page_number=1, segment_type=TokenType.TEXT)],
+            [
+                SegmentBox(
+                    left=164.0,
+                    top=60.0,
+                    width=116.0,
+                    height=21.0,
+                    page_width=612,
+                    page_height=792,
+                    page_number=1,
+                    segment_type=TokenType.TEXT,
+                )
+            ],
             suggestion.segments_boxes,
         )
         self.assertEqual([Option(id="1", label="United Nations")], suggestion.values)

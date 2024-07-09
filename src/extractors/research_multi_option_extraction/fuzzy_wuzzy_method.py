@@ -1,8 +1,8 @@
 import pickle
 from os.path import join
 from fuzzywuzzy import fuzz
-from paragraph_extraction_trainer.Paragraph import Paragraph
-from paragraph_extraction_trainer.PdfSegment import PdfSegment
+from fast_trainer.Paragraph import Paragraph
+from fast_trainer.PdfSegment import PdfSegment
 
 from config import ROOT_PATH
 

@@ -75,39 +75,6 @@ class TestPdfToMultiOptionExtraction(TestCase):
         self.assertTrue(Option(id="2", label="2") not in suggestions[1].values)
         self.assertTrue(Option(id="1", label="1") in suggestions[1].values)
 
-    def test_tf_idf(self):
-        extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
-        options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
-
-        pdf_data_1 = PdfData.from_texts(["point one point two"])
-        pdf_data_2 = PdfData.from_texts(["point two"])
-        pdf_data_3 = PdfData.from_texts(["point three point one"])
-
-        samples = [
-            TrainingSample(pdf_data_1, LabeledData(values=[options[0], options[1]])),
-            TrainingSample(pdf_data_2, LabeledData(values=[options[1]])),
-            TrainingSample(pdf_data_3, LabeledData(values=[options[2], options[0]])),
-        ]
-
-        multi_option_data = ExtractionData(
-            multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
-        )
-
-        multi_option_extraction = PdfToMultiOptionExtractor(extraction_identifier)
-        multi_option_extraction.create_model(multi_option_data)
-
-        prediction_sample_1 = PredictionSample(pdf_data=pdf_data_1)
-        prediction_sample_3 = PredictionSample(pdf_data=pdf_data_3)
-        suggestions = multi_option_extraction.get_suggestions([prediction_sample_1, prediction_sample_3])
-
-        self.assertEqual(2, len(suggestions))
-        self.assertTrue(Option(id="1", label="1") in suggestions[0].values)
-        self.assertTrue(Option(id="2", label="2") in suggestions[0].values)
-        self.assertTrue(Option(id="3", label="3") not in suggestions[0].values)
-        self.assertTrue(Option(id="3", label="3") in suggestions[1].values)
-        self.assertTrue(Option(id="2", label="2") not in suggestions[1].values)
-        self.assertTrue(Option(id="1", label="1") in suggestions[1].values)
-
     def test_no_prediction_data(self):
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]

@@ -117,7 +117,11 @@ class TestExtractorPdfToMultiOption(TestCase):
                 "page_height": 792,
                 "xml_segments_boxes": [],
                 "label_segments_boxes": [
-                    json.loads(SegmentBox(left=397, top=91, width=10, height=9, page_number=1).model_dump_json())
+                    json.loads(
+                        SegmentBox(
+                            left=397, top=91, width=10, height=9, page_width=612, page_height=792, page_number=1
+                        ).model_dump_json()
+                    )
                 ],
             }
 

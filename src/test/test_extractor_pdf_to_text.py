@@ -39,7 +39,18 @@ class TestExtractorPdfToText(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 123, "top": 48, "width": 83, "height": 12, "page_number": 1, "type": "TEXT"}],
+            "label_segments_boxes": [
+                {
+                    "left": 123,
+                    "top": 48,
+                    "width": 83,
+                    "height": 12,
+                    "page_width": 612,
+                    "page_height": 792,
+                    "page_number": 1,
+                    "type": "TEXT",
+                }
+            ],
         }
         mongo_client.pdf_metadata_extraction.labeled_data.insert_one(json_data)
 
@@ -74,7 +85,17 @@ class TestExtractorPdfToText(TestCase):
             "page_width": 612,
             "page_height": 792,
             "xml_segments_boxes": [],
-            "label_segments_boxes": [{"left": 125, "top": 247, "width": 319, "height": 29, "page_number": 1}],
+            "label_segments_boxes": [
+                {
+                    "left": 125,
+                    "top": 247,
+                    "width": 319,
+                    "height": 29,
+                    "page_width": 612,
+                    "page_height": 792,
+                    "page_number": 1,
+                }
+            ],
         }
 
         mongo_client.pdf_metadata_extraction.labeled_data.insert_one(json_data)
@@ -112,7 +133,14 @@ class TestExtractorPdfToText(TestCase):
             "label_segments_boxes": [
                 json.loads(
                     SegmentBox(
-                        left=400, top=115, width=74, height=9, page_number=1, segment_type=TokenType.TEXT
+                        left=400,
+                        top=115,
+                        width=74,
+                        height=9,
+                        page_width=612,
+                        page_height=792,
+                        page_number=1,
+                        segment_type=TokenType.TEXT,
                     ).model_dump_json()
                 )
             ],
@@ -192,12 +220,30 @@ class TestExtractorPdfToText(TestCase):
             "page_height": 792,
             "xml_segments_boxes": [
                 json.loads(
-                    SegmentBox(left=0, top=130, width=612, height=70, page_number=2, type=TokenType.TEXT).model_dump_json()
+                    SegmentBox(
+                        left=0,
+                        top=130,
+                        page_width=612,
+                        page_height=792,
+                        width=612,
+                        height=70,
+                        page_number=2,
+                        type=TokenType.TEXT,
+                    ).model_dump_json()
                 )
             ],
             "label_segments_boxes": [
                 json.loads(
-                    SegmentBox(left=300, top=150, width=5, height=5, page_number=2, type=TokenType.TEXT).model_dump_json()
+                    SegmentBox(
+                        left=300,
+                        page_width=612,
+                        page_height=792,
+                        top=150,
+                        width=5,
+                        height=5,
+                        page_number=2,
+                        type=TokenType.TEXT,
+                    ).model_dump_json()
                 )
             ],
         }
@@ -299,7 +345,11 @@ class TestExtractorPdfToText(TestCase):
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
-                "label_segments_boxes": [SegmentBox(left=397, top=115, width=74, height=9, page_number=1).to_dict()],
+                "label_segments_boxes": [
+                    SegmentBox(
+                        left=397, top=115, page_width=612, page_height=792, width=74, height=9, page_number=1
+                    ).to_dict()
+                ],
             }
 
             mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
@@ -378,7 +428,11 @@ class TestExtractorPdfToText(TestCase):
                 "page_height": 792,
                 "xml_segments_boxes": [],
                 "label_segments_boxes": [
-                    json.loads(SegmentBox(left=397, top=91, width=10, height=9, page_number=1).model_dump_json())
+                    json.loads(
+                        SegmentBox(
+                            left=397, top=91, page_width=612, page_height=792, width=10, height=9, page_number=1
+                        ).model_dump_json()
+                    )
                 ],
             }
 
@@ -446,7 +500,11 @@ class TestExtractorPdfToText(TestCase):
                 "page_height": 792,
                 "xml_segments_boxes": [],
                 "label_segments_boxes": [
-                    json.loads(SegmentBox(left=289, top=206, width=34, height=10, page_number=1).model_dump_json())
+                    json.loads(
+                        SegmentBox(
+                            left=289, top=206, page_width=612, page_height=792, width=34, height=10, page_number=1
+                        ).model_dump_json()
+                    )
                 ],
             }
 

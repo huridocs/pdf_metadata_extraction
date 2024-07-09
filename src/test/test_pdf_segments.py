@@ -26,15 +26,58 @@ class TestPdfSegments(TestCase):
             page_height=792,
             xml_segments_boxes=[
                 SegmentBox(
-                    left=495.1, top=42.6323, width=56.96199999999999, height=18.2164, page_number=1, type=TokenType.TEXT
+                    left=495.1,
+                    top=42.6323,
+                    width=56.96199999999999,
+                    page_width=612,
+                    page_height=792,
+                    height=18.2164,
+                    page_number=1,
+                    type=TokenType.TEXT,
                 ),
-                SegmentBox(left=123.38, top=48.1103, width=82.9812, height=12.7624, page_number=1, type=TokenType.TEXT),
                 SegmentBox(
-                    left=123.38, top=72.8529, width=148.656, height=17.895700000000005, page_number=1, type=TokenType.TEXT
+                    left=123.38,
+                    top=48.1103,
+                    page_width=612,
+                    page_height=792,
+                    width=82.9812,
+                    height=12.7624,
+                    page_number=1,
+                    type=TokenType.TEXT,
                 ),
-                SegmentBox(left=123.38, top=245.184, width=317.406, height=27.5377, page_number=1, type=TokenType.TEXT),
+                SegmentBox(
+                    left=123.38,
+                    top=72.8529,
+                    width=148.656,
+                    height=17.895700000000005,
+                    page_width=612,
+                    page_height=792,
+                    page_number=1,
+                    type=TokenType.TEXT,
+                ),
+                SegmentBox(
+                    left=123.38,
+                    top=245.184,
+                    width=317.406,
+                    height=27.5377,
+                    page_width=612,
+                    page_height=792,
+                    page_number=1,
+                    type=TokenType.TEXT,
+                ),
             ],
-            label_segments_boxes=[SegmentBox(left=125, top=247, width=319, height=29, page_number=1, type=TokenType.TEXT)],
+            label_segments_boxes=[
+                SegmentBox(
+                    left=125,
+                    top=247,
+                    width=319,
+                    height=29,
+                    page_width=612,
+                    page_height=792,
+                    page_number=1,
+                    type=TokenType.TEXT,
+                )
+            ],
         )
 
         with open(self.test_file_path, "rb") as file:
@@ -124,7 +167,7 @@ class TestPdfSegments(TestCase):
             page_width=1,  # 612
             page_height=2,  # 396
             xml_segments_boxes=[
-                SegmentBox(left=0, top=0.3282828, width=1, height=0.1767676, page_number=2),
+                SegmentBox(left=0, top=0.3282828, width=1, height=0.1767676, page_width=612, page_height=792, page_number=2),
             ],
             label_segments_boxes=[
                 SegmentBox(
@@ -132,6 +175,8 @@ class TestPdfSegments(TestCase):
                     top=0.37878,
                     width=0.008169,
                     height=0.0126,
+                    page_width=612,
+                    page_height=792,
                     page_number=2,
                 )
             ],
@@ -164,8 +209,14 @@ class TestPdfSegments(TestCase):
         segmentation_data = SegmentationData(
             page_width=612,
             page_height=792,
-            xml_segments_boxes=[SegmentBox(left=1, top=1, width=56.96199999999999, height=18.2164, page_number=1)],
-            label_segments_boxes=[SegmentBox(left=125, top=247, width=319, height=29, page_number=1)],
+            xml_segments_boxes=[
+                SegmentBox(
+                    left=1, top=1, width=56.96199999999999, height=18.2164, page_width=612, page_height=792, page_number=1
+                )
+            ],
+            label_segments_boxes=[
+                SegmentBox(left=125, top=247, width=319, height=29, page_width=612, page_height=792, page_number=1)
+            ],
         )
 
         with open(self.test_file_path, "rb") as file:

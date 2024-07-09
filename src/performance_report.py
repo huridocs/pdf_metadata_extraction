@@ -1,4 +1,5 @@
 import json
+import os
 import pickle
 import random
 from os import listdir
@@ -6,14 +7,10 @@ from os.path import join
 from pathlib import Path
 from time import sleep, time
 
-from paragraph_extraction_trainer.Paragraph import Paragraph
-from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
-from paragraph_extraction_trainer.download_models import paragraph_extraction_model_path
-from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
+import requests
 from pdf_features.PdfFeatures import PdfFeatures
-from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
-from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from sklearn.metrics import f1_score
+from tqdm import tqdm
 
 from config import APP_PATH, ROOT_PATH
 from data.ExtractionData import ExtractionData
@@ -22,6 +19,8 @@ from data.LabeledData import LabeledData
 from data.Option import Option
 from data.PdfData import PdfData
 from data.PredictionSample import PredictionSample
+from data.SegmentBox import SegmentBox
+from data.SegmentationData import SegmentationData
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
 from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
@@ -41,7 +40,7 @@ BASE_LINE = {
     "cejil_countries": (69.05, "FuzzyFirstCleanLabel"),
     "d4la_document_type": (44.07, "CleanBeginningDotDigits500_SingleLabelSetFit"),
     "cejil_secretary": (80.0, "FuzzyAll75"),
-    "countries_in_favor": (99.75, "PreviousWordsSentenceSelectorFuzzyCommas"),
+    "countries_in_favor": (96.89, "PreviousWordsSentenceSelectorFuzzyCommas"),
     "cejil_judge": (92.86, "FuzzyLast"),
 }
 
@@ -60,14 +59,27 @@ def get_task_pdf_names():
 def cache_pdf_data(pdf_name: str, pickle_path: Path):
     pdf_features = PdfFeatures.from_poppler_etree(join(LABELED_DATA_PDFS_PATH, pdf_name, "etree.xml"))
 
-    trainer = TokenTypeTrainer([pdf_features], ModelConfiguration())
-    trainer.set_token_types()
-    trainer = ParagraphExtractorTrainer(pdfs_features=[pdf_features], model_configuration=MODEL_CONFIGURATION)
-    paragraphs: list[Paragraph] = trainer.get_paragraphs(paragraph_extraction_model_path)
+    with open(join(LABELED_DATA_PDFS_PATH, pdf_name, "document.pdf"), "rb") as stream:
+        files = {"file": stream}
+
+        results = requests.post("http://localhost:5060", files=files)
+
+    if results.status_code != 200:
+        raise Exception("Error extracting the paragraphs")
+
+    segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in results.json()]
 
     pdf_data = PdfData(pdf_features, file_name=pdf_name)
-    pdf_data.set_segments_from_paragraphs(paragraphs)
+    segmentation_data = SegmentationData(
+        page_width=segments[0].page_width,
+        page_height=segments[0].page_height,
+        xml_segments_boxes=segments,
+        label_segments_boxes=[],
+    )
 
+    pdf_data.set_segments_from_segmentation_data(segmentation_data)
+
+    os.makedirs(pickle_path.parent, exist_ok=True)
     with open(pickle_path, mode="wb") as file:
         pickle.dump(pdf_data, file)
 
@@ -79,7 +91,7 @@ def get_samples(task_name):
         labels_dict: dict[str, list[str]] = json.load(file)
 
     multi_option_samples: list[TrainingSample] = list()
-    for pdf_name in sorted(get_task_pdf_names()[task_name]):
+    for pdf_name in tqdm(sorted(get_task_pdf_names()[task_name])):
         pickle_path = join(PDF_DATA_FOLDER_PATH, f"{pdf_name}.pickle")
 
         if Path(pickle_path).exists():
@@ -177,7 +189,7 @@ def get_predictions(dataset: ExtractionData) -> (list[list[int]], list[list[int]
 
 def get_mistakes() -> dict[str, (float, str)]:
     f1s_method_name = dict()
-    for dataset in get_multi_option_benchmark_data(filter_by=["cejil_president"]):
+    for dataset in get_multi_option_benchmark_data(filter_by=["cejil_judge"]):
         truth_one_hot, prediction_one_hot, method_name, test_samples = get_predictions(dataset)
 
         correct = 0
@@ -207,5 +219,4 @@ if __name__ == "__main__":
     start = time()
     print("start")
     performance_report()
-    # get_mistakes()
     print("time", round(time() - start, 2), "s")

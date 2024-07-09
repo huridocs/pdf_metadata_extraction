@@ -4,10 +4,10 @@ import pickle
 from os.path import join, exists
 from pathlib import Path
 
-from paragraph_extraction_trainer.Paragraph import Paragraph
-from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
-from paragraph_extraction_trainer.download_models import paragraph_extraction_model_path
-from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
+from fast_trainer.Paragraph import Paragraph
+from fast_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
+from fast_trainer.download_models import paragraph_extraction_model_path
+from fast_trainer.model_configuration import MODEL_CONFIGURATION
 from pdf_features.PdfFeatures import PdfFeatures
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer

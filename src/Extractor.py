@@ -55,6 +55,11 @@ class Extractor:
     def get_labeled_data(self):
         labeled_data_list = []
         for document in self.pdf_metadata_extraction_db.labeled_data.find(self.mongo_filter):
+            labeled_data = LabeledData(**document)
+            for segment in labeled_data.xml_segments_boxes + labeled_data.label_segments_boxes:
+                segment.page_width = segment.page_width if segment.page_width else labeled_data.page_width
+                segment.page_height = segment.page_height if segment.page_height else labeled_data.page_height
+
             labeled_data_list.append(LabeledData(**document))
 
         return labeled_data_list
@@ -138,7 +143,11 @@ class Extractor:
     def get_prediction_data_from_db(self):
         prediction_data_list = []
         for document in self.pdf_metadata_extraction_db.prediction_data.find(self.mongo_filter):
-            prediction_data_list.append(PredictionData(**document))
+            prediction_data = PredictionData(**document)
+            for segment in prediction_data.xml_segments_boxes:
+                segment.page_width = segment.page_width if segment.page_width else prediction_data.page_width
+                segment.page_height = segment.page_height if segment.page_height else prediction_data.page_height
+            prediction_data_list.append(prediction_data)
         return prediction_data_list
 
     def delete_training_data(self):

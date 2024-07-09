@@ -1,6 +1,6 @@
 from typing import Optional
 
-from paragraph_extraction_trainer.Paragraph import Paragraph
+from fast_trainer.Paragraph import Paragraph
 
 from data.SegmentationData import SegmentationData
 from pdf_features.PdfFeatures import PdfFeatures
@@ -20,11 +20,6 @@ class PdfData:
         self.file_type = file_type
         self.pdf_path = ""
         self.pdf_data_segments: list[PdfDataSegment] = list()
-
-    def set_segments_from_paragraphs(self, paragraphs: list[Paragraph]):
-        for paragraph in paragraphs:
-            self.pdf_data_segments.append(PdfDataSegment.from_pdf_tokens(paragraph.tokens))
-        self.pdf_data_segments.sort(key=lambda x: (x.page_number, x.bounding_box.top, x.bounding_box.left))
 
     def set_segments_from_segmentation_data(self, segmentation_data: SegmentationData):
         pdf_segments_to_merge = dict()

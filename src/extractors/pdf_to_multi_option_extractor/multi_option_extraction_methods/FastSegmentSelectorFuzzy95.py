@@ -19,7 +19,7 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
     threshold = 85
 
-    text_types = [TokenType.TEXT, TokenType.LIST, TokenType.TITLE]
+    text_types = [TokenType.TEXT, TokenType.LIST_ITEM, TokenType.TITLE, TokenType.SECTION_HEADER, TokenType.CAPTION]
 
     def get_appearances(self, pdf_segment: PdfDataSegment, options: list[str]) -> list[str]:
         appearances = []

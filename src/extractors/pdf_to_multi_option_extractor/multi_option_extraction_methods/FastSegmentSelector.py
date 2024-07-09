@@ -15,7 +15,7 @@ import lightgbm as lgb
 class FastSegmentSelector:
     def __init__(self, extraction_identifier: ExtractionIdentifier):
         self.extraction_identifier = extraction_identifier
-        self.text_types = [TokenType.TEXT, TokenType.LIST, TokenType.TITLE]
+        self.text_types = [TokenType.TEXT, TokenType.LIST_ITEM, TokenType.TITLE, TokenType.SECTION_HEADER, TokenType.CAPTION]
         self.previous_words, self.next_words, self.text_segments = [], [], []
 
         self.fast_segment_selector_path = Path(join(self.extraction_identifier.get_path(), "fast_segment_selector"))

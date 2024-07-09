@@ -43,14 +43,14 @@ services:
   mongo_metadata_extraction:
     restart: unless-stopped
     command: mongod --port 29017
-    image: "mongo:6"
+    image: "mongo:7.0.12"
     networks:
       - pdf_metadata_extraction_network
     ports:
       - "29017:29017"
   redis_metadata_extraction:
     restart: unless-stopped
-    image: "redis:7.0.8"
+    image: "redis:7.2.5"
     command: redis-server
     environment:
       - REDIS_REPLICATION_MODE=master

@@ -46,7 +46,7 @@ class Suggestion(BaseModel):
 
     def add_segments(self, pdf_data: PdfData, context_from_the_end: bool = False):
         context_segments: list[PdfDataSegment] = [x for x in pdf_data.pdf_data_segments if x.ml_label]
-        valid_types = [TokenType.TEXT, TokenType.TITLE, TokenType.HEADER]
+        valid_types = [TokenType.LIST_ITEM, TokenType.TITLE, TokenType.TEXT, TokenType.SECTION_HEADER, TokenType.CAPTION]
         context_segments = [x for x in context_segments if x.segment_type in valid_types]
 
         if not context_segments:
@@ -59,7 +59,8 @@ class Suggestion(BaseModel):
             context_segments = Beginning750().filter_segments(context_segments)
 
         self.page_number = context_segments[0].page_number
-        self.segments_boxes = [SegmentBox.from_pdf_segment(pdf_segment) for pdf_segment in context_segments]
+        pages = pdf_data.pdf_features.pages if pdf_data.pdf_features else []
+        self.segments_boxes = [SegmentBox.from_pdf_segment(pdf_segment, pages) for pdf_segment in context_segments]
         self.segment_text = " .. ".join([pdf_segment.text_content for pdf_segment in context_segments])
 
     def scale_up(self):

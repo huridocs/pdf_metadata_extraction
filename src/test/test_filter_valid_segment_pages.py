@@ -31,10 +31,11 @@ class TestFilterValidSegmentPages(TestCase):
             page_width=0,
             page_height=0,
             xml_segments_boxes=[
-                SegmentBox(left=0, top=0, width=0, height=0, page_number=i + 1) for i in range(number_of_pages)
+                SegmentBox(left=0, top=0, width=0, page_width=0, page_height=0, height=0, page_number=i + 1)
+                for i in range(number_of_pages)
             ],
             label_segments_boxes=[
-                SegmentBox(left=0, top=0, width=0, height=0, page_number=label_number)
+                SegmentBox(left=0, top=0, page_width=0, page_height=0, width=0, height=0, page_number=label_number)
                 for label_number in labels_page_numbers
             ],
         )
@@ -48,7 +49,8 @@ class TestFilterValidSegmentPages(TestCase):
             page_width=0,
             page_height=0,
             xml_segments_boxes=[
-                SegmentBox(left=0, top=0, width=0, height=0, page_number=page_number) for page_number in page_numbers
+                SegmentBox(left=0, top=0, width=0, page_width=0, page_height=0, height=0, page_number=page_number)
+                for page_number in page_numbers
             ],
         )
 
