@@ -49,6 +49,9 @@ delete_queues:
 download_models:
 	. .venv/bin/activate; command cd src; python download_models.py
 
+gpu:
+	. .venv/bin/activate; command cd src; python is_gpu_available.py
+
 free_up_space:
 	df -h
 	sudo rm -rf /usr/share/dotnet
