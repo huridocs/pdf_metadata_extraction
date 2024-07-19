@@ -40,7 +40,7 @@ except Exception:
     pass
 
 
-@app.get("/info")
+@app.get("/")
 async def info():
     config_logger.info("PDF information extraction endpoint")
     return sys.version
