@@ -42,11 +42,11 @@ class OllamaFastText(MultiLabelMethod):
 
     @staticmethod
     def get_text(sample: TrainingSample) -> str:
-        file_name = sample.pdf_data.pdf_features.file_name.replace('.pdf', '.txt')
-        text = Path(ROOT_PATH, 'data', 'cyrilla_summaries', file_name).read_text()
+        file_name = sample.pdf_data.pdf_features.file_name.replace(".pdf", ".txt")
+        text = Path(ROOT_PATH, "data", "cyrilla_summaries", file_name).read_text()
 
-        if 'three sentence' in text.split(':')[0]:
-            text = ':'.join(text.split(':')[1:]).strip()
+        if "three sentence" in text.split(":")[0]:
+            text = ":".join(text.split(":")[1:]).strip()
 
         return text if text else "No text"
 

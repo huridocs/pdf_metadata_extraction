@@ -62,8 +62,9 @@ class CleanBeginningMinWidth500(FilterSegmentsMethod):
 
         min_width_segments = []
         while 0 < min_width:
-            min_width_segments = [x for x in pdf_data_segments if x.bounding_box.width > min_width
-                                  and x.segment_type in self.valid_types]
+            min_width_segments = [
+                x for x in pdf_data_segments if x.bounding_box.width > min_width and x.segment_type in self.valid_types
+            ]
             if not min_width_segments:
                 min_width -= 10
                 continue

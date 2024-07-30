@@ -12,19 +12,39 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 
 
 class ZeroShotAya20Classes(MultiLabelMethod):
-    top_options = ['intellectual property', 'telecommunication', 'access to information', 'privacy', 'freedom of expression', 'constitution', 'electronic communications', 'data protection and retention', 'trademark', 'cybercrime', 'copyright', 'media/press', 'defamation', 'data protection', 'intermediary liability', 'e-transactions', 'broadcasting networks', 'surveillance', 'internet service providers', 'national security']
-
+    top_options = [
+        "intellectual property",
+        "telecommunication",
+        "access to information",
+        "privacy",
+        "freedom of expression",
+        "constitution",
+        "electronic communications",
+        "data protection and retention",
+        "trademark",
+        "cybercrime",
+        "copyright",
+        "media/press",
+        "defamation",
+        "data protection",
+        "intermediary liability",
+        "e-transactions",
+        "broadcasting networks",
+        "surveillance",
+        "internet service providers",
+        "national security",
+    ]
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         return True
 
     @staticmethod
     def get_text(sample: TrainingSample) -> str:
-        file_name = sample.pdf_data.pdf_features.file_name.replace('.pdf', '.txt')
-        text = Path(ROOT_PATH, 'data', 'cyrilla_summaries', file_name).read_text()
+        file_name = sample.pdf_data.pdf_features.file_name.replace(".pdf", ".txt")
+        text = Path(ROOT_PATH, "data", "cyrilla_summaries", file_name).read_text()
 
-        if 'three sentence' in text.split(':')[0]:
-            text = ':'.join(text.split(':')[1:]).strip()
+        if "three sentence" in text.split(":")[0]:
+            text = ":".join(text.split(":")[1:]).strip()
 
         return text if text else "No text"
 
@@ -37,19 +57,24 @@ class ZeroShotAya20Classes(MultiLabelMethod):
         for sample in multi_option_data.samples:
             predictions.append(list())
             text = self.get_text(sample)
-            response = ollama.chat(model='aya:35b', messages=[
-                {
-                    'role': 'user',
-                    'content': f'''Answer the question based on the following context:
+            response = ollama.chat(
+                model="aya:35b",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f'''Answer the question based on the following context:
                     
                     {text}
                     
                     Select from 1 to 6 relevant keywords from the following list based on the above text, output them separated with an end of line and do not output anything else: 
                     {'\n'.join(self.top_options)}
-'''}])
+''',
+                    }
+                ],
+            )
 
-            response = response['message']['content']
-            response_keywords = [x.lower().strip() for x in response.split('\n')]
+            response = response["message"]["content"]
+            response_keywords = [x.lower().strip() for x in response.split("\n")]
 
             print(response)
 

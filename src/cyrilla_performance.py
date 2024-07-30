@@ -13,8 +13,9 @@ from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDotDigits500 import \
-    CleanBeginningDotDigits500
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDotDigits500 import (
+    CleanBeginningDotDigits500,
+)
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.NoFilter import NoFilter
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.OllamaSummary import OllamaSummary
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
@@ -61,7 +62,9 @@ def get_train_test(dataset: ExtractionData):
     return training_dataset, testing_dataset
 
 
-def get_predictions(dataset: ExtractionData, train: bool = True, method: PdfMultiOptionMethod = None) -> (list[list[int]], list[list[int]], str):
+def get_predictions(
+    dataset: ExtractionData, train: bool = True, method: PdfMultiOptionMethod = None
+) -> (list[list[int]], list[list[int]], str):
     training_dataset, testing_dataset = get_train_test(dataset)
 
     if method:
@@ -82,11 +85,11 @@ def get_predictions(dataset: ExtractionData, train: bool = True, method: PdfMult
 
 
 def get_text(sample: TrainingSample) -> str:
-    file_name = sample.pdf_data.pdf_features.file_name.replace('.pdf', '.txt')
-    text = Path(ROOT_PATH, 'data', 'cyrilla_summaries', file_name).read_text()
+    file_name = sample.pdf_data.pdf_features.file_name.replace(".pdf", ".txt")
+    text = Path(ROOT_PATH, "data", "cyrilla_summaries", file_name).read_text()
 
-    if 'three sentence' in text.split(':')[0]:
-        text = ':'.join(text.split(':')[1:]).strip()
+    if "three sentence" in text.split(":")[0]:
+        text = ":".join(text.split(":")[1:]).strip()
 
     return text if text else "No text"
 
@@ -194,7 +197,7 @@ def cache_summaries(dataset: ExtractionData):
         sample_dataset = ExtractionData(samples=[sample], options=dataset.options, multi_value=dataset.multi_value)
         filtered_data = OllamaSummary().filter(sample_dataset)
         summary = " ".join([x.text_content for x in filtered_data.samples[0].pdf_data.pdf_data_segments])
-        file_name = sample.pdf_data.pdf_features.file_name.replace('.pdf', '.txt')
+        file_name = sample.pdf_data.pdf_features.file_name.replace(".pdf", ".txt")
         Path(ROOT_PATH, "data", "cyrilla_summaries", file_name).write_text(summary)
 
 

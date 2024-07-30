@@ -13,9 +13,9 @@ from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import Filter
 
 class PdfMultiOptionMethod:
     def __init__(
-            self,
-            filter_segments_method: Type[FilterSegmentsMethod] = None,
-            multi_label_method: Type[MultiLabelMethod] = None,
+        self,
+        filter_segments_method: Type[FilterSegmentsMethod] = None,
+        multi_label_method: Type[MultiLabelMethod] = None,
     ):
         self.filter_segments_method = filter_segments_method
         self.multi_label_method = multi_label_method
@@ -48,8 +48,7 @@ class PdfMultiOptionMethod:
         seeds = [22, 23, 24, 25]
         for i in range(repetitions):
             train_set, test_set = ExtractorBase.get_train_test_sets(multi_option_data)
-            truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples],
-                                                         self.options)
+            truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples], self.options)
 
             self.train(train_set)
             predictions = self.predict(test_set)

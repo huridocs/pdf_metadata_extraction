@@ -33,31 +33,38 @@ from config import ROOT_PATH
 #             'corruption': 1, 'cybercafe': 1, 'racism': 1, 'banking secrecy law': 1, 'fintech': 1,
 #            'network disruption': 1}
 
-samples = {"decryption": 1,
-        "state of emergency": 1,
-        "open data": 1,
-        "instagram community guidelines>hate speech, bullying and abuse": 1,
-        "military justice code": 1,
-        "privacy policy": 1,
-        "cyber security ___ cyber crime": 1,
-        "gambling": 1,
-        "insult to foreign state": 1,
-        "cybercafe": 1}
+samples = {
+    "decryption": 1,
+    "state of emergency": 1,
+    "open data": 1,
+    "instagram community guidelines>hate speech, bullying and abuse": 1,
+    "military justice code": 1,
+    "privacy policy": 1,
+    "cyber security ___ cyber crime": 1,
+    "gambling": 1,
+    "insult to foreign state": 1,
+    "cybercafe": 1,
+}
 
 
 def get_synthetic_data():
     for key, values in samples.items():
-        path = Path(ROOT_PATH, 'data', 'cyrilla_synthetic_data', f'{key}.txt')
+        path = Path(ROOT_PATH, "data", "cyrilla_synthetic_data", f"{key}.txt")
 
         if path.exists():
             continue
 
-        response = ollama.chat(model='llama3.1:latest', messages=[
-            {
-                'role': 'user',
-                'content': f'''write eight paragraphs about government documents ruling {key} but each paragraph is tackling a different aspect'''}])
+        response = ollama.chat(
+            model="llama3.1:latest",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"""write eight paragraphs about government documents ruling {key} but each paragraph is tackling a different aspect""",
+                }
+            ],
+        )
 
-        texts = response['message']['content'].split('\n\n')
+        texts = response["message"]["content"].split("\n\n")
 
         if len(texts) == 16:
             texts = [text for i, text in enumerate(texts) if i % 2 == 1]
@@ -66,11 +73,11 @@ def get_synthetic_data():
             texts = [text for i, text in enumerate(texts[1:]) if i % 2 == 1]
 
         if len(texts) != 8:
-            print(f'Error in {key}')
+            print(f"Error in {key}")
             break
 
         path.write_text(json.dumps(texts, indent=4))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_synthetic_data()

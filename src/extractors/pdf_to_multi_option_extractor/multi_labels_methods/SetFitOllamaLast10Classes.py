@@ -32,7 +32,8 @@ class SetFitOllamaLast10Classes(MultiLabelMethod):
         "cyber security / cyber crime",
         "gambling",
         "insult to foreign state",
-        "cybercafe"]
+        "cybercafe",
+    ]
 
     def get_data_path(self):
         model_folder_path = join(self.base_path, self.get_name())
@@ -61,11 +62,11 @@ class SetFitOllamaLast10Classes(MultiLabelMethod):
 
     @staticmethod
     def get_text(sample: TrainingSample) -> str:
-        file_name = sample.pdf_data.pdf_features.file_name.replace('.pdf', '.txt')
-        text = Path(ROOT_PATH, 'data', 'cyrilla_summaries', file_name).read_text()
+        file_name = sample.pdf_data.pdf_features.file_name.replace(".pdf", ".txt")
+        text = Path(ROOT_PATH, "data", "cyrilla_summaries", file_name).read_text()
 
-        if 'three sentence' in text.split(':')[0]:
-            text = ':'.join(text.split(':')[1:]).strip()
+        if "three sentence" in text.split(":")[0]:
+            text = ":".join(text.split(":")[1:]).strip()
 
         return text if text else "No text"
 
@@ -82,11 +83,11 @@ class SetFitOllamaLast10Classes(MultiLabelMethod):
     def get_dataset_from_data(self):
         data = list()
 
-        for label in os.listdir(Path(ROOT_PATH, 'data', 'cyrilla_synthetic_data')):
-            option_label = label.replace('.txt', '').replace('___', '/')
+        for label in os.listdir(Path(ROOT_PATH, "data", "cyrilla_synthetic_data")):
+            option_label = label.replace(".txt", "").replace("___", "/")
             if option_label not in self.top_options:
                 continue
-            texts = json.loads(Path(ROOT_PATH, 'data', 'cyrilla_synthetic_data', label).read_text())
+            texts = json.loads(Path(ROOT_PATH, "data", "cyrilla_synthetic_data", label).read_text())
             for text in texts:
                 one_hot = [0] * len(self.top_options)
                 if option_label in self.top_options:

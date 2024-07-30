@@ -17,43 +17,53 @@ from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDotDigits500 import (
     CleanBeginningDotDigits500,
 )
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDotTextAndTitles500 import \
-    CleanBeginningDotTextAndTitles500
-from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningMinWidth500 import \
-    CleanBeginningMinWidth500
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDotTextAndTitles500 import (
+    CleanBeginningDotTextAndTitles500,
+)
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningMinWidth500 import (
+    CleanBeginningMinWidth500,
+)
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDotDigits1000 import CleanEndDotDigits1000
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.FastTextMethod import FastTextMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
 
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitOptionsWithSamplesMethod25 import \
-    SetFitOptionsWithSamplesMethod25
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import \
-    SingleLabelSetFitMethod
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzy95 import \
-    FastSegmentSelectorFuzzy95
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzyCommas import \
-    FastSegmentSelectorFuzzyCommas
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitOptionsWithSamplesMethod25 import (
+    SetFitOptionsWithSamplesMethod25,
+)
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import SingleLabelSetFitMethod
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzy95 import (
+    FastSegmentSelectorFuzzy95,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzyCommas import (
+    FastSegmentSelectorFuzzyCommas,
+)
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll100 import FuzzyAll100
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll75 import FuzzyAll75
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll88 import FuzzyAll88
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyFirst import FuzzyFirst
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyFirstCleanLabel import \
-    FuzzyFirstCleanLabel
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyFirstCleanLabelStats import \
-    FuzzyFirstCleanLabelStats
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyFirstCleanLabel import (
+    FuzzyFirstCleanLabel,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyFirstCleanLabelStats import (
+    FuzzyFirstCleanLabelStats,
+)
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLast import FuzzyLast
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLastCleanLabel import \
-    FuzzyLastCleanLabel
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzySegmentSelector import \
-    FuzzySegmentSelector
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.NextWordsTokenSelectorFuzzy75 import \
-    NextWordsTokenSelectorFuzzy75
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsSentenceSelectorFuzzyCommas import \
-    PreviousWordsSentenceSelectorFuzzyCommas
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsTokenSelectorFuzzy75 import \
-    PreviousWordsTokenSelectorFuzzy75
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import \
-    SentenceSelectorFuzzyCommas
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyLastCleanLabel import FuzzyLastCleanLabel
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzySegmentSelector import (
+    FuzzySegmentSelector,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.NextWordsTokenSelectorFuzzy75 import (
+    NextWordsTokenSelectorFuzzy75,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsSentenceSelectorFuzzyCommas import (
+    PreviousWordsSentenceSelectorFuzzyCommas,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.PreviousWordsTokenSelectorFuzzy75 import (
+    PreviousWordsTokenSelectorFuzzy75,
+)
+from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import (
+    SentenceSelectorFuzzyCommas,
+)
 
 from send_logs import send_logs
 
@@ -127,8 +137,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
 
         return suggestions
 
-    def get_predictions(self, predictions_samples: list[PredictionSample]) -> (
-    list[TrainingSample], list[list[Option]]):
+    def get_predictions(self, predictions_samples: list[PredictionSample]) -> (list[TrainingSample], list[list[Option]]):
         self.load_options()
         training_samples = [TrainingSample(pdf_data=sample.pdf_data) for sample in predictions_samples]
         extraction_data = ExtractionData(

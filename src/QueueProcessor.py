@@ -84,8 +84,11 @@ class QueueProcessor:
     @staticmethod
     def task_to_string(extraction_task: ExtractionTask):
         extraction_dict = extraction_task.model_dump()
-        if "params" in extraction_dict and "options" in extraction_dict["params"] and 10 < len(
-                extraction_dict["params"]["options"]):
+        if (
+            "params" in extraction_dict
+            and "options" in extraction_dict["params"]
+            and 10 < len(extraction_dict["params"]["options"])
+        ):
             extraction_dict["params"]["options"] = f'[hidden {len(extraction_dict["params"]["options"])} options]'
 
         return str(extraction_dict)

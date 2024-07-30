@@ -22,6 +22,7 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 class SetFitOptionsWithSamplesMethod25_4000(MultiLabelMethod):
     model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
     THRESHOLD = 25
+
     def get_data_path(self):
         model_folder_path = join(self.base_path, self.get_name())
 

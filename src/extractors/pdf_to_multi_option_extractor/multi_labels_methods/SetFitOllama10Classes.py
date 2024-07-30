@@ -22,16 +22,18 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 class SetFitOllama10Classes(MultiLabelMethod):
     model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
 
-    top_options = ["intellectual property",
-                   "telecommunication",
-                   "access to information",
-                   "freedom of expression",
-                   "privacy",
-                   "constitution",
-                   "trademark",
-                   "electronic communications",
-                   "cybercrime",
-                   "data protection and retention"]
+    top_options = [
+        "intellectual property",
+        "telecommunication",
+        "access to information",
+        "freedom of expression",
+        "privacy",
+        "constitution",
+        "trademark",
+        "electronic communications",
+        "cybercrime",
+        "data protection and retention",
+    ]
 
     def get_data_path(self):
         model_folder_path = join(self.base_path, self.get_name())
@@ -60,11 +62,11 @@ class SetFitOllama10Classes(MultiLabelMethod):
 
     @staticmethod
     def get_text(sample: TrainingSample) -> str:
-        file_name = sample.pdf_data.pdf_features.file_name.replace('.pdf', '.txt')
-        text = Path(ROOT_PATH, 'data', 'cyrilla_summaries', file_name).read_text()
+        file_name = sample.pdf_data.pdf_features.file_name.replace(".pdf", ".txt")
+        text = Path(ROOT_PATH, "data", "cyrilla_summaries", file_name).read_text()
 
-        if 'three sentence' in text.split(':')[0]:
-            text = ':'.join(text.split(':')[1:]).strip()
+        if "three sentence" in text.split(":")[0]:
+            text = ":".join(text.split(":")[1:]).strip()
 
         return text if text else "No text"
 

@@ -57,7 +57,7 @@ class LlamaSummary(FilterSegmentsMethod):
         return pdf_data_segment_copy
 
     def filter_segments(self, pdf_data_segments: list[PdfDataSegment]) -> list[PdfDataSegment]:
-        input_text = ' '.join([x.text_content for x in self.get_first_tokens(pdf_data_segments, 1500)])
+        input_text = " ".join([x.text_content for x in self.get_first_tokens(pdf_data_segments, 1500)])
 
         model_id = "meta-llama/Meta-Llama-3.1-8B"
 
@@ -69,15 +69,15 @@ class LlamaSummary(FilterSegmentsMethod):
             max_length=500,
             truncation=True,
             token=os.environ.get("HUGGINGFACE_TOKEN"),
-            return_full_text=False
+            return_full_text=False,
         )
 
-        response = pipeline(f'Select three sentences that captures the topic of the following document: {input_text}')
+        response = pipeline(f"Select three sentences that captures the topic of the following document: {input_text}")
 
         if response and "generated_text" in response[0]:
             output_text = response[0]["generated_text"]
-            if 'three sentence' in output_text.split(':')[0]:
-                output_text = ':'.join(output_text.split(':')[1:]).strip()
+            if "three sentence" in output_text.split(":")[0]:
+                output_text = ":".join(output_text.split(":")[1:]).strip()
         else:
             output_text = "No text"
 

@@ -77,7 +77,7 @@ def single_label_maximum_performance(dataset: ExtractionData):
 if __name__ == "__main__":
     start = time()
     print("start")
-    with open(join(ROOT_PATH, 'data', 'all_cyrilla.pickle'), mode='rb') as file:
+    with open(join(ROOT_PATH, "data", "all_cyrilla.pickle"), mode="rb") as file:
         data = pickle.load(file)
 
     print("time", round(time() - start, 2), "s")

@@ -54,11 +54,16 @@ class OllamaSummary(FilterSegmentsMethod):
         return pdf_data_segment_copy
 
     def filter_segments(self, pdf_data_segments: list[PdfDataSegment]) -> list[PdfDataSegment]:
-        text = ' '.join([x.text_content for x in self.get_first_tokens(pdf_data_segments, 1500)])
+        text = " ".join([x.text_content for x in self.get_first_tokens(pdf_data_segments, 1500)])
 
-        response = ollama.chat(model='llama3.1:latest', messages=[
-            {
-                'role': 'user',
-                'content': f'Select three sentences that captures the topic of the following document: {text}'}])
+        response = ollama.chat(
+            model="llama3.1:latest",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Select three sentences that captures the topic of the following document: {text}",
+                }
+            ],
+        )
 
-        return [PdfDataSegment(1, Rectangle(0, 0, 0, 0), response['message']['content'])]
+        return [PdfDataSegment(1, Rectangle(0, 0, 0, 0), response["message"]["content"])]

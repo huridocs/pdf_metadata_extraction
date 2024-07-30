@@ -49,11 +49,11 @@ class SetFitOllama(MultiLabelMethod):
 
     @staticmethod
     def get_text(sample: TrainingSample) -> str:
-        file_name = sample.pdf_data.pdf_features.file_name.replace('.pdf', '.txt')
-        text = Path(ROOT_PATH, 'data', 'cyrilla_summaries', file_name).read_text()
+        file_name = sample.pdf_data.pdf_features.file_name.replace(".pdf", ".txt")
+        text = Path(ROOT_PATH, "data", "cyrilla_summaries", file_name).read_text()
 
-        if 'three sentence' in text.split(':')[0]:
-            text = ':'.join(text.split(':')[1:]).strip()
+        if "three sentence" in text.split(":")[0]:
+            text = ":".join(text.split(":")[1:]).strip()
 
         return text if text else "No text"
 
@@ -71,11 +71,11 @@ class SetFitOllama(MultiLabelMethod):
             data.append([self.get_text(sample), label])
 
         options_labels = [x.label for x in self.options]
-        for label in os.listdir(Path(ROOT_PATH, 'data', 'cyrilla_synthetic_data')):
-            texts = json.loads(Path(ROOT_PATH, 'data', 'cyrilla_synthetic_data', label).read_text())
+        for label in os.listdir(Path(ROOT_PATH, "data", "cyrilla_synthetic_data")):
+            texts = json.loads(Path(ROOT_PATH, "data", "cyrilla_synthetic_data", label).read_text())
             for text in texts:
                 one_hot = [0] * len(options_labels)
-                option_label = label.replace('.txt', '').replace('___', '/')
+                option_label = label.replace(".txt", "").replace("___", "/")
                 if option_label in options_labels:
                     one_hot[options_labels.index(option_label)] = 1
                 else:
@@ -140,12 +140,9 @@ class SetFitOllama(MultiLabelMethod):
     def predictions_to_options(self, predictions) -> list[list[Option]]:
         one_hot_list = list()
         for prediction in predictions:
-            one_hot_list.append(
-                [self.options[i] for i, value in enumerate(prediction) if value > 0.5]
-            )
+            one_hot_list.append([self.options[i] for i, value in enumerate(prediction) if value > 0.5])
 
         return one_hot_list
-
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         if not extraction_data.multi_value:
