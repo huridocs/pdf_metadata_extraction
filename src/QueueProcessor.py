@@ -43,12 +43,12 @@ class QueueProcessor:
     def process(self, id, message, rc, ts):
         try:
             task = ExtractionTask(**message)
-            config_logger.info(f"New task {task.model_dump()}")
+            config_logger.info(f"New task {self.task_to_string(task)}")
         except ValidationError:
             config_logger.error(f"Not a valid Redis message: {message}")
             return True
 
-        self.log_process_information(message)
+        self.log_process_information(task)
 
         task_calculated, error_message = Extractor.calculate_task(task)
         if error_message:
@@ -81,9 +81,18 @@ class QueueProcessor:
         self.results_queue.sendMessage().message(model_results_message.model_dump()).execute()
         return True
 
-    def log_process_information(self, message):
+    @staticmethod
+    def task_to_string(extraction_task: ExtractionTask):
+        extraction_dict = extraction_task.model_dump()
+        if "params" in extraction_dict and "options" in extraction_dict["params"] and 10 < len(
+                extraction_dict["params"]["options"]):
+            extraction_dict["params"]["options"] = f'[hidden {len(extraction_dict["params"]["options"])} options]'
+
+        return str(extraction_dict)
+
+    def log_process_information(self, extraction_task: ExtractionTask):
         try:
-            config_logger.info(f"Processing Redis message: {message}")
+            config_logger.info(f"Processing Redis message: {self.task_to_string(extraction_task)}")
             config_logger.info(
                 f"Messages pending in queue: {self.task_queue.getQueueAttributes().exec_command()['msgs'] - 1}"
             )

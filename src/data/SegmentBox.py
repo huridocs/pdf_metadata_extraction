@@ -65,4 +65,5 @@ class SegmentBox(BaseModel):
             page_number=pdf_segment.page_number,
             page_width=page_width,
             page_height=page_height,
+            segment_type=pdf_segment.segment_type,
         )

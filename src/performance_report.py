@@ -184,7 +184,7 @@ def get_predictions(dataset: ExtractionData) -> (list[list[int]], list[list[int]
     values_list = [x.labeled_data.values for x in test_samples]
     truth_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(values_list, dataset.options)
     prediction_one_hot = PdfMultiOptionMethod.one_hot_to_options_list(predictions, dataset.options)
-    return truth_one_hot, prediction_one_hot, extractor.get_best_method(training_dataset).get_name(), context_samples
+    return truth_one_hot, prediction_one_hot, extractor.get_predictions_method().get_name(), context_samples
 
 
 def get_mistakes() -> dict[str, (float, str)]:

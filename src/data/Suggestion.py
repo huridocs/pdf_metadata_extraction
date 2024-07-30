@@ -40,8 +40,8 @@ class Suggestion(BaseModel):
         self.add_segments(prediction_pdf_data)
         self.text = text
 
-    def add_prediction_multi_option(self, training_sample: TrainingSample, values: list[Option], context_from_the_end: bool):
-        self.add_segments(training_sample.pdf_data, context_from_the_end)
+    def add_prediction_multi_option(self, pdf_data: PdfData, values: list[Option], context_from_the_end: bool):
+        self.add_segments(pdf_data, context_from_the_end)
         self.values = values
 
     def add_segments(self, pdf_data: PdfData, context_from_the_end: bool = False):

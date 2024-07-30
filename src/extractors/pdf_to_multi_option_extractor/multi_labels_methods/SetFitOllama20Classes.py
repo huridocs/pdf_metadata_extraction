@@ -1,23 +1,49 @@
+import json
 import os
 import shutil
 from os.path import join, exists
+from pathlib import Path
 
 import pandas as pd
 from datasets import load_dataset
 
+from config import ROOT_PATH
 from data.ExtractionData import ExtractionData
 from data.Option import Option
 from setfit import SetFitModel, TrainingArguments, Trainer
 
-from extractors.ExtractorBase import ExtractorBase
+from data.TrainingSample import TrainingSample
 from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
 from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 
 
-class SetFitMethod(MultiLabelMethod):
+class SetFitOllama20Classes(MultiLabelMethod):
     model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
+
+    top_options = [
+        "intellectual property",
+                   "telecommunication",
+                   "access to information",
+                   "freedom of expression",
+                   "privacy",
+                   "constitution",
+                   "trademark",
+                   "electronic communications",
+                   "cybercrime",
+                   "data protection and retention",
+                   "defamation",
+                   "media/press",
+                   "cybercrime",
+                   "copyright",
+                   "penal code",
+                   "data protection",
+                   "surveillance",
+                   "e-transactions",
+                   "digital rights",
+                   "social media"
+                   ]
 
     def get_data_path(self):
         model_folder_path = join(self.base_path, self.get_name())
@@ -44,13 +70,38 @@ class SetFitMethod(MultiLabelMethod):
         example["label"] = eval(example["label"])
         return example
 
-    def get_dataset_from_data(self, extraction_data: ExtractionData):
-        data = list()
-        texts = [sample.pdf_data.get_text() for sample in extraction_data.samples]
-        labels = self.get_one_hot_encoding(extraction_data)
+    @staticmethod
+    def get_text(sample: TrainingSample) -> str:
+        file_name = sample.pdf_data.pdf_features.file_name.replace('.pdf', '.txt')
+        text = Path(ROOT_PATH, 'data', 'cyrilla_summaries', file_name).read_text()
 
-        for text, label in zip(texts, labels):
-            data.append([text, label])
+        if 'three sentence' in text.split(':')[0]:
+            text = ':'.join(text.split(':')[1:]).strip()
+
+        return text if text else "No text"
+
+    def get_top_one_hot_encoding(self, multi_option_data: ExtractionData):
+        one_hot_encoding = list()
+        for sample in multi_option_data.samples:
+            one_hot_encoding.append([0] * len(self.top_options))
+            for option in sample.labeled_data.values:
+                if option.label not in self.top_options:
+                    continue
+                one_hot_encoding[-1][self.top_options.index(option.label)] = 1
+        return one_hot_encoding
+
+    def get_dataset_from_data(self, extraction_data: ExtractionData):
+        labels = self.get_top_one_hot_encoding(extraction_data)
+        data = list()
+
+        for label, sample in zip(labels, extraction_data.samples):
+            if sample.labeled_data.language_iso not in ["en", "eng"]:
+                raise Exception(f"Language {sample.labeled_data.language_iso} not supported")
+
+            if sum(label) == 0:
+                continue
+
+            data.append([self.get_text(sample), label])
 
         df = pd.DataFrame(data)
         df.columns = ["text", "label"]
@@ -69,8 +120,10 @@ class SetFitMethod(MultiLabelMethod):
 
         model = SetFitModel.from_pretrained(
             self.model_name,
-            labels=[x.label for x in self.options],
+            labels=self.top_options,
             multi_target_strategy="one-vs-rest",
+            use_differentiable_head=True,
+            head_params={"out_features": 20},
         )
 
         args = TrainingArguments(
@@ -99,19 +152,27 @@ class SetFitMethod(MultiLabelMethod):
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         model = SetFitModel.from_pretrained(self.get_model_path())
-        predict_texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
+        predict_texts = [self.get_text(sample) for sample in multi_option_data.samples]
+
         predictions = model.predict(predict_texts)
 
-        return self.predictions_to_options_list(predictions.tolist())
+        return self.predictions_to_options(predictions.tolist())
+
+    def predictions_to_options(self, predictions) -> list[list[Option]]:
+        predictions_options = list()
+        options_labels = [x.label for x in self.options]
+        for prediction in predictions:
+            predictions_options.append([])
+            for i, one_prediction in enumerate(prediction):
+                if one_prediction < 0.5:
+                    continue
+                index = options_labels.index(self.top_options[i])
+                predictions_options[-1].append(self.options[index])
+
+        return predictions_options
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         if not extraction_data.multi_value:
-            return False
-
-        if len(extraction_data.options) >= 35:
-            return True
-
-        if ExtractorBase.is_multilingual(extraction_data):
             return False
 
         return True

@@ -13,12 +13,12 @@ from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import Filter
 
 class PdfMultiOptionMethod:
     def __init__(
-        self,
-        filter_segments_method: Type[FilterSegmentsMethod] = None,
-        multi_label_method: Type[MultiLabelMethod] = None,
+            self,
+            filter_segments_method: Type[FilterSegmentsMethod] = None,
+            multi_label_method: Type[MultiLabelMethod] = None,
     ):
-        self.multi_label_method = multi_label_method
         self.filter_segments_method = filter_segments_method
+        self.multi_label_method = multi_label_method
         self.extraction_identifier = ExtractionIdentifier(run_name="not set", extraction_name="not set")
         self.options: list[Option] = list()
         self.multi_value = False
@@ -33,7 +33,7 @@ class PdfMultiOptionMethod:
         self.extraction_data = multi_option_data
 
     def get_name(self):
-        if self.filter_segments_method and self.multi_label_method:
+        if self.multi_label_method:
             text_extractor_name = self.filter_segments_method.__name__.replace("Method", "")
             multi_option_name = self.multi_label_method.__name__.replace("Method", "")
             text_extractor_name = text_extractor_name.replace("TextAtThe", "")
@@ -48,7 +48,8 @@ class PdfMultiOptionMethod:
         seeds = [22, 23, 24, 25]
         for i in range(repetitions):
             train_set, test_set = ExtractorBase.get_train_test_sets(multi_option_data)
-            truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples], self.options)
+            truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples],
+                                                         self.options)
 
             self.train(train_set)
             predictions = self.predict(test_set)
@@ -80,8 +81,6 @@ class PdfMultiOptionMethod:
 
     def train(self, multi_option_data: ExtractionData):
         self.set_parameters(multi_option_data)
-
-        print("Filtering segments")
         filtered_multi_option_data = self.filter_segments_method().filter(multi_option_data)
 
         print("Creating model")

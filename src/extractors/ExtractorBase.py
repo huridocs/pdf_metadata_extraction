@@ -56,8 +56,8 @@ class ExtractorBase:
             test_set = extraction_data.samples[train_size:]
 
         if limit_samples:
-            train_set = train_set[:80]
-            test_set = test_set[:30]
+            train_set = train_set[: 30 * len(extraction_data.options)] if extraction_data.options else train_set[:80]
+            test_set = test_set[: 5 * len(extraction_data.options)] if extraction_data.options else test_set[:30]
 
         train_extraction_data = ExtractorBase.get_extraction_data_from_samples(extraction_data, train_set)
         test_extraction_data = ExtractorBase.get_extraction_data_from_samples(extraction_data, test_set)

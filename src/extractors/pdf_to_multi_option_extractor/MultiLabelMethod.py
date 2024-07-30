@@ -1,5 +1,4 @@
 import json
-import math
 import os
 import shutil
 from abc import ABC, abstractmethod
@@ -7,7 +6,6 @@ from os import makedirs
 from os.path import exists, join
 from pathlib import Path
 
-import torch
 from numpy import argmax
 
 from data.ExtractionIdentifier import ExtractionIdentifier

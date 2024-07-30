@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from data.PdfData import PdfData
+from data.TrainingSample import TrainingSample
 
 
 @dataclass
