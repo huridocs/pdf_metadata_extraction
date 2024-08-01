@@ -49,6 +49,9 @@ class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
 
                 sentence_segment_list.append((text, segment))
 
+        if not sentence_segment_list:
+            return list()
+
         sentences_across_pages = list()
         sentences_across_pages.append(sentence_segment_list[0])
         for sentence, next_sentence in zip(sentence_segment_list, sentence_segment_list[1:]):
@@ -63,6 +66,9 @@ class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
 
     def get_segments_merged(self, segments):
         segments = [segment for segment in segments if segment.text_content.strip()]
+        if not segments:
+            return list()
+
         merged_sentences = [segments[0]]
         for segment in segments[1:]:
             previous_segment_text = " ".join(merged_sentences[-1].text_content.split())

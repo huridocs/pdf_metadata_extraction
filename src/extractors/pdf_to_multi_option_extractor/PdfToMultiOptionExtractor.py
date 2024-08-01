@@ -1,4 +1,6 @@
 import json
+import shutil
+from collections import Counter
 from os.path import join, exists
 from pathlib import Path
 
@@ -90,7 +92,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
     def create_model(self, extraction_data: ExtractionData):
         self.options = extraction_data.options
         self.multi_value = extraction_data.multi_value
-
+        send_logs(self.extraction_identifier, self.get_stats(extraction_data))
         method = self.get_best_method(extraction_data)
         method.train(extraction_data)
 
@@ -149,10 +151,12 @@ class PdfToMultiOptionExtractor(ExtractorBase):
     def get_best_method(self, multi_option_data: ExtractionData) -> PdfMultiOptionMethod:
         best_method_instance = self.METHODS[0]
         best_performance = 0
+        performance_log = "Performance aggregation:\n"
         for method in self.METHODS:
             performance = self.get_method_performance(method, multi_option_data)
-
+            performance_log += f"{method.get_name()}: {round(performance, 2)}%\n"
             if performance == 100:
+                send_logs(self.extraction_identifier, performance_log)
                 send_logs(self.extraction_identifier, f"Best method {method.get_name()} with {performance}%")
                 return method
 
@@ -160,13 +164,15 @@ class PdfToMultiOptionExtractor(ExtractorBase):
                 best_performance = performance
                 best_method_instance = method
 
+        send_logs(self.extraction_identifier, performance_log)
         send_logs(self.extraction_identifier, f"Best method {best_method_instance.get_name()}")
         return best_method_instance
 
-    def get_method_performance(self, method: PdfMultiOptionMethod, multi_option_data: ExtractionData):
+    def get_method_performance(self, method: PdfMultiOptionMethod, multi_option_data: ExtractionData) -> float:
         method.set_parameters(multi_option_data)
 
         if not method.can_be_used(multi_option_data):
+            send_logs(self.extraction_identifier, f"Not valid method {method.get_name()}")
             return 0
 
         send_logs(self.extraction_identifier, f"Checking {method.get_name()}")
@@ -178,7 +184,11 @@ class PdfToMultiOptionExtractor(ExtractorBase):
             performance = 0
 
         self.reset_extraction_data(multi_option_data)
-        send_logs(self.extraction_identifier, f"Performance {method.get_name()}: {performance}%")
+
+        if method.multi_label_method:
+            shutil.rmtree(method.base_path, ignore_errors=True)
+
+        send_logs(self.extraction_identifier, f"Performance {method.get_name()}: {round(performance, 2)}%")
         return performance
 
     def get_predictions_method(self):
@@ -204,3 +214,21 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         for sample in multi_option_data.samples:
             for segment in sample.pdf_data.pdf_data_segments:
                 segment.ml_label = 0
+
+    @staticmethod
+    def get_stats(extraction_data: ExtractionData):
+        options = Counter()
+        for sample in extraction_data.samples:
+            options.update([option.label for option in sample.labeled_data.values])
+        languages = Counter()
+        for sample in extraction_data.samples:
+            languages.update([sample.labeled_data.language_iso])
+
+        options_count = len(extraction_data.options)
+        stats = f"\nNumber of options: {options_count}\n"
+        stats += f"Number of samples: {len(extraction_data.samples)}\n"
+        stats += f"Languages\n"
+        stats += "\n".join([f"{key} {value}" for key, value in languages.most_common()])
+        stats += f"\nOptions\n"
+        stats += "\n".join([f"{key} {value}" for key, value in options.most_common()])
+        return stats
