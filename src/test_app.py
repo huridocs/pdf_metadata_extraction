@@ -17,7 +17,7 @@ class TestApp(TestCase):
 
     def test_info(self):
         with TestClient(app) as client:
-            response = client.get("/info")
+            response = client.get("/")
 
         self.assertEqual(200, response.status_code)
 
