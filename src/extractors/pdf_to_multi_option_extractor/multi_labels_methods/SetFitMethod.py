@@ -15,6 +15,7 @@ from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
 from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
+from send_logs import send_logs
 
 
 class SetFitMethod(MultiLabelMethod):
@@ -107,6 +108,7 @@ class SetFitMethod(MultiLabelMethod):
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         if not torch.cuda.is_available():
+            send_logs(self.extraction_identifier, f"GPU not available for {self.get_name()}")
             return False
 
         if not extraction_data.multi_value:
