@@ -60,7 +60,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
         )
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
@@ -68,7 +68,7 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
             success=True,
             error_message="",
             data_url=None,
@@ -94,7 +94,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
         )
         QUEUE.sendMessage(delay=0).message(str(task.model_dump_json())).execute()
 
@@ -102,7 +102,7 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="suggestions",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
             success=True,
             error_message="",
             data_url=f"{SERVER_URL}/get_suggestions/{tenant}/{extraction_id}",
@@ -137,7 +137,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
@@ -146,7 +146,7 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
             success=False,
             error_message="No data to create model",
             data_url=None,
@@ -157,7 +157,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
         )
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
@@ -165,7 +165,7 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="suggestions",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
             success=False,
             error_message="No data to calculate suggestions",
             data_url=None,
@@ -216,7 +216,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id, options=options, multi_value=False),
+            params=Params(id=extraction_id, options=options, multi_value=False, metadata={"name": "test"}),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
@@ -226,7 +226,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
@@ -280,7 +280,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id, options=options, multi_value=True),
+            params=Params(id=extraction_id, options=options, multi_value=True, metadata={"name": "test"}),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
@@ -308,7 +308,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="suggestions",
-            params=Params(id=extraction_id),
+            params=Params(id=extraction_id, metadata={"name": "test"}),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()

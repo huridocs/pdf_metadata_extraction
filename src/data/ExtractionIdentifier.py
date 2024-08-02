@@ -11,6 +11,7 @@ from config import DATA_PATH
 class ExtractionIdentifier(BaseModel):
     run_name: str
     extraction_name: str
+    metadata: dict[str, str] = dict()
 
     def get_path(self):
         return join(DATA_PATH, self.run_name, self.extraction_name)

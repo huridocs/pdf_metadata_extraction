@@ -213,8 +213,12 @@ class Extractor:
 
     @staticmethod
     def calculate_task(extraction_task: ExtractionTask) -> (bool, str):
-        extraction_name = extraction_task.params.id
-        extractor_identifier = ExtractionIdentifier(run_name=extraction_task.tenant, extraction_name=extraction_name)
+        extractor_identifier = ExtractionIdentifier(
+            run_name=extraction_task.tenant,
+            extraction_name=extraction_task.params.id,
+            metadata=extraction_task.params.metadata,
+        )
+
         Extractor.remove_old_models(extractor_identifier)
 
         if extraction_task.task == Extractor.CREATE_MODEL_TASK_NAME:

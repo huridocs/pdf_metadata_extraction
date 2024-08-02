@@ -139,9 +139,6 @@ async def get_suggestions(tenant: str, extraction_id: str):
 
         pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
         config_logger.info(f"{len(suggestions_list)} suggestions created for {tenant} {extraction_id}")
-        if len(suggestions_list) > 2:
-            config_logger.info(json.dumps(suggestions_list[0]))
-            config_logger.info(json.dumps(suggestions_list[1]))
 
         return json.dumps(suggestions_list)
     except Exception:
