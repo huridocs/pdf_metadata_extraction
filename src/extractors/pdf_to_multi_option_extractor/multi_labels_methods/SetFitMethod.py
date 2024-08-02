@@ -3,6 +3,7 @@ import shutil
 from os.path import join, exists
 
 import pandas as pd
+import torch
 from datasets import load_dataset
 
 from data.ExtractionData import ExtractionData
@@ -105,6 +106,9 @@ class SetFitMethod(MultiLabelMethod):
         return self.predictions_to_options_list(predictions.tolist())
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        if not torch.cuda.is_available():
+            return False
+
         if not extraction_data.multi_value:
             return False
 

@@ -26,15 +26,15 @@ class TestSameInputMethod(TestCase):
                         former Yugoslav Republic of Macedonia, United Kingdom of Great Britain and Northern
                         Ireland, Venezuela (Bolivarian Republic of)"""
 
-        tags_text = (
-            "Albania, Algeria, Argentina, Bolivia (Plurinational State of), Brazil, Congo, Côte d’Ivoire, "
-            "El  Salvador,  Estonia,  France,  Gabon,  Germany,  Ireland,  Kazakhstan,  Latvia,  Mexico, "
-            "Montenegro,  Namibia,  Netherlands,  Paraguay,  Portugal,  Sierra  Leone,  South  Africa,  "
-            "the former  Yugoslav  Republic  of  Macedonia,  United  Kingdom  of  Great  Britain  and  "
+        tags_text = [
+            "Albania, Algeria, Argentina, Bolivia (Plurinational State of), Brazil, Congo, Côte d’Ivoire, ",
+            "El  Salvador,  Estonia,  France,  Gabon,  Germany,  Ireland,  Kazakhstan,  Latvia,  Mexico, ",
+            "Montenegro,  Namibia,  Netherlands,  Paraguay,  Portugal,  Sierra  Leone,  South  Africa,  ",
+            "the former  Yugoslav  Republic  of  Macedonia,  United  Kingdom  of  Great  Britain  and",
             "Northern Ireland, Venezuela (Bolivarian Republic of)"
-        )
+        ]
 
-        sample = TrainingSample(labeled_data=LabeledData(label_text=label_text, language_iso="en"), tags_texts=[tags_text])
+        sample = TrainingSample(labeled_data=LabeledData(label_text=label_text, language_iso="en"), tags_texts=tags_text)
 
         extraction_data = ExtractionData(samples=[sample], extraction_identifier=extraction_identifier)
 

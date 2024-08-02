@@ -3,6 +3,7 @@ import shutil
 from os.path import join, exists
 
 import pandas as pd
+import torch.cuda
 from datasets import load_dataset
 
 from data.ExtractionData import ExtractionData
@@ -21,6 +22,9 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
     model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        if not torch.cuda.is_available():
+            return False
+
         if extraction_data.multi_value:
             return False
 
