@@ -9,6 +9,7 @@ from extractors.ExtractorBase import ExtractorBase
 from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 from extractors.text_to_text_extractor.methods.DateParserMethod import DateParserMethod
 from extractors.text_to_text_extractor.methods.DateParserWithBreaksMethod import DateParserWithBreaksMethod
+from extractors.text_to_text_extractor.methods.InputWithoutSpaces import InputWithoutSpaces
 from extractors.text_to_text_extractor.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
 from extractors.text_to_text_extractor.methods.RegexMethod import RegexMethod
 from extractors.text_to_text_extractor.methods.RegexSubtractionMethod import RegexSubtractionMethod
@@ -20,6 +21,7 @@ class TextToTextExtractor(ExtractorBase):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
     METHODS: list[type[TextToTextMethod]] = [
         SameInputOutputMethod,
+        InputWithoutSpaces,
         RegexMethod,
         RegexSubtractionMethod,
         DateParserWithBreaksMethod,
