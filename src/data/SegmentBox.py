@@ -23,6 +23,13 @@ class SegmentBox(BaseModel):
     def to_dict(self):
         return json.loads(self.model_dump_json())
 
+    def to_output(self):
+        segment_box_dict = json.loads(self.model_dump_json())
+        del segment_box_dict["page_width"]
+        del segment_box_dict["page_height"]
+        del segment_box_dict["segment_type"]
+        return segment_box_dict
+
     def get_bounding_box(self) -> Rectangle:
         return Rectangle.from_width_height(
             left=int(self.left), top=int(self.top), width=int(self.width), height=int(self.height)

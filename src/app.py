@@ -135,7 +135,7 @@ async def get_suggestions(tenant: str, extraction_id: str):
         suggestions_list: list[str] = list()
 
         for document in pdf_metadata_extraction_db.suggestions.find(suggestions_filter):
-            suggestions_list.append(Suggestion(**document).scale_up().to_dict())
+            suggestions_list.append(Suggestion(**document).scale_up().to_output())
 
         pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
         config_logger.info(f"{len(suggestions_list)} suggestions created for {tenant} {extraction_id}")

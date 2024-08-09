@@ -250,8 +250,8 @@ class TestEndToEnd(TestCase):
                     top=60.0,
                     width=116.0,
                     height=21.0,
-                    page_width=612,
-                    page_height=792,
+                    page_width=0,
+                    page_height=0,
                     page_number=1,
                     segment_type=TokenType.TEXT,
                 )
