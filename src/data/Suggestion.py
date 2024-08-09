@@ -27,6 +27,11 @@ class Suggestion(BaseModel):
         suggestion_dict["segments_boxes"] = [x.to_dict() for x in self.segments_boxes]
         return suggestion_dict
 
+    def to_output(self):
+        suggestion_dict = self.model_dump()
+        suggestion_dict["segments_boxes"] = [x.to_output() for x in self.segments_boxes]
+        return suggestion_dict
+
     @staticmethod
     def get_empty(extraction_identifier: ExtractionIdentifier, entity_name: str) -> "Suggestion":
         return Suggestion(
