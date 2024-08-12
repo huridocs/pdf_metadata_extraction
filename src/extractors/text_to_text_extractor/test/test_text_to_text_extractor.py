@@ -56,3 +56,24 @@ class TestTextToTextExtractor(TestCase):
         self.assertEqual(extraction_id, suggestions[0].id)
         self.assertEqual("entity_name", suggestions[0].entity_name)
         self.assertEqual("one", suggestions[0].text)
+
+    def test_predictions_input_without_spaces(self):
+        sample = [
+            TrainingSample(
+                labeled_data=LabeledData(label_text="onetwothree", language_iso="en"), tags_texts=["one two", "three"]
+            )
+        ]
+        extraction_data = ExtractionData(samples=sample * 3, extraction_identifier=extraction_identifier)
+
+        text_to_text_extractor = TextToTextExtractor(extraction_identifier=extraction_identifier)
+        text_to_text_extractor.create_model(extraction_data)
+
+        suggestions = text_to_text_extractor.get_suggestions(
+            [PredictionSample.from_text("one two three four", "entity_name")]
+        )
+
+        self.assertEqual(1, len(suggestions))
+        self.assertEqual(tenant, suggestions[0].tenant)
+        self.assertEqual(extraction_id, suggestions[0].id)
+        self.assertEqual("entity_name", suggestions[0].entity_name)
+        self.assertEqual("onetwothreefour", suggestions[0].text)

@@ -6,7 +6,7 @@ from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 class InputWithoutSpaces(TextToTextMethod):
 
     def train(self, extraction_data: ExtractionData):
-        pass
+        self.save_json("best_method.json", True)
 
     @staticmethod
     def trim_text(tag_texts: list[str]) -> str:
