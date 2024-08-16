@@ -267,7 +267,8 @@ if __name__ == "__main__":
     start = time()
     print("start")
 
-    data = get_multi_option_benchmark_data(filter_by=["all_cyrilla_keywords"])[0]
+    # data = get_multi_option_benchmark_data(filter_by=["all_cyrilla_keywords"])[0]
+    data = get_multi_option_benchmark_data(filter_by=["cyrilla_not_english_keywords"])[0]
     print("no pickle time", round(time() - start, 2), "s")
 
     get_f1_scores_method_names(data, train=True)
