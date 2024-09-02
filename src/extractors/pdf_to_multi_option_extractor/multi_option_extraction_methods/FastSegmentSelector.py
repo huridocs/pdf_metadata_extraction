@@ -47,7 +47,8 @@ class FastSegmentSelector:
         for word in self.next_words:
             features.append(1 if word in next_segment_texts else 0)
 
-        features.append(len([x for x in text if x == ","]) / len(text) if text else 0)
+        commas_percentage = len([x for x in text if x == ","]) / len(text) if text else 0
+        features.append(commas_percentage)
 
         return features
 
@@ -83,13 +84,20 @@ class FastSegmentSelector:
         Path(self.next_words_path).write_text(json.dumps(self.next_words))
 
     def create_model(self, segments: list[PdfDataSegment]):
+        if not segments:
+            return
+
         self.text_segments = [x for x in segments if x.segment_type in self.text_types]
         self.save_predictive_common_words(self.text_segments)
 
         x, y = self.get_x_y(segments)
 
+        if x.size == 0 or x[0].size == 0:
+            return
+
         train_data = lgb.Dataset(x, y)
         num_round = 50
+
         light_gbm_model = lgb.train({}, train_data, num_round)
         light_gbm_model.save_model(self.model_path)
 
@@ -108,10 +116,16 @@ class FastSegmentSelector:
         return x_train, y
 
     def predict(self, segments):
+        if not exists(self.model_path) or not segments:
+            return []
+
         self.text_segments = [x for x in segments if x.segment_type in self.text_types]
         self.load_repeated_words()
 
         x, y = self.get_x_y(segments)
+
+        if x.size == 0 or x[0].size == 0:
+            return []
 
         model = lgb.Booster(model_file=self.model_path)
         predictions = model.predict(x)
