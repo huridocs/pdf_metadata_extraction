@@ -118,6 +118,12 @@ class LightgbmFrequentWords:
         return frequent_words_path
 
     def set_most_frequent_words_to_segments(self, model_path: str):
-        most_frequent_words = json.loads(Path(self.get_frequent_words_path(model_path)).read_text())
+        path_frequent_words = Path(self.get_frequent_words_path(model_path))
+
+        if not path_frequent_words.exists():
+            most_frequent_words = []
+        else:
+            most_frequent_words = json.loads(path_frequent_words.read_text())
+
         for segment in self.segments:
             segment.set_most_frequent_words(most_frequent_words)

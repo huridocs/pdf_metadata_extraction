@@ -59,6 +59,9 @@ class SegmentSelector:
         return valid_pdf_data
 
     def set_extraction_segments(self, pdfs_data: list[PdfData]):
+        if not self.model:
+            return
+
         predictions = LightgbmFrequentWords().predict(self.model, pdfs_data, self.model_path)
         index = 0
         for pdf_metadata in pdfs_data:
