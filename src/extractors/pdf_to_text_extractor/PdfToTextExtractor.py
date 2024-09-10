@@ -65,7 +65,6 @@ class PdfToTextExtractor(ExtractorBase):
 
     def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
         start = time()
-        config_logger.info("get_metadata_predictions")
         segment_selector = SegmentSelector(self.extraction_identifier)
 
         if not segment_selector.model or not predictions_samples:

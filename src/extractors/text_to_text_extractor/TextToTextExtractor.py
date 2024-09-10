@@ -1,6 +1,5 @@
 import json
 import os
-from os.path import exists, join
 from pathlib import Path
 
 from config import config_logger
@@ -40,11 +39,7 @@ class TextToTextExtractor(ExtractorBase):
 
     def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
         method_instance = self.get_predictions_method()
-        message = f"Predicting {len(predictions_samples)} documents with {method_instance.get_name()}"
-        send_logs(self.extraction_identifier, message)
-
         prediction = method_instance.predict(predictions_samples)
-
         suggestions = list()
         for prediction, prediction_sample in zip(prediction, predictions_samples):
             entity_name = prediction_sample.entity_name
