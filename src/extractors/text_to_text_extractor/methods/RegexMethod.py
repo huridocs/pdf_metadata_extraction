@@ -2,12 +2,13 @@ import re
 
 from data.ExtractionData import ExtractionData
 from data.PredictionSample import PredictionSample
-from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
 
 from tdda import *
 
+from extractors.ToTextExtractorMethod import ToTextExtractorMethod
 
-class RegexMethod(TextToTextMethod):
+
+class RegexMethod(ToTextExtractorMethod):
 
     def train(self, extraction_data: ExtractionData):
         regex_list = rexpy.extract([x.labeled_data.label_text for x in extraction_data.samples])

@@ -1,9 +1,9 @@
 from data.ExtractionData import ExtractionData
 from data.PredictionSample import PredictionSample
-from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
+from extractors.ToTextExtractorMethod import ToTextExtractorMethod
 
 
-class SameInputOutputMethod(TextToTextMethod):
+class SameInputOutputMethod(ToTextExtractorMethod):
 
     def train(self, extraction_data: ExtractionData):
         pass

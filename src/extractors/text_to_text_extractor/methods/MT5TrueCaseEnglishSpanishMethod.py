@@ -17,7 +17,7 @@ from config import DATA_PATH, config_logger
 from data.ExtractionData import ExtractionData
 from data.PredictionSample import PredictionSample
 from data.TrainingSample import TrainingSample
-from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
+from extractors.ToTextExtractorMethod import ToTextExtractorMethod
 
 from extractors.text_to_text_extractor.methods.TrueCaser import TrueCaser
 from extractors.text_to_text_extractor.methods.run_seq_2_seq import (
@@ -35,7 +35,7 @@ logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.ERROR
 logging_hf.set_verbosity(40)
 
 
-class MT5TrueCaseEnglishSpanishMethod(TextToTextMethod):
+class MT5TrueCaseEnglishSpanishMethod(ToTextExtractorMethod):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
     def get_model_path(self):

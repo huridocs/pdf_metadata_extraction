@@ -12,7 +12,7 @@ from data.PredictionSample import PredictionSample
 from extractors.ExtractorBase import ExtractorBase
 
 
-class TextToTextMethod:
+class ToTextExtractorMethod:
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):
         self.extraction_identifier = extraction_identifier
@@ -57,8 +57,9 @@ class TextToTextMethod:
         performance_train_set, performance_test_set = ExtractorBase.get_train_test_sets(extraction_data)
 
         self.train(performance_train_set)
+        samples = performance_test_set.samples
+        predictions = self.predict([PredictionSample(pdf_data=x.pdf_data, tags_texts=x.tags_texts) for x in samples])
 
-        predictions = self.predict([PredictionSample(tags_texts=x.tags_texts) for x in performance_test_set.samples])
         self.log_performance_sample(extraction_data=performance_test_set, predictions=predictions)
 
         correct = [

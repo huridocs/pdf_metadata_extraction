@@ -22,7 +22,7 @@ class TestExtractorPdfToText(TestCase):
     model_path = f"{APP_PATH}/tenant_test/extraction_id/segment_predictor_model/model.model"
 
     @mongomock.patch(servers=[f"{MONGO_HOST}:{MONGO_PORT}"])
-    def test_create_model_error_when_blank_document(self):
+    def test_create_model_when_blank_document(self):
         tenant = "segment_test"
         extraction_id = "extraction_id"
 
@@ -66,7 +66,7 @@ class TestExtractorPdfToText(TestCase):
         )
         task_calculated, error = Extractor.calculate_task(task)
 
-        self.assertFalse(task_calculated)
+        self.assertTrue(task_calculated)
 
         shutil.rmtree(join(DATA_PATH, tenant))
 

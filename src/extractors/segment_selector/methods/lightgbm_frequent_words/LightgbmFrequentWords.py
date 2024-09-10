@@ -57,7 +57,7 @@ class LightgbmFrequentWords:
         parameters["metric"] = "binary_logloss"
         parameters["verbose"] = -1
         parameters["boosting_type"] = "gbdt"
-        parameters["min_data"] = 1
+        parameters["min_data"] = 0
 
         train_data = lgb.Dataset(x_train, y_train)
         num_round = 3000
