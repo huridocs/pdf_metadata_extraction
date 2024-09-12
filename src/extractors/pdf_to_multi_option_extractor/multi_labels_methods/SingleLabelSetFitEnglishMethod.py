@@ -18,9 +18,9 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 from send_logs import send_logs
 
 
-class SingleLabelSetFitMethod(MultiLabelMethod):
+class SingleLabelSetFitEnglishMethod(MultiLabelMethod):
 
-    model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
+    model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
         if not torch.cuda.is_available():
@@ -91,6 +91,7 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
         model = SetFitModel.from_pretrained(
             self.model_name,
             labels=[x.label for x in self.options],
+            trust_remote_code=True
         )
 
         args = TrainingArguments(
@@ -118,7 +119,7 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
         trainer.model.save_pretrained(self.get_model_path())
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
-        model = SetFitModel.from_pretrained(self.get_model_path())
+        model = SetFitModel.from_pretrained(self.get_model_path(), trust_remote_code=True)
         predict_texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
         predictions = model.predict(predict_texts)
 

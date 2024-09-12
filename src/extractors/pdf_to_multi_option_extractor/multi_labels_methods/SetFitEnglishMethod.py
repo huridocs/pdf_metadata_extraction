@@ -18,8 +18,8 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 from send_logs import send_logs
 
 
-class SetFitMethod(MultiLabelMethod):
-    model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
+class SetFitEnglishMethod(MultiLabelMethod):
+    model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
 
     def get_data_path(self):
         model_folder_path = join(self.base_path, self.get_name())
@@ -73,6 +73,7 @@ class SetFitMethod(MultiLabelMethod):
             self.model_name,
             labels=[x.label for x in self.options],
             multi_target_strategy="one-vs-rest",
+            trust_remote_code=True
         )
 
         args = TrainingArguments(
@@ -100,7 +101,7 @@ class SetFitMethod(MultiLabelMethod):
         trainer.model.save_pretrained(self.get_model_path())
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
-        model = SetFitModel.from_pretrained(self.get_model_path())
+        model = SetFitModel.from_pretrained(self.get_model_path(), trust_remote_code=True)
         predict_texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
         predictions = model.predict(predict_texts)
 
