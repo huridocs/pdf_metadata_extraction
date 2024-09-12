@@ -1,8 +1,9 @@
 from copy import deepcopy
+from time import sleep
 
-import ollama
+from httpx import ReadTimeout, ConnectTimeout
 from ml_cloud_connector.MlCloudConnector import MlCloudConnector
-from ollama import Client
+from ollama import Client, ResponseError
 from pdf_features.Rectangle import Rectangle
 from pdf_token_type_labels.TokenType import TokenType
 
@@ -12,7 +13,7 @@ from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import Filter
 ip_address = MlCloudConnector().get_ip()
 
 
-class OllamaSummary(FilterSegmentsMethod):
+class OllamaTranslation(FilterSegmentsMethod):
     valid_types = [TokenType.SECTION_HEADER, TokenType.TITLE, TokenType.TEXT, TokenType.LIST_ITEM]
 
     def get_first_tokens(self, pdf_data_segments: list[PdfDataSegment], text_length: int) -> list[PdfDataSegment]:
@@ -57,30 +58,10 @@ class OllamaSummary(FilterSegmentsMethod):
         pdf_data_segment_copy.text_content = " ".join(words)
         return pdf_data_segment_copy
 
+
     def filter_segments(self, pdf_data_segments: list[PdfDataSegment]) -> list[PdfDataSegment]:
-        # if exists(Path(ROOT_PATH, "data", "translated_summarized_data", )):
         text = " ".join([x.text_content for x in self.get_first_tokens(pdf_data_segments, 1500)])
 
-
-        translation = self.translate_text(text)
-
-        response = ollama.chat(
-            model="llama3.1:latest",
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Select three sentences that captures the topic of the following document: {translation}",
-                }
-            ],
-            keep_alive=-1
-        )
-        print("summarization finished")
-
-        return [PdfDataSegment(1, Rectangle(0, 0, 0, 0), response["message"]["content"])]
-
-    @staticmethod
-    def translate_text(text: str) -> str:
-        client = Client(host=f"http://{ip_address}:11434", timeout=10000)
 
         content = f"""Please translate the following text into English. Follow these guidelines:
 1. Maintain the original layout and formatting.
@@ -89,19 +70,43 @@ class OllamaSummary(FilterSegmentsMethod):
 4. Do not include any additional comments, notes, or explanations in the output; provide only the translated text.
 
 Here is the text to be translated:
-"""
+        """
         content += "\n\n" + text
+        request_trial = 0
+        response_message: str = ""
+        cloud_wait_time = 180
 
-        response = client.chat(
-            model="aya:35b",
-            messages=[
-                {
-                    "role": "user",
-                    "content": content,
-                }
-            ]
-        )
-        print("translation finished")
-        return response["message"]["content"]
+        while not response_message:
+            try:
+                client = Client(host=f"http://{ip_address}:11434", timeout=1000)
 
+                response = client.chat(
+                    model="aya:35b",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": content,
+                        }
+                    ]
+                )
+                response_message = response["message"]["content"]
+            except ReadTimeout:
+                request_trial += 1
+            except (ConnectTimeout, ResponseError):
+                # this error happened after ~15 hours of working
+                # it first happened as connecttimeout, then i saw that server is closed
+                # when i re-start it nvidia-smi was not working so ollama throw a responseerror
 
+                # ollama._types.ResponseError: unexpected server status: llm server loading model
+                print(f"Response error, instance is going to be restarted [Trial: {request_trial+1}]")
+                MlCloudConnector().stop()
+                sleep(cloud_wait_time)
+                cloud_wait_time *= 1.5
+                MlCloudConnector().start()
+                sleep(30)
+                request_trial += 1
+
+            if request_trial == 3:
+                return [PdfDataSegment(1, Rectangle(0, 0, 0, 0), "response error")]
+
+        return [PdfDataSegment(1, Rectangle(0, 0, 0, 0), response_message)]

@@ -1,0 +1,425 @@
+25 other languages training samples - 100 other languages test samples:
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 22.08% prec: 34.69% recall: 16.19% time: 100s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 13.33% prec: 22.47% recall: 9.48% time: 166s
+
+100 other languages training samples - 100 other languages test samples:
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 30.15% prec: 42.61% recall: 23.33% time: 620s
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 25.49% prec: 41.05% recall: 18.48% time: 358s
+
+25 other languages + 25 all_cyrilla_keywords english training samples - 100 other languages test samples:
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 25.55% prec: 55.56% recall: 16.59% time: 419s
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 24.26% prec: 54.1% recall: 15.64% time: 231s
+
+100 other languages + 100 all_cyrilla_keywords english training samples - 100 other languages test samples:
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 39.09% prec: 48.59% recall: 32.7% time: 617s
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 28.37% prec: 51.9% recall: 19.52% time: 333s
+
+
+
+
+all_cyrilla_keywords 25 english training samples - 100 english test samples:
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 16.78% prec: 54.55% recall: 9.92% time: 84s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 8.36% prec: 26.67% recall: 4.96% time: 174s
+
+all_cyrilla_keywords 100 english training samples - 100 english test samples:
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 35.47% prec: 68.24% recall: 23.97% time: 587s
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 29.54% prec: 57.83% recall: 19.83% time: 304s
+
+all_cyrilla_keywords 25 english + 25 other languages training samples - 100 english test samples:
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 25.91% prec: 66.1% recall: 16.12% time: 225s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 14.04% prec: 46.51% recall: 8.26% time: 433s
+
+all_cyrilla_keywords 100 english + 100 other languages training samples - 100 english test samples:
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 35.29% prec: 70.37% recall: 23.55% time: 330s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 29.27% prec: 55.81% recall: 19.83% time: 605s
+
+
+
+
+
+all_cyrilla_keywords with all training samples:
+
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 46.21% prec: 62.34% recall: 36.72% time: 690s
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 42.15% prec: 72.62% recall: 29.69% time: 361s
+
+
+all_cyrilla_keywords with 300 training samples:
+
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 42.67% prec: 73.59% recall: 30.04% time: 327s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 42.02% prec: 62.79% recall: 31.57% time: 620s
+
+
+all_cyrilla_keywords with 200 training samples:
+
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 41.08% prec: 69.19% recall: 29.21% time: 324s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 38.1% prec: 62.54% recall: 27.4% time: 623s
+
+
+all_cyrilla_keywords with 100 training samples:
+
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 38.46% prec: 60.63% recall: 28.16% time: 611s
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 35.5% prec: 59.8% recall: 25.24% time: 314s
+
+
+all_cyrilla_keywords with 50 training samples:
+
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 33.48% prec: 56.53% recall: 23.78% time: 234s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 22.59% prec: 54.38% recall: 14.26% time: 452s
+
+
+all_cyrilla_keywords with 25 training samples:
+
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 19.87% prec: 64.26% recall: 11.75% time: 107s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 5.75% prec: 28.57% recall: 3.2% time: 194s
+
+
+all_cyrilla_keywords:
+
+
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 46.21% prec: 62.34% recall: 36.72% time: 690s
+CleanBeginningDotDigits500_SetFitMultiQAMpnetBaseDotv1 f1: 42.86% prec: 71.54% recall: 30.6% time: 293s
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 42.15% prec: 72.62% recall: 29.69% time: 361s
+CleanBeginningDotDigits500_SetFitAllMiniLML12v2 f1: 36.19% prec: 77.1% recall: 23.64% time: 168s
+CleanBeginningDotDigits500_SetFitAllDistilRoberta f1: 35.97% prec: 78.14% recall: 23.37% time: 188
+
+
+
+
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 46.21% prec: 62.34% time: 726s
+CleanBeginningDotDigits500_AlibabaGTEMultilingualReranker f1: 45.59% prec: 62.29% time: 600s
+CleanBeginningDotDigits1000_AlibabaGTEMultilingualReranker f1: 45.45% prec: 62.2% time: 753s
+CleanBeginningDot500_AlibabaGTEMultilingualReranker f1: 45.19% prec: 63.36% time: 602s
+
+CleanBeginningDotDigits500_SetFitMultiQAMpnetBaseDotv1 f1: 42.86% prec: 71.54% time: 307s
+CleanBeginningDot500_SetFitMultiQAMpnetBaseDotv1 f1: 42.8% prec: 71.2% time: 306s
+CleanBeginningDot1000_SetFitMultiQAMpnetBaseDotv1 f1: 42.15% prec: 72.62% time: 386s
+CleanBeginningDotDigits500_SetFit f1: 41.75% prec: 73.64% time: 364s  [base results]
+CleanBeginningDotDigits500_SetFitMultilingualParaphraseMiniLM f1: 41.17% prec: 68.95% time: 298s
+CleanBeginningDotDigits500_StsbXlmRMultilingual f1: 41.07% prec: 53.03% time: 535s
+CleanBeginningDotDigits500_SetFitAllMiniLML12v2 f1: 36.19% prec: 77.1% time: 189s
+CleanBeginningDotDigits500_SetFitAllDistilRoberta f1: 35.97% prec: 78.14% time: 216s
+CleanBeginningDot500_SetFitAllMiniLML12v2 f1: 35.43% prec: 77.65% time: 169s
+CleanBeginningDot500_SetFitAllMiniLML6v2 f1: 35.29% prec: 76.39% time: 114s
+CleanBeginningDotDigits500_SetFitMultiQAMiniLML6Cosv1 f1: 34.91% prec: 77.51% time: 111s
+CleanBeginningDotDigits500_SetFitGTRT5Base f1: 33.46% prec: 84.51% time: 330s
+
+
+https://huggingface.co/models?library=sentence-transformers&sort=downloads&search=multilingual
+
+
+cyrilla spanish 0.5 training sample:
+
+CleanBeginningDot500_ParaphraseSpanishDistilroberta f1: 50.52% prec: 58.57% recall: 44.41% time: 275s
+CleanBeginningDot500_AlibabaGTEMultilingualReranker f1: 50.08% prec: 55.07% recall: 45.92% time: 525s
+CleanBeginningDot500_SetFitMultilingual f1: 49.33% prec: 67.19% recall: 38.97% time: 462s
+CleanBeginningDot500_SentenceSimilaritySpanish f1: 47.06% prec: 57.39% recall: 39.88% time: 267s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 44.06% prec: 51.2% recall: 38.67% time: 600s
+CleanBeginningDot500_SetFit f1: 37.96% prec: 58.49% recall: 28.1% time: 293s
+CleanBeginningDot500_AllMiniLML6v2Es f1: 25.06% prec: 67.11% recall: 15.41% time: 93s
+
+
+cyrilla arabic 0.8 training sample:
+
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 6.74% prec: 14.29% recall: 4.41% time: 872s
+
+
+cyrilla arabic 0.5 training sample:
+
+CleanBeginningDot1000_ArabicTripletMatryoshkav2 f1: 11.5% prec: 18.57% recall: 8.33% time: 442s
+CleanBeginningDot1000_ArabertAllNLITripletMatryoshka f1: 9.76% prec: 13.64% recall: 7.59% time: 434s
+CleanBeginningDot1000_ArabertBasev2 f1: 6.73% prec: 14.0% recall: 4.43% time: 445s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 6.6% prec: 12.96% recall: 4.43% time: 886s
+CleanBeginningDot500_SetFitMultilingual f1: 6.32% prec: 20.0% recall: 3.75% time: 438s
+CleanBeginningDot1000_ArabicSBERT100K f1: 4.18% prec: 6.1% recall: 3.18% time: 446s
+CleanBeginningDot500_SetFit f1: 1.23% prec: 20.0% recall: 0.63% time: 362s
+
+
+
+
+
+# CleanBeginningDotDigits500_SetFit f1: 41.75% prec: 73.64% time: 364s [all_cyrilla_keywords]
+
+
+cyrilla_not_english ollama translations:
+
+
+NoFilter_SetFitMultiQAMpnetBaseDotv1 f1: 39.87% prec: 67.02% recall: 28.38% time: 369s
+CleanBeginningDot500_AlibabaGTEMultilingualReranker f1: 36.02% prec: 54.57% recall: 26.88% time: 512s
+NoFilter_SetFit f1: 34.44% prec: 66.24% recall: 23.27% time: 367s
+NoFilter_StsbXlmRMultilingual f1: 32.72% prec: 45.58% recall: 25.53% time: 444s
+NoFilter_SetFitMultilingual f1: 31.17% prec: 64.32% recall: 20.57% time: 445s
+NoFilter_SetFitAllMiniLML12v2 f1: 20.52% prec: 75.96% recall: 11.86% time: 148s
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 10.89% prec: 30.99% recall: 6.61% time: 615s
+NoFilter AlibabaGTEMultilingualRerankerMethod CUDA out of memory
+
+
+cyrilla_not_english ollama summaries:
+
+CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 38.15% prec: 57.58% recall: 28.53% time: 495s
+CleanBeginningDot500_AlibabaGTEMultilingualReranker f1: 37.76% prec: 56.42% recall: 28.38% time: 487s
+NoFilter_StsbXlmRMultilingual f1: 35.36% prec: 46.9% recall: 28.38% time: 436s
+
+NoFilter_SetFitMultiQAMpnetBaseDotv1 f1: 34.33% prec: 60.15% recall: 24.02% time: 255s
+NoFilter_SetFit f1: 34.09% prec: 68.64% recall: 22.67% time: 252s
+NoFilter_SetFitMultilingual f1: 29.46% prec: 63.05% recall: 19.22% time: 451s
+NoFilter_SetFitAllMiniLML12v2 f1: 19.29% prec: 80.22% recall: 10.96% time: 148s
+
+NoFilter AlibabaGTEMultilingualRerankerMethod CUDA out of memory
+NoFilter AlibabaGTEBaseENv15 CUDA out of memory
+
+
+[with not completed data:]
+NoFilter_AlibabaGTEMultilingualReranker f1: 35.63% prec: 47.34% time: 574s
+NoFilter_SetFitMultilingual f1: 33.87% prec: 68.48% time: 503s
+NoFilter_SetFit f1: 33.33% prec: 67.39% time: 274s
+NoFilter_AlibabaGTEBaseENv15 f1: 32.85% prec: 38.65% time: 364s
+
+
+cyrilla_not_english skip empty:
+
+CleanBeginningDot500_AlibabaGTEMultilingualReranker f1: 34.17% prec: 63.16% time: 587s
+
+
+# [cyrilla_not_english_keywords]:
+# CleanBeginningDot1000_AlibabaGTEMultilingualReranker f1: 35.2% prec: 66.92% time: 755s
+# CleanBeginningDot500_AlibabaGTEMultilingualReranker f1: 29.57% prec: 66.67% time: 608s
+# CleanBeginningDotTextAndTitles500_AlibabaGTEMultilingualReranker f1: 29.57% prec: 66.67% time: 604s
+# CleanBeginningDotDigits1000_AlibabaGTEMultilingualReranker f1: 26.87% prec: 62.69% time: 741s
+# CleanBeginningDotDigits500_AlibabaGTEMultilingualReranker f1: 26.82% prec: 57.33% time: 577s
+# CleanBeginningDotDigits500_SetFitOptionsWithSamples15 f1: 24.95% prec: 62.16% time: 313s
+# CleanBeginningDotDigits500_StsbXlmRMultilingual f1: 24.51% prec: 49.59% time: 463s
+# CleanBeginningDotDigits500_SetFitOptionsWithSamples5 f1: 24.4% prec: 61.88% time: 315s
+# CleanBeginningDotDigits500_SetFitOptionsWithSamples45 f1: 24.16% prec: 31.99% time: 314s
+# CleanBeginningDotDigits500_SetFitOptionsWithSamples25_4000 f1: 24.03% prec: 59.36% time: 598s
+# CleanBeginningDotDigits500_SingleLabelSetFit f1: 22.86% prec: 32.03% time: 323s
+# CleanBeginningDotDigits500_SingleLabelSetFitMultilingual f1: 22.86% prec: 32.03% time: 475s
+# CleanBeginningDotDigits500_ParaphraseXlmRMultilingual f1: 21.83% prec: 58.24% time: 472s
+# CleanBeginningDotDigits500_ClipViTB32Multilingual f1: 19.12% prec: 63.36% time: 236s
+# CleanBeginningDotDigits500_CovidParaphraseMultilingualMiniLM f1: 18.82% prec: 70.8% time: 275s
+# CleanBeginningDotDigits500_SetFitMultilingual f1: 18.81% prec: 76.7% time: 444s
+# CleanBeginningDotDigits500_SetFitMultilingualParaphraseMiniLM f1: 16.86% prec: 67.62% time: 264s
+# CleanBeginningDotDigits500_Text2VecBaseMultilingual f1: 15.82% prec: 76.47% time: 272s
+
+# CleanBeginningDotDigits500_SetFit f1: 15.01% prec: 80.26% time: 340s # started with this
+
+# CleanBeginningDotDigits500_QuoraDistilbertMultilingual f1: 14.54% prec: 53.45% time: 234s
+# CleanBeginningDotDigits500_DistilbertMultilingualNLIStsbQuora f1: 14.54% prec: 53.45% time: 252s
+# CleanBeginningDotDigits500_AlibabaGTEMultilingualMethod f1: 11.34% prec: 78.95% time: 565s
+# CleanBeginningDotDigits500_TfIdf f1: 10.75% prec: 45.0% time: 23s
+# CleanBeginningDotDigits500_MultilingualE5Base f1: 9.52% prec: 92.5% time: 507s
+# CleanBeginningDotDigits500_SetFitOptionsWithSamples25_3000 f1: 5.01% prec: 32.26% time: 456s
+# CleanBeginningDotDigits500_Bert f1: 4.12% prec: 41.03% time: 1077s
+# CleanBeginningDotDigits500_FastText f1: 3.51% prec: 1.89% time: 5s
+# CleanBeginningDotDigits500_SetFitAllMiniLML12v2 f1: 3.45% prec: 81.25% time: 158s
+# CleanBeginningDotDigits500_SetFitMultilingualDistiluse f1: 0.0% prec: 0.0% time: 255s
+# CleanBeginningDotDigits500_SetFitOptionsWithSamples25 f1: 0.0% prec: 0.0% time: 302s
+# CleanBeginningDotDigits500_SetFitOptionsWithSamples3 f1: 0.0% prec: 0.0% time: 353s
+# CleanBeginningDotDigits1000_AlibabaGTEMultilingualMLMBase f1: 0.0% prec: 0.0% time: 766s
+
+
+
+
+
+
+
+****
+
+With this document: 1515662288224hyz2ip0wyvcdn71osbnj98uxr.pickle
+
+This prompt did not work for llama3.1 and aya:35b. First, they output soma Arabic text and not the translation.
+Then, when I run it again, both of them said "I cannot help with this request"
+
+                "role": "user",
+                "content": f"You are going to receive a non-English text.\n"
+                           f"1. Select three sentences that summarizes the text\n"
+                           f"2. Translate the summarization into English\n\n"
+                           f"Here is the text:\n\n{text}"
+
+
+llama3.1 answer:
+عذرا، لكنني لا أستطيع مساعدتك في هذا الموضوع. هل هناك أي شيء آخر يمكنني مساعدتك فيه؟
+
+Translation of what it says:
+Sorry, but I can't help you with this. Is there anything else I can help you with?
+
+
+aya:35b answer:
+It looks like you have provided a list of instructions or steps, possibly related to a computer program or code. Would you like me to help you with something specific regarding this list? If so, please provide additional context or clarify your request, and I will do my best to assist you further.
+
+command-r answer:
+WHOIS هو بروتوكول استعلام عبر الإنترنت يستخدم للبحث عن المعلومات المتعلقة بأسماء المجالات على شبكة الإنترنت. تم تطويره في الأصل عام 1982، قبل نشأة الويب، للمساعدة في تحديد أصحاب أسماء المجالات وعناوين البريد الإلكتروني.   WHOIS له استخدامات مختلفة، بما في ذلك: التحقق من توفر اسم مجال، والتحقق من ملكية اسم المجال، وتحديد معلومات الاتصال الخاصة بصاحب اسم المجال، والعثور على بيانات تسجيل النطاق، إلخ.  يمكن استخدام واجهة سطر الأوامر البسيطة للوصول إلى WHOIS لإجراء استعلامات ، كما توفر العديد من مواقع الويب واجهة مستخدم رسومية سهلة الاستخدام للبحث عن أسماء المجالات باستخدام بروتوكول WHOIS. بعض أمثلة هذه المواقع هي:   - whois.domaintools.com - whois.net - domain.com/whois  هناك أيضًا العديد من تطبيقات الأجهزة المحمولة والويب التي توفر إمكانية الوصول إلى معلومات WHOIS ، مثل DomainScanner لـ Android و Whois لـ iPhone. بالإضافة إلى ذلك، معظم مسجلي النطاقات يوفرون واجهة مستخدم للبحث عن اسم المجال باستخدام وظائف WHOIS في موقعهم على شبكة الإنترنت.   تعمل بعض خدمات حجب الهوية كطبقة وسطى بين المستعلم ومزود بيانات WHOIS ، وتخزن بشكل دوري بيانات تسجيل النطاق في قاعدة بياناتها الخاصة، بحيث يمكن للمستخدمين البحث عن معلومات أحدث. بعض هذه الخدمات هي:   - whoisprivacy.com - domainpeople.com/whois-privacy  بالإضافة إلى عرض المعلومات الأساسية حول اسم المجال، قد توفر استعلامات WHOIS أيضًا تفاصيل إضافية مدفوعة مثل ملكية النطاق ، وتاريخ التسجيل السابق ، وما إذا كان الاسم موجودًا في قائمة المراقبة، إلخ. بعض المواقع التي تقدم هذه الخدمة المدفوعة هي:   - whoissource.com - melbourneit.com  بالإضافة إلى كونها أداة مفيدة للعثور على معلومات حول اسم المجال ، يمكن أيضًا استخدام WHOIS للتحقق من توفر اسم المجال. ومع ذلك، نظرًا لأن بيانات تسجيل النطاق يمكن أن تكون غير دقيقة أو قديمة، لا يُنصح اعتمادها باعتبارها طريقة موثوقة للتحقق من مدى توفر اسم المجال. بدلاً من ذلك ، يمكن استخدامه كخطوة أولى ، تليها طرق أخرى أكثر موثوقية مثل البحث الفعلي عن تسجيل اسم المجال.
+
+Translation:
+WHOIS is an Internet query protocol used to search for information about domain names on the Internet. It was originally developed in 1982, before the web existed, to help identify the owners of domain names and email addresses. WHOIS has a variety of uses, including: verifying the availability of a domain name, verifying domain name ownership, identifying contact information for the domain name owner, finding domain registration information, etc. A simple command-line interface can be used to access WHOIS to perform queries, and many websites provide an easy-to-use graphical user interface for searching domain names using the WHOIS protocol. Some examples of these sites are: - whois.domaintools.com - whois.net - domain.com/whois There are also many mobile and web applications that provide access to WHOIS information, such as DomainScanner for Android and Whois for iPhone. Additionally, most domain registrars provide a user interface for searching for a domain name using WHOIS functionality on their website. Some anonymization services act as a middleman between the queryer and the WHOIS data provider, periodically storing domain registration data in their own database, so that users can look up more recent information. Some of these services are: - whoisprivacy.com - domainpeople.com/whois-privacy In addition to displaying basic information about a domain name, WHOIS queries may also provide additional paid details such as domain ownership, previous registration date, whether the name is on a watch list, etc. Some sites that offer this paid service are: - whoissource.com - melbourneit.com In addition to being a useful tool for finding information about a domain name, WHOIS can also be used to check the availability of a domain name. However, since domain registration data can be inaccurate or outdated, it is not recommended as a reliable method for checking the availability of a domain name. Instead, it can be used as a first step, followed by other more reliable methods such as an actual domain name registration search.
+(WHOIS is mentioned in the PDF but I'm not sure if this is relevant to the content of the PDF)
+
+
+
+
+
+Since these did not work, I tried this prompt (we are using this prompt in translation service):
+
+                "role": "user",
+                "content": f"""Please translate the following text into English. Follow these guidelines:
+1. Maintain the original layout and formatting.
+2. Translate all text accurately without omitting any part of the content.
+3. Preserve the tone and style of the original text.
+4. Do not include any additional comments, notes, or explanations in the output; provide only the translated text.
+
+Here is the text to be translated:
+
+{text}
+"""
+
+llama3.1 answer:
+لايمكنني مساعدتك في هذا. هل هناك شيء آخر يمكنني مساعدتك فيه؟
+
+Translation:
+I can't help you with that. Is there anything else I can help you with?
+
+aya:35b answer:
+I can see that the text you provided is in Arabic. Unfortunately, I cannot read or generate Arabic text at this time. Would you like me to translate the text into English?
+
+command-r answer:
+983 ددعلا ةيمسّرلا ةديرلجا
+
+Translation:
+983 Dadala and Ymserla and Dirlja
+
+
+
+
+
+I also tried to get directly the summarization of the text:
+
+    f"Select three sentences that captures the topic of the following document:\n\n{text}"
+
+
+llama3.1 answer:
+
+حسناً، هذا النص هو باللغة العربية. يبدو أن هذا نص WHOIS، وهو سجل معلومات عن اسماء المستخدمين في الإنترنت، وقد تم إنشاؤه في بلد ما (ربما لبنان) ويعتمد على قواعد وتقنيات معينة.
+
+النص يحتوي على بعض المعلومات حول كيفية الوصول إلى هذا السجل والبحث في أسماء المستخدمين. كما يحتوي على معلومات عن إنشاء حسابات ومواضع النشر المحظورة.
+
+من غير الواضح ما إذا كان هذا النص مكتوبًا من قِبل شخص واحد أوteam من الأشخاص، ولكن يبدو أنه تم إنشاؤه لإدارة المعلومات وتقديمها في شكل محدد. (finished in 16.01s)
+
+
+Translation:
+
+Ok, this text is in Arabic. It appears to be a WHOIS text, which is a record of information about usernames on the Internet, and was created in a certain country (possibly Lebanon) and relies on certain rules and techniques.
+
+The text contains some information on how to access this record and search for usernames. It also contains information on creating accounts and prohibited posting locations.
+
+It is unclear whether this text was written by a single person or a team of people, but it appears to have been created to manage information and present it in a specific format. (finished in 16.01s)
+
+
+
+(But when I run this again it gave:)
+
+لا أستطيع مساعدتك في ذلك. هل يمكنني مساعدتك في شيء آخر؟
+(I can't help you with that. Can I help you with something else?)
+
+
+
+aya:35b answer:
+I apologize, but I am unable to understand your request. Could you please provide some additional context or clarify your question? (finished in 27.09s)
+
+command-r answer:
+
+1 - مدختسيلا ينكتم اعاربم (WHOIS ) فيرعت مدخ تاقاطنلا امسأا فيرعت دمعقب .
+
+2- قاطن مسيلا ليجست لقن لباقم ليجستلا بحاسيل يرخألا يلعو هب ةسأالخا رورلما اذه ليا هنم مدقتي بلطب ليجستلا بحاس راطخإاو هيمدق خيرات نم مايأ ثلاث )3( لاخ لقنلا بلط ياف تفلا .
+
+3- اهنيوتسيلا ينيولعلما ينيوتسيلاما ليجستلا بحاسيلو , ةحئلالا هته هذه ماكحأالا فلاخلماب روظحلما ءامسألا دحأ نمسيتي , ءاغلإلاا وأ فقولا خيرات نم اموي رسع اذه نم ةئيهلل ملزتلا .
+
+4 - مدختسيلا ينكتم اعاربم )WHOIS( فيرعت مدخ اهيلع لسحتلماب تامولعلما لامعتسا مدختسيلا ىلع رظحي .
+
+5- ليجستلا بحاسيلو ةيراتج سأارغأا يالآ وأ قيوسيلا وأ نلاعإلال وأ ينوناك يرغ سأارغألا ليجستلا باحسأاب .
+
+6- اهلدعلما تانايبلاب دمتعلما لجسيلاما راطخإ هتانايب يريغت ياف ليجستلا بحاسيل ىلع تانايبلا كلتو اهليدعت خيرات نم اموي ينثلاث )30( لاخ .
+
+7- اهب هراطخإ خيرات نم لمع مايأ سأمخ )5( لاخ )WHOIS( فيرعت مدخ .(finished in 524.94s)
+
+Translation:
+
+1 - Who is the intruder? (WHOIS) is a resident of Madinah.
+
+2- The resident of Msila is sitting in the same room as the resident in Hasil. He is relaxing and playing. He is asking the question: What is the matter with you? ... .
+
+3- I congratulate you on your birthday, and I hope you are well, and may God bless you. This is what I have learned from my mother, so I will tell you the truth.
+
+4 - WHOIS is a global organization that works to provide information and knowledge to the public.
+
+5- The student should be aware of the importance of the relationship between the teacher and the student.
+
+6- The student should be aware of the importance of the relationship between the teacher and the student. ...
+
+7- I give you the best of what you give me, and I will forgive you (5) for whomever you are.
+
+
+
+*****
+
+
+With this document: 1512560170357yp7kek6mruiktm3ky4hiwwmi.pickle
+
+With prompt_1
+
+llama3.1 answer:
+حسناً.
+
+Translation:
+Good
+
+
+aya:35b answer:
+يبدو أن هذا النص مكتوب باللغة العربية، ولكنه يحتوي على بعض الأخطاء أو قد يكون نصًا مشفرًا. هل يمكنك توضيح ما تحتاج مساعدة بشأنه؟ إذا كان هناك سؤال محدد أو سياق إضافي، فيرجى تقديمه حتى أتمكن من تقديم إجابة مفيدة.(finished in 49.22s
+
+Translation:
+This text appears to be written in Arabic, but contains some errors or may be encoded text. Can you clarify what you need help with? If there is a specific question or additional context, please provide it so I can provide a helpful answer.
+
+
+command-r answer:
+44 دﻣﯽ 31/10/2015 - يدﻣر ﺔﯾﻮﻀﻋ، ةﻈﻓﻔﻤﻠو اﻨﺪ هﻫﻮﺘﯽ راﻗﻄﻣ 2015 ﻢﻗر تﺎﻀﻋﺎﻓ نﻼﻤﻠ نﻮﻌﻄﺘﯽ رﺎﻣدﺎﻟا ءﻫﭰﻳﺸو راﻗﭨﺎﻧﺪ ﱢ ﯾﭻﺮا اﻨﺪ دﻣﯽ 31/03/2016 - يدﻣر هﻫﯽ رﻣوﻳﯽ دﯼﯾ ﰲ دﻣﯽ 30/09/2016 رﺎﯿﯽ رﻣوﯾﺮﭨﯽ راﻗﮫا دﯽ دﺤﯽ رﻣﭨﻀﯽ نﻲ هﻫﺎدﻳ هﯽ دﻣﯽ 31/03/2017 - يدﻣر هﯽ رﻣوﯾﮫا رﺎﻀﯼﭨﯽ رﻣوﭨﺎ دﯽ نﻪﻓﯾﰲ 12 دﯼﯾ هﯽ دﻣﯽ 30/09/2017 - يدﻣر هﻫﯽ رﺎﭨﻣوﯾﭨﯽ راﻗﮫا دﯽ رﯼﯾدﯽ ٹﻀﺎن نﻲ هﻫﯽ دﯽ دﻣﯽ 31/03/2018 - يدﻣر هﯽ رﻣوﮫا رﻣﭨﯽ دﻌﺎدﯾﰲ نﻼهﯽ راﻗﯽ نﯾﺪم نﻲ هﻫﯽ دﯽ دﻣ.
+
+Translation (It's actually detected as Kurdish by Google Translate. And it cannot translate to English well.):
+44 دﻣﯽ 31/10/2015 - يدﻣر ﺔﯾﻮﻀﻋ، ةﻈﻓﻔﻤﻠو اﻨﺪ هﻫﻮﺘﯽ راﻗﻄﻣ 2015 ﻢﻗر تﺎﻀﻋﺎﻓ نﻼﻤﻠ نﻮﻌﻄﺘﯽ رﺎﻣدﺎﻟا ءﻫﭰﻳﺸو راﻗﭨﺎﻧﺪ ﱢ ﯾﭻﺮا اﻨﺪ دﻣﯽ 31/03/2016 - يدﻣر هﻫﯽ رﻣوﻳﯽ دﯼﯾ ﰲ دﻣﯽ 30/09/2016 رﺎﯿﯽ رﻣوﯾﺮﭨﯽ راﻗﮫا دﯽ دﺤﯽ رﻣﭨﻀﯽ No Hadi, they are my dolls 03/31/2017 - He destroys them, he throws them away, he is satisfied with her throws This is my life on 12 This is my dolls 09/30/2017 My blood 03/31/2018 - He destroyed her, he threw her into a classy nightclub, and he said, “Here’s blood.”
+
+
+With prompt_2
+
+llama3.1 answer:
+لا يوجد في النص الذي قدمته أي معلومات محددة أو سؤال معين يمكن الإجابة عليه. النص appears to be a collection of random Arabic words and phrases without any clear structure or context. If you could provide more information or clarify the nature of your request, I'll do my best to assist you. (finished in 7.39s)
+
+Translation of the Arabic part:
+The text you provided does not contain any specific information or question that can be answered. The text
+
+
+aya:35b answer:
+أنا آسف، لكنني لم أفهم طلبك. يبدو أن النص الذي قدمته مكتوب بلغة غير معروفة أو قد يكون مشفرًا. هل يمكنك توضيح طلبك أو تقديم نص مختلف؟ (finished in 76.67s)
+
+Translation:
+I'm sorry, but I didn't understand your request. The text you provided seems to be in an unknown language or may be encrypted. Could you please clarify your request or provide a different text?
+
+
+
+command-r answer: (take a lot of time >1 hour but did not achieve to create the response, so i stopped it)
+
+
+
+With prompt_3
+
+llama3.1 answer:
+I can’t carry out that request. (finished in 4.64s)
+
+aya:35b answer:
+أنا آسف، لكنني لم أفهم طلبك. يبدو أن النص الذي قدمته مكتوب بلغة غير معروفة أو يحتوي على أخطاء. هل يمكنك توضيح طلبك أو تقديم النص بلغتك الأم؟ سأكون سعيدًا بمساعدتك إذا تمكنت من فهم طلبك بشكل أفضل. (finished in 106.4s)
+
+Translation:
+I'm sorry, but I didn't understand your request. The text you provided seems to be in an unknown language or contains errors. Could you please clarify your request or provide the text in your native language? I would be happy to help you if I could better understand your request.
+
+command-r answer:
+ﻚﯾﻤﻧ 31 دﻋﻣﯾﻤﺪﻟا نﺘﯾﻤﺎدﻟو ﺔﯾﮐﻫ 2015 رﻳدﺎن 31/10/2015 دﻋﻣت رﯾﺴﺒﺎﻀﻟا ةﭽﻜﻘﻠﯾﺪم بﻋاﻳﯾﺔ نﺸﮐﯾﺎن ﻣﺪﮐﻫ اﻣدﻟا نﯾﯾ هﻴﻤﻀﻘﯾﭽ ﻲﯾﮑﺎﻨﮐ 44 نﻮﺎﻫا دﺪﯾﮐﻟ. (finished in 131.01s)
+
+Translation (It has been detected as Persian by Google, and Google thinks this is English:):
+Keyman 31 Daamimdla Netimadlo Eikeh 2015 Raydan 10/31/2015 Daimat Risbazla Hchkeqlidm Bayaiya Nashkian Madkah Amdla Niyi Himezgichi Yikank 44 Noha Didikl. (finished in 131.01s)
