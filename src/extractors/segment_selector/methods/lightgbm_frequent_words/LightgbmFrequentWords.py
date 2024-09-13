@@ -3,7 +3,6 @@ from collections import Counter
 from pathlib import Path
 from time import time
 
-
 import nltk
 import numpy as np
 
@@ -18,6 +17,7 @@ from extractors.segment_selector.methods.lightgbm_frequent_words.SegmentLightgbm
 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+
 
 nltk.download("stopwords")
 
@@ -57,11 +57,11 @@ class LightgbmFrequentWords:
         parameters["metric"] = "binary_logloss"
         parameters["verbose"] = -1
         parameters["boosting_type"] = "gbdt"
+        parameters["min_data"] = 0
 
         train_data = lgb.Dataset(x_train, y_train)
         num_round = 3000
         light_gbm_model = lgb.train(parameters, train_data, num_round)
-
         return light_gbm_model
 
     def run_light_gbm(self):
@@ -118,6 +118,12 @@ class LightgbmFrequentWords:
         return frequent_words_path
 
     def set_most_frequent_words_to_segments(self, model_path: str):
-        most_frequent_words = json.loads(Path(self.get_frequent_words_path(model_path)).read_text())
+        path_frequent_words = Path(self.get_frequent_words_path(model_path))
+
+        if not path_frequent_words.exists():
+            most_frequent_words = []
+        else:
+            most_frequent_words = json.loads(path_frequent_words.read_text())
+
         for segment in self.segments:
             segment.set_most_frequent_words(most_frequent_words)

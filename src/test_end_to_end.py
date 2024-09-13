@@ -120,15 +120,15 @@ class TestEndToEnd(TestCase):
         self.assertEqual(tenant, suggestion.tenant)
         self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
-        self.assertEqual("United Nations", suggestion.text)
-        self.assertEqual("United Nations", suggestion.segment_text)
+        self.assertEqual("Original: English", suggestion.text)
+        self.assertTrue("Original: English" in suggestion.segment_text)
         self.assertEqual(1, suggestion.page_number)
 
-        self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertEqual(round(123 / 0.75, 0), suggestion.segments_boxes[0].left)
-        self.assertEqual(round(45 / 0.75, 0), suggestion.segments_boxes[0].top)
-        self.assertEqual(round(87 / 0.75, 0), suggestion.segments_boxes[0].width)
-        self.assertEqual(round(16 / 0.75, 0), suggestion.segments_boxes[0].height)
+        self.assertEqual(len(suggestion.segments_boxes), 2)
+        self.assertEqual(529, suggestion.segments_boxes[0].left)
+        self.assertEqual(120, suggestion.segments_boxes[0].top)
+        self.assertEqual(105, suggestion.segments_boxes[0].width)
+        self.assertEqual(15, suggestion.segments_boxes[0].height)
         self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
     def test_create_model_without_data(self):

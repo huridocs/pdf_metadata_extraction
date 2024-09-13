@@ -42,7 +42,7 @@ Containers with `make start`
 
 ![Alt logo](readme_pictures/docker_compose_up.png?raw=true "docker-compose up")
 
-Containers with `make start_for_testing`
+Containers with `make start-test`
 
 ![Alt logo](readme_pictures/docker_compose_redis.png?raw=true "docker-compose -f docker-compose-service-with-redis.yml up")
 

@@ -1,9 +1,9 @@
 from data.ExtractionData import ExtractionData
 from data.PredictionSample import PredictionSample
-from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
+from extractors.ToTextExtractorMethod import ToTextExtractorMethod
 
 
-class InputWithoutSpaces(TextToTextMethod):
+class InputWithoutSpaces(ToTextExtractorMethod):
 
     def train(self, extraction_data: ExtractionData):
         self.save_json("best_method.json", True)

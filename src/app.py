@@ -16,6 +16,7 @@ from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
 from XmlFile import XmlFile
+from send_logs import send_logs
 
 
 @asynccontextmanager
@@ -129,7 +130,6 @@ async def prediction_data_post(prediction_data: PredictionData):
 @app.get("/get_suggestions/{tenant}/{extraction_id}")
 async def get_suggestions(tenant: str, extraction_id: str):
     try:
-        config_logger.info(f"get_suggestions {tenant} {extraction_id}")
         pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
         suggestions_filter = {"tenant": tenant, "id": extraction_id}
         suggestions_list: list[str] = list()
@@ -138,7 +138,8 @@ async def get_suggestions(tenant: str, extraction_id: str):
             suggestions_list.append(Suggestion(**document).scale_up().to_output())
 
         pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
-        config_logger.info(f"{len(suggestions_list)} suggestions created for {tenant} {extraction_id}")
+        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
+        send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
 
         return json.dumps(suggestions_list)
     except Exception:
