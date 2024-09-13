@@ -88,11 +88,7 @@ class SingleLabelSetFitEnglishMethod(MultiLabelMethod):
         train_dataset = self.get_dataset_from_data(extraction_data)
         batch_size = get_batch_size(len(extraction_data.samples))
 
-        model = SetFitModel.from_pretrained(
-            self.model_name,
-            labels=[x.label for x in self.options],
-            trust_remote_code=True
-        )
+        model = SetFitModel.from_pretrained(self.model_name, labels=[x.label for x in self.options], trust_remote_code=True)
 
         args = TrainingArguments(
             output_dir=self.get_model_path(),

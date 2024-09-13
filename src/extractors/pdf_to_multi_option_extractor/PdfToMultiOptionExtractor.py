@@ -21,7 +21,13 @@ from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBegin
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDotDigits1000 import CleanEndDotDigits1000
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.FastTextMethod import FastTextMethod
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitEnglishMethod import SetFitEnglishMethod
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitEnglishMethod import SingleLabelSetFitEnglishMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMultilingualMethod import SetFitMultilingualMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitEnglishMethod import (
+    SingleLabelSetFitEnglishMethod,
+)
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMultilingualMethod import (
+    SingleLabelSetFitMultilingualMethod,
+)
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzy95 import (
     FastSegmentSelectorFuzzy95,
 )
@@ -75,9 +81,9 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         PdfMultiOptionMethod(CleanBeginningDotDigits500, FastTextMethod),
         PdfMultiOptionMethod(CleanEndDotDigits1000, FastTextMethod),
         PdfMultiOptionMethod(CleanBeginningDot1000, SetFitEnglishMethod),
-        PdfMultiOptionMethod(CleanBeginningDot1000, SetFitEnglishMethod),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SetFitMultilingualMethod),
         PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelSetFitEnglishMethod),
-        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelSetFitEnglishMethod),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelSetFitMultilingualMethod),
     ]
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):

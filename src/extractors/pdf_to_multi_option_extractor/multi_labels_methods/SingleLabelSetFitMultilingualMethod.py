@@ -1,6 +1,8 @@
 from data.ExtractionData import ExtractionData
 from extractors.ExtractorBase import ExtractorBase
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitEnglishMethod import SingleLabelSetFitEnglishMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitEnglishMethod import (
+    SingleLabelSetFitEnglishMethod,
+)
 
 
 class SingleLabelSetFitMultilingualMethod(SingleLabelSetFitEnglishMethod):

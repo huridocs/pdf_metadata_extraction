@@ -6,12 +6,13 @@ from data.Option import Option
 from data.PdfData import PdfData
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitEnglishMethod import SetFitEnglishMethod
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMultilingualMethod import \
-    SetFitMultilingualMethod
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitEnglishMethod import \
-    SingleLabelSetFitEnglishMethod
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMultilingualMethod import \
-    SingleLabelSetFitMultilingualMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMultilingualMethod import SetFitMultilingualMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitEnglishMethod import (
+    SingleLabelSetFitEnglishMethod,
+)
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMultilingualMethod import (
+    SingleLabelSetFitMultilingualMethod,
+)
 
 
 class TestSetFitEnglishMethod(TestCase):
@@ -20,9 +21,16 @@ class TestSetFitEnglishMethod(TestCase):
 
     def setUp(self):
         self.extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
-        self.options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3"),
-                   Option(id="4", label="4"), Option(id="5", label="5"), Option(id="6", label="6"),
-                   Option(id="7", label="7"), Option(id="8", label="8")]
+        self.options = [
+            Option(id="1", label="1"),
+            Option(id="2", label="2"),
+            Option(id="3", label="3"),
+            Option(id="4", label="4"),
+            Option(id="5", label="5"),
+            Option(id="6", label="6"),
+            Option(id="7", label="7"),
+            Option(id="8", label="8"),
+        ]
 
         pdf_data_1 = PdfData.from_texts(["point 1"])
         pdf_data_2 = PdfData.from_texts(["point 2 point 3"])
@@ -45,23 +53,31 @@ class TestSetFitEnglishMethod(TestCase):
         ]
 
         self.extraction_data_english_multi = ExtractionData(
-            multi_value=True, options=self.options, samples=[samples[2], samples[4]],
-            extraction_identifier=self.extraction_identifier
+            multi_value=True,
+            options=self.options,
+            samples=[samples[2], samples[4]],
+            extraction_identifier=self.extraction_identifier,
         )
 
         self.extraction_data_english_single = ExtractionData(
-            multi_value=False, options=self.options, samples=[samples[0], samples[5]],
-            extraction_identifier=self.extraction_identifier
+            multi_value=False,
+            options=self.options,
+            samples=[samples[0], samples[5]],
+            extraction_identifier=self.extraction_identifier,
         )
 
         self.extraction_data_non_english_multi = ExtractionData(
-            multi_value=True, options=self.options, samples=[samples[1], samples[6]],
-            extraction_identifier=self.extraction_identifier
+            multi_value=True,
+            options=self.options,
+            samples=[samples[1], samples[6]],
+            extraction_identifier=self.extraction_identifier,
         )
 
         self.extraction_data_non_english_single = ExtractionData(
-            multi_value=False, options=self.options, samples=[samples[3], samples[7]],
-            extraction_identifier=self.extraction_identifier
+            multi_value=False,
+            options=self.options,
+            samples=[samples[3], samples[7]],
+            extraction_identifier=self.extraction_identifier,
         )
 
     def test_can_be_used_english_single_label(self):
@@ -79,8 +95,9 @@ class TestSetFitEnglishMethod(TestCase):
         self.assertFalse(setfit_english_method.can_be_used(self.extraction_data_non_english_single))
 
     def test_can_be_used_non_english_single_label(self):
-        setfit_single_multilingual_method = SingleLabelSetFitMultilingualMethod(self.extraction_identifier,
-                                                                                self.options, False)
+        setfit_single_multilingual_method = SingleLabelSetFitMultilingualMethod(
+            self.extraction_identifier, self.options, False
+        )
         self.assertFalse(setfit_single_multilingual_method.can_be_used(self.extraction_data_english_multi))
         self.assertFalse(setfit_single_multilingual_method.can_be_used(self.extraction_data_english_single))
         self.assertFalse(setfit_single_multilingual_method.can_be_used(self.extraction_data_non_english_multi))

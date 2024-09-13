@@ -1,4 +1,7 @@
 from unittest import TestCase
+
+import torch
+
 from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
@@ -13,9 +16,16 @@ class TestSetFitEnglishMethod(TestCase):
     extraction_id = "extraction_id"
 
     def test_train_and_predict(self):
+        if not torch.cuda.is_available():
+            return
         extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
-        options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3"),
-                   Option(id="4", label="4"), Option(id="5", label="5")]
+        options = [
+            Option(id="1", label="1"),
+            Option(id="2", label="2"),
+            Option(id="3", label="3"),
+            Option(id="4", label="4"),
+            Option(id="5", label="5"),
+        ]
 
         pdf_data_1 = PdfData.from_texts(["point 1"])
         pdf_data_2 = PdfData.from_texts(["point 2 point 3"])
@@ -30,7 +40,6 @@ class TestSetFitEnglishMethod(TestCase):
             TrainingSample(pdf_data_4, LabeledData(values=[options[3], options[0]])),
             TrainingSample(pdf_data_5, LabeledData(values=[options[4]])),
         ]
-
 
         extraction_data = ExtractionData(
             multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
