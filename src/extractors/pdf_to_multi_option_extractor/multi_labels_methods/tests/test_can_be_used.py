@@ -1,4 +1,7 @@
 from unittest import TestCase
+
+import torch
+
 from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
@@ -81,6 +84,8 @@ class TestSetFitEnglishMethod(TestCase):
         )
 
     def test_can_be_used_english_single_label(self):
+        if not torch.cuda.is_available():
+            return
         setfit_single_english_method = SingleLabelSetFitEnglishMethod(self.extraction_identifier, self.options, False)
         self.assertFalse(setfit_single_english_method.can_be_used(self.extraction_data_english_multi))
         self.assertTrue(setfit_single_english_method.can_be_used(self.extraction_data_english_single))
@@ -88,6 +93,8 @@ class TestSetFitEnglishMethod(TestCase):
         self.assertFalse(setfit_single_english_method.can_be_used(self.extraction_data_non_english_single))
 
     def test_can_be_used_english_multi_label(self):
+        if not torch.cuda.is_available():
+            return
         setfit_english_method = SetFitEnglishMethod(self.extraction_identifier, self.options, True)
         self.assertTrue(setfit_english_method.can_be_used(self.extraction_data_english_multi))
         self.assertFalse(setfit_english_method.can_be_used(self.extraction_data_english_single))
@@ -95,6 +102,8 @@ class TestSetFitEnglishMethod(TestCase):
         self.assertFalse(setfit_english_method.can_be_used(self.extraction_data_non_english_single))
 
     def test_can_be_used_non_english_single_label(self):
+        if not torch.cuda.is_available():
+            return
         setfit_single_multilingual_method = SingleLabelSetFitMultilingualMethod(
             self.extraction_identifier, self.options, False
         )
@@ -104,6 +113,8 @@ class TestSetFitEnglishMethod(TestCase):
         self.assertTrue(setfit_single_multilingual_method.can_be_used(self.extraction_data_non_english_single))
 
     def test_can_be_used_non_english_multi_label(self):
+        if not torch.cuda.is_available():
+            return
         setfit_multilingual_method = SetFitMultilingualMethod(self.extraction_identifier, self.options, True)
         self.assertFalse(setfit_multilingual_method.can_be_used(self.extraction_data_english_multi))
         self.assertFalse(setfit_multilingual_method.can_be_used(self.extraction_data_english_single))
