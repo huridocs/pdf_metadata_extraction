@@ -5,6 +5,7 @@ from os import makedirs
 from os.path import join, exists
 from pathlib import Path
 
+
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PdfData import PdfData
 from extractors.segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
@@ -46,7 +47,6 @@ class SegmentSelector:
             return False, "No data to create model"
 
         self.model.save_model(model_path, num_iteration=self.model.best_iteration)
-
         return True, ""
 
     @staticmethod

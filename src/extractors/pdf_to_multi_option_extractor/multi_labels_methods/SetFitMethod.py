@@ -73,6 +73,7 @@ class SetFitMethod(MultiLabelMethod):
             self.model_name,
             labels=[x.label for x in self.options],
             multi_target_strategy="one-vs-rest",
+            trust_remote_code=True,
         )
 
         args = TrainingArguments(

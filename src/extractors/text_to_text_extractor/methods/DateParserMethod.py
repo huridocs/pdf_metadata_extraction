@@ -2,11 +2,11 @@ import re
 
 from data.ExtractionData import ExtractionData
 from data.PredictionSample import PredictionSample
-from extractors.text_to_text_extractor.TextToTextMethod import TextToTextMethod
+from extractors.ToTextExtractorMethod import ToTextExtractorMethod
 from dateparser.search import search_dates
 
 
-class DateParserMethod(TextToTextMethod):
+class DateParserMethod(ToTextExtractorMethod):
 
     @staticmethod
     def get_best_date(dates):
