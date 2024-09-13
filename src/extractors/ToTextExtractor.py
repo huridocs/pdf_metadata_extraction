@@ -36,6 +36,10 @@ class ToTextExtractor(ExtractorBase):
 
     def get_suggestions(self, predictions_samples: list[PredictionSample]) -> list[Suggestion]:
         method_instance = self.get_predictions_method()
+        send_logs(
+            self.extraction_identifier,
+            f"And also using {method_instance.get_name()} to calculate {len(predictions_samples)} suggestions",
+        )
         prediction = method_instance.predict(predictions_samples)
         suggestions = list()
         for prediction, prediction_sample in zip(prediction, predictions_samples):
@@ -97,4 +101,3 @@ class ToTextExtractor(ExtractorBase):
                 best_method_instance = method_instance
 
         return best_method_instance
-

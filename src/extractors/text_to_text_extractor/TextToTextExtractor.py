@@ -37,4 +37,3 @@ class TextToTextExtractor(ToTextExtractor):
                 return True
 
         return False
-

@@ -160,8 +160,6 @@ class Extractor:
         if not suggestions:
             return False, "No data to calculate suggestions"
 
-        send_logs(self.extraction_identifier, f"Calculated {len(suggestions)} suggestions")
-
         self.pdf_metadata_extraction_db.suggestions.insert_many([x.to_dict() for x in suggestions])
         xml_folder_path = XmlFile.get_xml_folder_path(extraction_identifier=self.extraction_identifier, to_train=False)
         for suggestion in suggestions:
@@ -176,8 +174,6 @@ class Extractor:
         return True, ""
 
     def get_suggestions(self) -> list[Suggestion]:
-        send_logs(self.extraction_identifier, f"Gathering data to calculate suggestions")
-
         prediction_samples = self.get_prediction_samples(self.get_prediction_data_from_db())
 
         if not self.extraction_identifier.get_extractor_used_path().exists():
@@ -190,8 +186,8 @@ class Extractor:
             if extractor_instance.get_name() != extractor_name:
                 continue
 
-            send_logs(self.extraction_identifier, f"Calculating suggestions with {extractor_instance.get_name()}")
-            send_logs(self.extraction_identifier, f"Calculating {len(prediction_samples)} suggestions")
+            message = f"Using {extractor_instance.get_name()} to calculate {len(prediction_samples)} suggestions"
+            send_logs(self.extraction_identifier, message)
             return extractor_instance.get_suggestions(prediction_samples)
 
         send_logs(self.extraction_identifier, f"No extractor available", Severity.error)

@@ -19,9 +19,11 @@ from config import (
     RESULTS_QUEUE_NAME,
     logs_queue,
 )
+from data.ExtractionIdentifier import ExtractionIdentifier
 from data.ExtractionTask import ExtractionTask
 from data.ResultsMessage import ResultsMessage
 from Extractor import Extractor
+from send_logs import send_logs
 
 
 class QueueProcessor:
@@ -48,7 +50,7 @@ class QueueProcessor:
             config_logger.error(f"Not a valid Redis message: {message}")
             return True
 
-        self.log_process_information(task)
+        self.log_process_information()
 
         task_calculated, error_message = Extractor.calculate_task(task)
         if error_message:
@@ -78,7 +80,8 @@ class QueueProcessor:
                 data_url=data_url,
             )
 
-        config_logger.info(model_results_message.to_string())
+        extraction_identifier = ExtractionIdentifier(run_name=task.tenant, extraction_name=task.params.id)
+        send_logs(extraction_identifier, f"Result message: {model_results_message.to_string()}")
         self.results_queue.sendMessage().message(model_results_message.model_dump()).execute()
         return True
 
@@ -94,9 +97,8 @@ class QueueProcessor:
 
         return str(extraction_dict)
 
-    def log_process_information(self, extraction_task: ExtractionTask):
+    def log_process_information(self):
         try:
-            config_logger.info(f"Processing Redis message: {self.task_to_string(extraction_task)}")
             config_logger.info(
                 f"Messages pending in queue: {self.task_queue.getQueueAttributes().exec_command()['msgs'] - 1}"
             )

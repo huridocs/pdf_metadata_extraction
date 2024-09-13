@@ -10,6 +10,7 @@ from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PredictionSample import PredictionSample
 from extractors.ExtractorBase import ExtractorBase
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
 
 
 class ToTextExtractorMethod:
@@ -60,8 +61,6 @@ class ToTextExtractorMethod:
         samples = performance_test_set.samples
         predictions = self.predict([PredictionSample(pdf_data=x.pdf_data, tags_texts=x.tags_texts) for x in samples])
 
-        self.log_performance_sample(extraction_data=performance_test_set, predictions=predictions)
-
         correct = [
             sample
             for sample, prediction in zip(performance_test_set.samples, predictions)
@@ -72,10 +71,16 @@ class ToTextExtractorMethod:
 
     def log_performance_sample(self, extraction_data: ExtractionData, predictions: list[str]):
         config_logger.info(f"Performance predictions for {self.get_name()}")
+        filtered_extraction_data = CleanBeginningDot250().filter(extraction_data)
+        message = ""
         for i, (training_sample, prediction) in enumerate(zip(extraction_data.samples, predictions)):
-            if i >= 3:
+            if i >= 5:
                 break
+            segments = filtered_extraction_data.samples[i].pdf_data.pdf_data_segments
+            document_text = " ".join([x.text_content for x in segments])
+            message += f"\nprediction            : {prediction[:70].strip()}\n"
+            message += f"truth                 : {training_sample.labeled_data.label_text[:70].strip()}\n"
+            message += f"segment selector text : {' '.join(training_sample.tags_texts)[:70].strip()}\n"
+            message += f"document text         : {document_text[:70].strip()}\n"
 
-            config_logger.info("prediction: " + prediction)
-            config_logger.info("truth     : " + training_sample.labeled_data.label_text)
-            config_logger.info("text      : " + " ".join(training_sample.tags_texts))
+        config_logger.info(message)
