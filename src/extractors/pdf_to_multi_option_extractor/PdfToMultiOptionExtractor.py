@@ -14,13 +14,20 @@ from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMul
 
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
+from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot1000 import CleanBeginningDot1000
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDotDigits500 import (
     CleanBeginningDotDigits500,
 )
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanEndDotDigits1000 import CleanEndDotDigits1000
 from extractors.pdf_to_multi_option_extractor.multi_labels_methods.FastTextMethod import FastTextMethod
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMethod import SetFitMethod
-from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMethod import SingleLabelSetFitMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitEnglishMethod import SetFitEnglishMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SetFitMultilingualMethod import SetFitMultilingualMethod
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitEnglishMethod import (
+    SingleLabelSetFitEnglishMethod,
+)
+from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSetFitMultilingualMethod import (
+    SingleLabelSetFitMultilingualMethod,
+)
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzy95 import (
     FastSegmentSelectorFuzzy95,
 )
@@ -73,10 +80,10 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         FuzzySegmentSelector(),
         PdfMultiOptionMethod(CleanBeginningDotDigits500, FastTextMethod),
         PdfMultiOptionMethod(CleanEndDotDigits1000, FastTextMethod),
-        PdfMultiOptionMethod(CleanBeginningDotDigits500, SetFitMethod),
-        PdfMultiOptionMethod(CleanEndDotDigits1000, SetFitMethod),
-        PdfMultiOptionMethod(CleanBeginningDotDigits500, SingleLabelSetFitMethod),
-        PdfMultiOptionMethod(CleanEndDotDigits1000, SingleLabelSetFitMethod),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SetFitEnglishMethod),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SetFitMultilingualMethod),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelSetFitEnglishMethod),
+        PdfMultiOptionMethod(CleanBeginningDot1000, SingleLabelSetFitMultilingualMethod),
     ]
 
     def __init__(self, extraction_identifier: ExtractionIdentifier):

@@ -3,7 +3,7 @@ import shutil
 from os.path import join, exists
 
 import pandas as pd
-import torch.cuda
+import torch
 from datasets import load_dataset
 
 from data.ExtractionData import ExtractionData
@@ -18,22 +18,8 @@ from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabel
 from send_logs import send_logs
 
 
-class SingleLabelSetFitMethod(MultiLabelMethod):
-
-    model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
-
-    def can_be_used(self, extraction_data: ExtractionData) -> bool:
-        if not torch.cuda.is_available():
-            send_logs(self.extraction_identifier, f"GPU not available for {self.get_name()}")
-            return False
-
-        if extraction_data.multi_value:
-            return False
-
-        if ExtractorBase.is_multilingual(extraction_data):
-            return False
-
-        return True
+class SetFitEnglishMethod(MultiLabelMethod):
+    model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
 
     def get_data_path(self):
         model_folder_path = join(self.base_path, self.get_name())
@@ -63,12 +49,7 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
     def get_dataset_from_data(self, extraction_data: ExtractionData):
         data = list()
         texts = [sample.pdf_data.get_text() for sample in extraction_data.samples]
-        labels = list()
-
-        for sample in extraction_data.samples:
-            labels.append("no_label")
-            if sample.labeled_data.values:
-                labels[-1] = self.options[self.options.index(sample.labeled_data.values[0])].label
+        labels = self.get_one_hot_encoding(extraction_data)
 
         for text, label in zip(texts, labels):
             data.append([text, label])
@@ -79,7 +60,7 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
         df.to_csv(self.get_data_path())
         dataset_csv = load_dataset("csv", data_files=self.get_data_path())
         dataset = dataset_csv["train"]
-        # dataset = dataset.map(self.eval_encodings)
+        dataset = dataset.map(self.eval_encodings)
 
         return dataset
 
@@ -91,6 +72,8 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
         model = SetFitModel.from_pretrained(
             self.model_name,
             labels=[x.label for x in self.options],
+            multi_target_strategy="one-vs-rest",
+            trust_remote_code=True,
         )
 
         args = TrainingArguments(
@@ -109,7 +92,7 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
             args=args,
             train_dataset=train_dataset,
             eval_dataset=train_dataset,
-            metric="accuracy",
+            metric="f1",
             callbacks=[EarlyStoppingAfterInitialTraining(early_stopping_patience=3), AvoidAllEvaluation()],
         )
 
@@ -118,8 +101,21 @@ class SingleLabelSetFitMethod(MultiLabelMethod):
         trainer.model.save_pretrained(self.get_model_path())
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
-        model = SetFitModel.from_pretrained(self.get_model_path())
+        model = SetFitModel.from_pretrained(self.get_model_path(), trust_remote_code=True)
         predict_texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
         predictions = model.predict(predict_texts)
 
-        return [[option for option in self.options if option.label == prediction] for prediction in predictions]
+        return self.predictions_to_options_list(predictions.tolist())
+
+    def can_be_used(self, extraction_data: ExtractionData) -> bool:
+        if not torch.cuda.is_available():
+            send_logs(self.extraction_identifier, f"GPU not available for {self.get_name()}")
+            return False
+
+        if not extraction_data.multi_value:
+            return False
+
+        if ExtractorBase.is_multilingual(extraction_data):
+            return False
+
+        return True
