@@ -33,6 +33,9 @@ class ToTextExtractorMethod:
     def load_json(self, file_name: str):
         path = join(self.extraction_identifier.get_path(), self.get_name(), file_name)
 
+        if not exists(path):
+            return ""
+
         with open(path, "r") as file:
             return json.load(file)
 

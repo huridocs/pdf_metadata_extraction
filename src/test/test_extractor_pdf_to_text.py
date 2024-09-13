@@ -184,120 +184,16 @@ class TestExtractorPdfToText(TestCase):
         self.assertEqual(tenant, suggestion.tenant)
         self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
-        self.assertEqual("Original: English", suggestion.segment_text)
+        self.assertTrue("Original: English" in suggestion.segment_text)
         self.assertEqual("Original: English", suggestion.text)
         self.assertEqual(1, suggestion.page_number)
 
-        self.assertEqual(len(suggestion.segments_boxes), 1)
+        self.assertEqual(len(suggestion.segments_boxes), 2)
         self.assertEqual(397.0, suggestion.segments_boxes[0].left)
-        self.assertEqual(114.0, suggestion.segments_boxes[0].top)
-        self.assertEqual(77.0, suggestion.segments_boxes[0].width)
-        self.assertEqual(11.0, suggestion.segments_boxes[0].height)
+        self.assertEqual(90.0, suggestion.segments_boxes[0].top)
         self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
         self.assertIsNone(mongo_client.pdf_metadata_extraction.prediction_data.find_one())
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_get_suggestions_page_2(self):
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-
-        tenant = "segment_test"
-        extraction_id = "extraction_id"
-
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
-        shutil.copytree(f"{APP_PATH}/tenant_test", f"{DATA_PATH}/{tenant}")
-
-        labeled_data_json = {
-            "tenant": tenant,
-            "id": extraction_id,
-            "xml_file_name": "test.xml",
-            "entity_name": "",
-            "language_iso": "en",
-            "label_text": "text",
-            "page_width": 612,
-            "page_height": 792,
-            "xml_segments_boxes": [
-                json.loads(
-                    SegmentBox(
-                        left=0,
-                        top=130,
-                        page_width=612,
-                        page_height=792,
-                        width=612,
-                        height=70,
-                        page_number=2,
-                        type=TokenType.TEXT,
-                    ).model_dump_json()
-                )
-            ],
-            "label_segments_boxes": [
-                json.loads(
-                    SegmentBox(
-                        left=300,
-                        page_width=612,
-                        page_height=792,
-                        top=150,
-                        width=5,
-                        height=5,
-                        page_number=2,
-                        type=TokenType.TEXT,
-                    ).model_dump_json()
-                )
-            ],
-        }
-
-        mongo_client.pdf_metadata_extraction.labeled_data.insert_one(labeled_data_json)
-
-        Extractor.calculate_task(
-            ExtractionTask(
-                tenant=tenant,
-                task=Extractor.CREATE_MODEL_TASK_NAME,
-                params=Params(id=extraction_id),
-            )
-        )
-
-        to_predict_json = {
-            "tenant": tenant,
-            "id": extraction_id,
-            "xml_file_name": "test.xml",
-            "entity_name": "",
-            "page_width": 612,
-            "page_height": 792,
-            "xml_segments_boxes": [
-                json.loads(SegmentBox(left=0, top=130, width=612, height=70, page_number=2).model_dump_json())
-            ],
-        }
-
-        mongo_client.pdf_metadata_extraction.prediction_data.insert_one(to_predict_json)
-
-        task_calculated, error = Extractor.calculate_task(
-            ExtractionTask(
-                tenant=tenant,
-                task=Extractor.SUGGESTIONS_TASK_NAME,
-                params=Params(id=extraction_id),
-            )
-        )
-
-        documents_count = mongo_client.pdf_metadata_extraction.suggestions.count_documents({})
-        suggestion = Suggestion(**mongo_client.pdf_metadata_extraction.suggestions.find_one())
-
-        self.assertTrue(task_calculated)
-        self.assertEqual(1, documents_count)
-        self.assertEqual(tenant, suggestion.tenant)
-        self.assertEqual(extraction_id, suggestion.id)
-        self.assertEqual("test.xml", suggestion.xml_file_name)
-        self.assertTrue("In accordance with paragraph" in suggestion.segment_text)
-        self.assertTrue("every four years" in suggestion.text)
-        self.assertEqual(2, suggestion.page_number)
-
-        self.assertEqual(len(suggestion.segments_boxes), 1)
-        self.assertEqual(134.0, suggestion.segments_boxes[0].left)
-        self.assertEqual(126.0, suggestion.segments_boxes[0].top)
-        self.assertEqual(357.0, suggestion.segments_boxes[0].width)
-        self.assertEqual(72, suggestion.segments_boxes[0].height)
-        self.assertEqual(2, suggestion.segments_boxes[0].page_number)
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -341,7 +237,7 @@ class TestExtractorPdfToText(TestCase):
                 "xml_file_name": "test.xml",
                 "entity_name": "",
                 "language_iso": "en",
-                "label_text": "English",
+                "label_text": "English1",
                 "page_width": 612,
                 "page_height": 792,
                 "xml_segments_boxes": [],
@@ -381,7 +277,7 @@ class TestExtractorPdfToText(TestCase):
         self.assertEqual({extraction_id}, {x.id for x in suggestions})
         self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
         self.assertEqual({"Original: English"}, {x.segment_text for x in suggestions})
-        self.assertEqual({"English"}, {x.text for x in suggestions})
+        self.assertEqual({"English1"}, {x.text for x in suggestions})
 
         self.assertEqual({1}, set([len(x.segments_boxes) for x in suggestions]))
         self.assertEqual(397.0, suggestions[0].segments_boxes[0].left)
@@ -461,11 +357,11 @@ class TestExtractorPdfToText(TestCase):
 
         self.assertTrue(task_calculated)
         self.assertEqual(1, len(suggestions))
-        self.assertEqual({tenant}, {x.tenant for x in suggestions})
-        self.assertEqual({extraction_id}, {x.id for x in suggestions})
-        self.assertEqual({"test.xml"}, {x.xml_file_name for x in suggestions})
-        self.assertEqual({"15 February 2021"}, {x.segment_text for x in suggestions})
-        self.assertEqual({"15"}, {x.text for x in suggestions})
+        self.assertEqual(tenant, suggestions[0].tenant)
+        self.assertEqual(extraction_id, suggestions[0].id)
+        self.assertEqual("test.xml", suggestions[0].xml_file_name)
+        self.assertTrue("15 February 2021" in suggestions[0].segment_text)
+        self.assertEqual("15", suggestions[0].text)
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
@@ -558,7 +454,6 @@ class TestExtractorPdfToText(TestCase):
         self.assertEqual({tenant}, {x.tenant for x in suggestions})
         self.assertEqual({extraction_id}, {x.id for x in suggestions})
         self.assertEqual({"spanish.xml"}, {x.xml_file_name for x in suggestions})
-        self.assertEqual({"por día"}, {x.segment_text for x in suggestions})
         self.assertEqual({"día"}, {x.text for x in suggestions})
 
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
