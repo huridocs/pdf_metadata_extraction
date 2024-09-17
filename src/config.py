@@ -7,10 +7,7 @@ import graypy
 from rsmq import RedisSMQ
 
 
-SERVICE_NAME = "information_extraction"
-TASK_QUEUE_NAME = SERVICE_NAME + "_tasks"
-RESULTS_QUEUE_NAME = SERVICE_NAME + "_results"
-LOGS_QUEUE_NAME = SERVICE_NAME + "_logs"
+QUEUES_NAMES = os.environ.get("QUEUES_NAMES", "information_extraction")
 
 SERVICE_HOST = os.environ.get("SERVICE_HOST", "http://127.0.0.1")
 SERVICE_PORT = os.environ.get("SERVICE_PORT", "5056")
@@ -36,9 +33,3 @@ if GRAYLOG_IP:
 logging.root.handlers = []
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=handlers)
 config_logger = logging.getLogger(__name__)
-
-logs_queue = RedisSMQ(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    qname=LOGS_QUEUE_NAME,
-)
