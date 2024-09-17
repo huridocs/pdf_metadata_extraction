@@ -1,6 +1,6 @@
 git+https://github.com/huridocs/pdf-document-layout-analysis@15b7116c10baa62d7278b870b6b87cd1f742695f
+git+https://github.com/huridocs/queue-processor@bab1f4419b0768df518d06795afd5df2ba0e331c
 slugify==0.0.1
-PyRSMQ==0.5.0
 python-Levenshtein==0.25.1
 tdda==2.0.9
 datasets==2.19.0
@@ -22,5 +22,4 @@ pymongo==4.6.3
 graypy==2.1.0
 setfit==1.0.3
 fuzzywuzzy==0.18.0
-redis==5.0.3
 httpx==0.27.0

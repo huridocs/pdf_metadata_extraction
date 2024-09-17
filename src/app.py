@@ -6,11 +6,10 @@ import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import sys
 
-from rsmq import RedisSMQ
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
 
-from config import config_logger, REDIS_HOST, REDIS_PORT, RESULTS_QUEUE_NAME, MONGO_HOST, MONGO_PORT
+from config import config_logger, MONGO_HOST, MONGO_PORT
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.PredictionData import PredictionData
@@ -85,24 +84,6 @@ async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...
     except Exception:
         config_logger.error(f"Error adding task {filename}", exc_info=1)
         raise HTTPException(status_code=422, detail=f"Error adding task {filename}")
-
-
-@app.get("/delete_queues")
-async def delete_queues():
-    try:
-        results_queue = RedisSMQ(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            qname=RESULTS_QUEUE_NAME,
-        )
-
-        results_queue.deleteQueue().execute()
-        results_queue.createQueue().execute()
-
-        return "deleted"
-    except Exception:
-        config_logger.error("Error", exc_info=1)
-        raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
 
 
 @app.post("/labeled_data")
