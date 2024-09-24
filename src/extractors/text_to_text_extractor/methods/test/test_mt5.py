@@ -26,8 +26,11 @@ class TestMT5(TestCase):
 
         mt5_true_case_english_spanish.train(extraction_data)
 
-        predictions = mt5_true_case_english_spanish.predict([PredictionSample.from_text("1/ foo end")] * 10)
+        prediction_sample = PredictionSample.from_text("1/ foo end")
+        prediction_sample_empty = PredictionSample.from_text("")
+        predictions = mt5_true_case_english_spanish.predict([prediction_sample] + [prediction_sample_empty])
 
-        self.assertEqual(10, len(predictions))
+        self.assertEqual(2, len(predictions))
         self.assertEqual("foo", predictions[0])
+        self.assertEqual("", predictions[1])
         print(f"Predictions in {round(time() - start, 2)} seconds")

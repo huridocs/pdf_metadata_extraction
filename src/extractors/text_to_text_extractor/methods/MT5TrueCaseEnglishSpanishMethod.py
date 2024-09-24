@@ -159,7 +159,11 @@ class MT5TrueCaseEnglishSpanishMethod(ToTextExtractorMethod):
 
         max_length_predictions = int(self.get_max_length_path().read_text())
         config_logger.info(f"Max length predictions: {max_length_predictions}")
-        for input_text in pd.read_csv(predict_data_path)["input_with_prefix"].tolist():
+        for input_text, text in zip(pd.read_csv(predict_data_path)["input_with_prefix"].tolist(), texts):
+            if not text.strip():
+                predictions.append("")
+                continue
+
             input_ids = tokenizer(input_text, return_tensors="pt").to(device).input_ids
             outputs = model.generate(input_ids, max_length=max_length_predictions)
             predictions.append(tokenizer.decode(outputs[0])[6:-4])

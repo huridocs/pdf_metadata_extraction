@@ -4,7 +4,6 @@ from os.path import join
 from pathlib import Path
 
 import graypy
-from rsmq import RedisSMQ
 
 
 QUEUES_NAMES = os.environ.get("QUEUES_NAMES", "information_extraction")
