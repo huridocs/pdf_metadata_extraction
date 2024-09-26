@@ -7,6 +7,7 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fu
 
 
 class FastSegmentSelectorFuzzyCommas(FastSegmentSelectorFuzzy95):
+    REPORT_ERRORS = False
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         self.set_parameters(multi_option_data)

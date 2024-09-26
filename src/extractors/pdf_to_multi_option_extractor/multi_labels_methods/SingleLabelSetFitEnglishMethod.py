@@ -68,7 +68,9 @@ class SingleLabelSetFitEnglishMethod(MultiLabelMethod):
         for sample in extraction_data.samples:
             labels.append("no_label")
             if sample.labeled_data.values:
-                labels[-1] = self.options[self.options.index(sample.labeled_data.values[0])].label
+                options = [option for option in self.options if option.id == sample.labeled_data.values[0].id]
+                if options:
+                    labels[-1] = options[0].label
 
         for text, label in zip(texts, labels):
             data.append([text, label])
@@ -79,7 +81,6 @@ class SingleLabelSetFitEnglishMethod(MultiLabelMethod):
         df.to_csv(self.get_data_path())
         dataset_csv = load_dataset("csv", data_files=self.get_data_path())
         dataset = dataset_csv["train"]
-        # dataset = dataset.map(self.eval_encodings)
 
         return dataset
 

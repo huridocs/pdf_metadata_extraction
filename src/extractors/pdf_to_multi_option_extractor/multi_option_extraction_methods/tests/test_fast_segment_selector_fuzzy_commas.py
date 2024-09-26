@@ -4,7 +4,6 @@ from data.LabeledData import LabeledData
 from data.Option import Option
 from data.PdfData import PdfData
 from data.ExtractionData import ExtractionData
-from data.PredictionSample import PredictionSample
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzyCommas import (
     FastSegmentSelectorFuzzyCommas,

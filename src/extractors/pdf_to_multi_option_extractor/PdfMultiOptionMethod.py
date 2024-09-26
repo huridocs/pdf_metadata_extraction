@@ -12,6 +12,9 @@ from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import Filter
 
 
 class PdfMultiOptionMethod:
+
+    REPORT_ERRORS = True
+
     def __init__(
         self,
         filter_segments_method: Type[FilterSegmentsMethod] = None,
