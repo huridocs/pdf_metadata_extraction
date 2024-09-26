@@ -68,6 +68,10 @@ class ToTextExtractor(ExtractorBase):
         if not extraction_data.samples:
             return False, "No samples to create model"
 
+        performance_train_set, performance_test_set = ExtractorBase.get_train_test_sets(extraction_data)
+        send_logs(self.extraction_identifier, f"Train set contains {len(performance_train_set.samples)} samples")
+        send_logs(self.extraction_identifier, f"Test set contains {len(performance_test_set.samples)} samples")
+
         if len(extraction_data.samples) < 2:
             best_method_instance = self.METHODS[0](self.extraction_identifier)
             config_logger.info(f"\nBest method {best_method_instance.get_name()} because no samples")
@@ -87,12 +91,16 @@ class ToTextExtractor(ExtractorBase):
     def get_best_method(self, extraction_data: ExtractionData):
         best_performance = 0
         best_method_instance = self.METHODS[0](self.extraction_identifier)
+        performance_log = "Performance aggregation:\n"
+
         for method in self.METHODS:
             method_instance = method(self.extraction_identifier)
             send_logs(self.extraction_identifier, f"Checking {method_instance.get_name()}")
             performance = method_instance.performance(extraction_data)
+            performance_log += f"{method_instance.get_name()}: {round(performance, 2)}%\n"
             send_logs(self.extraction_identifier, f"Performance {method_instance.get_name()}: {performance}%")
             if performance == 100:
+                send_logs(self.extraction_identifier, performance_log)
                 send_logs(self.extraction_identifier, f"Best method {method_instance.get_name()} with {performance}%")
                 return method_instance
 
@@ -100,4 +108,6 @@ class ToTextExtractor(ExtractorBase):
                 best_performance = performance
                 best_method_instance = method_instance
 
+        send_logs(self.extraction_identifier, performance_log)
+        send_logs(self.extraction_identifier, f"Best method {best_method_instance.get_name()} with {performance}%")
         return best_method_instance

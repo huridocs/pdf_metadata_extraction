@@ -99,7 +99,13 @@ class PdfToMultiOptionExtractor(ExtractorBase):
     def create_model(self, extraction_data: ExtractionData):
         self.options = extraction_data.options
         self.multi_value = extraction_data.multi_value
+
         send_logs(self.extraction_identifier, self.get_stats(extraction_data))
+
+        performance_train_set, performance_test_set = ExtractorBase.get_train_test_sets(extraction_data)
+        send_logs(self.extraction_identifier, f"Train set contains {len(performance_train_set.samples)} samples")
+        send_logs(self.extraction_identifier, f"Test set contains {len(performance_test_set.samples)} samples")
+
         method = self.get_best_method(extraction_data)
         method.train(extraction_data)
 
