@@ -17,6 +17,8 @@ from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_ma
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from send_logs import send_logs
 
+import gc
+
 
 class SetFitEnglishMethod(MultiLabelMethod):
     model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
@@ -99,6 +101,10 @@ class SetFitEnglishMethod(MultiLabelMethod):
         trainer.train()
 
         trainer.model.save_pretrained(self.get_model_path())
+
+        del model
+        del trainer
+        gc.collect()
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         model = SetFitModel.from_pretrained(self.get_model_path(), trust_remote_code=True)
