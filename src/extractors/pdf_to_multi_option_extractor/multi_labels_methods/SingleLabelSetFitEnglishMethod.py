@@ -118,8 +118,8 @@ class SingleLabelSetFitEnglishMethod(MultiLabelMethod):
 
         del model
         del trainer
-        torch.cuda.empty_cache()
         gc.collect()
+        torch.cuda.empty_cache()
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         model = SetFitModel.from_pretrained(self.get_model_path(), trust_remote_code=True)
@@ -127,7 +127,7 @@ class SingleLabelSetFitEnglishMethod(MultiLabelMethod):
         predictions = model.predict(predict_texts)
 
         del model
-        torch.cuda.empty_cache()
         gc.collect()
+        torch.cuda.empty_cache()
 
         return [[option for option in self.options if option.label == prediction] for prediction in predictions]
