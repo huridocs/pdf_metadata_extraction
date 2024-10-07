@@ -82,7 +82,6 @@ class SetFitEnglishMethod(MultiLabelMethod):
             output_dir=self.get_model_path(),
             batch_size=batch_size,
             max_steps=get_max_steps(len(extraction_data.samples)),
-            evaluation_strategy="steps",
             save_strategy="steps",
             eval_steps=200,
             save_steps=200,

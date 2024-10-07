@@ -5,7 +5,7 @@ from os import makedirs
 from os.path import join, exists
 from pathlib import Path
 
-
+from config import config_logger
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PdfData import PdfData
 from extractors.segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
@@ -39,12 +39,12 @@ class SegmentSelector:
         valid_pdf_data = self.get_valid_pdfs_data(pdfs_data)
 
         if not valid_pdf_data:
-            return False, "No data to create model"
+            return False, "No data to create model, no segments"
 
         self.model = LightgbmFrequentWords().create_model(valid_pdf_data, model_path)
 
         if not self.model:
-            return False, "No data to create model"
+            return False, "No data to create model, no model created"
 
         self.model.save_model(model_path, num_iteration=self.model.best_iteration)
         return True, ""
@@ -53,8 +53,9 @@ class SegmentSelector:
     def get_valid_pdfs_data(pdfs_data: list[PdfData]) -> list[PdfData]:
         valid_pdf_data = list()
         for pdf_data in pdfs_data:
-            if not pdf_data.pdf_data_segments or not pdf_data.pdf_features:
+            if not pdf_data.pdf_features or not pdf_data.pdf_data_segments:
                 continue
+
             valid_pdf_data.append(pdf_data)
         return valid_pdf_data
 

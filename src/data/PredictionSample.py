@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from data.PdfData import PdfData
+from data.PdfDataSegment import PdfDataSegment
 
 
 @dataclass
@@ -22,7 +23,9 @@ class PredictionSample:
 
     @staticmethod
     def from_text(text: str, entity_name: str = ""):
-        return PredictionSample(tags_texts=[text], entity_name=entity_name)
+        pdf_data = PdfData(None)
+        pdf_data.pdf_data_segments.append(PdfDataSegment.create_with_text(text))
+        return PredictionSample(tags_texts=[text], entity_name=entity_name, pdf_data=pdf_data)
 
     @staticmethod
     def from_texts(texts: list[str]):
