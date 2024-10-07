@@ -103,12 +103,17 @@ class SetFitEnglishMethod(MultiLabelMethod):
 
         del model
         del trainer
+        torch.cuda.empty_cache()
         gc.collect()
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         model = SetFitModel.from_pretrained(self.get_model_path(), trust_remote_code=True)
         predict_texts = [sample.pdf_data.get_text() for sample in multi_option_data.samples]
         predictions = model.predict(predict_texts)
+
+        del model
+        torch.cuda.empty_cache()
+        gc.collect()
 
         return self.predictions_to_options_list(predictions.tolist())
 
