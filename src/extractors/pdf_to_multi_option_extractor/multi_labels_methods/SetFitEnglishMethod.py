@@ -1,22 +1,18 @@
 import os
 import shutil
 from os.path import join, exists
-
 import pandas as pd
 import torch
 from datasets import load_dataset
-
 from data.ExtractionData import ExtractionData
 from data.Option import Option
 from setfit import SetFitModel, TrainingArguments, Trainer
-
 from extractors.ExtractorBase import ExtractorBase
 from extractors.bert_method_scripts.AvoidAllEvaluation import AvoidAllEvaluation
 from extractors.bert_method_scripts.EarlyStoppingAfterInitialTraining import EarlyStoppingAfterInitialTraining
 from extractors.bert_method_scripts.get_batch_size import get_batch_size, get_max_steps
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from send_logs import send_logs
-
 import gc
 
 
@@ -103,8 +99,8 @@ class SetFitEnglishMethod(MultiLabelMethod):
 
         del model
         del trainer
-        torch.cuda.empty_cache()
         gc.collect()
+        torch.cuda.empty_cache()
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         model = SetFitModel.from_pretrained(self.get_model_path(), trust_remote_code=True)
@@ -112,8 +108,8 @@ class SetFitEnglishMethod(MultiLabelMethod):
         predictions = model.predict(predict_texts)
 
         del model
-        torch.cuda.empty_cache()
         gc.collect()
+        torch.cuda.empty_cache()
 
         return self.predictions_to_options_list(predictions.tolist())
 
