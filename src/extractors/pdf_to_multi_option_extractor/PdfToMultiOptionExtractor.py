@@ -1,5 +1,4 @@
 import json
-import shutil
 from collections import Counter
 from os.path import join, exists
 from pathlib import Path
@@ -61,6 +60,8 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Se
 )
 from send_logs import send_logs
 
+RETRAIN_SAMPLES_THRESHOLD = 250
+
 
 class PdfToMultiOptionExtractor(ExtractorBase):
     METHODS: list[PdfMultiOptionMethod] = [
@@ -103,11 +104,17 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         send_logs(self.extraction_identifier, self.get_stats(extraction_data))
 
         performance_train_set, performance_test_set = ExtractorBase.get_train_test_sets(extraction_data)
-        send_logs(self.extraction_identifier, f"Train set contains {len(performance_train_set.samples)} samples")
-        send_logs(self.extraction_identifier, f"Test set contains {len(performance_test_set.samples)} samples")
+        samples_info = f"Train: {len(performance_train_set.samples)} samples\n"
+        samples_info += f"Test: {len(performance_test_set.samples)} samples"
+        send_logs(self.extraction_identifier, samples_info)
 
         method = self.get_best_method(extraction_data)
-        method.train(extraction_data)
+
+        for method_to_remove in [x for x in self.METHODS if x.get_name() != method.get_name()]:
+            method_to_remove.remove_method_data(extraction_data.extraction_identifier)
+
+        if len(extraction_data.samples) < RETRAIN_SAMPLES_THRESHOLD:
+            method.train(extraction_data)
 
         self.save_json(self.options_path, [x.model_dump() for x in extraction_data.options])
         self.save_json(self.multi_value_path, extraction_data.multi_value)
@@ -165,8 +172,9 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         best_method_instance = self.METHODS[0]
         best_performance = 0
         performance_log = "Performance aggregation:\n"
+        train_set, test_set = ExtractorBase.get_train_test_sets(multi_option_data)
         for method in self.METHODS:
-            performance = self.get_method_performance(method, multi_option_data)
+            performance = self.get_method_performance(method, train_set, test_set)
             performance_log += f"{method.get_name()}: {round(performance, 2)}%\n"
             if performance == 100:
                 send_logs(self.extraction_identifier, performance_log)
@@ -181,26 +189,25 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         send_logs(self.extraction_identifier, f"Best method {best_method_instance.get_name()}")
         return best_method_instance
 
-    def get_method_performance(self, method: PdfMultiOptionMethod, multi_option_data: ExtractionData) -> float:
-        method.set_parameters(multi_option_data)
+    def get_method_performance(
+        self, method: PdfMultiOptionMethod, train_set: ExtractionData, test_set: ExtractionData
+    ) -> float:
+        method.set_parameters(train_set)
 
-        if not method.can_be_used(multi_option_data):
+        if not method.can_be_used(train_set):
             send_logs(self.extraction_identifier, f"Not valid method {method.get_name()}")
             return 0
 
         send_logs(self.extraction_identifier, f"Checking {method.get_name()}")
 
         try:
-            performance = method.get_performance(multi_option_data)
+            performance = method.get_performance(train_set, test_set)
         except Exception as e:
             severity = Severity.error if method.REPORT_ERRORS else Severity.info
             send_logs(self.extraction_identifier, f"Error checking {method.get_name()}: {e}", severity)
             performance = 0
 
-        self.reset_extraction_data(multi_option_data)
-
-        if method.multi_label_method:
-            shutil.rmtree(method.base_path, ignore_errors=True)
+        self.reset_extraction_data(train_set)
 
         send_logs(self.extraction_identifier, f"Performance {method.get_name()}: {round(performance, 2)}%")
         return performance

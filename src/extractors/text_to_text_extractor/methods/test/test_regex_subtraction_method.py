@@ -19,7 +19,7 @@ class TestRegexSubtractionMethod(TestCase):
 
         regex_method = RegexSubtractionMethod(extraction_identifier)
 
-        self.assertEqual(100, regex_method.performance(extraction_data))
+        self.assertEqual(100, regex_method.performance(extraction_data, extraction_data))
 
     def test_performance_text_in_back(self):
         sample_1 = TrainingSample(labeled_data=LabeledData(label_text="two", language_iso="en"), tags_texts=["two other"])
@@ -31,7 +31,7 @@ class TestRegexSubtractionMethod(TestCase):
 
         regex_method = RegexSubtractionMethod(extraction_identifier)
 
-        self.assertEqual(100, regex_method.performance(extraction_data))
+        self.assertEqual(100, regex_method.performance(extraction_data, extraction_data))
 
     def test_performance(self):
         text = "Angola, Argentina, Austria, Benin, Botswana, Brazil, Burkina Faso, Chile, Congo, Costa Rica, "
@@ -56,7 +56,7 @@ class TestRegexSubtractionMethod(TestCase):
 
         regex_method = RegexSubtractionMethod(extraction_identifier)
 
-        self.assertEqual(100, regex_method.performance(extraction_data))
+        self.assertEqual(100, regex_method.performance(extraction_data, extraction_data))
 
     def test_performance_text_front_and_back(self):
         sample_1 = TrainingSample(labeled_data=LabeledData(label_text="two", language_iso="en"), tags_texts=["1/ two final"])
@@ -68,7 +68,7 @@ class TestRegexSubtractionMethod(TestCase):
 
         regex_method = RegexSubtractionMethod(extraction_identifier)
 
-        self.assertEqual(100, regex_method.performance(extraction_data))
+        self.assertEqual(100, regex_method.performance(extraction_data, extraction_data))
 
     def test_predict(self):
         sample_1 = TrainingSample(labeled_data=LabeledData(label_text="foo", language_iso="en"), tags_texts=["1/ foo end"])

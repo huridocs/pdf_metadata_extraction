@@ -85,7 +85,7 @@ class MT5TrueCaseEnglishSpanishMethod(ToTextExtractorMethod):
         return data_path
 
     def train(self, extraction_data: ExtractionData):
-        self.remove_model()
+        self.remove_method_data(extraction_data.extraction_identifier)
         train_path = self.prepare_dataset(extraction_data)
 
         if not train_path:

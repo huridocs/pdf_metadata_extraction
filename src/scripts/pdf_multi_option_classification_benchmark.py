@@ -144,7 +144,7 @@ def get_benchmark_custom_methods(repetitions: int = 4):
     for extraction_data, method in loop_datasets_methods(["cejil_countries"]):
         start = time()
         print("Calculating", extraction_data.extraction_identifier, method.get_name())
-        performance = method.get_performance(extraction_data, repetitions)
+        performance = method.get_performance(extraction_data, extraction_data)
         add_row(results_table, method, round(time() - start), performance)
 
 

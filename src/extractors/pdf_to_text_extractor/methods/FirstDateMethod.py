@@ -24,7 +24,6 @@ class FirstDateMethod(ToTextExtractorMethod):
 
         return predictions
 
-
     def get_date_from_segments(self, segments, languages):
         for segment in self.loop_segments(segments):
             date = DateParserMethod.get_date([segment.text_content], languages)

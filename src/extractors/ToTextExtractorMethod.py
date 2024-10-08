@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 from abc import abstractmethod
+from copy import deepcopy
 from os.path import join, exists
 from pathlib import Path
 
@@ -9,13 +10,13 @@ from config import config_logger
 from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PredictionSample import PredictionSample
-from extractors.ExtractorBase import ExtractorBase
 from extractors.pdf_to_multi_option_extractor.filter_segments_methods.CleanBeginningDot250 import CleanBeginningDot250
 
 
 class ToTextExtractorMethod:
 
-    def __init__(self, extraction_identifier: ExtractionIdentifier):
+    def __init__(self, extraction_identifier: ExtractionIdentifier, from_class_name: str = ""):
+        self.from_class_name = from_class_name
         self.extraction_identifier = extraction_identifier
         os.makedirs(self.extraction_identifier.get_path(), exist_ok=True)
 
@@ -23,7 +24,10 @@ class ToTextExtractorMethod:
         return self.__class__.__name__
 
     def save_json(self, file_name: str, data: any):
-        path = join(self.extraction_identifier.get_path(), self.get_name(), file_name)
+        if self.from_class_name:
+            path = join(self.extraction_identifier.get_path(), self.from_class_name, self.get_name(), file_name)
+        else:
+            path = join(self.extraction_identifier.get_path(), self.get_name(), file_name)
         if not exists(Path(path).parent):
             os.makedirs(Path(path).parent)
 
@@ -39,9 +43,6 @@ class ToTextExtractorMethod:
         with open(path, "r") as file:
             return json.load(file)
 
-    def remove_model(self):
-        shutil.rmtree(join(self.extraction_identifier.get_path(), self.get_name()), ignore_errors=True)
-
     @abstractmethod
     def train(self, extraction_data: ExtractionData):
         pass
@@ -54,22 +55,21 @@ class ToTextExtractorMethod:
     def clean_text(text: str) -> str:
         return " ".join(text.split())
 
-    def performance(self, extraction_data: ExtractionData) -> float:
-        if not extraction_data.samples:
+    def performance(self, performance_train_set: ExtractionData, performance_test_set: ExtractionData) -> float:
+        if not performance_train_set.samples:
             return 0
-
-        performance_train_set, performance_test_set = ExtractorBase.get_train_test_sets(extraction_data)
 
         self.train(performance_train_set)
         samples = performance_test_set.samples
-        predictions = self.predict([PredictionSample(pdf_data=x.pdf_data, tags_texts=x.tags_texts) for x in samples])
+        predictions = self.predict(
+            [PredictionSample(pdf_data=deepcopy(x.pdf_data), tags_texts=x.tags_texts) for x in samples]
+        )
 
         correct = [
             sample
             for sample, prediction in zip(performance_test_set.samples, predictions)
             if self.clean_text(sample.labeled_data.label_text) == self.clean_text(prediction)
         ]
-        self.remove_model()
         return 100 * len(correct) / len(performance_test_set.samples)
 
     def log_performance_sample(self, extraction_data: ExtractionData, predictions: list[str]):
@@ -87,3 +87,6 @@ class ToTextExtractorMethod:
             message += f"document text         : {document_text[:70].strip()}\n"
 
         config_logger.info(message)
+
+    def remove_method_data(self, extraction_identifier: ExtractionIdentifier):
+        shutil.rmtree(join(extraction_identifier.get_path(), self.get_name()), ignore_errors=True)

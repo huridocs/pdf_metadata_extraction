@@ -35,7 +35,7 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
         )
 
         fast_segment_selector_fuzzy_commas = FastSegmentSelectorFuzzyCommas()
-        performance = fast_segment_selector_fuzzy_commas.get_performance(multi_option_data)
+        performance = fast_segment_selector_fuzzy_commas.get_performance(multi_option_data, multi_option_data)
 
         self.assertEqual(100, performance)
 
@@ -60,7 +60,7 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
         )
 
         fast_segment_selector_fuzzy_commas = FastSegmentSelectorFuzzyCommas()
-        performance = fast_segment_selector_fuzzy_commas.get_performance(multi_option_data)
+        performance = fast_segment_selector_fuzzy_commas.get_performance(multi_option_data, multi_option_data)
 
         self.assertAlmostEqual(83.33333333333334, performance)
 

@@ -28,7 +28,7 @@ services:
               count: 1
               capabilities: [ gpu ]
     init: true
-    entrypoint: [ "python", "-m", "src.QueueProcessor" ]
+    entrypoint: [ "python", "-m", "src.start_queue_processor" ]
     build:
       context: .
       dockerfile: Dockerfile

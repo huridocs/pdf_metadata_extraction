@@ -2,7 +2,7 @@ import json
 import os
 import re
 from os.path import join, exists
-
+from pathlib import Path
 
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
@@ -13,7 +13,7 @@ MAX_PAGES = 99999
 
 class FilterValidSegmentsPages:
     def __init__(self, extraction_identifier: ExtractionIdentifier):
-        self.labeled_data_json_path = join(extraction_identifier.get_path(), "filter_pages.json")
+        self.labeled_data_json_path = Path(extraction_identifier.get_path(), "filter_pages.json")
         self.start_gaps = []
         self.end_gaps = []
         self.valid_pages_ranges = []
@@ -37,12 +37,10 @@ class FilterValidSegmentsPages:
         return valid_page_numbers_from_the_end
 
     def for_training(self, labeled_data_list: list[LabeledData]):
-        if not exists(os.path.dirname(self.labeled_data_json_path)):
-            os.makedirs(os.path.dirname(self.labeled_data_json_path))
+        if not self.labeled_data_json_path.parent.exists():
+            os.makedirs(self.labeled_data_json_path.parent)
 
-        with open(self.labeled_data_json_path, "w") as file:
-            json.dump([x.model_dump_json() for x in labeled_data_list], file)
-
+        self.labeled_data_json_path.write_text(json.dumps([x.model_dump_json() for x in labeled_data_list]))
         self.set_parameters(labeled_data_list)
         pages_list = [[x.page_number for x in labeled_data.xml_segments_boxes] for labeled_data in labeled_data_list]
         total_number_pages_per_document = [max(pages) if pages else 1000 for pages in pages_list]

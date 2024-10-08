@@ -17,7 +17,7 @@ class TestSameInputMethod(TestCase):
         extraction_data = ExtractionData(samples=[sample], extraction_identifier=extraction_identifier)
 
         same_input_output_method = SameInputOutputMethod(extraction_identifier)
-        self.assertEqual(100, same_input_output_method.performance(extraction_data))
+        self.assertEqual(100, same_input_output_method.performance(extraction_data, extraction_data))
 
     def test_performance_100_with_multiline(self):
         label_text = """Albania, Algeria, Argentina, Bolivia (Plurinational State of), Brazil, Congo, Côte d’Ivoire,
@@ -39,7 +39,7 @@ class TestSameInputMethod(TestCase):
         extraction_data = ExtractionData(samples=[sample], extraction_identifier=extraction_identifier)
 
         same_input_output_method = SameInputOutputMethod(extraction_identifier)
-        self.assertEqual(100, same_input_output_method.performance(extraction_data))
+        self.assertEqual(100, same_input_output_method.performance(extraction_data, extraction_data))
 
     def test_performance_50(self):
         sample_1 = TrainingSample(labeled_data=LabeledData(label_text="a b c", language_iso="en"), tags_texts=["a b c"])
@@ -49,7 +49,7 @@ class TestSameInputMethod(TestCase):
 
         same_input_output_method = SameInputOutputMethod(extraction_identifier)
 
-        self.assertEqual(50, same_input_output_method.performance(extraction_data))
+        self.assertEqual(50, same_input_output_method.performance(extraction_data, extraction_data))
 
     def test_predict(self):
         same_input_output_method = SameInputOutputMethod(extraction_identifier)

@@ -21,7 +21,7 @@ services:
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
     init: true
-    entrypoint: [ "python", "-m", "src.QueueProcessor" ]
+    entrypoint: [ "python", "-m", "src.start_queue_processor" ]
     build:
       context: .
       dockerfile: Dockerfile

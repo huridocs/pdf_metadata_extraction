@@ -1,5 +1,6 @@
 from extractors.pdf_to_text_extractor.methods.FirstDateMethod import FirstDateMethod
 
+
 class LastDateMethod(FirstDateMethod):
 
     @staticmethod

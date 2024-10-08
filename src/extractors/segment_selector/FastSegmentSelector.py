@@ -18,7 +18,7 @@ class FastSegmentSelector:
         self.text_types = [TokenType.TEXT, TokenType.LIST_ITEM, TokenType.TITLE, TokenType.SECTION_HEADER, TokenType.CAPTION]
         self.previous_words, self.next_words, self.text_segments = [], [], []
 
-        self.fast_segment_selector_path = Path(join(self.extraction_identifier.get_path(), "fast_segment_selector"))
+        self.fast_segment_selector_path = Path(self.extraction_identifier.get_path(), self.__class__.__name__)
         if not self.fast_segment_selector_path.exists():
             os.makedirs(self.fast_segment_selector_path, exist_ok=True)
 
