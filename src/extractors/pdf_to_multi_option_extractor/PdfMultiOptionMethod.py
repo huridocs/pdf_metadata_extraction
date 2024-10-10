@@ -25,14 +25,12 @@ class PdfMultiOptionMethod:
         self.extraction_identifier = ExtractionIdentifier(run_name="not set", extraction_name="not set")
         self.options: list[Option] = list()
         self.multi_value = False
-        self.base_path = ""
         self.extraction_data = None
 
     def set_parameters(self, multi_option_data: ExtractionData):
         self.extraction_identifier = multi_option_data.extraction_identifier
         self.options = multi_option_data.options
         self.multi_value = multi_option_data.multi_value
-        self.base_path = multi_option_data.extraction_identifier.get_path()
         self.extraction_data = multi_option_data
 
     def get_name(self):
@@ -82,7 +80,7 @@ class PdfMultiOptionMethod:
         filtered_multi_option_data = self.filter_segments_method().filter(multi_option_data)
 
         print("Creating model")
-        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value)
+        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value, self.get_name())
         multi_label.train(filtered_multi_option_data)
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
@@ -92,7 +90,7 @@ class PdfMultiOptionMethod:
         filtered_multi_option_data = self.filter_segments_method().filter(multi_option_data)
 
         print("Prediction")
-        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value)
+        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value, self.get_name())
         predictions = multi_label.predict(filtered_multi_option_data)
 
         return predictions
