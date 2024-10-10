@@ -100,7 +100,7 @@ class ToTextExtractor(ExtractorBase):
         for method_to_remove in self.METHODS:
             method_instance = method_to_remove(self.extraction_identifier)
             if method_instance.get_name() != best_method_instance.get_name():
-                method_instance.remove_method_data(self.extraction_identifier)
+                method_instance.remove_method_data()
 
     def get_best_method(self, extraction_data: ExtractionData):
         best_performance = 0

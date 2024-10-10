@@ -20,14 +20,21 @@ class ToTextExtractorMethod:
         self.extraction_identifier = extraction_identifier
         os.makedirs(self.extraction_identifier.get_path(), exist_ok=True)
 
+    def get_path(self):
+        if self.from_class_name:
+            path = join(self.extraction_identifier.get_path(), self.from_class_name, self.get_name())
+        else:
+            path = join(self.extraction_identifier.get_path(), self.get_name())
+
+        os.makedirs(path, exist_ok=True)
+        return path
+
     def get_name(self):
         return self.__class__.__name__
 
     def save_json(self, file_name: str, data: any):
-        if self.from_class_name:
-            path = join(self.extraction_identifier.get_path(), self.from_class_name, self.get_name(), file_name)
-        else:
-            path = join(self.extraction_identifier.get_path(), self.get_name(), file_name)
+        path = join(self.get_path(), file_name)
+
         if not exists(Path(path).parent):
             os.makedirs(Path(path).parent)
 
@@ -35,7 +42,7 @@ class ToTextExtractorMethod:
             json.dump(data, file)
 
     def load_json(self, file_name: str):
-        path = join(self.extraction_identifier.get_path(), self.get_name(), file_name)
+        path = join(self.get_path(), file_name)
 
         if not exists(path):
             return ""
@@ -88,5 +95,5 @@ class ToTextExtractorMethod:
 
         config_logger.info(message)
 
-    def remove_method_data(self, extraction_identifier: ExtractionIdentifier):
-        shutil.rmtree(join(extraction_identifier.get_path(), self.get_name()), ignore_errors=True)
+    def remove_method_data(self):
+        shutil.rmtree(self.get_path(), ignore_errors=True)

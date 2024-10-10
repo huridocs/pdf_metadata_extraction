@@ -32,7 +32,7 @@ class FastSegmentSelectorInputWithoutSpaces(SegmentSelectorSameInputOutputMethod
             self.mark_predicted_segments(selected_segments)
             sample.tags_texts = self.get_predicted_texts(sample.pdf_data)
 
-        semantic_metadata_extraction = self.SEMANTIC_METHOD(self.extraction_identifier)
+        semantic_metadata_extraction = self.SEMANTIC_METHOD(self.extraction_identifier, self.get_name())
         return semantic_metadata_extraction.predict(predictions_samples)
 
     @staticmethod
