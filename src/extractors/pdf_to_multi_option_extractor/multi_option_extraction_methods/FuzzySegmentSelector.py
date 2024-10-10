@@ -86,6 +86,7 @@ class FuzzySegmentSelector(PdfMultiOptionMethod):
         return appearances, next_segment, next_segment_appearances
 
     def train(self, multi_option_data: ExtractionData):
+        self.set_parameters(multi_option_data)
         for multi_option_sample in multi_option_data.samples:
             self.mark_segments_for_segment_selector(multi_option_sample)
 

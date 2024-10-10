@@ -52,6 +52,8 @@ class TestSegmentSelector(TestCase):
         makedirs(join(TestSegmentSelector.BASE_PATH, "xml_to_train"))
         test_folder_path = join(TestSegmentSelector.BASE_PATH, "xml_to_train", TestSegmentSelector.TEST_XML_NAME)
         shutil.copy(self.TEST_XML_PATH, test_folder_path)
+        segment_selector = SegmentSelector(extraction_identifier=TestSegmentSelector.EXTRACTION_IDENTIFIER)
+        segment_selector.prepare_model_folder()
 
     def tearDown(self):
         shutil.rmtree(join(DATA_PATH, TestSegmentSelector.TENANT), ignore_errors=True)
@@ -81,6 +83,7 @@ class TestSegmentSelector(TestCase):
 
         pdf_features = PdfData.from_xml_file(TestSegmentSelector.XML_FILE, segmentation_data, [])
         segment_selector = SegmentSelector(extraction_identifier=TestSegmentSelector.EXTRACTION_IDENTIFIER)
+        segment_selector.prepare_model_folder()
         segment_selector.create_model(pdfs_data=[pdf_features])
 
         segment_selector = SegmentSelector(extraction_identifier=TestSegmentSelector.EXTRACTION_IDENTIFIER)

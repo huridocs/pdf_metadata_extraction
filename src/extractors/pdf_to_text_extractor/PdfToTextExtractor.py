@@ -3,8 +3,22 @@ from data.TrainingSample import TrainingSample
 from extractors.ExtractorBase import ExtractorBase
 from extractors.ToTextExtractor import ToTextExtractor
 from extractors.ToTextExtractorMethod import ToTextExtractorMethod
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorDateParserMethod import FastSegmentSelectorDateParserMethod
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorDateParserWithBreaksMethod import (
+    FastSegmentSelectorDateParserWithBreaksMethod,
+)
 from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorInputWithoutSpaces import (
     FastSegmentSelectorInputWithoutSpaces,
+)
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorMT5TrueCaseEnglishSpanishMethod import (
+    FastSegmentSelectorMT5TrueCaseEnglishSpanishMethod,
+)
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorRegexMethod import FastSegmentSelectorRegexMethod
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorRegexSubtractionMethod import (
+    FastSegmentSelectorRegexSubtractionMethod,
+)
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorSameInputOutputMethod import (
+    FastSegmentSelectorSameInputOutputMethod,
 )
 from extractors.pdf_to_text_extractor.methods.FirstDateMethod import FirstDateMethod
 from extractors.pdf_to_text_extractor.methods.LastDateMethod import LastDateMethod
@@ -35,11 +49,17 @@ class PdfToTextExtractor(ToTextExtractor):
         PdfToTextRegexMethod,
         FirstDateMethod,
         LastDateMethod,
+        FastSegmentSelectorDateParserMethod,
+        FastSegmentSelectorDateParserWithBreaksMethod,
+        FastSegmentSelectorInputWithoutSpaces,
+        FastSegmentSelectorMT5TrueCaseEnglishSpanishMethod,
+        FastSegmentSelectorRegexMethod,
+        FastSegmentSelectorRegexSubtractionMethod,
+        FastSegmentSelectorSameInputOutputMethod,
         SegmentSelectorDateParserMethod,
         SegmentSelectorDateParserWithBreaksMethod,
         SegmentSelectorInputWithoutSpaces,
         SegmentSelectorMT5TrueCaseEnglishSpanishMethod,
-        FastSegmentSelectorInputWithoutSpaces,
         SegmentSelectorRegexMethod,
         SegmentSelectorRegexSubtractionMethod,
         SegmentSelectorSameInputOutputMethod,
