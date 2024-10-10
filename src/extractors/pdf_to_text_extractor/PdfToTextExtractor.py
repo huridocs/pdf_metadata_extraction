@@ -24,6 +24,9 @@ from extractors.pdf_to_text_extractor.methods.SegmentSelectorRegexSubtractionMet
 from extractors.pdf_to_text_extractor.methods.SegmentSelectorSameInputOutputMethod import (
     SegmentSelectorSameInputOutputMethod,
 )
+from extractors.segment_selector.FastAndPositionsSegmentSelector import FastAndPositionsSegmentSelector
+from extractors.segment_selector.FastSegmentSelector import FastSegmentSelector
+from extractors.segment_selector.SegmentSelector import SegmentSelector
 
 
 class PdfToTextExtractor(ToTextExtractor):
@@ -41,6 +44,12 @@ class PdfToTextExtractor(ToTextExtractor):
         SegmentSelectorRegexSubtractionMethod,
         SegmentSelectorSameInputOutputMethod,
     ]
+
+    def create_model(self, extraction_data: ExtractionData) -> tuple[bool, str]:
+        SegmentSelector(extraction_identifier=self.extraction_identifier).prepare_model_folder()
+        FastSegmentSelector(extraction_identifier=self.extraction_identifier).prepare_model_folder()
+        FastAndPositionsSegmentSelector(extraction_identifier=self.extraction_identifier).prepare_model_folder()
+        return super().create_model(extraction_data)
 
     @staticmethod
     def get_train_test_sets(extraction_data: ExtractionData) -> (ExtractionData, ExtractionData):
