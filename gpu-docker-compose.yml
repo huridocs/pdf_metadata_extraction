@@ -20,6 +20,7 @@ services:
     env_file: .env
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
+    restart: unless-stopped
     deploy:
       resources:
         reservations:

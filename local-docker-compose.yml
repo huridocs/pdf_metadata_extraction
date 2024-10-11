@@ -20,6 +20,7 @@ services:
     env_file: .env.local
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
+    restart: unless-stopped
     init: true
     entrypoint: [ "python", "-m", "src.start_queue_processor" ]
     build:

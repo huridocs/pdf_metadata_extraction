@@ -1,5 +1,5 @@
 git+https://github.com/huridocs/pdf-document-layout-analysis@67365bb133dab5826a3863d2e2cc551a21b89e81
-git+https://github.com/huridocs/queue-processor@d30bf31e614694cf65f7117cd28cabf4afedfe55
+git+https://github.com/huridocs/queue-processor@1875372bf9f6dcd1995a32c4e50ff92aa45f9ea8
 slugify==0.0.1
 python-Levenshtein==0.25.1
 tdda==2.0.9
