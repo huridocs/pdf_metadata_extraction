@@ -41,6 +41,8 @@ class TestSetFitEnglishMethod(TestCase):
             TrainingSample(pdf_data_5, LabeledData(values=[options[4]])),
         ]
 
+        samples = samples * 2
+
         extraction_data = ExtractionData(
             multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
         )

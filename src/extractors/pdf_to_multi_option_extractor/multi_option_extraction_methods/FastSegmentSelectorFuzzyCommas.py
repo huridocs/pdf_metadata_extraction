@@ -15,5 +15,6 @@ class FastSegmentSelectorFuzzyCommas(FastSegmentSelectorFuzzy95):
         return FuzzyCommas().predict(self.extraction_data)
 
     def train(self, multi_option_data: ExtractionData):
+        self.set_parameters(multi_option_data)
         super().train(multi_option_data)
         FuzzyCommas().train(multi_option_data)

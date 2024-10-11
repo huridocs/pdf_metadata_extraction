@@ -16,6 +16,7 @@ class PreviousWordsSentenceSelectorFuzzyCommas(SentenceSelectorFuzzyCommas):
     REPORT_ERRORS = False
 
     def train(self, multi_option_data: ExtractionData):
+        self.set_parameters(multi_option_data)
         extraction_data_by_sentences = self.get_extraction_data_by_sentence(multi_option_data)
         marked_segments = list()
         for sample in extraction_data_by_sentences.samples:

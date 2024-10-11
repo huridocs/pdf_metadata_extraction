@@ -16,14 +16,25 @@ from data.ExtractionData import ExtractionData
 
 
 class MultiLabelMethod(ABC):
-    def __init__(self, extraction_identifier: ExtractionIdentifier, options: list[Option], multi_value: bool):
+    def __init__(
+        self, extraction_identifier: ExtractionIdentifier, options: list[Option], multi_value: bool, method_name: str = ""
+    ):
+        self.method_name = method_name
         self.extraction_identifier = extraction_identifier
         self.options = options
         self.multi_value = multi_value
-        self.base_path = extraction_identifier.get_path()
 
-        if not exists(self.base_path):
-            os.makedirs(self.base_path)
+    def get_name(self):
+        return self.__class__.__name__
+
+    def get_path(self):
+        if self.method_name:
+            path = join(self.extraction_identifier.get_path(), self.method_name)
+        else:
+            path = join(self.extraction_identifier.get_path(), self.get_name())
+
+        os.makedirs(path, exist_ok=True)
+        return path
 
     @abstractmethod
     def train(self, multi_option_data: ExtractionData):
@@ -33,11 +44,8 @@ class MultiLabelMethod(ABC):
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         pass
 
-    def get_name(self):
-        return self.__class__.__name__
-
     def save_json(self, file_name: str, data: any):
-        path = join(self.base_path, self.get_name(), file_name)
+        path = join(self.get_path(), file_name)
         if not exists(Path(path).parent):
             makedirs(Path(path).parent)
 
@@ -45,13 +53,13 @@ class MultiLabelMethod(ABC):
             json.dump(data, file)
 
     def load_json(self, file_name: str):
-        path = join(self.base_path, self.get_name(), file_name)
+        path = join(self.get_path(), file_name)
 
         with open(path, "r") as file:
             return json.load(file)
 
     def remove_model(self):
-        shutil.rmtree(join(self.base_path, self.get_name()), ignore_errors=True)
+        shutil.rmtree(join(self.get_path()), ignore_errors=True)
 
     def get_texts_labels(self, multi_option_data: ExtractionData) -> (list[str], list[list[int]]):
         texts = list()

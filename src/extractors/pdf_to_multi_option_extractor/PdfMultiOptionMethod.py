@@ -1,3 +1,5 @@
+import shutil
+from os.path import join
 from typing import Type
 
 from sklearn.metrics import f1_score
@@ -6,13 +8,11 @@ from data.ExtractionIdentifier import ExtractionIdentifier
 from data.Option import Option
 from data.ExtractionData import ExtractionData
 from data.TrainingSample import TrainingSample
-from extractors.ExtractorBase import ExtractorBase
 from extractors.pdf_to_multi_option_extractor.MultiLabelMethod import MultiLabelMethod
 from extractors.pdf_to_multi_option_extractor.FilterSegmentsMethod import FilterSegmentsMethod
 
 
 class PdfMultiOptionMethod:
-
     REPORT_ERRORS = True
 
     def __init__(
@@ -25,14 +25,12 @@ class PdfMultiOptionMethod:
         self.extraction_identifier = ExtractionIdentifier(run_name="not set", extraction_name="not set")
         self.options: list[Option] = list()
         self.multi_value = False
-        self.base_path = ""
         self.extraction_data = None
 
     def set_parameters(self, multi_option_data: ExtractionData):
         self.extraction_identifier = multi_option_data.extraction_identifier
         self.options = multi_option_data.options
         self.multi_value = multi_option_data.multi_value
-        self.base_path = multi_option_data.extraction_identifier.get_path()
         self.extraction_data = multi_option_data
 
     def get_name(self):
@@ -45,26 +43,20 @@ class PdfMultiOptionMethod:
 
         return self.__class__.__name__
 
-    def get_performance(self, multi_option_data: ExtractionData, repetitions: int = 1) -> float:
-        self.set_parameters(multi_option_data)
-        scores = list()
-        seeds = [22, 23, 24, 25]
-        for i in range(repetitions):
-            train_set, test_set = ExtractorBase.get_train_test_sets(multi_option_data)
-            truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples], self.options)
+    def get_performance(self, train_set: ExtractionData, test_set: ExtractionData) -> float:
+        self.set_parameters(train_set)
+        truth_one_hot = self.one_hot_to_options_list([x.labeled_data.values for x in test_set.samples], self.options)
 
-            self.train(train_set)
-            predictions = self.predict(test_set)
+        self.train(train_set)
+        predictions = self.predict(test_set)
 
-            if not self.multi_value:
-                predictions = [x[:1] for x in predictions]
+        if not self.multi_value:
+            predictions = [x[:1] for x in predictions]
 
-            predictions_one_hot = self.one_hot_to_options_list(predictions, self.options)
-            score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
-            scores.append(100 * score)
-            print(f"Score for seed={seeds[i]} {self.extraction_identifier} {self.get_name()}: {100 * score}")
+        predictions_one_hot = self.one_hot_to_options_list(predictions, self.options)
+        score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
 
-        return sum(scores) / len(scores)
+        return 100 * score
 
     @staticmethod
     def one_hot_to_options_list(pdfs_options: list[list[Option]], options: list[Option]) -> list[list[int]]:
@@ -88,7 +80,7 @@ class PdfMultiOptionMethod:
         filtered_multi_option_data = self.filter_segments_method().filter(multi_option_data)
 
         print("Creating model")
-        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value)
+        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value, self.get_name())
         multi_label.train(filtered_multi_option_data)
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
@@ -98,7 +90,7 @@ class PdfMultiOptionMethod:
         filtered_multi_option_data = self.filter_segments_method().filter(multi_option_data)
 
         print("Prediction")
-        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value)
+        multi_label = self.multi_label_method(self.extraction_identifier, self.options, self.multi_value, self.get_name())
         predictions = multi_label.predict(filtered_multi_option_data)
 
         return predictions
@@ -115,3 +107,6 @@ class PdfMultiOptionMethod:
             return multi_label.can_be_used(multi_option_data)
 
         return True
+
+    def remove_method_data(self, extraction_identifier: ExtractionIdentifier):
+        shutil.rmtree(join(extraction_identifier.get_path(), self.get_name()), ignore_errors=True)

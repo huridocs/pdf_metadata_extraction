@@ -23,7 +23,7 @@ services:
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
     init: true
-    entrypoint: [ "python3", "-m", "src.QueueProcessor" ]
+    entrypoint: [ "python3", "-m", "src.start_queue_processor" ]
     restart: unless-stopped
     build:
       context: .

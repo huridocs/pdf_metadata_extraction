@@ -39,10 +39,10 @@ class MT5TrueCaseEnglishSpanishMethod(ToTextExtractorMethod):
     SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
     def get_model_path(self):
-        return str(join(self.extraction_identifier.get_path(), self.get_name(), "model"))
+        return str(join(self.get_path(), "model"))
 
     def get_max_length_path(self):
-        return Path(str(join(self.extraction_identifier.get_path(), self.get_name(), "max_length_output")))
+        return Path(self.get_path(), "max_length_output")
 
     def get_max_input_length(self, extraction_data: ExtractionData):
         tokenizer = AutoTokenizer.from_pretrained("HURIDOCS/mt5-small-spanish-es", cache_dir=self.get_cache_dir())
@@ -60,7 +60,7 @@ class MT5TrueCaseEnglishSpanishMethod(ToTextExtractorMethod):
         return output_length
 
     def prepare_dataset(self, extraction_data: ExtractionData):
-        data_path = str(join(self.extraction_identifier.get_path(), self.get_name(), "t5_transformers_data.csv"))
+        data_path = join(self.get_path(), "t5_transformers_data.csv")
 
         if exists(data_path):
             os.remove(data_path)
@@ -85,7 +85,7 @@ class MT5TrueCaseEnglishSpanishMethod(ToTextExtractorMethod):
         return data_path
 
     def train(self, extraction_data: ExtractionData):
-        self.remove_model()
+        self.remove_method_data()
         train_path = self.prepare_dataset(extraction_data)
 
         if not train_path:

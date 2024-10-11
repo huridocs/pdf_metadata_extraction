@@ -18,6 +18,8 @@ from extractors.text_to_text_extractor.methods.RegexSubtractionMethod import Reg
 from extractors.text_to_text_extractor.methods.SameInputOutputMethod import SameInputOutputMethod
 from send_logs import send_logs
 
+RETRAIN_SAMPLES_THRESHOLD = 250
+
 
 class ToTextExtractor(ExtractorBase):
     METHODS: list[type[ToTextExtractorMethod]] = []
@@ -68,9 +70,11 @@ class ToTextExtractor(ExtractorBase):
         if not extraction_data.samples:
             return False, "No samples to create model"
 
-        performance_train_set, performance_test_set = ExtractorBase.get_train_test_sets(extraction_data)
-        send_logs(self.extraction_identifier, f"Train set contains {len(performance_train_set.samples)} samples")
-        send_logs(self.extraction_identifier, f"Test set contains {len(performance_test_set.samples)} samples")
+        performance_train_set, performance_test_set = self.get_train_test_sets(extraction_data)
+
+        samples_info = f"Train: {len(performance_train_set.samples)} samples\n"
+        samples_info += f"Test: {len(performance_test_set.samples)} samples"
+        send_logs(self.extraction_identifier, samples_info)
 
         if len(extraction_data.samples) < 2:
             best_method_instance = self.METHODS[0](self.extraction_identifier)
@@ -80,23 +84,34 @@ class ToTextExtractor(ExtractorBase):
 
         best_method_instance = self.get_best_method(extraction_data)
         self.method_name_path.write_text(json.dumps(best_method_instance.get_name()))
-        best_method_instance.train(extraction_data)
+
+        if len(extraction_data.samples) < RETRAIN_SAMPLES_THRESHOLD:
+            best_method_instance.train(extraction_data)
+
+        self.remove_data_from_methods_not_selected(best_method_instance)
+
         return True, ""
 
-    def remove_models(self):
-        for method in self.METHODS:
-            method_instance = method(self.extraction_identifier)
-            method_instance.remove_model()
+    @staticmethod
+    def get_train_test_sets(extraction_data: ExtractionData) -> (ExtractionData, ExtractionData):
+        return ExtractorBase.get_train_test_sets(extraction_data)
+
+    def remove_data_from_methods_not_selected(self, best_method_instance):
+        for method_to_remove in self.METHODS:
+            method_instance = method_to_remove(self.extraction_identifier)
+            if method_instance.get_name() != best_method_instance.get_name():
+                method_instance.remove_method_data()
 
     def get_best_method(self, extraction_data: ExtractionData):
         best_performance = 0
         best_method_instance = self.METHODS[0](self.extraction_identifier)
         performance_log = "Performance aggregation:\n"
 
+        training_set, test_set = self.get_train_test_sets(extraction_data)
         for method in self.METHODS:
             method_instance = method(self.extraction_identifier)
             send_logs(self.extraction_identifier, f"Checking {method_instance.get_name()}")
-            performance = method_instance.performance(extraction_data)
+            performance = method_instance.performance(training_set, test_set)
             performance_log += f"{method_instance.get_name()}: {round(performance, 2)}%\n"
             send_logs(self.extraction_identifier, f"Performance {method_instance.get_name()}: {performance}%")
             if performance == 100:

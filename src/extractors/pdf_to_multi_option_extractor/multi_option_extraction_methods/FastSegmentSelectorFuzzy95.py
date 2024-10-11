@@ -12,7 +12,7 @@ from data.PdfDataSegment import PdfDataSegment
 from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.PdfMultiOptionMethod import PdfMultiOptionMethod
 from data.ExtractionData import ExtractionData
-from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelector import FastSegmentSelector
+from extractors.segment_selector.FastSegmentSelector import FastSegmentSelector
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FuzzyAll95 import FuzzyAll95
 
 
@@ -35,6 +35,7 @@ class FastSegmentSelectorFuzzy95(PdfMultiOptionMethod):
         return list(dict.fromkeys(appearances))
 
     def train(self, multi_option_data: ExtractionData):
+        self.set_parameters(multi_option_data)
         marked_segments = list()
         for sample in multi_option_data.samples:
             marked_segments.extend(self.get_marked_segments(sample))

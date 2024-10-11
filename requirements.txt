@@ -1,5 +1,5 @@
-git+https://github.com/huridocs/pdf-document-layout-analysis@15b7116c10baa62d7278b870b6b87cd1f742695f
-git+https://github.com/huridocs/queue-processor@bab1f4419b0768df518d06795afd5df2ba0e331c
+git+https://github.com/huridocs/pdf-document-layout-analysis@67365bb133dab5826a3863d2e2cc551a21b89e81
+git+https://github.com/huridocs/queue-processor@1875372bf9f6dcd1995a32c4e50ff92aa45f9ea8
 slugify==0.0.1
 python-Levenshtein==0.25.1
 tdda==2.0.9
@@ -20,6 +20,6 @@ rapidfuzz==3.8.1
 sentry_sdk==1.44.0
 pymongo==4.6.3
 graypy==2.1.0
-setfit==1.0.3
+setfit==1.1.0
 fuzzywuzzy==0.18.0
 httpx==0.27.0

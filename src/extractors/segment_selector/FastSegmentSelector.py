@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from collections import Counter
 from os.path import join, exists
 from pathlib import Path
@@ -18,13 +19,23 @@ class FastSegmentSelector:
         self.text_types = [TokenType.TEXT, TokenType.LIST_ITEM, TokenType.TITLE, TokenType.SECTION_HEADER, TokenType.CAPTION]
         self.previous_words, self.next_words, self.text_segments = [], [], []
 
-        self.fast_segment_selector_path = Path(join(self.extraction_identifier.get_path(), "fast_segment_selector"))
+        self.fast_segment_selector_path = Path(self.extraction_identifier.get_path(), self.__class__.__name__)
         if not self.fast_segment_selector_path.exists():
             os.makedirs(self.fast_segment_selector_path, exist_ok=True)
 
         self.previous_words_path = join(self.fast_segment_selector_path, "previous_words.txt")
         self.next_words_path = join(self.fast_segment_selector_path, "next_words.txt")
         self.model_path = join(self.fast_segment_selector_path, "lightgbm_model.txt")
+
+    def prepare_model_folder(self):
+        shutil.rmtree(Path(self.model_path).parent, ignore_errors=True)
+
+        model_path = self.model_path
+
+        if not exists(Path(model_path).parent):
+            os.makedirs(Path(model_path).parent)
+
+        return model_path
 
     def get_features(self, segment: PdfDataSegment, segments: list[PdfDataSegment]):
         features = list()
@@ -84,7 +95,7 @@ class FastSegmentSelector:
         Path(self.next_words_path).write_text(json.dumps(self.next_words))
 
     def create_model(self, segments: list[PdfDataSegment]):
-        if not segments:
+        if not segments or Path(self.model_path).exists():
             return
 
         self.text_segments = [x for x in segments if x.segment_type in self.text_types]

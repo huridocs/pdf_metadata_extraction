@@ -54,7 +54,9 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
             error_message=error_message,
         )
 
-    extraction_identifier = ExtractionIdentifier(run_name=task.tenant, extraction_name=task.params.id)
+    extraction_identifier = ExtractionIdentifier(
+        run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata
+    )
     send_logs(extraction_identifier, f"Result message: {model_results_message.to_string()}")
     return model_results_message.model_dump()
 
@@ -87,4 +89,4 @@ if __name__ == "__main__":
 
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
-    queue_processor.start(process)
+    queue_processor.start(process, run_once=True)

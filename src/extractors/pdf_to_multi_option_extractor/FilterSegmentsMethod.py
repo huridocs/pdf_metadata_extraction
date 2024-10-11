@@ -7,6 +7,9 @@ from data.TrainingSample import TrainingSample
 
 
 class FilterSegmentsMethod(ABC):
+    def get_name(self):
+        return self.__class__.__name__
+
     @abstractmethod
     def filter_segments(self, pdf_data_segments: list[PdfDataSegment]) -> list[PdfDataSegment]:
         pass

@@ -32,7 +32,7 @@ class BertSeqSteps(MultiLabelMethod):
         return extraction_data.multi_value
 
     def get_data_path(self, name):
-        model_folder_path = join(self.base_path, self.get_name())
+        model_folder_path = self.get_path()
 
         if not exists(model_folder_path):
             os.makedirs(model_folder_path)
@@ -40,7 +40,7 @@ class BertSeqSteps(MultiLabelMethod):
         return join(model_folder_path, f"{name}.csv")
 
     def get_model_path(self):
-        model_folder_path = join(self.base_path, self.get_name())
+        model_folder_path = self.get_path()
 
         if not exists(model_folder_path):
             os.makedirs(model_folder_path)

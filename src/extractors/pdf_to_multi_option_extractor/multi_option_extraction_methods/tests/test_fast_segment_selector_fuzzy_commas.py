@@ -8,14 +8,18 @@ from data.TrainingSample import TrainingSample
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.FastSegmentSelectorFuzzyCommas import (
     FastSegmentSelectorFuzzyCommas,
 )
+from extractors.segment_selector.FastSegmentSelector import FastSegmentSelector
 
 
 class TestFastSegmentSelectorFuzzyCommas(TestCase):
     TENANT = "multi_option_extraction_test"
     extraction_id = "extraction_id"
+    extraction_identifier = ExtractionIdentifier(run_name=TENANT, extraction_name=extraction_id)
+
+    def setUp(self):
+        FastSegmentSelector(self.extraction_identifier).prepare_model_folder()
 
     def test_performance_100(self):
-        extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 
         pdf_data_1 = PdfData.from_texts(["1, 2"])
@@ -31,16 +35,15 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
         ]
 
         multi_option_data = ExtractionData(
-            multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
+            multi_value=True, options=options, samples=samples, extraction_identifier=self.extraction_identifier
         )
 
         fast_segment_selector_fuzzy_commas = FastSegmentSelectorFuzzyCommas()
-        performance = fast_segment_selector_fuzzy_commas.get_performance(multi_option_data)
+        performance = fast_segment_selector_fuzzy_commas.get_performance(multi_option_data, multi_option_data)
 
         self.assertEqual(100, performance)
 
     def test_performance_83(self):
-        extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 
         pdf_data_1 = PdfData.from_texts(["1, 2"])
@@ -56,16 +59,15 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
         ]
 
         multi_option_data = ExtractionData(
-            multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
+            multi_value=True, options=options, samples=samples, extraction_identifier=self.extraction_identifier
         )
 
         fast_segment_selector_fuzzy_commas = FastSegmentSelectorFuzzyCommas()
-        performance = fast_segment_selector_fuzzy_commas.get_performance(multi_option_data)
+        performance = fast_segment_selector_fuzzy_commas.get_performance(multi_option_data, multi_option_data)
 
         self.assertAlmostEqual(83.33333333333334, performance)
 
     def test_predictions(self):
-        extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [
             Option(id="1", label="1"),
             Option(id="2", label="2"),
@@ -87,7 +89,7 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
         ]
 
         multi_option_data = ExtractionData(
-            multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
+            multi_value=True, options=options, samples=samples, extraction_identifier=self.extraction_identifier
         )
 
         fast_segment_selector_fuzzy_commas = FastSegmentSelectorFuzzyCommas()
@@ -98,7 +100,7 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
             TrainingSample(pdf_data_5, LabeledData(values=[])),
         ]
         prediction_multi_option_data = ExtractionData(
-            multi_value=True, options=options, samples=prediction_samples, extraction_identifier=extraction_identifier
+            multi_value=True, options=options, samples=prediction_samples, extraction_identifier=self.extraction_identifier
         )
         predictions = fast_segment_selector_fuzzy_commas.predict(prediction_multi_option_data)
 
@@ -113,7 +115,6 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
         self.assertTrue(Option(id="3", label="3") in predictions[1])
 
     def test_predictions_when_empy_data(self):
-        extraction_identifier = ExtractionIdentifier(run_name=self.TENANT, extraction_name=self.extraction_id)
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 
         pdf_data_1 = PdfData.from_texts(["1, 2"])
@@ -127,7 +128,7 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
         ]
 
         multi_option_data = ExtractionData(
-            multi_value=True, options=options, samples=samples, extraction_identifier=extraction_identifier
+            multi_value=True, options=options, samples=samples, extraction_identifier=self.extraction_identifier
         )
 
         fast_segment_selector_fuzzy_commas = FastSegmentSelectorFuzzyCommas()
@@ -140,7 +141,7 @@ class TestFastSegmentSelectorFuzzyCommas(TestCase):
             TrainingSample(PdfData.from_texts([""]), LabeledData(values=[])),
         ]
         prediction_multi_option_data = ExtractionData(
-            multi_value=True, options=options, samples=prediction_samples, extraction_identifier=extraction_identifier
+            multi_value=True, options=options, samples=prediction_samples, extraction_identifier=self.extraction_identifier
         )
         predictions = fast_segment_selector_fuzzy_commas.predict(prediction_multi_option_data)
 
