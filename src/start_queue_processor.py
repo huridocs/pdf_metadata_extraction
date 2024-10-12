@@ -84,9 +84,7 @@ if __name__ == "__main__":
     except Exception:
         pass
 
-    config_logger.info("Is GPU used?")
-    config_logger.info(torch.cuda.is_available())
-
+    config_logger.info(f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
-    queue_processor.start(process, run_once=True)
+    queue_processor.start(process)

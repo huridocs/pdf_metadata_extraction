@@ -14,12 +14,18 @@ import lightgbm as lgb
 
 
 class FastSegmentSelector:
-    def __init__(self, extraction_identifier: ExtractionIdentifier):
+    def __init__(self, extraction_identifier: ExtractionIdentifier, method_name: str = ""):
         self.extraction_identifier = extraction_identifier
         self.text_types = [TokenType.TEXT, TokenType.LIST_ITEM, TokenType.TITLE, TokenType.SECTION_HEADER, TokenType.CAPTION]
         self.previous_words, self.next_words, self.text_segments = [], [], []
+        self.method_name = method_name
 
-        self.fast_segment_selector_path = Path(self.extraction_identifier.get_path(), self.__class__.__name__)
+        if method_name:
+            self.fast_segment_selector_path = Path(
+                self.extraction_identifier.get_path(), method_name, self.__class__.__name__
+            )
+        else:
+            self.fast_segment_selector_path = Path(self.extraction_identifier.get_path(), self.__class__.__name__)
         if not self.fast_segment_selector_path.exists():
             os.makedirs(self.fast_segment_selector_path, exist_ok=True)
 
@@ -95,7 +101,10 @@ class FastSegmentSelector:
         Path(self.next_words_path).write_text(json.dumps(self.next_words))
 
     def create_model(self, segments: list[PdfDataSegment]):
-        if not segments or Path(self.model_path).exists():
+        if not segments:
+            return
+
+        if not self.method_name and Path(self.model_path).exists():
             return
 
         self.text_segments = [x for x in segments if x.segment_type in self.text_types]
