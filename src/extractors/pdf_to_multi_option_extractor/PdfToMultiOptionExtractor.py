@@ -58,6 +58,9 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Pr
 from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.SentenceSelectorFuzzyCommas import (
     SentenceSelectorFuzzyCommas,
 )
+from extractors.segment_selector.FastAndPositionsSegmentSelector import FastAndPositionsSegmentSelector
+from extractors.segment_selector.FastSegmentSelector import FastSegmentSelector
+from extractors.segment_selector.SegmentSelector import SegmentSelector
 from send_logs import send_logs
 
 RETRAIN_SAMPLES_THRESHOLD = 250
@@ -100,6 +103,10 @@ class PdfToMultiOptionExtractor(ExtractorBase):
     def create_model(self, extraction_data: ExtractionData):
         self.options = extraction_data.options
         self.multi_value = extraction_data.multi_value
+
+        SegmentSelector(self.extraction_identifier).prepare_model_folder()
+        FastSegmentSelector(self.extraction_identifier).prepare_model_folder()
+        FastAndPositionsSegmentSelector(self.extraction_identifier).prepare_model_folder()
 
         send_logs(self.extraction_identifier, self.get_stats(extraction_data))
 
