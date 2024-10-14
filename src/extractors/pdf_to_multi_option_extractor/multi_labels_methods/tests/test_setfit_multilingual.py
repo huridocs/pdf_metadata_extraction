@@ -63,10 +63,12 @@ class TestSetFitMultilingualMethod(TestCase):
 
         self.assertEqual(3, len(predictions))
         self.assertIn(Option(id="1", label="1"), predictions[0])
+        self.assertNotIn(Option(id="5", label="5"), predictions[0])
+
         self.assertIn(Option(id="2", label="2"), predictions[1])
         self.assertIn(Option(id="3", label="3"), predictions[1])
+        self.assertNotIn(Option(id="4", label="4"), predictions[1])
+
         self.assertIn(Option(id="4", label="4"), predictions[2])
         self.assertIn(Option(id="1", label="1"), predictions[2])
-        self.assertNotIn(Option(id="5", label="5"), predictions[0])
-        self.assertNotIn(Option(id="4", label="4"), predictions[1])
         self.assertNotIn(Option(id="3", label="3"), predictions[2])
