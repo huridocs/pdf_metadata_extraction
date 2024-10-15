@@ -11,6 +11,7 @@ class LabeledData(BaseModel):
     entity_name: str = ""
     language_iso: str = ""
     label_text: str = ""
+    empty_value: bool = False
     values: list[Option] = list()
     source_text: str = ""
     page_width: float = 0
