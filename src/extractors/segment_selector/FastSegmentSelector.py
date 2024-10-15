@@ -9,16 +9,18 @@ import numpy as np
 from pdf_token_type_labels.TokenType import TokenType
 
 from data.ExtractionIdentifier import ExtractionIdentifier
+from data.PdfData import PdfData
 from data.PdfDataSegment import PdfDataSegment
 import lightgbm as lgb
 
+from extractors.segment_selector.SegmentSelectorBase import SegmentSelectorBase
 
-class FastSegmentSelector:
+
+class FastSegmentSelector(SegmentSelectorBase):
     def __init__(self, extraction_identifier: ExtractionIdentifier, method_name: str = ""):
-        self.extraction_identifier = extraction_identifier
+        super().__init__(extraction_identifier, method_name)
         self.text_types = [TokenType.TEXT, TokenType.LIST_ITEM, TokenType.TITLE, TokenType.SECTION_HEADER, TokenType.CAPTION]
         self.previous_words, self.next_words, self.text_segments = [], [], []
-        self.method_name = method_name
 
         if method_name:
             self.fast_segment_selector_path = Path(
@@ -161,3 +163,10 @@ class FastSegmentSelector:
 
         if exists(self.next_words_path):
             self.next_words = json.loads(Path(self.next_words_path).read_text())
+
+    def get_predictions_for_performance(self, training_set: list[PdfData], test_set: list[PdfData]) -> list[int]:
+        training_segments = [x for pdf_data in training_set for x in pdf_data.pdf_data_segments]
+        test_segments = [x for pdf_data in test_set for x in pdf_data.pdf_data_segments]
+        self.create_model(training_segments)
+        predictions = self.predict(test_segments)
+        return [1 if segment in predictions else 0 for segment in test_segments]

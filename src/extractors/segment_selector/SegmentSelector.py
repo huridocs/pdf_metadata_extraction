@@ -7,12 +7,13 @@ from pathlib import Path
 
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.PdfData import PdfData
+from extractors.segment_selector.SegmentSelectorBase import SegmentSelectorBase
 from extractors.segment_selector.methods.lightgbm_frequent_words.LightgbmFrequentWords import LightgbmFrequentWords
 
 
-class SegmentSelector:
-    def __init__(self, extraction_identifier: ExtractionIdentifier):
-        self.extraction_identifier = extraction_identifier
+class SegmentSelector(SegmentSelectorBase):
+    def __init__(self, extraction_identifier: ExtractionIdentifier, method_name: str = ""):
+        super().__init__(extraction_identifier, method_name)
         self.model_path = join(self.extraction_identifier.get_path(), "segment_predictor_model", "model.model")
         self.model = self.load_model()
 
@@ -69,3 +70,8 @@ class SegmentSelector:
             for segment in pdf_metadata.pdf_data_segments:
                 segment.ml_label = 1 if predictions[index] > 0.5 else 0
                 index += 1
+
+    def get_predictions_for_performance(self, training_set: list[PdfData], test_set: list[PdfData]) -> list[int]:
+        self.create_model(training_set)
+        self.set_extraction_segments(test_set)
+        return [segment.ml_label for pdf_data in test_set for segment in pdf_data.pdf_data_segments]
