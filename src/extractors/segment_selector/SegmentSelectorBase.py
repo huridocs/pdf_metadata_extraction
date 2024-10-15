@@ -17,3 +17,6 @@ class SegmentSelectorBase(ABC):
     @abstractmethod
     def get_predictions_for_performance(self, training_set: list[PdfData], test_set: list[PdfData]) -> list[int]:
         pass
+
+    def get_name(self):
+        return self.__class__.__name__

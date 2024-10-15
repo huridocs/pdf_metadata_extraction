@@ -169,3 +169,4 @@ class FastSegmentSelector(SegmentSelectorBase):
         test_segments = [x for pdf_data in test_set for x in pdf_data.pdf_data_segments]
         self.create_model(training_segments)
         predictions = self.predict(test_segments)
+        return [1 if segment in predictions else 0 for segment in test_segments]
