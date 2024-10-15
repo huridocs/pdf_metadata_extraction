@@ -22,7 +22,7 @@ DATASETS = [
     "rightdocs_titles",
     "secretary",
     "semantic_president",
-    "signatories"
+    "signatories",
 ]
 
 
@@ -43,24 +43,27 @@ def get_data_for_performance(filter_datasets: list[str] = None) -> dict[str, lis
             else:
                 pdf_data: PdfData = cache_pdf_data(pdf_name, Path(pickle_path))
 
-            segmentation_data = SegmentationData(page_width=0,
-                                                 page_height=0,
-                                                 xml_segments_boxes=[],
-                                                 label_segments_boxes=get_labels(dataset, pdf_name))
+            segmentation_data = SegmentationData(
+                page_width=0, page_height=0, xml_segments_boxes=[], label_segments_boxes=get_labels(dataset, pdf_name)
+            )
             pdf_data.set_ml_label_from_segmentation_data(segmentation_data)
             pdf_data_per_dataset[dataset].append(pdf_data)
 
     return pdf_data_per_dataset
 
+
 def get_labels(dataset, pdf_name):
     label_segments_boxes = []
-    labels = json.loads(Path(LABELED_DATA_PATH, dataset, pdf_name, 'labels.json').read_text())
-    for page in labels['pages']:
-        for label in page['labels']:
+    labels = json.loads(Path(LABELED_DATA_PATH, dataset, pdf_name, "labels.json").read_text())
+    for page in labels["pages"]:
+        for label in page["labels"]:
             label_segments_boxes.append(
-                SegmentBox(left=label['left'],
-                           top=label['top'],
-                           width=label['width'],
-                           height=label['height'],
-                           page_number=page['number']))
+                SegmentBox(
+                    left=label["left"],
+                    top=label["top"],
+                    width=label["width"],
+                    height=label["height"],
+                    page_number=page["number"],
+                )
+            )
     return label_segments_boxes
