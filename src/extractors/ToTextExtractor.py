@@ -5,6 +5,7 @@ from pathlib import Path
 from config import config_logger
 from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
+from data.LogsMessage import Severity
 from data.PredictionSample import PredictionSample
 from data.Suggestion import Suggestion
 from extractors.ExtractorBase import ExtractorBase
@@ -111,7 +112,12 @@ class ToTextExtractor(ExtractorBase):
         for method in self.METHODS:
             method_instance = method(self.extraction_identifier)
             send_logs(self.extraction_identifier, f"Checking {method_instance.get_name()}")
-            performance = method_instance.performance(training_set, test_set)
+            try:
+                performance = method_instance.performance(training_set, test_set)
+            except Exception as e:
+                message = f"Error checking {method_instance.get_name()}: {e}"
+                send_logs(self.extraction_identifier, message, Severity.error)
+                performance = 0
             performance_log += f"{method_instance.get_name()}: {round(performance, 2)}%\n"
             send_logs(self.extraction_identifier, f"Performance {method_instance.get_name()}: {performance}%")
             if performance == 100:
