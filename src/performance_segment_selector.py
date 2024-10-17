@@ -30,11 +30,12 @@ def print_results(results):
         average_precision = round(sum(precisions) / len(precisions), 2)
         average_recall = round(sum(recalls) / len(recalls), 2)
         average_seconds = round(sum(seconds) / len(seconds))
-
+        samples = sum([x.samples for x in results if x.method == method.get_name()])
         results.append(
             SegmentSelectorResults(
                 method=method.get_name(),
                 dataset="Average",
+                samples=samples,
                 precision=average_precision,
                 recall=average_recall,
                 seconds=average_seconds,
@@ -68,6 +69,7 @@ def get_performance_segment_selector():
             selector_results = SegmentSelectorResults(
                 method=method.get_name(),
                 dataset=dataset,
+                samples=len(pdfs_data),
                 precision=round(100 * precision_score(truth, predicted_labels), 2),
                 recall=round(100 * recall_score(truth, predicted_labels), 2),
                 seconds=round(time() - start),
@@ -75,7 +77,7 @@ def get_performance_segment_selector():
 
             results.append(selector_results)
 
-        print_results(results)
+    print_results(results)
 
 
 if __name__ == "__main__":
