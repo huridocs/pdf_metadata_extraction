@@ -9,7 +9,9 @@ from tdda import *
 class PdfToTextRegexMethod(ToTextExtractorMethod):
 
     def train(self, extraction_data: ExtractionData):
-        regex_list = rexpy.extract([x.labeled_data.label_text for x in extraction_data.samples])
+        samples = [x.labeled_data.label_text for x in extraction_data.samples]
+        samples = [sample for sample in samples if sample]
+        regex_list = rexpy.extract(samples)
         regex_list = [regex[1:-1] for regex in regex_list]
         self.save_json("regex_list.json", regex_list)
 

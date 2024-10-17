@@ -17,10 +17,23 @@ class Suggestion(BaseModel):
     xml_file_name: str = ""
     entity_name: str = ""
     text: str = ""
+    empty_suggestion: bool = False
     values: list[Option] = list()
     segment_text: str = ""
     page_number: int = 1
     segments_boxes: list[SegmentBox] = list()
+
+    def is_empty(self):
+        if self.empty_suggestion:
+            return True
+
+        return not self.text and not self.values
+
+    def mark_suggestion_if_empty(self):
+        if self.is_empty():
+            self.empty_suggestion = True
+
+        return self
 
     def to_dict(self):
         suggestion_dict = self.model_dump()

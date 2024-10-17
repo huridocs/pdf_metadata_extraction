@@ -14,9 +14,6 @@ from extractors.pdf_to_multi_option_extractor.multi_option_extraction_methods.Fa
 
 
 class SentenceSelectorFuzzyCommas(FastSegmentSelectorFuzzyCommas):
-
-    REPORT_ERRORS = False
-
     def train(self, multi_option_data: ExtractionData):
         self.set_parameters(multi_option_data)
         extraction_data_by_sentences = self.get_extraction_data_by_sentence(multi_option_data)

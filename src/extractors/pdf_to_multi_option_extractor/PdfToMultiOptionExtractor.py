@@ -211,7 +211,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
             performance = method.get_performance(train_set, test_set)
         except Exception as e:
             severity = Severity.error if method.REPORT_ERRORS else Severity.info
-            send_logs(self.extraction_identifier, f"Error checking {method.get_name()}: {e}", severity)
+            send_logs(self.extraction_identifier, f"Error checking {method.get_name()}", severity, e)
             performance = 0
 
         self.reset_extraction_data(train_set)

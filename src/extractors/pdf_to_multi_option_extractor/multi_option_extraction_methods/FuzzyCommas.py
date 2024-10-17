@@ -34,7 +34,6 @@ class FuzzyCommas(PdfMultiOptionMethod):
             text = pdf_segment.text_content
             texts_separated_by_comma = self.clean_texts(re.split(",|:| and ", text), False)
             for one_piece_text in texts_separated_by_comma:
-
                 appearance = self.get_appearances_one_segment(one_piece_text, aliases)
 
                 if appearance:
@@ -46,37 +45,37 @@ class FuzzyCommas(PdfMultiOptionMethod):
         return appearances, not_found_texts
 
     def get_appearances_one_segment(self, text: str, aliases: dict[str, list[str]]) -> str:
-        for option in self.options_cleaned_words_sorted_by_length:
-            if len(text) < len(option) * 0.92 or len(text) > len(option) * 1.2:
+        for option_cleaned in self.options_cleaned_words_sorted_by_length:
+            if len(text) < len(option_cleaned) * 0.92 or len(text) > len(option_cleaned) * 1.2:
                 continue
 
-            if fuzz.partial_ratio(option, self.clean_text(text, True)) >= self.threshold:
-                return self.options_cleaned[self.options_cleaned_words_sorted.index(option)]
+            if fuzz.partial_ratio(option_cleaned, self.clean_text(text, True)) >= self.threshold:
+                return self.options_cleaned[self.options_cleaned_words_sorted.index(option_cleaned)]
 
-        for option in self.options_cleaned_by_length:
-            if not aliases or option not in aliases:
+        for option_cleaned in self.options_cleaned_by_length:
+            if not aliases or option_cleaned not in aliases:
                 continue
 
-            for alias in aliases[option]:
+            for alias in aliases[option_cleaned]:
                 if rapidfuzz.fuzz.ratio(alias, text) > self.threshold:
-                    return option
+                    return option_cleaned
 
         return ""
 
     @staticmethod
-    def clean_text(text: str, sort: bool) -> str:
+    def clean_text(text: str, sort_words: bool) -> str:
         text = text.lower()
         text = "".join([letter for letter in text if letter.isalnum() or letter == " "])
 
-        if sort:
+        if sort_words:
             text = " ".join(sorted(text.split()))
         else:
             text = " ".join(text.split())
 
         return text
 
-    def clean_texts(self, texts: list[str], sort: bool) -> list[str]:
-        return list([self.clean_text(option, sort) for option in texts])
+    def clean_texts(self, texts: list[str], sort_words: bool) -> list[str]:
+        return list([self.clean_text(option, sort_words) for option in texts])
 
     def predict(self, multi_option_data: ExtractionData) -> list[list[Option]]:
         self.set_parameters(multi_option_data)
@@ -84,6 +83,9 @@ class FuzzyCommas(PdfMultiOptionMethod):
 
         try:
             aliases = json.loads(self.get_aliases_path().read_text())
+            if not aliases or not isinstance(aliases, dict):
+                raise FileNotFoundError
+
         except FileNotFoundError:
             aliases = dict()
 
@@ -138,7 +140,7 @@ class FuzzyCommas(PdfMultiOptionMethod):
         return aliases
 
     def set_options_variants(self):
-        self.options_cleaned = self.clean_texts(texts=[x.label for x in self.options], sort=False)
+        self.options_cleaned = self.clean_texts(texts=[x.label for x in self.options], sort_words=False)
         self.options_cleaned_by_length = sorted(self.options_cleaned, key=lambda x: -len(x))
-        self.options_cleaned_words_sorted = self.clean_texts(texts=[x.label for x in self.options], sort=True)
+        self.options_cleaned_words_sorted = self.clean_texts(texts=[x.label for x in self.options], sort_words=True)
         self.options_cleaned_words_sorted_by_length = sorted(self.options_cleaned_words_sorted, key=lambda x: -len(x))

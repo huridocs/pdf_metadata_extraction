@@ -41,6 +41,7 @@ BASE_LINE = {
     "d4la_document_type": (44.07, "CleanBeginningDotDigits500_SingleLabelSetFit"),
     "cejil_secretary": (80.0, "FuzzyAll75"),
     "countries_in_favor": (96.89, "PreviousWordsSentenceSelectorFuzzyCommas"),
+    "countries_in_favor_empty_labels": (96.89, "PreviousWordsSentenceSelectorFuzzyCommas"),
     "cejil_judge": (92.86, "FuzzyLast"),
 }
 
@@ -189,7 +190,7 @@ def get_predictions(dataset: ExtractionData) -> (list[list[int]], list[list[int]
 
 def get_mistakes() -> dict[str, (float, str)]:
     f1s_method_name = dict()
-    for dataset in get_multi_option_benchmark_data(filter_by=["cejil_judge"]):
+    for dataset in get_multi_option_benchmark_data(filter_by=[]):
         truth_one_hot, prediction_one_hot, method_name, test_samples = get_predictions(dataset)
 
         correct = 0
