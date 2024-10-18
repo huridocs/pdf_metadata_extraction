@@ -10,13 +10,6 @@ from data.PredictionSample import PredictionSample
 from data.Suggestion import Suggestion
 from extractors.ExtractorBase import ExtractorBase
 from extractors.ToTextExtractorMethod import ToTextExtractorMethod
-from extractors.text_to_text_extractor.methods.DateParserMethod import DateParserMethod
-from extractors.text_to_text_extractor.methods.DateParserWithBreaksMethod import DateParserWithBreaksMethod
-from extractors.text_to_text_extractor.methods.InputWithoutSpaces import InputWithoutSpaces
-from extractors.text_to_text_extractor.methods.MT5TrueCaseEnglishSpanishMethod import MT5TrueCaseEnglishSpanishMethod
-from extractors.text_to_text_extractor.methods.RegexMethod import RegexMethod
-from extractors.text_to_text_extractor.methods.RegexSubtractionMethod import RegexSubtractionMethod
-from extractors.text_to_text_extractor.methods.SameInputOutputMethod import SameInputOutputMethod
 from send_logs import send_logs
 
 RETRAIN_SAMPLES_THRESHOLD = 250
@@ -115,8 +108,8 @@ class ToTextExtractor(ExtractorBase):
             try:
                 performance = method_instance.performance(training_set, test_set)
             except Exception as e:
-                message = f"Error checking {method_instance.get_name()}: {e}"
-                send_logs(self.extraction_identifier, message, Severity.error)
+                message = f"Error checking {method_instance.get_name()}"
+                send_logs(self.extraction_identifier, message, Severity.error, e)
                 performance = 0
             performance_log += f"{method_instance.get_name()}: {round(performance, 2)}%\n"
             send_logs(self.extraction_identifier, f"Performance {method_instance.get_name()}: {performance}%")

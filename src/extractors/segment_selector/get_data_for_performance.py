@@ -19,6 +19,7 @@ DATASETS = [
     "plan_many_date",
     "plan_many_title",
     "president",
+    "president_empty_labels",
     "rightdocs_titles",
     "secretary",
     "semantic_president",

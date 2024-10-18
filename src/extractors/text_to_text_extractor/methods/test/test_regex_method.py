@@ -77,6 +77,24 @@ class TestRegexMethod(TestCase):
         self.assertEqual(1, len(predictions))
         self.assertEqual("", predictions[0])
 
+    def test_regex_when_empty_labels(self):
+        sample_1 = [TrainingSample(labeled_data=LabeledData(label_text="123", language_iso="en"), tags_texts=[""])]
+        sample_2 = [TrainingSample(labeled_data=LabeledData(label_text="321", language_iso="en"), tags_texts=[""])]
+        empty_labels = [TrainingSample(labeled_data=LabeledData(label_text="", language_iso="en"), tags_texts=[""])] * 100
+
+        extraction_data = ExtractionData(
+            samples=sample_1 + empty_labels + sample_2, extraction_identifier=extraction_identifier
+        )
+
+        regex_method = RegexMethod(extraction_identifier)
+
+        regex_method.train(extraction_data)
+
+        texts = ["foo 555 var"]
+        predictions = regex_method.predict([PredictionSample.from_texts(texts)])
+        self.assertEqual(1, len(predictions))
+        self.assertEqual("555", predictions[0])
+
     def test_retrain(self):
         sample = [TrainingSample(labeled_data=LabeledData(label_text="1", language_iso="en"), tags_texts=[""])]
         extraction_data = ExtractionData(samples=sample, extraction_identifier=extraction_identifier)
