@@ -12,6 +12,8 @@ import sentry_sdk
 from config import config_logger, MONGO_HOST, MONGO_PORT
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
+from data.Option import Option
+from data.Options import Options
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion
 from XmlFile import XmlFile
@@ -123,6 +125,20 @@ async def get_suggestions(tenant: str, extraction_id: str):
         send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
 
         return json.dumps(suggestions_list)
+    except Exception:
+        config_logger.error("Error", exc_info=1)
+        raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
+
+
+@app.post("/options")
+def save_options(options: Options):
+    try:
+        extraction_identifier = ExtractionIdentifier(run_name=options.tenant, extraction_name=options.extraction_id)
+        options_list = [option.model_dump() for option in options.options]
+        extraction_identifier.get_options_path().write_text(json.dumps(options_list))
+        os.utime(extraction_identifier.get_options_path().parent)
+        config_logger.info(f"Options {options.options[:150]} saved for {extraction_identifier}")
+        return True
     except Exception:
         config_logger.error("Error", exc_info=1)
         raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")

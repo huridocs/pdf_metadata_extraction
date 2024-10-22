@@ -183,7 +183,11 @@ class TestEndToEnd(TestCase):
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
 
-        options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
+        options = {
+            "tenant": tenant,
+            "extraction_id": extraction_id,
+            "options": [Option(id="1", label="United Nations").model_dump(), Option(id="2", label="Other").model_dump()],
+        }
 
         labeled_data_json = {
             "id": extraction_id,
@@ -197,6 +201,7 @@ class TestEndToEnd(TestCase):
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+        requests.post(f"{SERVER_URL}/options", json=options)
 
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
@@ -216,7 +221,7 @@ class TestEndToEnd(TestCase):
         task = ExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id, options=options, multi_value=False, metadata={"name": "test"}),
+            params=Params(id=extraction_id, multi_value=False, metadata={"name": "test"}),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()

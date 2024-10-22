@@ -54,7 +54,11 @@ class PdfMultiOptionMethod:
             predictions = [x[:1] for x in predictions]
 
         predictions_one_hot = self.one_hot_to_options_list(predictions, self.options)
-        score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
+
+        try:
+            score = f1_score(truth_one_hot, predictions_one_hot, average="micro")
+        except ValueError:
+            score = 0
 
         return 100 * score
 

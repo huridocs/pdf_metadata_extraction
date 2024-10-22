@@ -122,8 +122,9 @@ class FuzzyCommas(PdfMultiOptionMethod):
     def get_aliases(self, sample: TrainingSample) -> dict[str, str]:
         segments = [segment for segment in sample.pdf_data.pdf_data_segments if segment.ml_label]
         appearances, not_found_texts = self.get_appearances_for_segments(segments, dict())
-        truth_options = self.clean_texts([option.label for option in sample.labeled_data.values], False)
-
+        values_ids = [option.id for option in sample.labeled_data.values]
+        values_labels = [option.label for option in self.options if option.id in values_ids]
+        truth_options = self.clean_texts(values_labels, False)
         not_found_options = [option for option in truth_options if option not in appearances]
         return self.find_aliases(not_found_options, not_found_texts)
 
