@@ -93,7 +93,6 @@ class PdfToMultiOptionExtractor(ExtractorBase):
     def __init__(self, extraction_identifier: ExtractionIdentifier):
         super().__init__(extraction_identifier)
         self.base_path = join(self.extraction_identifier.get_path(), "multi_option_extractor")
-        self.options_path = join(self.base_path, "options.json")
         self.multi_value_path = join(self.base_path, "multi_value.json")
         self.method_name_path = Path(join(self.base_path, "method_name.json"))
 
@@ -101,8 +100,9 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         self.multi_value = False
 
     def create_model(self, extraction_data: ExtractionData):
-        self.options = extraction_data.options
+        self.options = self.load_options(extraction_data.options)
         self.multi_value = extraction_data.multi_value
+        send_logs(self.extraction_identifier, f"options {[x.model_dump() for x in self.options]}")
 
         SegmentSelector(self.extraction_identifier).prepare_model_folder()
         FastSegmentSelector(self.extraction_identifier).prepare_model_folder()
@@ -123,7 +123,6 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         if len(extraction_data.samples) < RETRAIN_SAMPLES_THRESHOLD:
             method.train(extraction_data)
 
-        self.save_json(self.options_path, [x.model_dump() for x in extraction_data.options])
         self.save_json(self.multi_value_path, extraction_data.multi_value)
         self.save_json(str(self.method_name_path), method.get_name())
 
@@ -146,7 +145,8 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         return suggestions
 
     def get_predictions(self, predictions_samples: list[PredictionSample]) -> (list[TrainingSample], list[list[Option]]):
-        self.load_options()
+        self.options = self.load_options()
+        self.multi_value = self.load_multi_value()
         training_samples = [TrainingSample(pdf_data=sample.pdf_data) for sample in predictions_samples]
         extraction_data = ExtractionData(
             multi_value=self.multi_value,
@@ -165,15 +165,22 @@ class PdfToMultiOptionExtractor(ExtractorBase):
 
         return method.get_samples_for_context(extraction_data), prediction
 
-    def load_options(self):
-        if not exists(self.options_path) or not exists(self.multi_value_path):
-            return
+    def load_options(self, options: list[Option] = None) -> list[Option]:
+        if options:
+            self.extraction_identifier.get_options_path().write_text(json.dumps([x.model_dump() for x in options]))
+            return options
 
-        with open(self.options_path, "r") as file:
-            self.options = [Option(**x) for x in json.load(file)]
+        if not exists(self.extraction_identifier.get_options_path()):
+            return []
+
+        return [Option(**x) for x in json.loads(self.extraction_identifier.get_options_path().read_text())]
+
+    def load_multi_value(self) -> bool:
+        if not exists(self.multi_value_path):
+            return False
 
         with open(self.multi_value_path, "r") as file:
-            self.multi_value = json.load(file)
+            return json.load(file)
 
     def get_best_method(self, multi_option_data: ExtractionData) -> PdfMultiOptionMethod:
         best_method_instance = self.METHODS[0]
@@ -228,7 +235,7 @@ class PdfToMultiOptionExtractor(ExtractorBase):
         return self.METHODS[0]
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
-        if not extraction_data.options:
+        if not extraction_data.options and not extraction_data.extraction_identifier.get_options_path().exists():
             return False
 
         for sample in extraction_data.samples:

@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 from os.path import join, exists
 from pathlib import Path
 from typing import Type
@@ -54,9 +53,8 @@ class TextToMultiOptionExtractor(ExtractorBase):
         super().__init__(extraction_identifier)
 
         self.base_path = join(self.extraction_identifier.get_path(), "text_to_multi_option")
-        self.options_path = join(self.base_path, "options.json")
-        self.multi_value_path = join(self.base_path, "multi_value.json")
-        self.method_name_path = Path(join(self.base_path, "method_name.json"))
+        self.multi_value_path = Path(self.base_path, "multi_value.json")
+        self.method_name_path = Path(self.base_path, "method_name.json")
 
         self.options: list[Option] = list()
         self.multi_value = False
@@ -80,7 +78,8 @@ class TextToMultiOptionExtractor(ExtractorBase):
         return suggestions
 
     def get_predictions_method(self):
-        self.load_options()
+        self.options = self.load_options()
+        self.multi_value = self.load_multi_value()
         method_name = json.loads(self.method_name_path.read_text())
         for method in self.METHODS:
             method_instance = method(self.extraction_identifier, self.options, self.multi_value)
@@ -89,25 +88,30 @@ class TextToMultiOptionExtractor(ExtractorBase):
 
         return self.METHODS[0](self.extraction_identifier, self.options, self.multi_value)
 
-    def load_options(self):
-        if not exists(self.options_path) or not exists(self.multi_value_path):
-            return
+    def load_options(self, options: list[Option] = None) -> list[Option]:
+        if options:
+            self.extraction_identifier.get_options_path().write_text(json.dumps([x.model_dump() for x in options]))
+            return options
 
-        with open(self.options_path, "r") as file:
-            self.options = [Option(**x) for x in json.load(file)]
+        if not exists(self.extraction_identifier.get_options_path()):
+            return []
 
-        with open(self.multi_value_path, "r") as file:
-            self.multi_value = json.load(file)
+        return [Option(**x) for x in json.loads(self.extraction_identifier.get_options_path().read_text())]
+
+    def load_multi_value(self) -> bool:
+        if not self.multi_value_path.exists():
+            return False
+
+        return json.loads(self.multi_value_path.read_text())
 
     def create_model(self, extraction_data: ExtractionData) -> tuple[bool, str]:
-        self.options = extraction_data.options
+        self.options = self.load_options(extraction_data.options)
         self.multi_value = extraction_data.multi_value
 
         best_method_instance = self.get_best_method(extraction_data)
         best_method_instance.train(extraction_data)
 
-        self.save_json(self.options_path, [x.model_dump() for x in extraction_data.options])
-        self.save_json(self.multi_value_path, extraction_data.multi_value)
+        self.save_json(str(self.multi_value_path), extraction_data.multi_value)
         self.save_json(str(self.method_name_path), best_method_instance.get_name())
         return True, ""
 
@@ -150,7 +154,7 @@ class TextToMultiOptionExtractor(ExtractorBase):
             method_instance.remove_model()
 
     def can_be_used(self, extraction_data: ExtractionData) -> bool:
-        if not extraction_data.options:
+        if not extraction_data.options and not extraction_data.extraction_identifier.get_options_path().exists():
             return False
 
         for sample in extraction_data.samples:

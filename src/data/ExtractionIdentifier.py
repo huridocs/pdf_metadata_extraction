@@ -16,6 +16,12 @@ class ExtractionIdentifier(BaseModel):
     def get_path(self):
         return join(DATA_PATH, self.run_name, self.extraction_name)
 
+    def get_options_path(self):
+        path = Path(join(DATA_PATH, self.run_name, f"{self.extraction_name}_options.json"))
+        if not exists(path.parent):
+            os.makedirs(path.parent, exist_ok=True)
+        return path
+
     def get_extractor_used_path(self) -> Path:
         path = Path(join(DATA_PATH, self.run_name, f"{self.extraction_name}.txt"))
         if not exists(path.parent):
