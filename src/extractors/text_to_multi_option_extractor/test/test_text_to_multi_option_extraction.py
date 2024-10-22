@@ -21,9 +21,7 @@ class TestTextToMultiOptionExtraction(TestCase):
 
         multi_option_extraction = TextToMultiOptionExtractor(extraction_identifier)
         no_options = ExtractionData(extraction_identifier=extraction_identifier, samples=samples_text)
-        no_text = ExtractionData(
-            extraction_identifier=extraction_identifier, options=options, samples=samples_no_text
-        )
+        no_text = ExtractionData(extraction_identifier=extraction_identifier, options=options, samples=samples_no_text)
         valid_extraction_data = ExtractionData(
             extraction_identifier=extraction_identifier, options=options, samples=samples_text
         )
