@@ -12,7 +12,6 @@ import sentry_sdk
 from config import config_logger, MONGO_HOST, MONGO_PORT
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
-from data.Option import Option
 from data.Options import Options
 from data.PredictionData import PredictionData
 from data.Suggestion import Suggestion

@@ -1,6 +1,6 @@
 from time import time
 
-from sklearn.metrics import precision_score, recall_score, average_precision_score
+from sklearn.metrics import precision_score, recall_score
 from py_markdown_table.markdown_table import markdown_table
 from data.ExtractionIdentifier import ExtractionIdentifier
 from extractors.segment_selector.FastSegmentSelector import FastSegmentSelector

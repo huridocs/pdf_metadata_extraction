@@ -7,11 +7,20 @@ from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorDateParserMetho
 from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorDateParserWithBreaksMethod import (
     FastSegmentSelectorDateParserWithBreaksMethod,
 )
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorGlinerDateParserMethod import (
+    FastSegmentSelectorGlinerDateParserMethod,
+)
 from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorInputWithoutSpaces import (
     FastSegmentSelectorInputWithoutSpaces,
 )
 from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorMT5TrueCaseEnglishSpanishMethod import (
     FastSegmentSelectorMT5TrueCaseEnglishSpanishMethod,
+)
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorNerFirstAppearanceMethod import (
+    FastSegmentSelectorNerFirstAppearanceMethod,
+)
+from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorNerLastAppearanceMethod import (
+    FastSegmentSelectorNerLastAppearanceMethod,
 )
 from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorRegexMethod import FastSegmentSelectorRegexMethod
 from extractors.pdf_to_text_extractor.methods.FastSegmentSelectorRegexSubtractionMethod import (
@@ -27,9 +36,18 @@ from extractors.pdf_to_text_extractor.methods.SegmentSelectorDateParserMethod im
 from extractors.pdf_to_text_extractor.methods.SegmentSelectorDateParserWithBreaksMethod import (
     SegmentSelectorDateParserWithBreaksMethod,
 )
+from extractors.pdf_to_text_extractor.methods.SegmentSelectorGlinerDateParserMethod import (
+    SegmentSelectorGlinerDateParserMethod,
+)
 from extractors.pdf_to_text_extractor.methods.SegmentSelectorInputWithoutSpaces import SegmentSelectorInputWithoutSpaces
 from extractors.pdf_to_text_extractor.methods.SegmentSelectorMT5TrueCaseEnglishSpanishMethod import (
     SegmentSelectorMT5TrueCaseEnglishSpanishMethod,
+)
+from extractors.pdf_to_text_extractor.methods.SegmentSelectorNerFirstAppearanceMethod import (
+    SegmentSelectorNerFirstAppearanceMethod,
+)
+from extractors.pdf_to_text_extractor.methods.SegmentSelectorNerLastAppearanceMethod import (
+    SegmentSelectorNerLastAppearanceMethod,
 )
 from extractors.pdf_to_text_extractor.methods.SegmentSelectorRegexMethod import SegmentSelectorRegexMethod
 from extractors.pdf_to_text_extractor.methods.SegmentSelectorRegexSubtractionMethod import (
@@ -51,6 +69,9 @@ class PdfToTextExtractor(ToTextExtractor):
         FastSegmentSelectorInputWithoutSpaces,
         FastSegmentSelectorRegexMethod,
         FastSegmentSelectorRegexSubtractionMethod,
+        FastSegmentSelectorGlinerDateParserMethod,
+        FastSegmentSelectorNerFirstAppearanceMethod,
+        FastSegmentSelectorNerLastAppearanceMethod,
         SegmentSelectorInputWithoutSpaces,
         SegmentSelectorSameInputOutputMethod,
         SegmentSelectorRegexMethod,
@@ -62,6 +83,9 @@ class PdfToTextExtractor(ToTextExtractor):
         FastSegmentSelectorDateParserWithBreaksMethod,
         SegmentSelectorDateParserMethod,
         SegmentSelectorDateParserWithBreaksMethod,
+        SegmentSelectorGlinerDateParserMethod,
+        SegmentSelectorNerFirstAppearanceMethod,
+        SegmentSelectorNerLastAppearanceMethod,
         FastSegmentSelectorMT5TrueCaseEnglishSpanishMethod,
         SegmentSelectorMT5TrueCaseEnglishSpanishMethod,
     ]

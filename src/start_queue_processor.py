@@ -20,6 +20,10 @@ from Extractor import Extractor
 from send_logs import send_logs
 
 
+def restart_condition(message: dict[str, any]) -> bool:
+    return ExtractionTask(**message).task == Extractor.CREATE_MODEL_TASK_NAME
+
+
 def process(message: dict[str, any]) -> dict[str, any] | None:
     try:
         task = ExtractionTask(**message)
@@ -87,4 +91,4 @@ if __name__ == "__main__":
     config_logger.info(f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
-    queue_processor.start(process)
+    queue_processor.start(process, restart_condition)
