@@ -11,8 +11,8 @@ from data.PredictionData import PredictionData
 from data.SegmentBox import SegmentBox
 from FilterValidSegmentsPages import FilterValidSegmentsPages
 
-DOCKER_VOLUME_PATH = (
-    f"{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))}/docker_volume"
+DATA_FOLDER_PATH = (
+    f"{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))}/models_data"
 )
 
 
@@ -58,7 +58,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -72,7 +72,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -87,7 +87,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -103,7 +103,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -119,7 +119,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -135,7 +135,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -151,7 +151,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -167,7 +167,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -183,7 +183,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -200,7 +200,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -217,7 +217,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -234,7 +234,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -252,7 +252,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -266,7 +266,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
@@ -282,7 +282,7 @@ class TestFilterValidSegmentPages(TestCase):
         tenant = "tenant_filter"
         extraction_id = "property_filter"
 
-        shutil.rmtree(join(DOCKER_VOLUME_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_FOLDER_PATH, tenant), ignore_errors=True)
 
         filter_valid_segment_pages = FilterValidSegmentsPages(
             ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)

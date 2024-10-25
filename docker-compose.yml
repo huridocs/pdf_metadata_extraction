@@ -9,7 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - data:/app/docker_volume
+      - data:/app/models_data
     depends_on:
       - pdf_metadata_extraction_worker
     environment:
@@ -29,7 +29,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - data:/app/docker_volume
+      - data:/app/models_data
     shm_size: '11gb'
     depends_on:
       - mongo_metadata_extraction

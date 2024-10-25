@@ -20,7 +20,7 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()
-DATA_PATH = join(ROOT_PATH, "docker_volume")
+DATA_PATH = join(ROOT_PATH, "models_data")
 
 HUGGINGFACE_PATH = join(ROOT_PATH, "huggingface")
 

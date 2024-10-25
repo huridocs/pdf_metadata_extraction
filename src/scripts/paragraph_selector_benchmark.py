@@ -159,7 +159,7 @@ def run_one_method(
     method_class_name = snake_case_to_pascal_case(method_name)
     import_from = f"segment_selector.methods.{method_name}.{method_class_name}"
 
-    model_path = Path(join(ROOT_PATH, "docker_volume", "segment_selector", task, "model"))
+    model_path = Path(join(ROOT_PATH, "models_data", "segment_selector", task, "model"))
 
     shutil.rmtree(model_path.parent, ignore_errors=True)
     os.makedirs(model_path.parent)

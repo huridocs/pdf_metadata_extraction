@@ -266,7 +266,7 @@ If the service is running, the end point definitions can be founded in the follo
 
 The end points code can be founded inside the file `app.py`.
 
-The errors are reported to the file `docker_volume/service.log`, if the configuration is not changed (
+The errors are reported to the file `models_data/service.log`, if the configuration is not changed (
 see [Get service logs](#get-service-logs))
 
 ## Queue processor

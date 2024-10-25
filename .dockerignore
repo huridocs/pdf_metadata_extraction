@@ -1,7 +1,7 @@
 /venv/
 /.venv/
 .git
-/docker_volume/
+/models_data/
 /src/tenant_test/
 /huggingface/
 /data/

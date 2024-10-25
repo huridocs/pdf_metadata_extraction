@@ -15,7 +15,7 @@ core
 src/.pytest_cache
 outputs
 /performance_results/mistakes/
-/docker_volume/
+/models_data/
 /huggingface/
 /.ruff_cache/
 /data/
