@@ -1,6 +1,8 @@
 import os
+import shutil
 from contextlib import asynccontextmanager
 import json
+from os.path import join
 
 import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
@@ -9,7 +11,7 @@ import sys
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
 
-from config import config_logger, MONGO_HOST, MONGO_PORT
+from config import config_logger, MONGO_HOST, MONGO_PORT, DATA_PATH
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
 from data.Options import Options
@@ -127,6 +129,12 @@ async def get_suggestions(tenant: str, extraction_id: str):
     except Exception:
         config_logger.error("Error", exc_info=1)
         raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
+
+
+@app.delete("/{tenant}/{extraction_id}")
+async def get_suggestions(tenant: str, extraction_id: str):
+    shutil.rmtree(join(DATA_PATH, tenant, extraction_id), ignore_errors=True)
+    return True
 
 
 @app.post("/options")

@@ -1,8 +1,11 @@
+import shutil
+from os.path import join
 from time import time
 from unittest import TestCase
 
 import torch
 
+from config import DATA_PATH
 from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
@@ -12,6 +15,12 @@ from extractors.text_to_text_extractor.methods.MT5TrueCaseEnglishSpanishMethod i
 
 
 class TestMT5(TestCase):
+    def setUp(self):
+        shutil.rmtree(join(DATA_PATH, "test"), ignore_errors=True)
+
+    def tearDown(self):
+        shutil.rmtree(join(DATA_PATH, "test"), ignore_errors=True)
+
     def test_train(self):
         start = time()
         print("GPU available?")

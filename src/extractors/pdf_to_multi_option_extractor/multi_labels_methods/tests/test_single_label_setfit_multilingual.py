@@ -1,7 +1,10 @@
+import shutil
+from os.path import join
 from unittest import TestCase
 
 import torch
 
+from config import DATA_PATH
 from data.ExtractionData import ExtractionData
 from data.ExtractionIdentifier import ExtractionIdentifier
 from data.LabeledData import LabeledData
@@ -16,6 +19,9 @@ from extractors.pdf_to_multi_option_extractor.multi_labels_methods.SingleLabelSe
 class TestSetFitSingleLabelMultilingualMethod(TestCase):
     TENANT = "single_label_setfit_multilingual_test"
     extraction_id = "extraction_id"
+
+    def tearDown(self):
+        shutil.rmtree(join(DATA_PATH, self.TENANT), ignore_errors=True)
 
     def test_train_and_predict(self):
         if not torch.cuda.is_available():

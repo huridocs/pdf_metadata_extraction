@@ -21,6 +21,9 @@ class TestTextToTextExtractor(TestCase):
     def setUp(self):
         shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
 
+    def tearDown(self):
+        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+
     def test_predictions_same_input_output(self):
         sample = [TrainingSample(labeled_data=LabeledData(label_text="one", language_iso="en"), tags_texts=["two"])]
         extraction_data = ExtractionData(samples=sample, extraction_identifier=extraction_identifier)
