@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-
-from data.Option import Option
+from trainable_entity_extractor.data.Option import Option
 
 
 class Params(BaseModel):

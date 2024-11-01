@@ -6,14 +6,14 @@ from pdf_token_type_labels.TokenType import TokenType
 from rsmq import RedisSMQ
 
 import requests
+from trainable_entity_extractor.data.Option import Option
+from trainable_entity_extractor.data.SegmentBox import SegmentBox
+from trainable_entity_extractor.data.Suggestion import Suggestion
 
 from config import APP_PATH
 from data.ExtractionTask import ExtractionTask
-from data.Option import Option
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
-from data.SegmentBox import SegmentBox
-from data.Suggestion import Suggestion
 
 ROOT_PATH = "./"
 

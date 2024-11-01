@@ -8,6 +8,7 @@ import pymongo
 from trainable_entity_extractor.FilterValidSegmentsPages import FilterValidSegmentsPages
 from trainable_entity_extractor.TrainableEntityExtractor import TrainableEntityExtractor
 from trainable_entity_extractor.XmlFile import XmlFile
+from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.data.ExtractionData import ExtractionData
 from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.data.LabeledData import LabeledData
@@ -63,7 +64,9 @@ class Extractor:
                 pdf_data = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers_to_keep)
             else:
                 pdf_data = PdfData.from_texts([""])
-            sample = TrainingSample(pdf_data=pdf_data, labeled_data=labeled_data, tags_texts=[labeled_data.source_text])
+            sample = TrainingSample(
+                pdf_data=pdf_data, labeled_data=labeled_data, segment_selector_texts=[labeled_data.source_text]
+            )
             multi_option_samples.append(sample)
 
         return ExtractionData(
@@ -101,7 +104,7 @@ class Extractor:
             else:
                 pdf_data = PdfData.from_texts([""])
 
-            sample = PredictionSample(pdf_data=pdf_data, entity_name=entity_name, tags_texts=[prediction_data.source_text])
+            sample = PredictionSample(pdf_data=pdf_data, entity_name=entity_name, source_text=prediction_data.source_text)
             prediction_samples.append(sample)
 
         return prediction_samples

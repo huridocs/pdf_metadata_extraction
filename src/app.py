@@ -10,15 +10,16 @@ import sys
 
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
+from trainable_entity_extractor.XmlFile import XmlFile
+from trainable_entity_extractor.config import config_logger
+from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.data.LabeledData import LabeledData
+from trainable_entity_extractor.data.PredictionData import PredictionData
+from trainable_entity_extractor.data.Suggestion import Suggestion
+from trainable_entity_extractor.send_logs import send_logs
 
-from config import config_logger, MONGO_HOST, MONGO_PORT, DATA_PATH
-from data.ExtractionIdentifier import ExtractionIdentifier
-from data.LabeledData import LabeledData
+from config import MONGO_HOST, MONGO_PORT, DATA_PATH
 from data.Options import Options
-from data.PredictionData import PredictionData
-from data.Suggestion import Suggestion
-from XmlFile import XmlFile
-from send_logs import send_logs
 
 
 @asynccontextmanager

@@ -1,9 +1,8 @@
-git+https://github.com/huridocs/trainable-entity-extractor@541d2fa5d39c11ae1643bba05f7e64b193e4aa13
+git+https://github.com/huridocs/trainable-entity-extractor@d32d11b544530d9a309878741d1ef016010cfedf
 git+https://github.com/huridocs/queue-processor@2a961d0f3e579a63a439da058a023d04973449b2
 mongomock==4.1.2
 sentry_sdk==2.8.0
 pymongo==4.6.3
 sentry-sdk==2.8.0
-fastapi==0.111.1
 redis==5.0.7
 requests==2.32.3
