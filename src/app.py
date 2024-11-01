@@ -61,7 +61,9 @@ async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...))
     try:
         filename = file.filename
         xml_file = XmlFile(
-            extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
+            extraction_identifier=ExtractionIdentifier(
+                run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH
+            ),
             to_train=True,
             xml_file_name=filename,
         )
@@ -78,7 +80,9 @@ async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...
     try:
         filename = file.filename
         xml_file = XmlFile(
-            extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
+            extraction_identifier=ExtractionIdentifier(
+                run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH
+            ),
             to_train=False,
             xml_file_name=filename,
         )
@@ -122,7 +126,7 @@ async def get_suggestions(tenant: str, extraction_id: str):
             suggestions_list.append(Suggestion(**document).scale_up().to_output())
 
         pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
-        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
+        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH)
         send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
 
         return json.dumps(suggestions_list)
@@ -140,7 +144,9 @@ async def get_suggestions(tenant: str, extraction_id: str):
 @app.post("/options")
 def save_options(options: Options):
     try:
-        extraction_identifier = ExtractionIdentifier(run_name=options.tenant, extraction_name=options.extraction_id)
+        extraction_identifier = ExtractionIdentifier(
+            run_name=options.tenant, extraction_name=options.extraction_id, output_path=DATA_PATH
+        )
         options_list = [option.model_dump() for option in options.options]
         extraction_identifier.get_options_path().write_text(json.dumps(options_list))
         os.utime(extraction_identifier.get_options_path().parent)

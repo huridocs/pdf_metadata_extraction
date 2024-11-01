@@ -5,42 +5,26 @@ from pathlib import Path
 from time import time
 
 import pymongo
+from trainable_entity_extractor.FilterValidSegmentsPages import FilterValidSegmentsPages
+from trainable_entity_extractor.TrainableEntityExtractor import TrainableEntityExtractor
+from trainable_entity_extractor.XmlFile import XmlFile
+from trainable_entity_extractor.data.ExtractionData import ExtractionData
+from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.data.LabeledData import LabeledData
+from trainable_entity_extractor.data.Option import Option
+from trainable_entity_extractor.data.PdfData import PdfData
+from trainable_entity_extractor.data.PredictionData import PredictionData
+from trainable_entity_extractor.data.PredictionSample import PredictionSample
+from trainable_entity_extractor.data.SegmentationData import SegmentationData
+from trainable_entity_extractor.data.Suggestion import Suggestion
+from trainable_entity_extractor.data.TrainingSample import TrainingSample
+from trainable_entity_extractor.send_logs import send_logs
 
-from config import MONGO_PORT, MONGO_HOST, DATA_PATH, config_logger
-from data.ExtractionIdentifier import ExtractionIdentifier
-from data.LabeledData import LabeledData
-from data.LogsMessage import Severity
-from data.Option import Option
-
-from data.PredictionData import PredictionData
-from data.PredictionSample import PredictionSample
-from data.SegmentationData import SegmentationData
-from data.Suggestion import Suggestion
+from config import MONGO_PORT, MONGO_HOST, DATA_PATH
 from data.ExtractionTask import ExtractionTask
-from FilterValidSegmentsPages import FilterValidSegmentsPages
-from extractors.ExtractorBase import ExtractorBase
-from extractors.NaiveExtractor import NaiveExtractor
-from extractors.pdf_to_text_extractor.PdfToTextExtractor import PdfToTextExtractor
-from data.PdfData import PdfData
-
-from XmlFile import XmlFile
-from data.ExtractionData import ExtractionData
-from data.TrainingSample import TrainingSample
-from extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import PdfToMultiOptionExtractor
-from extractors.text_to_multi_option_extractor.TextToMultiOptionExtractor import TextToMultiOptionExtractor
-from extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
-from send_logs import send_logs
 
 
 class Extractor:
-    EXTRACTORS: list[type[ExtractorBase]] = [
-        TextToMultiOptionExtractor,
-        PdfToMultiOptionExtractor,
-        PdfToTextExtractor,
-        TextToTextExtractor,
-        NaiveExtractor,
-    ]
-
     CREATE_MODEL_TASK_NAME = "create_model"
     SUGGESTIONS_TASK_NAME = "suggestions"
 
@@ -94,27 +78,9 @@ class Extractor:
         send_logs(self.extraction_identifier, "Loading data to create model")
         extraction_data: ExtractionData = self.get_extraction_data_for_training(self.get_labeled_data())
         send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
-
-        if not extraction_data or not extraction_data.samples:
-            self.delete_training_data()
-            return False, "No data to create model"
-
-        for extractor in self.EXTRACTORS:
-            extractor_instance = extractor(self.extraction_identifier)
-
-            if not extractor_instance.can_be_used(extraction_data):
-                continue
-
-            send_logs(self.extraction_identifier, f"Using extractor {extractor_instance.get_name()}")
-            send_logs(self.extraction_identifier, f"Creating models with {len(extraction_data.samples)} samples")
-            self.extraction_identifier.get_extractor_used_path().write_text(extractor_instance.get_name())
-            self.delete_training_data()
-            return extractor_instance.create_model(extraction_data)
-
         self.delete_training_data()
-        send_logs(self.extraction_identifier, "Error creating extractor", Severity.error)
-
-        return False, "Error creating extractor"
+        trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
+        return trainable_entity_extractor.train(extraction_data)
 
     def get_prediction_samples(self, prediction_data_list: list[PredictionData] = None) -> list[PredictionSample]:
         filter_valid_pages = FilterValidSegmentsPages(self.extraction_identifier)
@@ -175,25 +141,8 @@ class Extractor:
 
     def get_suggestions(self) -> list[Suggestion]:
         prediction_samples = self.get_prediction_samples(self.get_prediction_data_from_db())
-
-        if not self.extraction_identifier.get_extractor_used_path().exists():
-            send_logs(self.extraction_identifier, f"No extractor available", Severity.error)
-            return []
-
-        extractor_name = self.extraction_identifier.get_extractor_used_path().read_text()
-        for extractor in self.EXTRACTORS:
-            extractor_instance = extractor(self.extraction_identifier)
-            if extractor_instance.get_name() != extractor_name:
-                continue
-
-            suggestions = extractor_instance.get_suggestions(prediction_samples)
-            suggestions = [suggestion.mark_suggestion_if_empty() for suggestion in suggestions]
-            message = f"Using {extractor_instance.get_name()} to calculate {len(suggestions)} suggestions"
-            send_logs(self.extraction_identifier, message)
-            return suggestions
-
-        send_logs(self.extraction_identifier, f"No extractor available", Severity.error)
-        return []
+        trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
+        return trainable_entity_extractor.predict(prediction_samples)
 
     @staticmethod
     def remove_old_models(extractor_identifier: ExtractionIdentifier):
@@ -205,7 +154,9 @@ class Extractor:
                 continue
 
             for extraction_name in os.listdir(join(DATA_PATH, run_name)):
-                extractor_identifier_to_check = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name)
+                extractor_identifier_to_check = ExtractionIdentifier(
+                    run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH
+                )
                 if extractor_identifier_to_check.is_old():
                     config_logger.info(f"Removing old model folder {extractor_identifier_to_check.get_path()}")
                     shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
@@ -216,6 +167,7 @@ class Extractor:
             run_name=extraction_task.tenant,
             extraction_name=extraction_task.params.id,
             metadata=extraction_task.params.metadata,
+            output_path=DATA_PATH,
         )
 
         Extractor.remove_old_models(extractor_identifier)
