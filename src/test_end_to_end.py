@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import time
 from unittest import TestCase
 
@@ -10,7 +12,7 @@ from trainable_entity_extractor.data.Option import Option
 from trainable_entity_extractor.data.SegmentBox import SegmentBox
 from trainable_entity_extractor.data.Suggestion import Suggestion
 
-from config import APP_PATH
+from config import APP_PATH, DATA_PATH
 from data.ExtractionTask import ExtractionTask
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
@@ -181,31 +183,37 @@ class TestEndToEnd(TestCase):
     def test_pdf_to_multi_option(self):
         tenant = "end_to_end_test"
         extraction_id = "pdf_to_multi_option"
-
         test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
 
-        with open(test_xml_path, mode="rb") as stream:
-            files = {"file": stream}
-            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
+        for i in range(10):
+            new_test_xml_path = f"{DATA_PATH}/test_{i}.xml"
+            shutil.copyfile(test_xml_path, new_test_xml_path)
+
+            with open(new_test_xml_path, mode="rb") as stream:
+                files = {"file": stream}
+                requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
+
+            os.remove(new_test_xml_path)
+
+            labeled_data_json = {
+                "id": extraction_id,
+                "tenant": tenant,
+                "xml_file_name": f"test_{i}.xml",
+                "language_iso": "en",
+                "values": [{"id": "1", "label": "United Nations"}],
+                "page_width": 612,
+                "page_height": 792,
+                "xml_segments_boxes": [],
+            }
+            requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
         options = {
             "tenant": tenant,
             "extraction_id": extraction_id,
-            "options": [Option(id="1", label="United Nations").model_dump(), Option(id="2", label="Other").model_dump()],
+            "options": [Option(id="1", label="United Nations").model_dump(),
+                        Option(id="2", label="Other").model_dump()],
         }
 
-        labeled_data_json = {
-            "id": extraction_id,
-            "tenant": tenant,
-            "xml_file_name": "test.xml",
-            "language_iso": "en",
-            "values": [{"id": "1", "label": "United Nations"}],
-            "page_width": 612,
-            "page_height": 792,
-            "xml_segments_boxes": [],
-        }
-
-        requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
         requests.post(f"{SERVER_URL}/options", json=options)
 
         with open(test_xml_path, mode="rb") as stream:
