@@ -36,7 +36,7 @@ class TestEndToEnd(TestCase):
     def tearDown(self):
         requests.delete(f"{SERVER_URL}/end_to_end_test/extraction_id")
         requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_multi_option")
-        requests.delete(f"{SERVER_URL}/end_to_end_test/multi_select_name")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_multi_option")
 
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
@@ -210,8 +210,7 @@ class TestEndToEnd(TestCase):
         options = {
             "tenant": tenant,
             "extraction_id": extraction_id,
-            "options": [Option(id="1", label="United Nations").model_dump(),
-                        Option(id="2", label="Other").model_dump()],
+            "options": [Option(id="1", label="United Nations").model_dump(), Option(id="2", label="Other").model_dump()],
         }
 
         requests.post(f"{SERVER_URL}/options", json=options)
@@ -280,7 +279,7 @@ class TestEndToEnd(TestCase):
 
     def test_text_to_multi_option(self):
         tenant = "end_to_end_test"
-        extraction_id = "multi_select_name"
+        extraction_id = "text_to_multi_option"
 
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 

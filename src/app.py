@@ -148,8 +148,7 @@ def save_options(options: Options):
         extraction_identifier = ExtractionIdentifier(
             run_name=options.tenant, extraction_name=options.extraction_id, output_path=DATA_PATH
         )
-        options_list = [option.model_dump() for option in options.options]
-        extraction_identifier.get_options_path().write_text(json.dumps(options_list))
+        extraction_identifier.save_options(options.options)
         os.utime(extraction_identifier.get_options_path().parent)
         config_logger.info(f"Options {options.options[:150]} saved for {extraction_identifier}")
         return True

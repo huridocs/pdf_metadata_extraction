@@ -176,7 +176,11 @@ class Extractor:
         Extractor.remove_old_models(extractor_identifier)
 
         if extraction_task.task == Extractor.CREATE_MODEL_TASK_NAME:
-            options = extraction_task.params.options
+            if extraction_task.params.options:
+                options = extraction_task.params.options
+            else:
+                options = extractor_identifier.get_options()
+
             multi_value = extraction_task.params.multi_value
             extractor = Extractor(extractor_identifier, options, multi_value)
             return extractor.create_models()
