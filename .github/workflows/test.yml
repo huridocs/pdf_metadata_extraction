@@ -40,5 +40,8 @@ jobs:
           timeout: 240000
           interval: 500
 
+      - name: Wait for queues
+        run: make wait_for_queues
+
       - name: Test with unittest
         run: make test

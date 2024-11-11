@@ -18,6 +18,9 @@ check_format:
 test:
 	. .venv/bin/activate; command cd src; command python -m pytest
 
+wait_for_queues:
+	. .venv/bin/activate; command cd src/scripts; command python wait_for_queues.py
+
 remove_docker_containers:
 	docker compose ps -q | xargs docker rm
 
