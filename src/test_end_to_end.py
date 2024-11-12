@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import time
 from unittest import TestCase
 
@@ -6,14 +8,14 @@ from pdf_token_type_labels.TokenType import TokenType
 from rsmq import RedisSMQ
 
 import requests
+from trainable_entity_extractor.data.Option import Option
+from trainable_entity_extractor.data.SegmentBox import SegmentBox
+from trainable_entity_extractor.data.Suggestion import Suggestion
 
-from config import APP_PATH
+from config import APP_PATH, DATA_PATH
 from data.ExtractionTask import ExtractionTask
-from data.Option import Option
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
-from data.SegmentBox import SegmentBox
-from data.Suggestion import Suggestion
 
 ROOT_PATH = "./"
 
@@ -31,6 +33,11 @@ SERVER_URL = "http://127.0.0.1:5056"
 
 
 class TestEndToEnd(TestCase):
+    def tearDown(self):
+        requests.delete(f"{SERVER_URL}/end_to_end_test/extraction_id")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_multi_option")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_multi_option")
+
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
 
@@ -176,12 +183,29 @@ class TestEndToEnd(TestCase):
     def test_pdf_to_multi_option(self):
         tenant = "end_to_end_test"
         extraction_id = "pdf_to_multi_option"
-
         test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
 
-        with open(test_xml_path, mode="rb") as stream:
-            files = {"file": stream}
-            requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
+        for i in range(10):
+            new_test_xml_path = f"{DATA_PATH}/test_{i}.xml"
+            shutil.copyfile(test_xml_path, new_test_xml_path)
+
+            with open(new_test_xml_path, mode="rb") as stream:
+                files = {"file": stream}
+                requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
+
+            os.remove(new_test_xml_path)
+
+            labeled_data_json = {
+                "id": extraction_id,
+                "tenant": tenant,
+                "xml_file_name": f"test_{i}.xml",
+                "language_iso": "en",
+                "values": [{"id": "1", "label": "United Nations"}],
+                "page_width": 612,
+                "page_height": 792,
+                "xml_segments_boxes": [],
+            }
+            requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
         options = {
             "tenant": tenant,
@@ -189,18 +213,6 @@ class TestEndToEnd(TestCase):
             "options": [Option(id="1", label="United Nations").model_dump(), Option(id="2", label="Other").model_dump()],
         }
 
-        labeled_data_json = {
-            "id": extraction_id,
-            "tenant": tenant,
-            "xml_file_name": "test.xml",
-            "language_iso": "en",
-            "values": [{"id": "1", "label": "United Nations"}],
-            "page_width": 612,
-            "page_height": 792,
-            "xml_segments_boxes": [],
-        }
-
-        requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
         requests.post(f"{SERVER_URL}/options", json=options)
 
         with open(test_xml_path, mode="rb") as stream:
@@ -267,7 +279,7 @@ class TestEndToEnd(TestCase):
 
     def test_text_to_multi_option(self):
         tenant = "end_to_end_test"
-        extraction_id = "multi_select_name"
+        extraction_id = "text_to_multi_option"
 
         options = [Option(id="1", label="1"), Option(id="2", label="2"), Option(id="3", label="3")]
 

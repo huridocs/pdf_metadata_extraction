@@ -1,6 +1,8 @@
 import os
+import shutil
 from contextlib import asynccontextmanager
 import json
+from os.path import join
 
 import pymongo
 from fastapi import FastAPI, HTTPException, UploadFile, File
@@ -8,16 +10,16 @@ import sys
 
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
+from trainable_entity_extractor.XmlFile import XmlFile
+from trainable_entity_extractor.config import config_logger
+from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.data.LabeledData import LabeledData
+from trainable_entity_extractor.data.PredictionData import PredictionData
+from trainable_entity_extractor.data.Suggestion import Suggestion
+from trainable_entity_extractor.send_logs import send_logs
 
-from config import config_logger, MONGO_HOST, MONGO_PORT
-from data.ExtractionIdentifier import ExtractionIdentifier
-from data.LabeledData import LabeledData
-from data.Option import Option
+from config import MONGO_HOST, MONGO_PORT, DATA_PATH
 from data.Options import Options
-from data.PredictionData import PredictionData
-from data.Suggestion import Suggestion
-from XmlFile import XmlFile
-from send_logs import send_logs
 
 
 @asynccontextmanager
@@ -60,7 +62,9 @@ async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...))
     try:
         filename = file.filename
         xml_file = XmlFile(
-            extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
+            extraction_identifier=ExtractionIdentifier(
+                run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH
+            ),
             to_train=True,
             xml_file_name=filename,
         )
@@ -77,7 +81,9 @@ async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...
     try:
         filename = file.filename
         xml_file = XmlFile(
-            extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id),
+            extraction_identifier=ExtractionIdentifier(
+                run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH
+            ),
             to_train=False,
             xml_file_name=filename,
         )
@@ -121,7 +127,7 @@ async def get_suggestions(tenant: str, extraction_id: str):
             suggestions_list.append(Suggestion(**document).scale_up().to_output())
 
         pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
-        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id)
+        extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH)
         send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
 
         return json.dumps(suggestions_list)
@@ -130,12 +136,19 @@ async def get_suggestions(tenant: str, extraction_id: str):
         raise HTTPException(status_code=422, detail="An error has occurred. Check graylog for more info")
 
 
+@app.delete("/{tenant}/{extraction_id}")
+async def get_suggestions(tenant: str, extraction_id: str):
+    shutil.rmtree(join(DATA_PATH, tenant, extraction_id), ignore_errors=True)
+    return True
+
+
 @app.post("/options")
 def save_options(options: Options):
     try:
-        extraction_identifier = ExtractionIdentifier(run_name=options.tenant, extraction_name=options.extraction_id)
-        options_list = [option.model_dump() for option in options.options]
-        extraction_identifier.get_options_path().write_text(json.dumps(options_list))
+        extraction_identifier = ExtractionIdentifier(
+            run_name=options.tenant, extraction_name=options.extraction_id, output_path=DATA_PATH
+        )
+        extraction_identifier.save_options(options.options)
         os.utime(extraction_identifier.get_options_path().parent)
         config_logger.info(f"Options {options.options[:150]} saved for {extraction_identifier}")
         return True

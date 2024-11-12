@@ -4,20 +4,25 @@ from pydantic import ValidationError
 from queue_processor.QueueProcessor import QueueProcessor
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
+from trainable_entity_extractor.config import config_logger
+from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.send_logs import send_logs
 
 from config import (
-    config_logger,
     SERVICE_HOST,
     SERVICE_PORT,
     REDIS_HOST,
     REDIS_PORT,
     QUEUES_NAMES,
+    DATA_PATH,
 )
-from data.ExtractionIdentifier import ExtractionIdentifier
 from data.ExtractionTask import ExtractionTask
 from data.ResultsMessage import ResultsMessage
 from Extractor import Extractor
-from send_logs import send_logs
+
+
+def restart_condition(message: dict[str, any]) -> bool:
+    return ExtractionTask(**message).task == Extractor.CREATE_MODEL_TASK_NAME
 
 
 def process(message: dict[str, any]) -> dict[str, any] | None:
@@ -55,7 +60,7 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
         )
 
     extraction_identifier = ExtractionIdentifier(
-        run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata
+        run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
     )
     send_logs(extraction_identifier, f"Result message: {model_results_message.to_string()}")
     return model_results_message.model_dump()
@@ -87,4 +92,4 @@ if __name__ == "__main__":
     config_logger.info(f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
-    queue_processor.start(process)
+    queue_processor.start(process, restart_condition)
