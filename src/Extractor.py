@@ -120,7 +120,7 @@ class Extractor:
         return prediction_data_list
 
     def delete_training_data(self):
-        training_xml_path = XmlFile.get_xml_folder_path(extraction_identifier=self.extraction_identifier, to_train=True)
+        training_xml_path = XmlFile(extraction_identifier=self.extraction_identifier, to_train=True).xml_folder_path
         send_logs(self.extraction_identifier, f"Deleting training data in {training_xml_path}")
         shutil.rmtree(training_xml_path, ignore_errors=True)
         self.pdf_metadata_extraction_db.labeled_data.delete_many(self.mongo_filter)
@@ -130,7 +130,7 @@ class Extractor:
             return False, "No data to calculate suggestions"
 
         self.pdf_metadata_extraction_db.suggestions.insert_many([x.to_dict() for x in suggestions])
-        xml_folder_path = XmlFile.get_xml_folder_path(extraction_identifier=self.extraction_identifier, to_train=False)
+        xml_folder_path = XmlFile(extraction_identifier=self.extraction_identifier, to_train=False).xml_folder_path
         for suggestion in suggestions:
             entity_name = {"entity_name": suggestion.entity_name, "xml_file_name": ""}
             xml_file_name = {"xml_file_name": suggestion.xml_file_name, "entity_name": ""}
