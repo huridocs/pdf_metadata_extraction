@@ -137,7 +137,7 @@ async def get_suggestions(tenant: str, extraction_id: str):
 
 
 @app.delete("/{tenant}/{extraction_id}")
-async def get_suggestions(tenant: str, extraction_id: str):
+async def delete_model(tenant: str, extraction_id: str):
     shutil.rmtree(join(DATA_PATH, tenant, extraction_id), ignore_errors=True)
     return True
 
