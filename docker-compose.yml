@@ -20,6 +20,25 @@ services:
     env_file: .env
     networks:
       - pdf_metadata_extraction_network
+  pdf_metadata_extraction_queue_processor:
+    container_name: pdf_metadata_extraction_queue_processor
+    init: true
+    entrypoint: [ "python3", "-m", "src.start_queue_processor" ]
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - data:/app/models_data
+    depends_on:
+      - mongo_metadata_extraction
+      - redis_metadata_extraction
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    networks:
+      - pdf_metadata_extraction_network
+    env_file: .env
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
     init: true
