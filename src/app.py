@@ -66,9 +66,7 @@ async def error():
 async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...)):
     filename = file.filename
     xml_file = XmlFile(
-        extraction_identifier=ExtractionIdentifier(
-            run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH
-        ),
+        extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH),
         to_train=True,
         xml_file_name=filename,
     )
@@ -76,21 +74,17 @@ async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...))
     return "xml_to_train saved"
 
 
-
 @app.post("/xml_to_predict/{tenant}/{extraction_id}")
 @catch_exceptions
 async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...)):
     filename = file.filename
     xml_file = XmlFile(
-        extraction_identifier=ExtractionIdentifier(
-            run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH
-        ),
+        extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH),
         to_train=False,
         xml_file_name=filename,
     )
     xml_file.save(file=file.file.read())
     return "xml_to_train saved"
-
 
 
 @app.post("/labeled_data")
@@ -137,6 +131,7 @@ async def get_satus(tenant: str, extraction_id: str):
     extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH)
     return extraction_identifier.get_status()
 
+
 @app.post("/train/{tenant}/{extraction_id}")
 @catch_exceptions
 async def train(tenant: str, extraction_id: str):
@@ -145,6 +140,7 @@ async def train(tenant: str, extraction_id: str):
     run_in_threadpool(Extractor.calculate_task, task)
     return True
 
+
 @app.post("/predict/{tenant}/{extraction_id}")
 @catch_exceptions
 async def predict(tenant: str, extraction_id: str):
@@ -152,6 +148,7 @@ async def predict(tenant: str, extraction_id: str):
     task = ExtractionTask(tenant=tenant, task=Extractor.SUGGESTIONS_TASK_NAME, params=params)
     run_in_threadpool(Extractor.calculate_task, task)
     return True
+
 
 @app.post("/options")
 @catch_exceptions
