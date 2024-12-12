@@ -1,11 +1,18 @@
 import os
+
+import pymongo
+import requests
 import torch
+from configuration import service_logger
+from ml_cloud_connector.MlCloudConnector import MlCloudConnector
+from ml_cloud_connector.ServerType import ServerType
 from pydantic import ValidationError
 from queue_processor.QueueProcessor import QueueProcessor
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.data.ExtractionStatus import ExtractionStatus
 from trainable_entity_extractor.send_logs import send_logs
 
 from config import (
@@ -14,7 +21,7 @@ from config import (
     REDIS_HOST,
     REDIS_PORT,
     QUEUES_NAMES,
-    DATA_PATH,
+    DATA_PATH, METADATA_EXTRACTOR_PORT, MONGO_HOST, MONGO_PORT,
 )
 from data.ExtractionTask import ExtractionTask
 from data.ResultsMessage import ResultsMessage
@@ -24,8 +31,39 @@ from Extractor import Extractor
 def restart_condition(message: dict[str, any]) -> bool:
     return ExtractionTask(**message).task == Extractor.CREATE_MODEL_TASK_NAME
 
+def calculate_task(extraction_task: ExtractionTask) -> (bool, str):
+    extractor_identifier = ExtractionIdentifier(
+        run_name=extraction_task.tenant,
+        extraction_name=extraction_task.params.id,
+        metadata=extraction_task.params.metadata,
+        output_path=DATA_PATH,
+    )
 
-def process(message: dict[str, any]) -> dict[str, any] | None:
+    Extractor.remove_old_models(extractor_identifier)
+
+    if extraction_task.task == Extractor.CREATE_MODEL_TASK_NAME:
+        return Extractor.create_model(extractor_identifier, extraction_task.params)
+    elif extraction_task.task == Extractor.SUGGESTIONS_TASK_NAME:
+        return Extractor.create_suggestions(extractor_identifier, extraction_task.params)
+    else:
+        return False, f"Task {extraction_task.task} not recognized"
+
+
+def should_wait(task):
+    mongo_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
+    ml_cloud_connector = MlCloudConnector(ServerType.METADATA_EXTRACTOR, service_logger)
+    ip = ml_cloud_connector.get_ip()
+    status = requests.get(f"http://{ip}:{METADATA_EXTRACTOR_PORT}/get_status/{task.tenant}/{task.params.id}")
+    if status.status_code != 200:
+        return True
+
+    if ExtractionStatus(int(status.json())) == ExtractionStatus.PROCESSING:
+        return True
+
+    return False
+
+
+def process_messages(message: dict[str, any]) -> dict[str, any] | None:
     try:
         task = ExtractionTask(**message)
         config_logger.info(f"New task {message}")
@@ -33,7 +71,10 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
         config_logger.error(f"Not a valid Redis message: {message}")
         return None
 
-    task_calculated, error_message = Extractor.calculate_task(task)
+    if should_wait(task):
+        return None
+
+    task_calculated, error_message = calculate_task(task)
 
     if task_calculated:
         data_url = None
@@ -92,4 +133,4 @@ if __name__ == "__main__":
     config_logger.info(f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
-    queue_processor.start(process, restart_condition)
+    queue_processor.start(process_messages, restart_condition)

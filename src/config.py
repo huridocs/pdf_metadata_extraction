@@ -6,6 +6,7 @@ QUEUES_NAMES = os.environ.get("QUEUES_NAMES", "information_extraction")
 
 SERVICE_HOST = os.environ.get("SERVICE_HOST", "http://127.0.0.1")
 SERVICE_PORT = os.environ.get("SERVICE_PORT", "5056")
+METADATA_EXTRACTOR_PORT = os.environ.get("METADATA_EXTRACTOR_PORT", "5066")
 REDIS_HOST = os.environ.get("REDIS_HOST", "127.0.0.1")
 REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
 MONGO_HOST = os.environ.get("MONGO_HOST", "mongodb://127.0.0.1")

@@ -91,6 +91,9 @@ async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...
 @catch_exceptions
 async def labeled_data_post(labeled_data: LabeledData):
     pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
+    pdf_metadata_extraction_db.labeled_data.delete_many(
+        {"tenant": labeled_data.tenant, "id": labeled_data.id, "xml_file_name": labeled_data.xml_file_name}
+    )
     pdf_metadata_extraction_db.labeled_data.insert_one(labeled_data.scale_down_labels().to_dict())
     return "labeled data saved"
 
@@ -99,6 +102,9 @@ async def labeled_data_post(labeled_data: LabeledData):
 @catch_exceptions
 async def prediction_data_post(prediction_data: PredictionData):
     pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
+    pdf_metadata_extraction_db.labeled_data.delete_many(
+        {"tenant": prediction_data.tenant, "id": prediction_data.id, "xml_file_name": prediction_data.xml_file_name}
+    )
     pdf_metadata_extraction_db.prediction_data.insert_one(prediction_data.to_dict())
     return "prediction data saved"
 
@@ -135,7 +141,10 @@ async def get_satus(tenant: str, extraction_id: str):
 @app.post("/train/{tenant}/{extraction_id}")
 @catch_exceptions
 async def train(tenant: str, extraction_id: str):
-    params = Params(id=extraction_id)
+    extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH)
+    params = Params(
+        id=extraction_id, options=extraction_identifier.get_options(), multi_value=extraction_identifier.get_multi_value()
+    )
     task = ExtractionTask(tenant=tenant, task=Extractor.CREATE_MODEL_TASK_NAME, params=params)
     run_in_threadpool(Extractor.calculate_task, task)
     return True
@@ -144,7 +153,10 @@ async def train(tenant: str, extraction_id: str):
 @app.post("/predict/{tenant}/{extraction_id}")
 @catch_exceptions
 async def predict(tenant: str, extraction_id: str):
-    params = Params(id=extraction_id)
+    extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH)
+    params = Params(
+        id=extraction_id, options=extraction_identifier.get_options(), multi_value=extraction_identifier.get_multi_value()
+    )
     task = ExtractionTask(tenant=tenant, task=Extractor.SUGGESTIONS_TASK_NAME, params=params)
     run_in_threadpool(Extractor.calculate_task, task)
     return True
@@ -157,6 +169,10 @@ def save_options(options: Options):
         run_name=options.tenant, extraction_name=options.extraction_id, output_path=DATA_PATH
     )
     extraction_identifier.save_options(options.options)
+
+    if options.multi_value is not None:
+        extraction_identifier.save_multi_value(options.multi_value)
+
     os.utime(extraction_identifier.get_options_path().parent)
     config_logger.info(f"Options {options.options[:150]} saved for {extraction_identifier}")
     return True

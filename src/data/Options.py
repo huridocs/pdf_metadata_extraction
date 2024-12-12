@@ -6,3 +6,4 @@ class Options(BaseModel):
     tenant: str
     extraction_id: str
     options: list[Option]
+    multi_value: bool | None = None
