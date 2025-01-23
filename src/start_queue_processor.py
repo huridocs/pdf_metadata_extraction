@@ -19,6 +19,7 @@ from config import (
 from data.ExtractionTask import ExtractionTask
 from data.ResultsMessage import ResultsMessage
 from Extractor import Extractor
+from data.TaskType import TaskType
 
 
 def restart_condition(message: dict[str, any]) -> bool:
@@ -27,14 +28,31 @@ def restart_condition(message: dict[str, any]) -> bool:
 
 def process(message: dict[str, any]) -> dict[str, any] | None:
     try:
-        task = ExtractionTask(**message)
+        task_type = TaskType(**message)
         config_logger.info(f"New task {message}")
     except ValidationError:
         config_logger.error(f"Not a valid Redis message: {message}")
         return None
 
-    task_calculated, error_message = Extractor.calculate_task(task)
+    if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
+        result_message = extraction_task(message)
+    else:
+        task = ExtractionTask(**message)
+        result_message = ResultsMessage(
+            tenant=task.tenant,
+            task=task.task,
+            params=task.params,
+            success=False,
+            error_message="Task not found",
+        )
+        config_logger.error(f"Task not found: {task_to_string(task_type)}")
 
+    return result_message.model_dump()
+
+
+def extraction_task(message):
+    task = ExtractionTask(**message)
+    task_calculated, error_message = Extractor.calculate_task(task)
     if task_calculated:
         data_url = None
 
@@ -58,12 +76,11 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
             success=False,
             error_message=error_message,
         )
-
     extraction_identifier = ExtractionIdentifier(
         run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
     )
     send_logs(extraction_identifier, f"Result message: {model_results_message.to_string()}")
-    return model_results_message.model_dump()
+    return model_results_message
 
 
 def task_to_string(extraction_task: ExtractionTask):

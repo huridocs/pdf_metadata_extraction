@@ -134,7 +134,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(len(suggestion.segments_boxes), 2)
         self.assertEqual(529, suggestion.segments_boxes[0].left)
         self.assertEqual(120, suggestion.segments_boxes[0].top)
-        self.assertEqual(105, suggestion.segments_boxes[0].width)
+        self.assertEqual(100, suggestion.segments_boxes[0].width)
         self.assertEqual(15, suggestion.segments_boxes[0].height)
         self.assertEqual(1, suggestion.segments_boxes[0].page_number)
 
@@ -207,14 +207,6 @@ class TestEndToEnd(TestCase):
             }
             requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
-        options = {
-            "tenant": tenant,
-            "extraction_id": extraction_id,
-            "options": [Option(id="1", label="United Nations").model_dump(), Option(id="2", label="Other").model_dump()],
-        }
-
-        requests.post(f"{SERVER_URL}/options", json=options)
-
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
@@ -230,10 +222,11 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
+        options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
         task = ExtractionTask(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id, multi_value=False, metadata={"name": "test"}),
+            params=Params(id=extraction_id, multi_value=False, metadata={"name": "test"}, options=options),
         )
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
@@ -265,7 +258,7 @@ class TestEndToEnd(TestCase):
                 SegmentBox(
                     left=164.0,
                     top=60.0,
-                    width=116.0,
+                    width=109.0,
                     height=21.0,
                     page_width=0,
                     page_height=0,

@@ -5,4 +5,4 @@ sentry-sdk==2.8.0
 redis==5.0.7
 requests==2.32.3
 git+https://github.com/huridocs/queue-processor@1f0294f17074ac6d52b0e48d49a32272f121cd9c
-git+https://github.com/huridocs/trainable-entity-extractor@4e79693f42db5abc5d77be1d66cf172181d2590f
+git+https://github.com/huridocs/trainable-entity-extractor@2ce855361399006045828af1cbff8e0aa706642f
