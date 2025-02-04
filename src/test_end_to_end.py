@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import time
+from pathlib import Path
 from unittest import TestCase
 
 from pdf_token_type_labels.TokenType import TokenType
@@ -13,9 +14,12 @@ from trainable_entity_extractor.data.SegmentBox import SegmentBox
 from trainable_entity_extractor.data.Suggestion import Suggestion
 
 from config import APP_PATH, DATA_PATH
-from data.ExtractionTask import ExtractionTask
+from data.ParagraphExtractionData import ParagraphExtractionData, XmlData
+from data.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
+from data.ParagraphsTranslations import ParagraphsTranslations
 from data.Params import Params
 from data.ResultsMessage import ResultsMessage
+from data.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 
 ROOT_PATH = "./"
 
@@ -64,7 +68,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
-        task = ExtractionTask(
+        task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id, metadata={"name": "test"}),
@@ -98,7 +102,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
-        task = ExtractionTask(
+        task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id, metadata={"name": "test"}),
@@ -141,7 +145,7 @@ class TestEndToEnd(TestCase):
     def test_create_model_without_data(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
-        task = ExtractionTask(
+        task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id, metadata={"name": "test"}),
@@ -161,7 +165,7 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(expected_result, results_message)
 
-        task = ExtractionTask(
+        task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id, metadata={"name": "test"}),
@@ -223,7 +227,7 @@ class TestEndToEnd(TestCase):
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
         options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
-        task = ExtractionTask(
+        task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id, multi_value=False, metadata={"name": "test"}, options=options),
@@ -233,7 +237,7 @@ class TestEndToEnd(TestCase):
 
         self.get_results_message()
 
-        task = ExtractionTask(
+        task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id, metadata={"name": "test"}),
@@ -287,7 +291,7 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
-        task = ExtractionTask(
+        task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="create_model",
             params=Params(id=extraction_id, options=options, multi_value=True, metadata={"name": "test"}),
@@ -315,7 +319,7 @@ class TestEndToEnd(TestCase):
 
         self.get_results_message()
 
-        task = ExtractionTask(
+        task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="suggestions",
             params=Params(id=extraction_id, metadata={"name": "test"}),
@@ -342,14 +346,99 @@ class TestEndToEnd(TestCase):
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
         self.assertEqual([Option(id="2", label="2"), Option(id="3", label="3")], suggestion_2.values)
 
+    def test_extract_paragraphs(self):
+        en_xml_path = Path(APP_PATH, "tests", "resources", "test_en.xml")
+        fr_xml_path = Path(APP_PATH, "tests", "resources", "test_fr.xml")
+
+        segment_boxes = [
+            SegmentBox(left=183, top=72, width=246, height=22, page_number=1, segment_type=TokenType.PAGE_HEADER),
+            SegmentBox(left=72, top=151, width=463, height=96, page_number=1, segment_type=TokenType.TEXT),
+            SegmentBox(left=72, top=290, width=43, height=12, page_number=1, segment_type=TokenType.TITLE),
+            SegmentBox(left=90, top=318, width=76, height=95, page_number=1, segment_type=TokenType.LIST_ITEM),
+        ]
+
+        paragraph_extraction_data = ParagraphExtractionData(
+            key="key_1",
+            xmls=[
+                XmlData(xml_file_name="test_en.xml", language="en", is_main_language=True, xml_segments_boxes=segment_boxes),
+                XmlData(
+                    xml_file_name="test_fr.xml", language="fr", is_main_language=False, xml_segments_boxes=segment_boxes
+                ),
+            ],
+        )
+
+        files = [
+            ("json_data", (None, paragraph_extraction_data.model_dump_json())),
+            ("xml_files", open(en_xml_path, "rb")),
+            ("xml_files", open(fr_xml_path, "rb")),
+        ]
+
+        response = requests.post(f"http://{SERVER_URL}/extract_paragraphs", files=files)
+        self.assertEqual(200, response.status_code)
+        results_message = self.get_results_message("paragraph_extraction_results")
+        self.assertEqual("key", results_message.key)
+        self.assertEqual(2, len(results_message.xmls))
+        self.assertTrue(results_message.success)
+        self.assertEqual("", results_message.error_message)
+        self.assertEqual(f"http://{SERVER_URL}/get_paragraphs_translations/key_1", results_message.data_url)
+
+        response = requests.get(results_message.data_url)
+
+        paragraphs_translations = ParagraphsTranslations(**json.loads(response.json()))
+        self.assertEqual("key_1", paragraphs_translations.key)
+        self.assertEqual("en", len(paragraphs_translations.main_language))
+        self.assertEqual(["en", "fr"], len(paragraphs_translations.available_languages))
+
+        self.assertEqual(2, len(paragraphs_translations.paragraphs))
+
+        self.assertEqual(1, paragraphs_translations.paragraphs[0].position)
+        self.assertEqual(2, len(paragraphs_translations.paragraphs[0].translations))
+
+        text = """Some text. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum
+has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a
+galley of type and scrambled it to make a type specimen book. It has survived not only five
+centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was
+popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and
+more recently with desktop publishing software like Aldus PageMaker including versions of Lorem
+Ipsum."""
+        self.assertEqual("en", paragraphs_translations.paragraphs[0].translations[0].language)
+        self.assertEqual(False, paragraphs_translations.paragraphs[0].translations[0].needs_user_review)
+        self.assertEqual(text, paragraphs_translations.paragraphs[0].translations[0].text)
+        self.assertEqual("fr", paragraphs_translations.paragraphs[0].translations[1].language)
+        self.assertEqual(False, paragraphs_translations.paragraphs[0].translations[1].needs_user_review)
+        self.assertEqual(text, paragraphs_translations.paragraphs[0].translations[1].text)
+
+        text = """●
+●
+●
+●
+●
+●
+●
+FORMULA
+FOOTNOTE
+LIST
+TABLE
+FIGURE
+TITLE
+TEXT"""
+        self.assertEqual("en", paragraphs_translations.paragraphs[1].translations[0].language)
+        self.assertEqual(False, paragraphs_translations.paragraphs[1].translations[0].needs_user_review)
+        self.assertEqual(text, paragraphs_translations.paragraphs[1].translations[0].text)
+        self.assertEqual("fr", paragraphs_translations.paragraphs[1].translations[1].language)
+        self.assertEqual(False, paragraphs_translations.paragraphs[1].translations[1].needs_user_review)
+        self.assertEqual(text, paragraphs_translations.paragraphs[1].translations[1].text)
+
     @staticmethod
-    def get_results_message() -> ResultsMessage:
+    def get_results_message(
+        queue_name: str = "information_extraction_results",
+    ) -> ResultsMessage | ParagraphExtractionResultsMessage | None:
         for i in range(20):
             time.sleep(3)
             queue = RedisSMQ(
                 host=REDIS_HOST,
                 port=REDIS_PORT,
-                qname="information_extraction_results",
+                qname=queue_name,
                 quiet=False,
             )
             message = queue.receiveMessage().exceptions(False).execute()

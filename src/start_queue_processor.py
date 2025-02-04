@@ -8,22 +8,16 @@ from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.send_logs import send_logs
 
-from config import (
-    SERVICE_HOST,
-    SERVICE_PORT,
-    REDIS_HOST,
-    REDIS_PORT,
-    QUEUES_NAMES,
-    DATA_PATH,
-)
-from data.ExtractionTask import ExtractionTask
+from config import SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, QUEUES_NAMES, DATA_PATH
+from data.ParagraphExtractorTask import ParagraphExtractorTask
+from data.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from data.ResultsMessage import ResultsMessage
 from Extractor import Extractor
 from data.TaskType import TaskType
 
 
 def restart_condition(message: dict[str, any]) -> bool:
-    return ExtractionTask(**message).task == Extractor.CREATE_MODEL_TASK_NAME
+    return TrainableEntityExtractionTask(**message).task == Extractor.CREATE_MODEL_TASK_NAME
 
 
 def process(message: dict[str, any]) -> dict[str, any] | None:
@@ -35,9 +29,13 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
         return None
 
     if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
-        result_message = extraction_task(message)
+        task = TrainableEntityExtractionTask(**message)
+        result_message = get_extraction(task)
+    if task_type.task == Extractor.PARAGRAPHS_EXTRACTOR_TASK_NAME:
+        task = ParagraphExtractorTask(**message)
+        result_message = get_extraction(task)
     else:
-        task = ExtractionTask(**message)
+        task = TrainableEntityExtractionTask(**message)
         result_message = ResultsMessage(
             tenant=task.tenant,
             task=task.task,
@@ -50,19 +48,18 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
     return result_message.model_dump()
 
 
-def extraction_task(message):
-    task = ExtractionTask(**message)
+def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask) -> ResultsMessage:
     task_calculated, error_message = Extractor.calculate_task(task)
     if task_calculated:
         data_url = None
 
         if task.task == Extractor.SUGGESTIONS_TASK_NAME:
-            data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.params.id}"
+            data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.xmls.id}"
 
         model_results_message = ResultsMessage(
             tenant=task.tenant,
             task=task.task,
-            params=task.params,
+            params=task.xmls,
             success=True,
             error_message="",
             data_url=data_url,
@@ -72,18 +69,18 @@ def extraction_task(message):
         model_results_message = ResultsMessage(
             tenant=task.tenant,
             task=task.task,
-            params=task.params,
+            params=task.xmls,
             success=False,
             error_message=error_message,
         )
     extraction_identifier = ExtractionIdentifier(
-        run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
+        run_name=task.tenant, extraction_name=task.xmls.id, metadata=task.xmls.metadata, output_path=DATA_PATH
     )
     send_logs(extraction_identifier, f"Result message: {model_results_message.to_string()}")
     return model_results_message
 
 
-def task_to_string(extraction_task: ExtractionTask):
+def task_to_string(extraction_task: TrainableEntityExtractionTask):
     extraction_dict = extraction_task.model_dump()
     if (
         "params" in extraction_dict

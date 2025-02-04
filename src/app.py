@@ -5,8 +5,10 @@ import json
 from os.path import join
 
 import pymongo
+from queue_processor.QueueProcessor import QueueProcessor
+
 from catch_exceptions import catch_exceptions
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 import sys
 
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
@@ -19,7 +21,9 @@ from trainable_entity_extractor.data.PredictionData import PredictionData
 from trainable_entity_extractor.data.Suggestion import Suggestion
 from trainable_entity_extractor.send_logs import send_logs
 
-from config import MONGO_HOST, MONGO_PORT, DATA_PATH
+from config import MONGO_HOST, MONGO_PORT, DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME
+from data.ParagraphExtractionData import ParagraphExtractionData
+from data.ParagraphExtractorTask import ParagraphExtractorTask
 
 
 @asynccontextmanager
@@ -58,7 +62,6 @@ async def error():
 
 
 @app.post("/xml_to_train/{tenant}/{extraction_id}")
-@app.post("/extract_paragraphs_xml/{tenant}/{extraction_id}")
 @catch_exceptions
 async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...)):
     filename = file.filename
@@ -121,3 +124,26 @@ async def get_suggestions(tenant: str, extraction_id: str):
 async def get_suggestions(tenant: str, extraction_id: str):
     shutil.rmtree(join(DATA_PATH, tenant, extraction_id), ignore_errors=True)
     return True
+
+
+@app.post("/extract_paragraphs")
+async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadFile] = File(...)):
+    paragraph_extraction_data = ParagraphExtractionData(**json.loads(json_data))
+
+    for file in xml_files:
+        identifier = ExtractionIdentifier(run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=paragraph_extraction_data.key)
+        xml_file = XmlFile(
+            extraction_identifier=identifier,
+            to_train=True,
+            xml_file_name=file.filename,
+        )
+        xml_file.save(file=file.file.read())
+
+    pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
+    pdf_metadata_extraction_db.paragraph_extraction_data.insert_one(paragraph_extraction_data.to_db())
+
+    queue_name = f"{PARAGRAPH_EXTRACTION_NAME}_tasks"
+    queue = QueueProcessor(REDIS_HOST, REDIS_PORT, []).get_queue(queue_name)
+    task = ParagraphExtractorTask(**paragraph_extraction_data.model_dump(), task=PARAGRAPH_EXTRACTION_NAME)
+    queue.sendMessage().message(task.model_dump()).execute()
+    return "ok"

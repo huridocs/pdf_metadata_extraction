@@ -1,10 +1,16 @@
 import os
+import re
 import shutil
 from os.path import join, exists
 from pathlib import Path
 from time import time
 
 import pymongo
+from multilingual_paragraph_extractor.domain.ParagraphFeatures import ParagraphFeatures
+from multilingual_paragraph_extractor.domain.ParagraphsFromLanguage import ParagraphsFromLanguage
+from multilingual_paragraph_extractor.use_cases.MultilingualParagraphAlignerUseCase import (
+    MultilingualParagraphAlignerUseCase,
+)
 from trainable_entity_extractor.FilterValidSegmentsPages import FilterValidSegmentsPages
 from trainable_entity_extractor.TrainableEntityExtractor import TrainableEntityExtractor
 from trainable_entity_extractor.XmlFile import XmlFile
@@ -21,13 +27,26 @@ from trainable_entity_extractor.data.Suggestion import Suggestion
 from trainable_entity_extractor.data.TrainingSample import TrainingSample
 from trainable_entity_extractor.send_logs import send_logs
 
-from config import MONGO_PORT, MONGO_HOST, DATA_PATH
-from data.ExtractionTask import ExtractionTask
+from config import MONGO_PORT, MONGO_HOST, DATA_PATH, PARAGRAPH_EXTRACTION_NAME
+from data.ParagraphExtractionData import ParagraphExtractionData
+from data.ParagraphExtractorTask import ParagraphExtractorTask
+from data.ParagraphTranslations import ParagraphTranslations
+from data.ParagraphsTranslations import ParagraphsTranslations
+from data.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 
 
 class Extractor:
     CREATE_MODEL_TASK_NAME = "create_model"
     SUGGESTIONS_TASK_NAME = "suggestions"
+
+    LABELED_DATA = "labeled_data"
+    PREDICTION_DATA = "prediction_data"
+
+    DATA_TYPE = {
+        LABELED_DATA: LabeledData,
+        PREDICTION_DATA: PredictionData,
+        PARAGRAPH_EXTRACTION_NAME: ParagraphExtractionData,
+    }
 
     def __init__(self, extraction_identifier: ExtractionIdentifier, options: list[Option] = None, multi_value: bool = False):
         self.extraction_identifier = extraction_identifier
@@ -35,19 +54,28 @@ class Extractor:
         self.options = options
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         self.pdf_metadata_extraction_db = client["pdf_metadata_extraction"]
-        self.mongo_filter = {"tenant": self.extraction_identifier.run_name, "id": self.extraction_identifier.extraction_name}
+        self.mongo_filter = {
+            "run_name": self.extraction_identifier.run_name,
+            "extraction_name": self.extraction_identifier.extraction_name,
+        }
 
-    def get_labeled_data(self):
-        labeled_data_list = []
-        for document in self.pdf_metadata_extraction_db.labeled_data.find(self.mongo_filter):
-            labeled_data = LabeledData(**document)
-            for segment in labeled_data.xml_segments_boxes + labeled_data.label_segments_boxes:
-                segment.page_width = segment.page_width if segment.page_width else labeled_data.page_width
-                segment.page_height = segment.page_height if segment.page_height else labeled_data.page_height
+    def get_db_name(self, data_type: str) -> str:
+        camel_case_str = self.DATA_TYPE[data_type].__name__
+        snake_case_str = re.sub(r"(?<!^)(?=[A-Z])", "_", camel_case_str).lower()
+        return snake_case_str
 
-            labeled_data_list.append(LabeledData(**document))
+    def get_data_from_db(self, data_type: str) -> list[LabeledData | PredictionData | ParagraphExtractionData]:
+        data_list: list[LabeledData | PredictionData | ParagraphExtractionData] = []
+        for document in self.pdf_metadata_extraction_db[self.get_db_name(data_type)].find(self.mongo_filter):
+            data = self.DATA_TYPE[data_type](**document)
+            if data_type != PARAGRAPH_EXTRACTION_NAME:
+                for segment in data.xml_segments_boxes:
+                    segment.page_width = segment.page_width if segment.page_width else data.page_width
+                    segment.page_height = segment.page_height if segment.page_height else data.page_height
 
-        return labeled_data_list
+            data_list.append(data)
+
+        return data_list
 
     def get_extraction_data_for_training(self, labeled_data_list: list[LabeledData]) -> ExtractionData:
         multi_option_samples: list[TrainingSample] = list()
@@ -79,7 +107,7 @@ class Extractor:
     def create_models(self) -> (bool, str):
         start = time()
         send_logs(self.extraction_identifier, "Loading data to create model")
-        extraction_data: ExtractionData = self.get_extraction_data_for_training(self.get_labeled_data())
+        extraction_data: ExtractionData = self.get_extraction_data_for_training(self.get_data_from_db("labeled_data"))
         send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
         self.delete_training_data()
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
@@ -109,16 +137,6 @@ class Extractor:
 
         return prediction_samples
 
-    def get_prediction_data_from_db(self):
-        prediction_data_list = []
-        for document in self.pdf_metadata_extraction_db.prediction_data.find(self.mongo_filter):
-            prediction_data = PredictionData(**document)
-            for segment in prediction_data.xml_segments_boxes:
-                segment.page_width = segment.page_width if segment.page_width else prediction_data.page_width
-                segment.page_height = segment.page_height if segment.page_height else prediction_data.page_height
-            prediction_data_list.append(prediction_data)
-        return prediction_data_list
-
     def delete_training_data(self):
         training_xml_path = XmlFile(extraction_identifier=self.extraction_identifier, to_train=True).xml_folder_path
         send_logs(self.extraction_identifier, f"Deleting training data in {training_xml_path}")
@@ -143,9 +161,49 @@ class Extractor:
         return True, ""
 
     def get_suggestions(self) -> list[Suggestion]:
-        prediction_samples = self.get_prediction_samples(self.get_prediction_data_from_db())
+        prediction_samples = self.get_prediction_samples(self.get_data_from_db(self.PREDICTION_DATA))
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.predict(prediction_samples)
+
+    def get_paragraphs(self, task: ParagraphExtractorTask) -> ParagraphsTranslations:
+        languages = [x.language for x in task.xmls]
+        if not languages:
+            return ParagraphsTranslations(key=task.key)
+
+        main_languages = [x.language for x in task.xmls if x.is_main_language]
+        main_language = main_languages[0] if main_languages else languages[0]
+        data = self.get_data_from_db(PARAGRAPH_EXTRACTION_NAME)
+
+        if not data:
+            return ParagraphsTranslations(key=task.key, available_languages=languages, main_language=main_language)
+
+        paragraph_extraction_task = data[0]
+        paragraphs_from_languages: list[ParagraphsFromLanguage] = list()
+        for xml_data in paragraph_extraction_task.xmls:
+            segmentation_data = SegmentationData(
+                page_width=0, page_height=0, xml_segments_boxes=xml_data.xml_segments_boxes, label_segments_boxes=[]
+            )
+            xml_file = XmlFile(
+                extraction_identifier=self.extraction_identifier, to_train=True, xml_file_name=xml_data.xml_file_name
+            )
+            pdf_data = PdfData.from_xml_file(xml_file, segmentation_data)
+            paragraphs_from_language = ParagraphsFromLanguage(
+                language=xml_data.language,
+                paragraphs=[ParagraphFeatures.from_pdf_data(pdf_data, x) for x in pdf_data.pdf_data_segments],
+                is_main_language=xml_data.is_main_language,
+            )
+            paragraphs_from_languages.append(paragraphs_from_language)
+
+        aligner_use_case = MultilingualParagraphAlignerUseCase(self.extraction_identifier)
+        aligner_use_case.align_languages(paragraphs_from_languages)
+
+        paragraphs = [ParagraphTranslations.from_paragraphs_from_language(x) for x in paragraphs_from_languages]
+        return ParagraphsTranslations(
+            key=task.key, available_languages=languages, main_language=main_language, paragraphs=paragraphs
+        )
+
+    def insert_paragraphs_in_db(self, paragraphs):
+        pass
 
     @staticmethod
     def remove_old_models(extractor_identifier: ExtractionIdentifier):
@@ -165,29 +223,45 @@ class Extractor:
                     shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
 
     @staticmethod
-    def calculate_task(extraction_task: ExtractionTask) -> (bool, str):
-        extractor_identifier = ExtractionIdentifier(
-            run_name=extraction_task.tenant,
-            extraction_name=extraction_task.params.id,
-            metadata=extraction_task.params.metadata,
-            output_path=DATA_PATH,
-        )
+    def calculate_task(task: TrainableEntityExtractionTask | ParagraphExtractorTask) -> (bool, str):
+        if task.task == Extractor.CREATE_MODEL_TASK_NAME:
+            extractor_identifier = ExtractionIdentifier(
+                run_name=task.tenant,
+                extraction_name=task.extraction_name,
+                metadata=task.metadata,
+                output_path=DATA_PATH,
+            )
 
-        Extractor.remove_old_models(extractor_identifier)
+            Extractor.remove_old_models(extractor_identifier)
 
-        if extraction_task.task == Extractor.CREATE_MODEL_TASK_NAME:
-            if extraction_task.params.options:
-                options = extraction_task.params.options
+            if task.xmls.options:
+                options = task.xmls.options
             else:
                 options = extractor_identifier.get_options()
 
-            multi_value = extraction_task.params.multi_value
+            multi_value = task.xmls.multi_value
             extractor = Extractor(extractor_identifier, options, multi_value)
             return extractor.create_models()
 
-        if extraction_task.task == Extractor.SUGGESTIONS_TASK_NAME:
+        if task.task == Extractor.SUGGESTIONS_TASK_NAME:
+            extractor_identifier = ExtractionIdentifier(
+                run_name=task.tenant,
+                extraction_name=task.extraction_name,
+                metadata=task.metadata,
+                output_path=DATA_PATH,
+            )
             extractor = Extractor(extractor_identifier)
             suggestions = extractor.get_suggestions()
             return extractor.insert_suggestions_in_db(suggestions)
+
+        if task.task == PARAGRAPH_EXTRACTION_NAME:
+            extractor_identifier = ExtractionIdentifier(
+                run_name=PARAGRAPH_EXTRACTION_NAME,
+                extraction_name=task.key,
+                output_path=DATA_PATH,
+            )
+            extractor = Extractor(extractor_identifier)
+            paragraphs = extractor.get_paragraphs(task)
+            return extractor.insert_paragraphs_in_db(paragraphs)
 
         return False, "Error"

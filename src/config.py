@@ -2,7 +2,10 @@ import os
 from os.path import join
 from pathlib import Path
 
-QUEUES_NAMES = os.environ.get("QUEUES_NAMES", "information_extraction")
+PARAGRAPH_EXTRACTION_NAME = "paragraph_extraction"
+QUEUES_NAMES = os.environ.get("QUEUES_NAMES", f"information_extraction")
+QUEUES_NAMES += f" {PARAGRAPH_EXTRACTION_NAME}"
+
 
 SERVICE_HOST = os.environ.get("SERVICE_HOST", "http://127.0.0.1")
 SERVICE_PORT = os.environ.get("SERVICE_PORT", "5056")
