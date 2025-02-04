@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from data.XML import XML
+from domain.XML import XML
 
 
 class ParagraphExtractionResultsMessage(BaseModel):

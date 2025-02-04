@@ -4,9 +4,9 @@ from contextlib import asynccontextmanager
 import json
 from os.path import join
 
-import pymongo
 from queue_processor.QueueProcessor import QueueProcessor
 
+from adapters.MongoPersistenceRepository import MongoPersistenceRepository
 from catch_exceptions import catch_exceptions
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 import sys
@@ -18,19 +18,19 @@ from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.data.LabeledData import LabeledData
 from trainable_entity_extractor.data.PredictionData import PredictionData
-from trainable_entity_extractor.data.Suggestion import Suggestion
 from trainable_entity_extractor.send_logs import send_logs
 
-from config import MONGO_HOST, MONGO_PORT, DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME
-from data.ParagraphExtractionData import ParagraphExtractionData
-from data.ParagraphExtractorTask import ParagraphExtractorTask
+from config import DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME, PARAGRAPH_EXTRACTION_TASKS_QUEUE_NAME
+from domain.ParagraphExtractionData import ParagraphExtractionData
+from domain.ParagraphExtractorTask import ParagraphExtractorTask
+from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.mongodb_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
+    app.persistence_repository = MongoPersistenceRepository()
     yield
-    app.mongodb_client.close()
+    app.persistence_repository.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -70,7 +70,7 @@ async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...))
         to_train=True,
         xml_file_name=filename,
     )
-    xml_file.save(file=file.file.read())
+    xml_file.save(file_content=file.file.read())
     return "xml_to_train saved"
 
 
@@ -83,67 +83,73 @@ async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...
         to_train=False,
         xml_file_name=filename,
     )
-    xml_file.save(file=file.file.read())
+    xml_file.save(file_content=file.file.read())
     return "xml_to_train saved"
 
 
 @app.post("/labeled_data")
 @catch_exceptions
 async def labeled_data_post(labeled_data: LabeledData):
-    pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-    pdf_metadata_extraction_db.labeled_data.insert_one(labeled_data.scale_down_labels().to_dict())
+    labeled_data.scale_down_labels()
+    extraction_identifier = ExtractionIdentifier(
+        run_name=labeled_data.tenant, extraction_name=labeled_data.id, output_path=DATA_PATH
+    )
+    app.persistence_repository.save_labeled_data(extraction_identifier, labeled_data)
     return "labeled data saved"
 
 
 @app.post("/prediction_data")
 @catch_exceptions
 async def prediction_data_post(prediction_data: PredictionData):
-    pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-    pdf_metadata_extraction_db.prediction_data.insert_one(prediction_data.to_dict())
+    extraction_identifier = ExtractionIdentifier(
+        run_name=prediction_data.tenant, extraction_name=prediction_data.id, output_path=DATA_PATH
+    )
+    app.persistence_repository.save_prediction_data(extraction_identifier, prediction_data)
     return "prediction data saved"
 
 
-@app.get("/get_suggestions/{tenant}/{extraction_id}")
+@app.get("/get_suggestions/{run_name}/{extraction_name}")
 @catch_exceptions
-async def get_suggestions(tenant: str, extraction_id: str):
-    pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-    suggestions_filter = {"tenant": tenant, "id": extraction_id}
-    suggestions_list: list[str] = list()
-
-    for document in pdf_metadata_extraction_db.suggestions.find(suggestions_filter):
-        suggestions_list.append(Suggestion(**document).scale_up().to_output())
-
-    pdf_metadata_extraction_db.suggestions.delete_many(suggestions_filter)
-    extraction_identifier = ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH)
+async def get_suggestions(run_name: str, extraction_name: str):
+    extraction_identifier = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH)
+    suggestions = app.persistence_repository.load_suggestions(extraction_identifier)
+    suggestions_list = [x.scale_up().to_output() for x in suggestions]
     send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
 
     return json.dumps(suggestions_list)
 
 
-@app.delete("/{tenant}/{extraction_id}")
-async def get_suggestions(tenant: str, extraction_id: str):
-    shutil.rmtree(join(DATA_PATH, tenant, extraction_id), ignore_errors=True)
+@app.delete("/{run_name}/{extraction_name}")
+async def remove_extractor(run_name: str, extraction_name: str):
+    shutil.rmtree(join(DATA_PATH, run_name, extraction_name), ignore_errors=True)
     return True
 
 
 @app.post("/extract_paragraphs")
 async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadFile] = File(...)):
     paragraph_extraction_data = ParagraphExtractionData(**json.loads(json_data))
+    extractor_identifier = ExtractionIdentifier(
+        run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=paragraph_extraction_data.key, output_path=DATA_PATH
+    )
+    app.persistence_repository.save_paragraph_extraction_data(extractor_identifier, paragraph_extraction_data)
 
     for file in xml_files:
-        identifier = ExtractionIdentifier(run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=paragraph_extraction_data.key)
         xml_file = XmlFile(
-            extraction_identifier=identifier,
+            extraction_identifier=extractor_identifier,
             to_train=True,
             xml_file_name=file.filename,
         )
-        xml_file.save(file=file.file.read())
+        xml_file.save(file_content=file.file.read())
 
-    pdf_metadata_extraction_db = app.mongodb_client["pdf_metadata_extraction"]
-    pdf_metadata_extraction_db.paragraph_extraction_data.insert_one(paragraph_extraction_data.to_db())
-
-    queue_name = f"{PARAGRAPH_EXTRACTION_NAME}_tasks"
-    queue = QueueProcessor(REDIS_HOST, REDIS_PORT, []).get_queue(queue_name)
-    task = ParagraphExtractorTask(**paragraph_extraction_data.model_dump(), task=PARAGRAPH_EXTRACTION_NAME)
-    queue.sendMessage().message(task.model_dump()).execute()
+    task = ParagraphExtractorTask(**paragraph_extraction_data.model_dump(), task=PARAGRAPH_EXTRACTION_NAME).model_dump()
+    QueueProcessor(REDIS_HOST, REDIS_PORT, [PARAGRAPH_EXTRACTION_TASKS_QUEUE_NAME]).send_message(task)
     return "ok"
+
+
+@app.get("/get_paragraphs_translations/{key}")
+async def get_paragraphs_translations(key: str) -> ParagraphsTranslations:
+    extractor_identifier = ExtractionIdentifier(
+        run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=key, output_path=DATA_PATH
+    )
+    paragraphs_from_languages = app.persistence_repository.load_paragraphs_from_languages(extractor_identifier)
+    return ParagraphsTranslations.from_paragraphs_from_languages(key, paragraphs_from_languages)

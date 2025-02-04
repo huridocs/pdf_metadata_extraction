@@ -2,7 +2,8 @@ import os
 from os.path import join
 from pathlib import Path
 
-PARAGRAPH_EXTRACTION_NAME = "paragraph_extraction"
+PARAGRAPH_EXTRACTION_NAME = os.environ.get("QUEUES_NAMES", f"paragraph_extraction")
+PARAGRAPH_EXTRACTION_TASKS_QUEUE_NAME = f"{PARAGRAPH_EXTRACTION_NAME}_tasks"
 QUEUES_NAMES = os.environ.get("QUEUES_NAMES", f"information_extraction")
 QUEUES_NAMES += f" {PARAGRAPH_EXTRACTION_NAME}"
 

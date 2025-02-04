@@ -1,5 +1,5 @@
-from data.TaskType import TaskType
-from data.XML import XML
+from domain.TaskType import TaskType
+from domain.XML import XML
 
 
 class ParagraphExtractorTask(TaskType):

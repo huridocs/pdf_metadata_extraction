@@ -8,16 +8,30 @@ from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.send_logs import send_logs
 
-from config import SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, QUEUES_NAMES, DATA_PATH
-from data.ParagraphExtractorTask import ParagraphExtractorTask
-from data.TrainableEntityExtractionTask import TrainableEntityExtractionTask
-from data.ResultsMessage import ResultsMessage
-from Extractor import Extractor
-from data.TaskType import TaskType
+from adapters.MongoPersistenceRepository import MongoPersistenceRepository
+from config import SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, QUEUES_NAMES, DATA_PATH, PARAGRAPH_EXTRACTION_NAME
+from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
+from domain.ParagraphExtractorTask import ParagraphExtractorTask
+from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
+from domain.ResultsMessage import ResultsMessage
+from use_cases.Extractor import Extractor
+from domain.TaskType import TaskType
 
 
 def restart_condition(message: dict[str, any]) -> bool:
     return TrainableEntityExtractionTask(**message).task == Extractor.CREATE_MODEL_TASK_NAME
+
+
+def get_paragraphs(task: ParagraphExtractorTask):
+    persistence_repository = MongoPersistenceRepository()
+    task_calculated, error_message = Extractor.calculate_task(task, persistence_repository)
+
+    if not task_calculated:
+        config_logger.info(f"Error: {error_message}")
+        return ParagraphExtractionResultsMessage(key=task.key, xmls=task.xmls, success=False, error_message=error_message)
+
+    data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_paragraphs_translations/{task.key}"
+    return ParagraphExtractionResultsMessage(key=task.key, xmls=task.xmls, success=True, error_message="", data_url=data_url)
 
 
 def process(message: dict[str, any]) -> dict[str, any] | None:
@@ -31,9 +45,9 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
     if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
         task = TrainableEntityExtractionTask(**message)
         result_message = get_extraction(task)
-    if task_type.task == Extractor.PARAGRAPHS_EXTRACTOR_TASK_NAME:
+    elif task_type.task == PARAGRAPH_EXTRACTION_NAME:
         task = ParagraphExtractorTask(**message)
-        result_message = get_extraction(task)
+        result_message = get_paragraphs(task)
     else:
         task = TrainableEntityExtractionTask(**message)
         result_message = ResultsMessage(
@@ -49,7 +63,9 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
 
 
 def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask) -> ResultsMessage:
-    task_calculated, error_message = Extractor.calculate_task(task)
+    persistence_repository = MongoPersistenceRepository()
+    task_calculated, error_message = Extractor.calculate_task(task, persistence_repository)
+
     if task_calculated:
         data_url = None
 

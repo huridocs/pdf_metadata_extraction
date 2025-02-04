@@ -1,5 +1,5 @@
-from data.Params import Params
-from data.TaskType import TaskType
+from domain.Params import Params
+from domain.TaskType import TaskType
 
 
 class TrainableEntityExtractionTask(TaskType):

@@ -1,7 +1,8 @@
 from typing import Optional
 
 from pydantic import BaseModel
-from data.Params import Params
+
+from domain.Params import Params
 
 
 class ResultsMessage(BaseModel):

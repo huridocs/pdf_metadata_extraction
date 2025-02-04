@@ -14,14 +14,14 @@ from trainable_entity_extractor.data.SegmentBox import SegmentBox
 from trainable_entity_extractor.data.Suggestion import Suggestion
 
 from config import APP_PATH, DATA_PATH
-from data.ParagraphExtractionData import ParagraphExtractionData, XmlData
-from data.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
-from data.ParagraphsTranslations import ParagraphsTranslations
-from data.Params import Params
-from data.ResultsMessage import ResultsMessage
-from data.TrainableEntityExtractionTask import TrainableEntityExtractionTask
+from domain.ParagraphExtractionData import ParagraphExtractionData, XmlSegments
+from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
+from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
+from domain.Params import Params
+from domain.ResultsMessage import ResultsMessage
+from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 
-ROOT_PATH = "./"
+ROOT_PATH = "../"
 
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = "6379"
@@ -347,8 +347,8 @@ class TestEndToEnd(TestCase):
         self.assertEqual([Option(id="2", label="2"), Option(id="3", label="3")], suggestion_2.values)
 
     def test_extract_paragraphs(self):
-        en_xml_path = Path(APP_PATH, "tests", "resources", "test_en.xml")
-        fr_xml_path = Path(APP_PATH, "tests", "resources", "test_fr.xml")
+        en_xml_path = Path(APP_PATH, "", "resources", "test_en.xml")
+        fr_xml_path = Path(APP_PATH, "", "resources", "test_fr.xml")
 
         segment_boxes = [
             SegmentBox(left=183, top=72, width=246, height=22, page_number=1, segment_type=TokenType.PAGE_HEADER),
@@ -359,9 +359,11 @@ class TestEndToEnd(TestCase):
 
         paragraph_extraction_data = ParagraphExtractionData(
             key="key_1",
-            xmls=[
-                XmlData(xml_file_name="test_en.xml", language="en", is_main_language=True, xml_segments_boxes=segment_boxes),
-                XmlData(
+            xmls_segments=[
+                XmlSegments(
+                    xml_file_name="test_en.xml", language="en", is_main_language=True, xml_segments_boxes=segment_boxes
+                ),
+                XmlSegments(
                     xml_file_name="test_fr.xml", language="fr", is_main_language=False, xml_segments_boxes=segment_boxes
                 ),
             ],

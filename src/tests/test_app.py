@@ -10,12 +10,12 @@ from unittest import TestCase
 
 from trainable_entity_extractor.data.Suggestion import Suggestion
 
-from app import app
+from drivers.rest.app import app
 from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
 
 
 class TestApp(TestCase):
-    test_file_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_predict/test.xml"
+    test_file_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_predict/test.xml"
 
     def test_info(self):
         with TestClient(app) as client:
@@ -24,21 +24,21 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
 
     def test_post_train_xml_file(self):
-        tenant = "endpoint_test"
-        extraction_id = "extraction_id"
+        run_name = "endpoint_test"
+        extraction_name = "extraction_id"
 
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, run_name), ignore_errors=True)
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
             with TestClient(app) as client:
-                response = client.post(f"/xml_to_train/{tenant}/{extraction_id}", files=files)
+                response = client.post(f"/xml_to_train/{run_name}/{extraction_name}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_train/test.xml"
+        to_train_xml_path = f"{DATA_PATH}/{run_name}/{extraction_name}/xml_to_train/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(DATA_PATH, run_name), ignore_errors=True)
 
     def test_post_xml_to_predict(self):
         tenant = "endpoint_test"
@@ -65,6 +65,8 @@ class TestApp(TestCase):
         mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
+            "run_name": tenant,
+            "extraction_name": extraction_id,
             "tenant": tenant,
             "id": extraction_id,
             "xml_file_name": "xml_file_name",
@@ -291,6 +293,8 @@ class TestApp(TestCase):
 
         json_data = [
             {
+                "run_name": "wrong tenant",
+                "extraction_name": extraction_id,
                 "tenant": "wrong tenant",
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
@@ -302,6 +306,8 @@ class TestApp(TestCase):
                 ],
             },
             {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
@@ -313,6 +319,8 @@ class TestApp(TestCase):
                 ],
             },
             {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "other_file_name",
@@ -324,6 +332,8 @@ class TestApp(TestCase):
                 ],
             },
             {
+                "run_name": tenant,
+                "extraction_name": "wrong extraction name",
                 "tenant": tenant,
                 "id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
@@ -372,6 +382,8 @@ class TestApp(TestCase):
 
         json_data = [
             {
+                "run_name": "wrong tenant",
+                "extraction_name": extraction_id,
                 "tenant": "wrong tenant",
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
@@ -383,6 +395,8 @@ class TestApp(TestCase):
                 ],
             },
             {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
@@ -394,6 +408,8 @@ class TestApp(TestCase):
                 ],
             },
             {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "other_file_name",
@@ -408,6 +424,8 @@ class TestApp(TestCase):
                 ],
             },
             {
+                "run_name": tenant,
+                "extraction_name": "wrong extraction name",
                 "tenant": tenant,
                 "id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
@@ -458,6 +476,8 @@ class TestApp(TestCase):
 
         json_data = [
             {
+                "run_name": tenant + "1",
+                "extraction_name": extraction_id,
                 "tenant": tenant + "1",
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
@@ -469,6 +489,8 @@ class TestApp(TestCase):
                 ],
             },
             {
+                "run_name": tenant + "2",
+                "extraction_name": extraction_id,
                 "tenant": tenant + "2",
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
