@@ -347,8 +347,8 @@ class TestEndToEnd(TestCase):
         self.assertEqual([Option(id="2", label="2"), Option(id="3", label="3")], suggestion_2.values)
 
     def test_extract_paragraphs(self):
-        en_xml_path = Path(APP_PATH, "", "resources", "test_en.xml")
-        fr_xml_path = Path(APP_PATH, "", "resources", "test_fr.xml")
+        en_xml_path = Path(APP_PATH, "tests", "resources", "test_en.xml")
+        fr_xml_path = Path(APP_PATH, "tests", "resources", "test_fr.xml")
 
         segment_boxes = [
             SegmentBox(left=183, top=72, width=246, height=22, page_number=1, segment_type=TokenType.PAGE_HEADER),
@@ -375,21 +375,21 @@ class TestEndToEnd(TestCase):
             ("xml_files", open(fr_xml_path, "rb")),
         ]
 
-        response = requests.post(f"http://{SERVER_URL}/extract_paragraphs", files=files)
+        response = requests.post(f"{SERVER_URL}/extract_paragraphs", files=files)
         self.assertEqual(200, response.status_code)
         results_message = self.get_results_message("paragraph_extraction_results")
-        self.assertEqual("key", results_message.key)
+        self.assertEqual("key_1", results_message.key)
         self.assertEqual(2, len(results_message.xmls))
         self.assertTrue(results_message.success)
         self.assertEqual("", results_message.error_message)
-        self.assertEqual(f"http://{SERVER_URL}/get_paragraphs_translations/key_1", results_message.data_url)
+        self.assertEqual(f"{SERVER_URL}/get_paragraphs_translations/key_1", results_message.data_url)
 
         response = requests.get(results_message.data_url)
 
-        paragraphs_translations = ParagraphsTranslations(**json.loads(response.json()))
+        paragraphs_translations = ParagraphsTranslations(**response.json())
         self.assertEqual("key_1", paragraphs_translations.key)
-        self.assertEqual("en", len(paragraphs_translations.main_language))
-        self.assertEqual(["en", "fr"], len(paragraphs_translations.available_languages))
+        self.assertEqual("en", paragraphs_translations.main_language)
+        self.assertEqual(["en", "fr"], paragraphs_translations.available_languages)
 
         self.assertEqual(2, len(paragraphs_translations.paragraphs))
 
@@ -446,4 +446,6 @@ TEXT"""
             message = queue.receiveMessage().exceptions(False).execute()
             if message:
                 queue.deleteMessage(id=message["id"]).execute()
+                if queue_name == "paragraph_extraction_results":
+                    return ParagraphExtractionResultsMessage(**json.loads(message["message"]))
                 return ResultsMessage(**json.loads(message["message"]))

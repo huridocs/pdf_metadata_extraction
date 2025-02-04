@@ -36,7 +36,7 @@ class MongoPersistenceRepository(PersistenceRepository):
         return data
 
     def save_data(self, extraction_identifier: ExtractionIdentifier, data: BaseModel, collection_name: str):
-        data_dict = data.to_dict()
+        data_dict = data.model_dump()
         data_dict = self.inject_extractor_identifier(extraction_identifier, data_dict)
         self.mongo_db[collection_name].insert_one(data_dict)
 

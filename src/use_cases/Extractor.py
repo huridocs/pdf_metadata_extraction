@@ -169,9 +169,6 @@ class Extractor:
             paragraphs_from_languages.append(paragraphs_from_language)
         return paragraphs_from_languages
 
-    def insert_paragraphs_in_db(self, paragraphs):
-        pass
-
     @staticmethod
     def remove_old_models(extractor_identifier: ExtractionIdentifier):
         if exists(extractor_identifier.get_path()):

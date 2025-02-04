@@ -20,9 +20,10 @@ from trainable_entity_extractor.data.LabeledData import LabeledData
 from trainable_entity_extractor.data.PredictionData import PredictionData
 from trainable_entity_extractor.send_logs import send_logs
 
-from config import DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME, PARAGRAPH_EXTRACTION_TASKS_QUEUE_NAME
+from config import DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME
 from domain.ParagraphExtractionData import ParagraphExtractionData
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
+from domain.XML import XML
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
 
 
@@ -128,9 +129,13 @@ async def remove_extractor(run_name: str, extraction_name: str):
 @app.post("/extract_paragraphs")
 async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadFile] = File(...)):
     paragraph_extraction_data = ParagraphExtractionData(**json.loads(json_data))
+
     extractor_identifier = ExtractionIdentifier(
         run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=paragraph_extraction_data.key, output_path=DATA_PATH
     )
+
+    config_logger.info(f"extract_paragraphs endpoint called for {extractor_identifier.extraction_name}")
+
     app.persistence_repository.save_paragraph_extraction_data(extractor_identifier, paragraph_extraction_data)
 
     for file in xml_files:
@@ -141,8 +146,15 @@ async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadF
         )
         xml_file.save(file_content=file.file.read())
 
-    task = ParagraphExtractorTask(**paragraph_extraction_data.model_dump(), task=PARAGRAPH_EXTRACTION_NAME).model_dump()
-    QueueProcessor(REDIS_HOST, REDIS_PORT, [PARAGRAPH_EXTRACTION_TASKS_QUEUE_NAME]).send_message(task)
+    paragraph_extractor_task = ParagraphExtractorTask(
+        task=PARAGRAPH_EXTRACTION_NAME,
+        key=paragraph_extraction_data.key,
+        xmls=[XML(**x.model_dump()) for x in paragraph_extraction_data.xmls_segments],
+    )
+    config_logger.info(f"add task {paragraph_extractor_task.model_dump()}")
+
+    task = paragraph_extractor_task.model_dump()
+    QueueProcessor(REDIS_HOST, REDIS_PORT, [PARAGRAPH_EXTRACTION_NAME]).send_message(task)
     return "ok"
 
 

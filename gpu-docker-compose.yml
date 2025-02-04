@@ -2,7 +2,7 @@ version: "3.8"
 services:
   pdf_metadata_extraction_api:
     container_name: pdf_metadata_extraction_api
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"  ]
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"  ]
     init: true
     restart: unless-stopped
     build:
@@ -29,7 +29,7 @@ services:
               count: 1
               capabilities: [ gpu ]
     init: true
-    entrypoint: [ "python", "-m", "src.start_queue_processor" ]
+    entrypoint: [ "python", "-m", "src.drivers.queues_processor.start_queue_processor" ]
     build:
       context: .
       dockerfile: Dockerfile
