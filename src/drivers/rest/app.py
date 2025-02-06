@@ -127,6 +127,7 @@ async def remove_extractor(run_name: str, extraction_name: str):
 
 
 @app.post("/extract_paragraphs")
+@catch_exceptions
 async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadFile] = File(...)):
     paragraph_extraction_data = ParagraphExtractionData(**json.loads(json_data))
 
@@ -159,9 +160,11 @@ async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadF
 
 
 @app.get("/get_paragraphs_translations/{key}")
+@catch_exceptions
 async def get_paragraphs_translations(key: str) -> ParagraphsTranslations:
     extractor_identifier = ExtractionIdentifier(
         run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=key, output_path=DATA_PATH
     )
     paragraphs_from_languages = app.persistence_repository.load_paragraphs_from_languages(extractor_identifier)
+    app.persistence_repository.delete_paragraphs_from_languages(extractor_identifier)
     return ParagraphsTranslations.from_paragraphs_from_languages(key, paragraphs_from_languages)

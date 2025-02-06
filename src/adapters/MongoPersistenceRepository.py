@@ -93,6 +93,9 @@ class MongoPersistenceRepository(PersistenceRepository):
         data = self.mongo_db.paragraphs_from_languages.find(self.get_filter(extraction_identifier))
         return [ParagraphsFromLanguage(**document) for document in data]
 
+    def delete_paragraphs_from_languages(self, extraction_identifier: ExtractionIdentifier):
+        self.mongo_db.paragraphs_from_languages.delete_many(self.get_filter(extraction_identifier))
+
     def delete_prediction_data(self, extraction_identifier: ExtractionIdentifier, filters: list[dict[str, str]]):
         for one_filter in filters:
             self.mongo_db.suggestions.delete_many({**self.get_filter(extraction_identifier), **one_filter})

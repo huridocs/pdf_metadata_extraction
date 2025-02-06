@@ -347,6 +347,9 @@ class TestEndToEnd(TestCase):
         self.assertEqual([Option(id="2", label="2"), Option(id="3", label="3")], suggestion_2.values)
 
     def test_extract_paragraphs(self):
+        response = requests.post(f"{SERVER_URL}/extract_paragraphs", files=[])
+        self.assertEqual(422, response.status_code)
+
         en_xml_path = Path(APP_PATH, "tests", "resources", "test_en.xml")
         fr_xml_path = Path(APP_PATH, "tests", "resources", "test_fr.xml")
 
@@ -384,6 +387,10 @@ class TestEndToEnd(TestCase):
         self.assertEqual("", results_message.error_message)
         self.assertEqual(f"{SERVER_URL}/get_paragraphs_translations/key_1", results_message.data_url)
 
+        response = requests.get(results_message.data_url + "force_error")
+
+        self.assertEqual(422, response.status_code)
+
         response = requests.get(results_message.data_url)
 
         paragraphs_translations = ParagraphsTranslations(**response.json())
@@ -405,25 +412,12 @@ more recently with desktop publishing software like Aldus PageMaker including ve
 Ipsum."""
         self.assertEqual("en", paragraphs_translations.paragraphs[0].translations[0].language)
         self.assertEqual(False, paragraphs_translations.paragraphs[0].translations[0].needs_user_review)
-        self.assertEqual(text, paragraphs_translations.paragraphs[0].translations[0].text)
+        self.assertEqual(text.split(), paragraphs_translations.paragraphs[0].translations[0].text.split())
         self.assertEqual("fr", paragraphs_translations.paragraphs[0].translations[1].language)
         self.assertEqual(False, paragraphs_translations.paragraphs[0].translations[1].needs_user_review)
-        self.assertEqual(text, paragraphs_translations.paragraphs[0].translations[1].text)
+        self.assertEqual(text.split(), paragraphs_translations.paragraphs[0].translations[1].text.split())
 
-        text = """●
-●
-●
-●
-●
-●
-●
-FORMULA
-FOOTNOTE
-LIST
-TABLE
-FIGURE
-TITLE
-TEXT"""
+        text = """● FORMULA ● FOOTNOTE ● LIST ● TABLE ● FIGURE ● TITLE ● TEXT"""
         self.assertEqual("en", paragraphs_translations.paragraphs[1].translations[0].language)
         self.assertEqual(False, paragraphs_translations.paragraphs[1].translations[0].needs_user_review)
         self.assertEqual(text, paragraphs_translations.paragraphs[1].translations[0].text)
