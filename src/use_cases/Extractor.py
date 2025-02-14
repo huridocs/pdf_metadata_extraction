@@ -66,6 +66,7 @@ class Extractor:
                 pdf_data=pdf_data, labeled_data=labeled_data, segment_selector_texts=[labeled_data.source_text]
             )
             multi_option_samples.append(sample)
+            xml_file.delete()
 
         return ExtractionData(
             samples=multi_option_samples,
@@ -103,6 +104,8 @@ class Extractor:
             else:
                 pdf_data = PdfData.from_texts([""])
 
+            xml_file.delete()
+
             sample = PredictionSample(pdf_data=pdf_data, entity_name=entity_name, source_text=prediction_data.source_text)
             prediction_samples.append(sample)
 
@@ -119,12 +122,6 @@ class Extractor:
             return False, "No data to calculate suggestions"
 
         self.persistence_repository.save_suggestions(self.extraction_identifier, suggestions)
-        xml_folder_path = XmlFile(extraction_identifier=self.extraction_identifier, to_train=False).xml_folder_path
-        for suggestion in suggestions:
-            path = Path(join(xml_folder_path, suggestion.xml_file_name))
-            if not path.is_dir():
-                path.unlink(missing_ok=True)
-
         return True, ""
 
     def get_suggestions(self) -> list[Suggestion]:
@@ -164,6 +161,8 @@ class Extractor:
                 is_main_language=xml_segments.is_main_language,
             )
             paragraphs_from_languages.append(paragraphs_from_language)
+            xml_file.delete()
+
         return paragraphs_from_languages
 
     @staticmethod
