@@ -1,13 +1,14 @@
 from pydantic import BaseModel
 from trainable_entity_extractor.data.SegmentBox import SegmentBox
 
-from domain.XML import XML
 
-
-class XmlSegments(XML):
+class XmlData(BaseModel):
+    xml_file_name: str
+    language: str
+    is_main_language: bool
     xml_segments_boxes: list[SegmentBox]
 
 
 class ParagraphExtractionData(BaseModel):
     key: str
-    xmls_segments: list[XmlSegments]
+    xmls: list[XmlData]

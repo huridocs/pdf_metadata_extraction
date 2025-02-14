@@ -57,7 +57,7 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
             success=False,
             error_message="Task not found",
         )
-        config_logger.error(f"Task not found: {task_to_string(task_type)}")
+        config_logger.error(f"Task not found: {task.model_dump()}")
 
     return result_message.model_dump()
 
@@ -66,46 +66,38 @@ def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask)
     persistence_repository = MongoPersistenceRepository()
     task_calculated, error_message = Extractor.calculate_task(task, persistence_repository)
 
-    if task_calculated:
-        data_url = None
-
-        if task.task == Extractor.SUGGESTIONS_TASK_NAME:
-            data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.xmls.id}"
-
-        model_results_message = ResultsMessage(
-            tenant=task.tenant,
-            task=task.task,
-            params=task.xmls,
-            success=True,
-            error_message="",
-            data_url=data_url,
-        )
-    else:
-        config_logger.info(f"Error: {error_message}")
-        model_results_message = ResultsMessage(
-            tenant=task.tenant,
-            task=task.task,
-            params=task.xmls,
-            success=False,
-            error_message=error_message,
-        )
+    model_results_message = get_result_message(error_message, task, task_calculated)
     extraction_identifier = ExtractionIdentifier(
-        run_name=task.tenant, extraction_name=task.xmls.id, metadata=task.xmls.metadata, output_path=DATA_PATH
+        run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
     )
     send_logs(extraction_identifier, f"Result message: {model_results_message.to_string()}")
     return model_results_message
 
 
-def task_to_string(extraction_task: TrainableEntityExtractionTask):
-    extraction_dict = extraction_task.model_dump()
-    if (
-        "params" in extraction_dict
-        and "options" in extraction_dict["params"]
-        and 10 < len(extraction_dict["params"]["options"])
-    ):
-        extraction_dict["params"]["options"] = f'[hidden {len(extraction_dict["params"]["options"])} options]'
+def get_result_message(error_message, task, task_calculated):
+    if task_calculated:
+        if task.task == Extractor.SUGGESTIONS_TASK_NAME:
+            data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.params.id}"
+        else:
+            data_url = None
 
-    return str(extraction_dict)
+        return ResultsMessage(
+            tenant=task.tenant,
+            task=task.task,
+            params=task.params,
+            success=True,
+            error_message="",
+            data_url=data_url,
+        )
+
+    config_logger.info(f"Error: {error_message}")
+    return ResultsMessage(
+        tenant=task.tenant,
+        task=task.task,
+        params=task.params,
+        success=False,
+        error_message=error_message,
+    )
 
 
 if __name__ == "__main__":

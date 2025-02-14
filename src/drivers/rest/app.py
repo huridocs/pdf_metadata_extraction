@@ -150,7 +150,7 @@ async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadF
     paragraph_extractor_task = ParagraphExtractorTask(
         task=PARAGRAPH_EXTRACTION_NAME,
         key=paragraph_extraction_data.key,
-        xmls=[XML(**x.model_dump()) for x in paragraph_extraction_data.xmls_segments],
+        xmls=[XML(**x.model_dump()) for x in paragraph_extraction_data.xmls],
     )
     config_logger.info(f"add task {paragraph_extractor_task.model_dump()}")
 
@@ -166,5 +166,4 @@ async def get_paragraphs_translations(key: str) -> ParagraphsTranslations:
         run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=key, output_path=DATA_PATH
     )
     paragraphs_from_languages = app.persistence_repository.load_paragraphs_from_languages(extractor_identifier)
-    app.persistence_repository.delete_paragraphs_from_languages(extractor_identifier)
     return ParagraphsTranslations.from_paragraphs_from_languages(key, paragraphs_from_languages)

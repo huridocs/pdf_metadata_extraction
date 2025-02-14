@@ -121,9 +121,6 @@ class Extractor:
         self.persistence_repository.save_suggestions(self.extraction_identifier, suggestions)
         xml_folder_path = XmlFile(extraction_identifier=self.extraction_identifier, to_train=False).xml_folder_path
         for suggestion in suggestions:
-            entity_name = {"entity_name": suggestion.entity_name, "xml_file_name": ""}
-            xml_file_name = {"xml_file_name": suggestion.xml_file_name, "entity_name": ""}
-            self.persistence_repository.delete_prediction_data(self.extraction_identifier, [entity_name, xml_file_name])
             path = Path(join(xml_folder_path, suggestion.xml_file_name))
             if not path.is_dir():
                 path.unlink(missing_ok=True)
@@ -153,7 +150,7 @@ class Extractor:
 
     def get_paragraphs_from_languages(self, paragraph_extraction_data):
         paragraphs_from_languages: list[ParagraphsFromLanguage] = list()
-        for xml_segments in paragraph_extraction_data.xmls_segments:
+        for xml_segments in paragraph_extraction_data.xmls:
             segmentation_data = SegmentationData(
                 page_width=0, page_height=0, xml_segments_boxes=xml_segments.xml_segments_boxes, label_segments_boxes=[]
             )
@@ -192,23 +189,23 @@ class Extractor:
     ) -> (bool, str):
         if task.task == Extractor.CREATE_MODEL_TASK_NAME:
             extractor_identifier = ExtractionIdentifier(
-                run_name=task.tenant, extraction_name=task.extraction_name, metadata=task.metadata, output_path=DATA_PATH
+                run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
             )
 
             Extractor.remove_old_models(extractor_identifier)
 
-            if task.xmls.options:
-                options = task.xmls.options
+            if task.params.options:
+                options = task.params.options
             else:
                 options = extractor_identifier.get_options()
 
-            multi_value = task.xmls.multi_value
+            multi_value = task.params.multi_value
             extractor = Extractor(extractor_identifier, persistence_repository, options, multi_value)
             return extractor.create_models()
 
         if task.task == Extractor.SUGGESTIONS_TASK_NAME:
             extractor_identifier = ExtractionIdentifier(
-                run_name=task.tenant, extraction_name=task.extraction_name, metadata=task.metadata, output_path=DATA_PATH
+                run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
             )
             extractor = Extractor(extractor_identifier, persistence_repository)
             suggestions = extractor.get_suggestions()

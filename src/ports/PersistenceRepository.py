@@ -62,11 +62,3 @@ class PersistenceRepository(ABC):
     @abstractmethod
     def load_paragraphs_from_languages(self, extraction_identifier: ExtractionIdentifier) -> list[ParagraphsFromLanguage]:
         pass
-
-    @abstractmethod
-    def delete_paragraphs_from_languages(self, extraction_identifier: ExtractionIdentifier):
-        pass
-
-    @abstractmethod
-    def delete_prediction_data(self, extraction_identifier: ExtractionIdentifier, filters: list[dict[str, str]]):
-        pass

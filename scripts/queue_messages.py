@@ -9,7 +9,7 @@ def print_queue_messages():
     queue = RedisSMQ(
         host=REDIS_HOST,
         port=REDIS_PORT,
-        qname="information_extraction_tasks",
+        qname="information_extraction_results",
         quiet=False,
     )
 

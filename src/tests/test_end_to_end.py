@@ -14,7 +14,7 @@ from trainable_entity_extractor.data.SegmentBox import SegmentBox
 from trainable_entity_extractor.data.Suggestion import Suggestion
 
 from config import APP_PATH, DATA_PATH
-from domain.ParagraphExtractionData import ParagraphExtractionData, XmlSegments
+from domain.ParagraphExtractionData import ParagraphExtractionData, XmlData
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
 from domain.Params import Params
@@ -49,7 +49,7 @@ class TestEndToEnd(TestCase):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
 
-        test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
+        test_xml_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_train/test.xml"
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
@@ -187,7 +187,7 @@ class TestEndToEnd(TestCase):
     def test_pdf_to_multi_option(self):
         tenant = "end_to_end_test"
         extraction_id = "pdf_to_multi_option"
-        test_xml_path = f"{APP_PATH}/tenant_test/extraction_id/xml_to_train/test.xml"
+        test_xml_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_train/test.xml"
 
         for i in range(10):
             new_test_xml_path = f"{DATA_PATH}/test_{i}.xml"
@@ -362,11 +362,9 @@ class TestEndToEnd(TestCase):
 
         paragraph_extraction_data = ParagraphExtractionData(
             key="key_1",
-            xmls_segments=[
-                XmlSegments(
-                    xml_file_name="test_en.xml", language="en", is_main_language=True, xml_segments_boxes=segment_boxes
-                ),
-                XmlSegments(
+            xmls=[
+                XmlData(xml_file_name="test_en.xml", language="en", is_main_language=True, xml_segments_boxes=segment_boxes),
+                XmlData(
                     xml_file_name="test_fr.xml", language="fr", is_main_language=False, xml_segments_boxes=segment_boxes
                 ),
             ],

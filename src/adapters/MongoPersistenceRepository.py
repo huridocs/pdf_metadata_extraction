@@ -45,7 +45,9 @@ class MongoPersistenceRepository(PersistenceRepository):
 
     def load_prediction_data(self, extraction_identifier: ExtractionIdentifier) -> list[PredictionData]:
         data = self.mongo_db.prediction_data.find(self.get_filter(extraction_identifier))
-        return [PredictionData(**document) for document in data]
+        prediction_data = [PredictionData(**document) for document in data]
+        self.mongo_db.prediction_data.delete_many(self.get_filter(extraction_identifier))
+        return prediction_data
 
     def save_labeled_data(self, extraction_identifier: ExtractionIdentifier, labeled_data: LabeledData):
         self.save_data(extraction_identifier, labeled_data, "labeled_data")
@@ -91,7 +93,9 @@ class MongoPersistenceRepository(PersistenceRepository):
 
     def load_paragraphs_from_languages(self, extraction_identifier: ExtractionIdentifier) -> list[ParagraphsFromLanguage]:
         data = self.mongo_db.paragraphs_from_languages.find(self.get_filter(extraction_identifier))
-        return [ParagraphsFromLanguage(**document) for document in data]
+        paragraphs = [ParagraphsFromLanguage(**document) for document in data]
+        self.mongo_db.paragraphs_from_languages.delete_many(self.get_filter(extraction_identifier))
+        return paragraphs
 
     def delete_paragraphs_from_languages(self, extraction_identifier: ExtractionIdentifier):
         self.mongo_db.paragraphs_from_languages.delete_many(self.get_filter(extraction_identifier))
