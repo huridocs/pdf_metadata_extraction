@@ -12,6 +12,7 @@
 - [How to use GPU](#how-to-use-gpu)
 - [HTTP server](#http-server)
 - [Queue processor](#queue-processor)
+- [Paragraph extractor](#paragraph-extractor)
 - [Service configuration](#service-configuration)
 - [Get service logs](#get-service-logs)
 - [Set up environment for development](#set-up-environment-for-development)
@@ -277,6 +278,76 @@ The container `Queue processor` is coded using Python 3.9, and it is on charge o
 
 The code can be founded in the file `QueueProcessor.py` and it uses the library `RedisSMQ` to interact with the redis
 queues.
+
+## Paragraph Extractor
+
+### Input
+
+1. *XML Upload Endpoint*
+    
+    ```
+    POST /extract_paragraphs
+    Content-Type: multipart/form-data
+    Body: files=[@xml_file_name.xml],JSON```
+   
+JSON file attached above should have:
+    
+   ```JSON
+    {
+   "key": string,
+   "xmls_segments": [{
+     "xml_file_name": string,
+     "language": string,
+     "is_main_language": bool,
+     "xml_segments_boxes": [{
+       "left": number,
+       "top": number,
+       "width": number,
+       "height": number,
+       "page_number": number,
+       "type" : string
+      }]
+     }]
+   }
+```
+
+### Output
+
+1. *Redis Response Message*  from extract_paragraphs_results queue
+```
+    {
+      key: str,
+      xmls: list[XML],
+      success: bool,
+      error_message: str,
+      data_url: Optional[str] # (optional if error)
+    }
+```
+    
+XML:
+```
+        xml_file_name: str
+        language: str
+        is_main_language: bool 
+```
+    
+2. *Results Endpoint (accessed via data_url)*
+```JSON
+    GET {data_url}
+    Response: {
+      "key": string,
+      "main_language": string,
+      "available_languages": string[],
+      "paragraphs": [{
+        "position": number,
+        "translations": [{
+          "language": string,
+          "text": string,
+          "needs_user_review": boolean
+        }]
+      }]
+    }
+```
 
 ## Service configuration
 
