@@ -9,9 +9,9 @@ from pdf_token_type_labels.TokenType import TokenType
 from rsmq import RedisSMQ
 
 import requests
-from trainable_entity_extractor.data.Option import Option
-from trainable_entity_extractor.data.SegmentBox import SegmentBox
-from trainable_entity_extractor.data.Suggestion import Suggestion
+from trainable_entity_extractor.domain.Option import Option
+from trainable_entity_extractor.domain.SegmentBox import SegmentBox
+from trainable_entity_extractor.domain.Suggestion import Suggestion
 
 from config import APP_PATH, DATA_PATH
 from domain.ParagraphExtractionData import ParagraphExtractionData, XmlData

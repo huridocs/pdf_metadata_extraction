@@ -1,7 +1,6 @@
 import os
 import shutil
 from os.path import join, exists
-from pathlib import Path
 from time import time
 
 from multilingual_paragraph_extractor.domain.ParagraphFeatures import ParagraphFeatures
@@ -9,21 +8,21 @@ from multilingual_paragraph_extractor.domain.ParagraphsFromLanguage import Parag
 from multilingual_paragraph_extractor.use_cases.MultilingualParagraphAlignerUseCase import (
     MultilingualParagraphAlignerUseCase,
 )
-from trainable_entity_extractor.FilterValidSegmentsPages import FilterValidSegmentsPages
-from trainable_entity_extractor.TrainableEntityExtractor import TrainableEntityExtractor
-from trainable_entity_extractor.XmlFile import XmlFile
 from trainable_entity_extractor.config import config_logger
-from trainable_entity_extractor.data.ExtractionData import ExtractionData
-from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
-from trainable_entity_extractor.data.LabeledData import LabeledData
-from trainable_entity_extractor.data.Option import Option
-from trainable_entity_extractor.data.PdfData import PdfData
-from trainable_entity_extractor.data.PredictionData import PredictionData
-from trainable_entity_extractor.data.PredictionSample import PredictionSample
-from trainable_entity_extractor.data.SegmentationData import SegmentationData
-from trainable_entity_extractor.data.Suggestion import Suggestion
-from trainable_entity_extractor.data.TrainingSample import TrainingSample
-from trainable_entity_extractor.send_logs import send_logs
+from trainable_entity_extractor.domain.ExtractionData import ExtractionData
+from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.domain.LabeledData import LabeledData
+from trainable_entity_extractor.domain.Option import Option
+from trainable_entity_extractor.domain.PdfData import PdfData
+from trainable_entity_extractor.domain.PredictionData import PredictionData
+from trainable_entity_extractor.domain.PredictionSample import PredictionSample
+from trainable_entity_extractor.domain.SegmentationData import SegmentationData
+from trainable_entity_extractor.domain.Suggestion import Suggestion
+from trainable_entity_extractor.domain.TrainingSample import TrainingSample
+from trainable_entity_extractor.use_cases.FilterValidSegmentsPages import FilterValidSegmentsPages
+from trainable_entity_extractor.use_cases.TrainableEntityExtractor import TrainableEntityExtractor
+from trainable_entity_extractor.use_cases.XmlFile import XmlFile
+from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 from config import DATA_PATH, PARAGRAPH_EXTRACTION_NAME
 from domain.ParagraphExtractorTask import ParagraphExtractorTask

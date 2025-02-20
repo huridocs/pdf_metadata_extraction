@@ -1,10 +1,10 @@
 from abc import abstractmethod, ABC
 
 from multilingual_paragraph_extractor.domain.ParagraphsFromLanguage import ParagraphsFromLanguage
-from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
-from trainable_entity_extractor.data.LabeledData import LabeledData
-from trainable_entity_extractor.data.PredictionData import PredictionData
-from trainable_entity_extractor.data.Suggestion import Suggestion
+from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.domain.LabeledData import LabeledData
+from trainable_entity_extractor.domain.PredictionData import PredictionData
+from trainable_entity_extractor.domain.Suggestion import Suggestion
 
 from domain.ParagraphExtractionData import ParagraphExtractionData
 

@@ -3,10 +3,10 @@ from typing import Optional
 import pymongo
 from multilingual_paragraph_extractor.domain.ParagraphsFromLanguage import ParagraphsFromLanguage
 from pydantic import BaseModel
-from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
-from trainable_entity_extractor.data.LabeledData import LabeledData
-from trainable_entity_extractor.data.PredictionData import PredictionData
-from trainable_entity_extractor.data.Suggestion import Suggestion
+from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.domain.LabeledData import LabeledData
+from trainable_entity_extractor.domain.PredictionData import PredictionData
+from trainable_entity_extractor.domain.Suggestion import Suggestion
 
 from config import MONGO_HOST, MONGO_PORT
 from domain.ParagraphExtractionData import ParagraphExtractionData

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from trainable_entity_extractor.data.SegmentBox import SegmentBox
+from trainable_entity_extractor.domain.SegmentBox import SegmentBox
 
 
 class XmlData(BaseModel):

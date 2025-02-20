@@ -8,7 +8,7 @@ import pymongo
 from fastapi.testclient import TestClient
 from unittest import TestCase
 
-from trainable_entity_extractor.data.Suggestion import Suggestion
+from trainable_entity_extractor.domain.Suggestion import Suggestion
 
 from drivers.rest.app import app
 from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from trainable_entity_extractor.data.Option import Option
+from trainable_entity_extractor.domain.Option import Option
 
 
 class Options(BaseModel):

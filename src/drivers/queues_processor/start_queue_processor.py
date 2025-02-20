@@ -5,8 +5,8 @@ from queue_processor.QueueProcessor import QueueProcessor
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 from trainable_entity_extractor.config import config_logger
-from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
-from trainable_entity_extractor.send_logs import send_logs
+from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
 from config import SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, QUEUES_NAMES, DATA_PATH, PARAGRAPH_EXTRACTION_NAME

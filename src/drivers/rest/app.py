@@ -5,6 +5,8 @@ import json
 from os.path import join
 
 from queue_processor.QueueProcessor import QueueProcessor
+from trainable_entity_extractor.use_cases.XmlFile import XmlFile
+from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
 from catch_exceptions import catch_exceptions
@@ -13,12 +15,10 @@ import sys
 
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
-from trainable_entity_extractor.XmlFile import XmlFile
 from trainable_entity_extractor.config import config_logger
-from trainable_entity_extractor.data.ExtractionIdentifier import ExtractionIdentifier
-from trainable_entity_extractor.data.LabeledData import LabeledData
-from trainable_entity_extractor.data.PredictionData import PredictionData
-from trainable_entity_extractor.send_logs import send_logs
+from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.domain.LabeledData import LabeledData
+from trainable_entity_extractor.domain.PredictionData import PredictionData
 
 from config import DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME
 from domain.ParagraphExtractionData import ParagraphExtractionData
