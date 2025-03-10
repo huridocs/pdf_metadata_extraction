@@ -140,7 +140,9 @@ class Extractor:
         aligner_use_case.align_languages(paragraphs_from_languages)
 
         for paragraphs_from_language in paragraphs_from_languages:
-            self.persistence_repository.save_paragraphs_from_language(self.extraction_identifier, paragraphs_from_language)
+            self.persistence_repository.save_paragraphs_from_language(
+                self.extraction_identifier, paragraphs_from_language.to_db()
+            )
 
         return True, ""
 

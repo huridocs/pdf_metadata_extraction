@@ -136,7 +136,6 @@ async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadF
     )
 
     config_logger.info(f"extract_paragraphs endpoint called for {extractor_identifier.extraction_name}")
-
     app.persistence_repository.save_paragraph_extraction_data(extractor_identifier, paragraph_extraction_data)
 
     for file in xml_files:
