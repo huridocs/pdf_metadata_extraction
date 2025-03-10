@@ -378,7 +378,7 @@ class TestEndToEnd(TestCase):
 
         response = requests.post(f"{SERVER_URL}/extract_paragraphs", files=files)
         self.assertEqual(200, response.status_code)
-        results_message = self.get_results_message("paragraph_extraction_results")
+        results_message = self.get_results_message("extract_paragraphs_results")
         self.assertEqual("key_1", results_message.key)
         self.assertEqual(2, len(results_message.xmls))
         self.assertTrue(results_message.success)
@@ -438,6 +438,6 @@ Ipsum."""
             message = queue.receiveMessage().exceptions(False).execute()
             if message:
                 queue.deleteMessage(id=message["id"]).execute()
-                if queue_name == "paragraph_extraction_results":
+                if queue_name == "extract_paragraphs_results":
                     return ParagraphExtractionResultsMessage(**json.loads(message["message"]))
                 return ResultsMessage(**json.loads(message["message"]))
