@@ -154,7 +154,8 @@ async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadF
     config_logger.info(f"add task {paragraph_extractor_task.model_dump()}")
 
     task = paragraph_extractor_task.model_dump()
-    QueueProcessor(REDIS_HOST, REDIS_PORT, [PARAGRAPH_EXTRACTION_NAME]).send_message(task)
+    queue_name = paragraph_extraction_data.queue_name if paragraph_extraction_data.queue_name else PARAGRAPH_EXTRACTION_NAME
+    QueueProcessor(REDIS_HOST, REDIS_PORT, [queue_name]).send_message(task)
     return "ok"
 
 

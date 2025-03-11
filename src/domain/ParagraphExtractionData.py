@@ -11,4 +11,5 @@ class XmlData(BaseModel):
 
 class ParagraphExtractionData(BaseModel):
     key: str
+    queue_name: str = ""
     xmls: list[XmlData]
