@@ -362,6 +362,7 @@ class TestEndToEnd(TestCase):
 
         paragraph_extraction_data = ParagraphExtractionData(
             key="key_1",
+            queue_name="extract_paragraphs",
             xmls=[
                 XmlData(xml_file_name="test_en.xml", language="en", is_main_language=True, xml_segments_boxes=segment_boxes),
                 XmlData(
