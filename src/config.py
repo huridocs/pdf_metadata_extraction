@@ -16,6 +16,9 @@ MONGO_PORT = os.environ.get("MONGO_PORT", "29017")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
+USE_LOCAL_EXTRACTORS = os.environ.get("USE_LOCAL_EXTRACTORS", "True").lower() in ("true", "1", "t")
+IS_CLOUD_VM = os.environ.get("IS_CLOUD_VM", "False").lower() in ("true", "1", "t")
+
 APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()
 DATA_PATH = join(ROOT_PATH, "models_data")

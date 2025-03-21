@@ -1,5 +1,10 @@
 import os
+from time import sleep
+
 import torch
+from ml_cloud_connector.adapters.google_v2.GoogleV2Repository import GoogleV2Repository
+from ml_cloud_connector.domain.ServerParameters import ServerParameters
+from ml_cloud_connector.domain.ServerType import ServerType
 from pydantic import ValidationError
 from queue_processor.QueueProcessor import QueueProcessor
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -9,13 +14,28 @@ from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIde
 from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
-from config import SERVICE_HOST, SERVICE_PORT, REDIS_HOST, REDIS_PORT, QUEUES_NAMES, DATA_PATH, PARAGRAPH_EXTRACTION_NAME
+from config import (
+    SERVICE_HOST,
+    SERVICE_PORT,
+    REDIS_HOST,
+    REDIS_PORT,
+    QUEUES_NAMES,
+    DATA_PATH,
+    PARAGRAPH_EXTRACTION_NAME,
+    USE_LOCAL_EXTRACTORS,
+    IS_CLOUD_VM,
+)
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from domain.ResultsMessage import ResultsMessage
 from use_cases.Extractor import Extractor
 from domain.TaskType import TaskType
+
+
+if not USE_LOCAL_EXTRACTORS and not IS_CLOUD_VM:
+    SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.DOCUMENT_LAYOUT_ANALYSIS)
+    CLOUD_PROVIDER = GoogleV2Repository(server_parameters=SERVER_PARAMETERS, service_logger=config_logger)
 
 
 def restart_condition(message: dict[str, any]) -> bool:
@@ -34,17 +54,22 @@ def get_paragraphs(task: ParagraphExtractorTask):
     return ParagraphExtractionResultsMessage(key=task.key, xmls=task.xmls, success=True, error_message="", data_url=data_url)
 
 
-def process(message: dict[str, any]) -> dict[str, any] | None:
+def process(message: dict[str, any]) -> tuple[dict[str, any] | None, bool]:
     try:
         task_type = TaskType(**message)
         config_logger.info(f"New task {message}")
     except ValidationError:
         config_logger.error(f"Not a valid Redis message: {message}")
-        return None
+        return None, True
 
     if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
-        task = TrainableEntityExtractionTask(**message)
-        result_message = get_extraction(task)
+        if USE_LOCAL_EXTRACTORS:
+            task = TrainableEntityExtractionTask(**message)
+            result_message = get_extraction(task)
+        else:
+            CLOUD_PROVIDER.start()
+            sleep(2)
+            return None, False
     elif task_type.task == PARAGRAPH_EXTRACTION_NAME:
         task = ParagraphExtractorTask(**message)
         result_message = get_paragraphs(task)
@@ -59,7 +84,7 @@ def process(message: dict[str, any]) -> dict[str, any] | None:
         )
         config_logger.error(f"Task not found: {task.model_dump()}")
 
-    return result_message.model_dump()
+    return result_message.model_dump(), True
 
 
 def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask) -> ResultsMessage:

@@ -1,8 +1,9 @@
 import os
 import shutil
 from os.path import join, exists
-from time import time
+from time import time, sleep
 
+import requests
 from multilingual_paragraph_extractor.domain.ParagraphFeatures import ParagraphFeatures
 from multilingual_paragraph_extractor.domain.ParagraphsFromLanguage import ParagraphsFromLanguage
 from multilingual_paragraph_extractor.use_cases.MultilingualParagraphAlignerUseCase import (
@@ -24,7 +25,7 @@ from trainable_entity_extractor.use_cases.TrainableEntityExtractor import Traina
 from trainable_entity_extractor.use_cases.XmlFile import XmlFile
 from trainable_entity_extractor.use_cases.send_logs import send_logs
 
-from config import DATA_PATH, PARAGRAPH_EXTRACTION_NAME
+from config import DATA_PATH, PARAGRAPH_EXTRACTION_NAME, USE_LOCAL_EXTRACTORS, SERVICE_HOST, SERVICE_PORT, IS_CLOUD_VM
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from ports.PersistenceRepository import PersistenceRepository
@@ -46,46 +47,11 @@ class Extractor:
         self.multi_value = multi_value
         self.options = options
 
-    def get_extraction_data_for_training(self, labeled_data_list: list[LabeledData]) -> ExtractionData:
-        multi_option_samples: list[TrainingSample] = list()
-        page_numbers_list = FilterValidSegmentsPages(self.extraction_identifier).for_training(labeled_data_list)
-        for labeled_data, page_numbers_to_keep in zip(labeled_data_list, page_numbers_list):
-            segmentation_data = SegmentationData.from_labeled_data(labeled_data)
-            xml_file = XmlFile(
-                extraction_identifier=self.extraction_identifier,
-                to_train=True,
-                xml_file_name=labeled_data.xml_file_name,
-            )
-
-            if exists(xml_file.xml_file_path) and not os.path.isdir(xml_file.xml_file_path):
-                pdf_data = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers_to_keep)
-            else:
-                pdf_data = PdfData.from_texts([""])
-            sample = TrainingSample(
-                pdf_data=pdf_data, labeled_data=labeled_data, segment_selector_texts=[labeled_data.source_text]
-            )
-            multi_option_samples.append(sample)
-            xml_file.delete()
-
-        return ExtractionData(
-            samples=multi_option_samples,
-            options=self.options,
-            multi_value=self.multi_value,
-            extraction_identifier=self.extraction_identifier,
-        )
-
-    def create_models(self) -> (bool, str):
-        start = time()
-        send_logs(self.extraction_identifier, "Loading data to create model")
-        labeled_data_list = self.persistence_repository.load_labeled_data(self.extraction_identifier)
-        extraction_data: ExtractionData = self.get_extraction_data_for_training(labeled_data_list)
-        send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
-        self.delete_training_data()
-        trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
-        return trainable_entity_extractor.train(extraction_data)
-
-    def get_prediction_samples(self, prediction_data_list: list[PredictionData] = None) -> list[PredictionSample]:
-        filter_valid_pages = FilterValidSegmentsPages(self.extraction_identifier)
+    @staticmethod
+    def get_prediction_samples(
+        extractor_identifier: ExtractionIdentifier, prediction_data_list: list[PredictionData] = None
+    ) -> list[PredictionSample]:
+        filter_valid_pages = FilterValidSegmentsPages(extractor_identifier)
         page_numbers_list = filter_valid_pages.for_prediction(prediction_data_list)
         prediction_samples: list[PredictionSample] = []
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
@@ -93,7 +59,7 @@ class Extractor:
             entity_name = prediction_data.entity_name if prediction_data.entity_name else prediction_data.xml_file_name
 
             xml_file = XmlFile(
-                extraction_identifier=self.extraction_identifier,
+                extraction_identifier=extractor_identifier,
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
@@ -110,6 +76,53 @@ class Extractor:
 
         return prediction_samples
 
+    @staticmethod
+    def get_samples_for_training(
+        extraction_identifier: ExtractionIdentifier, labeled_data_list: list[LabeledData]
+    ) -> list[TrainingSample]:
+        multi_option_samples: list[TrainingSample] = list()
+        page_numbers_list = FilterValidSegmentsPages(extraction_identifier).for_training(labeled_data_list)
+        for labeled_data, page_numbers_to_keep in zip(labeled_data_list, page_numbers_list):
+            segmentation_data = SegmentationData.from_labeled_data(labeled_data)
+            xml_file = XmlFile(
+                extraction_identifier=extraction_identifier,
+                to_train=True,
+                xml_file_name=labeled_data.xml_file_name,
+            )
+
+            if exists(xml_file.xml_file_path) and not os.path.isdir(xml_file.xml_file_path):
+                pdf_data = PdfData.from_xml_file(xml_file, segmentation_data, page_numbers_to_keep)
+            else:
+                pdf_data = PdfData.from_texts([""])
+            sample = TrainingSample(
+                pdf_data=pdf_data, labeled_data=labeled_data, segment_selector_texts=[labeled_data.source_text]
+            )
+            multi_option_samples.append(sample)
+            xml_file.delete()
+
+        return multi_option_samples
+
+    def create_models(self) -> (bool, str):
+        start = time()
+        send_logs(self.extraction_identifier, "Loading data to create model")
+
+        if USE_LOCAL_EXTRACTORS:
+            labeled_data_list = self.persistence_repository.load_labeled_data(self.extraction_identifier)
+            samples = self.get_samples_for_training(self.extraction_identifier, labeled_data_list)
+        else:
+            samples = self.import_samples(extraction_identifier=self.extraction_identifier, for_training=True)
+
+        extraction_data: ExtractionData = ExtractionData(
+            samples=samples,
+            options=self.options,
+            multi_value=self.multi_value,
+            extraction_identifier=self.extraction_identifier,
+        )
+        send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
+        self.delete_training_data()
+        trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
+        return trainable_entity_extractor.train(extraction_data)
+
     def delete_training_data(self):
         training_xml_path = XmlFile(extraction_identifier=self.extraction_identifier, to_train=True).xml_folder_path
         send_logs(self.extraction_identifier, f"Deleting training data in {training_xml_path}")
@@ -117,15 +130,19 @@ class Extractor:
         self.persistence_repository.delete_labeled_data(self.extraction_identifier)
 
     def save_suggestions(self, suggestions: list[Suggestion]) -> (bool, str):
-        if not suggestions:
-            return False, "No data to calculate suggestions"
-
         self.persistence_repository.save_suggestions(self.extraction_identifier, suggestions)
         return True, ""
 
     def get_suggestions(self) -> list[Suggestion]:
-        prediction_data_list = self.persistence_repository.load_prediction_data(self.extraction_identifier)
-        prediction_samples = self.get_prediction_samples(prediction_data_list)
+        if IS_CLOUD_VM:
+            prediction_samples = self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
+        else:
+            prediction_data_list = self.persistence_repository.load_prediction_data(self.extraction_identifier)
+            prediction_samples = self.get_prediction_samples(self.extraction_identifier, prediction_data_list)
+
+        config_logger.info(f"::::::::::::::::::::::::::::::::::::")
+        if prediction_samples:
+            config_logger.info(prediction_samples[0].model_dump())
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.predict(prediction_samples)
 
@@ -209,6 +226,12 @@ class Extractor:
             )
             extractor = Extractor(extractor_identifier, persistence_repository)
             suggestions = extractor.get_suggestions()
+
+            if not suggestions:
+                return False, "No data to calculate suggestions"
+
+            if IS_CLOUD_VM:
+                return extractor.send_suggestions(extractor_identifier, suggestions)
             return extractor.save_suggestions(suggestions)
 
         if task.task == PARAGRAPH_EXTRACTION_NAME:
@@ -219,3 +242,72 @@ class Extractor:
             return extractor.save_paragraphs_from_languages()
 
         return False, "Error"
+
+    @staticmethod
+    def import_samples(
+        extraction_identifier: ExtractionIdentifier, for_training: bool
+    ) -> list[TrainingSample | PredictionSample]:
+        samples: list[TrainingSample | PredictionSample] = list()
+        max_retries = 3
+        retry_delay = 5  # seconds
+
+        url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+        url += "/get_samples_training" if for_training else "/get_samples_prediction"
+        url += f"/{extraction_identifier.run_name}/{extraction_identifier.extraction_name}"
+
+        while True:
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+
+                if not response.json():
+                    break
+
+                samples.extend([TrainingSample(**x) if for_training else PredictionSample(**x) for x in response.json()])
+            except requests.exceptions.RequestException as e:
+                config_logger.error(f"Error fetching training samples: {e}")
+                if max_retries > 0:
+                    max_retries -= 1
+                    config_logger.info(f"Retrying in {retry_delay} seconds...")
+                    sleep(retry_delay)
+                    continue
+                else:
+                    config_logger.error("Max retries reached. Exiting.")
+                    break
+
+        return samples
+
+    @staticmethod
+    def send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> (bool, str):
+        max_retries = 3
+        retry_delay = 5  # seconds
+
+        url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+        url += "/save_suggestions"
+        url += f"/{extraction_identifier.run_name}/{extraction_identifier.extraction_name}"
+        headers = {"accept": "application/json", "Content-Type": "application/json"}
+        json_data = [x.model_dump() for x in suggestions]
+
+        while True:
+            try:
+                response = requests.post(url, headers=headers, json=json_data)
+                response.raise_for_status()
+                break
+            except requests.exceptions.RequestException as e:
+                config_logger.error(f"Error fetching training samples: {e}")
+                if max_retries > 0:
+                    max_retries -= 1
+                    config_logger.info(f"Retrying in {retry_delay} seconds...")
+                    sleep(retry_delay)
+                    continue
+                else:
+                    config_logger.error("Max retries reached. Exiting.")
+                    return False, "Could not send suggestions back"
+
+        return True, ""
+
+
+if __name__ == "__main__":
+    extraction_identifier = ExtractionIdentifier(run_name="end_to_end_test", extraction_name="pdf_to_multi_option")
+    result = Extractor.import_samples(extraction_identifier, for_training=False)
+    print(result)

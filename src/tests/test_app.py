@@ -8,7 +8,11 @@ import pymongo
 from fastapi.testclient import TestClient
 from unittest import TestCase
 
+from pdf_token_type_labels.TokenType import TokenType
+from trainable_entity_extractor.domain.PredictionSample import PredictionSample
 from trainable_entity_extractor.domain.Suggestion import Suggestion
+from trainable_entity_extractor.domain.SegmentBox import SegmentBox
+from trainable_entity_extractor.domain.TrainingSample import TrainingSample
 
 from drivers.rest.app import app
 from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
@@ -523,3 +527,204 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(0, len(suggestions))
+
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+    def test_save_suggestions(self):
+        tenant = "example_tenant_name"
+        extraction_id = "prediction_extraction_id"
+
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+
+        suggestions = [
+            Suggestion(
+                tenant=tenant,
+                id=extraction_id,
+                xml_file_name="xml_file_name",
+                entity_name="entity_name",
+                text="text_predicted",
+                segment_text="segment_text",
+                page_number=1,
+                segments_boxes=[
+                    SegmentBox(
+                        left=1,
+                        top=2,
+                        width=3,
+                        height=4,
+                        page_width=5,
+                        page_height=6,
+                        page_number=1,
+                        segment_type=TokenType.TEXT,
+                    )
+                ],
+            )
+        ]
+
+        with TestClient(app) as client:
+            response = client.post(f"/save_suggestions/{tenant}/{extraction_id}", json=[s.model_dump() for s in suggestions])
+
+        self.assertEqual(200, response.status_code)
+
+        suggestion_document = mongo_client.pdf_metadata_extraction.suggestions.find_one()
+
+        self.assertEqual(tenant, suggestion_document["tenant"])
+        self.assertEqual(extraction_id, suggestion_document["id"])
+        self.assertEqual("xml_file_name", suggestion_document["xml_file_name"])
+        self.assertEqual("entity_name", suggestion_document["entity_name"])
+        self.assertEqual("text_predicted", suggestion_document["text"])
+        self.assertEqual("segment_text", suggestion_document["segment_text"])
+        self.assertEqual(1, suggestion_document["page_number"])
+        self.assertEqual(
+            [
+                {
+                    "left": 1,
+                    "top": 2,
+                    "width": 3,
+                    "height": 4,
+                    "page_width": 5,
+                    "page_height": 6,
+                    "page_number": 1,
+                    "segment_type": "Text",
+                }
+            ],
+            suggestion_document["segments_boxes"],
+        )
+
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+    def test_get_samples_training(self):
+        tenant = "example_tenant_name"
+        extraction_id = "extraction_id"
+
+        labeled_data = [
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": "",
+                "text": "one_text",
+                "source_text": "one_text",
+                "page_width": 1.1,
+                "page_height": 2.1,
+                "xml_segments_boxes": [
+                    {"left": 1, "top": 2, "width": 3, "height": 4, "page_width": 5, "page_height": 6, "page_number": 5}
+                ],
+                "label_segments_boxes": [
+                    {"left": 8, "top": 12, "width": 16, "height": 20, "page_width": 5, "page_height": 6, "page_number": 10}
+                ],
+            },
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": "",
+                "text": "other_text",
+                "source_text": "other_text",
+                "page_width": 3.1,
+                "page_height": 4.1,
+                "xml_segments_boxes": [],
+                "label_segments_boxes": [],
+            },
+        ]
+
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+        mongo_client.pdf_metadata_extraction.labeled_data.insert_many(labeled_data)
+
+        with TestClient(app) as client:
+            response = client.get(f"/get_samples_training/{tenant}/{extraction_id}")
+
+        training_samples = [TrainingSample(**x) for x in response.json()]
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(2, len(training_samples))
+
+        self.assertEqual({tenant}, {x.labeled_data.tenant for x in training_samples})
+        self.assertEqual({extraction_id}, {x.labeled_data.id for x in training_samples})
+
+        self.assertEqual("one_text", training_samples[0].labeled_data.source_text)
+        self.assertEqual(1.1, training_samples[0].labeled_data.page_width)
+        self.assertEqual(2.1, training_samples[0].labeled_data.page_height)
+        self.assertEqual(
+            [
+                SegmentBox(
+                    left=1.0,
+                    top=2.0,
+                    width=3.0,
+                    height=4.0,
+                    page_number=5,
+                    page_width=5,
+                    page_height=6,
+                    segment_type=TokenType.TEXT,
+                )
+            ],
+            training_samples[0].labeled_data.xml_segments_boxes,
+        )
+        self.assertEqual(
+            [
+                SegmentBox(
+                    left=8.0,
+                    top=12.0,
+                    width=16.0,
+                    height=20.0,
+                    page_number=10,
+                    page_width=5,
+                    page_height=6,
+                    segment_type=TokenType.TEXT,
+                )
+            ],
+            training_samples[0].labeled_data.label_segments_boxes,
+        )
+
+        self.assertEqual("other_text", training_samples[1].labeled_data.source_text)
+        self.assertEqual(3.1, training_samples[1].labeled_data.page_width)
+        self.assertEqual(4.1, training_samples[1].labeled_data.page_height)
+        self.assertEqual([], training_samples[1].labeled_data.xml_segments_boxes)
+        self.assertEqual([], training_samples[1].labeled_data.label_segments_boxes)
+
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+    def test_get_samples_prediction(self):
+        tenant = "example_tenant_name"
+        extraction_id = "extraction_id"
+
+        prediction_data = [
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "entity_name": "entity_name",
+                "xml_file_name": "",
+                "source_text": "one_text",
+                "page_width": 1.1,
+                "page_height": 2.1,
+                "xml_segments_boxes": [],
+            },
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "entity_name": "other_entity_name",
+                "xml_file_name": "",
+                "source_text": "other_text",
+                "page_width": 3.1,
+                "page_height": 4.1,
+                "xml_segments_boxes": [],
+            },
+        ]
+
+        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
+        mongo_client.pdf_metadata_extraction.prediction_data.insert_many(prediction_data)
+
+        with TestClient(app) as client:
+            response = client.get(f"/get_samples_prediction/{tenant}/{extraction_id}")
+
+        prediction_samples = [PredictionSample(**x) for x in response.json()]
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(2, len(prediction_samples))
+
+        self.assertEqual("one_text", prediction_samples[0].source_text)
+        self.assertEqual("other_text", prediction_samples[1].source_text)
+        self.assertEqual("entity_name", prediction_samples[0].entity_name)
+        self.assertEqual("other_entity_name", prediction_samples[1].entity_name)

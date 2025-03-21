@@ -18,8 +18,7 @@ services:
     ports:
       - "5056:5056"
     env_file: .env
-    networks:
-      - pdf_metadata_extraction_network
+    network_mode: host
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
     init: true
@@ -37,15 +36,13 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-    networks:
-      - pdf_metadata_extraction_network
+    network_mode: host
     env_file: .env
   mongo_metadata_extraction:
     restart: unless-stopped
     command: mongod --port 29017
     image: "mongo:7.0.12"
-    networks:
-      - pdf_metadata_extraction_network
+    network_mode: host
     ports:
       - "29017:29017"
   redis_metadata_extraction:
@@ -54,12 +51,9 @@ services:
     command: redis-server
     environment:
       - REDIS_REPLICATION_MODE=master
-    networks:
-      - pdf_metadata_extraction_network
+    network_mode: host
     ports:
       - "6379:6379"
-networks:
-  pdf_metadata_extraction_network:
 
 volumes:
   data:

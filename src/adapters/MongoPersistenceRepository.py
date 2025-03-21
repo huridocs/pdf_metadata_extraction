@@ -49,6 +49,16 @@ class MongoPersistenceRepository(PersistenceRepository):
         self.mongo_db.prediction_data.delete_many(self.get_filter(extraction_identifier))
         return prediction_data
 
+    def load_and_delete_prediction_data(
+        self, extraction_identifier: ExtractionIdentifier, batch_size: int
+    ) -> list[PredictionData]:
+        data_cursor = self.mongo_db.prediction_data.find(self.get_filter(extraction_identifier)).limit(batch_size)
+        data = list(data_cursor)
+        prediction_data = [PredictionData(**document) for document in data]
+        ids_to_delete = [document["_id"] for document in data]
+        self.mongo_db.prediction_data.delete_many({"_id": {"$in": ids_to_delete}})
+        return prediction_data
+
     def save_labeled_data(self, extraction_identifier: ExtractionIdentifier, labeled_data: LabeledData):
         self.save_data(extraction_identifier, labeled_data, "labeled_data")
 
@@ -58,6 +68,16 @@ class MongoPersistenceRepository(PersistenceRepository):
     def load_labeled_data(self, extraction_identifier: ExtractionIdentifier) -> list[LabeledData]:
         data = self.mongo_db.labeled_data.find(self.get_filter(extraction_identifier))
         return [LabeledData(**document) for document in data]
+
+    def load_and_delete_labeled_data(
+        self, extraction_identifier: ExtractionIdentifier, batch_size: int
+    ) -> list[LabeledData]:
+        data_cursor = self.mongo_db.labeled_data.find(self.get_filter(extraction_identifier)).limit(batch_size)
+        data = list(data_cursor)
+        labeled_data = [LabeledData(**document) for document in data]
+        ids_to_delete = [document["_id"] for document in data]
+        self.mongo_db.labeled_data.delete_many({"_id": {"$in": ids_to_delete}})
+        return labeled_data
 
     def save_suggestions(self, extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]):
         for suggestion in suggestions:
@@ -103,3 +123,11 @@ class MongoPersistenceRepository(PersistenceRepository):
     def delete_prediction_data(self, extraction_identifier: ExtractionIdentifier, filters: list[dict[str, str]]):
         for one_filter in filters:
             self.mongo_db.suggestions.delete_many({**self.get_filter(extraction_identifier), **one_filter})
+
+
+if __name__ == "__main__":
+    foo = MongoPersistenceRepository()
+    extraction_identifier = ExtractionIdentifier(run_name="end_to_end_test", extraction_name="pdf_to_multi_option")
+    # foo.mongo_db.prediction_data.delete_many({"_id": {"$in": ['']}})
+    aha = foo.load_and_delete_prediction_data(extraction_identifier=extraction_identifier, batch_size=1)
+    print(aha)

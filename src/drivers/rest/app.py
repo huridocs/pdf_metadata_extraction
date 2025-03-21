@@ -5,6 +5,7 @@ import json
 from os.path import join
 
 from queue_processor.QueueProcessor import QueueProcessor
+from trainable_entity_extractor.domain.Suggestion import Suggestion
 from trainable_entity_extractor.use_cases.XmlFile import XmlFile
 from trainable_entity_extractor.use_cases.send_logs import send_logs
 
@@ -25,6 +26,7 @@ from domain.ParagraphExtractionData import ParagraphExtractionData
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.XML import XML
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
+from use_cases.Extractor import Extractor
 
 
 @asynccontextmanager
@@ -99,6 +101,22 @@ async def labeled_data_post(labeled_data: LabeledData):
     return "labeled data saved"
 
 
+@app.get("/get_samples_training/{run_name}/{extraction_name}")
+@catch_exceptions
+async def get_samples_training(run_name: str, extraction_name: str):
+    extraction_identifier = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH)
+    labeled_data = app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 50)
+    return Extractor.get_samples_for_training(extraction_identifier=extraction_identifier, labeled_data_list=labeled_data)
+
+
+@app.get("/get_samples_prediction/{run_name}/{extraction_name}")
+@catch_exceptions
+async def get_samples_prediction(run_name: str, extraction_name: str):
+    extraction_identifier = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH)
+    prediction_data = app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 50)
+    return Extractor.get_prediction_samples(extractor_identifier=extraction_identifier, prediction_data_list=prediction_data)
+
+
 @app.post("/prediction_data")
 @catch_exceptions
 async def prediction_data_post(prediction_data: PredictionData):
@@ -118,6 +136,15 @@ async def get_suggestions(run_name: str, extraction_name: str):
     send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
 
     return json.dumps(suggestions_list)
+
+
+@app.post("/save_suggestions/{run_name}/{extraction_name}")
+@catch_exceptions
+async def save_suggestions(run_name: str, extraction_name: str, suggestions: list[Suggestion]):
+    extraction_identifier = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH)
+    app.persistence_repository.save_suggestions(extraction_identifier, suggestions)
+    send_logs(extraction_identifier, f"{len(suggestions)} suggestions saved")
+    return True
 
 
 @app.delete("/{run_name}/{extraction_name}")

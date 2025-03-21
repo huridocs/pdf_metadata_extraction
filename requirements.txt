@@ -4,5 +4,6 @@ pymongo==4.6.3
 sentry-sdk==2.8.0
 redis==5.0.7
 requests==2.32.3
-git+https://github.com/huridocs/queue-processor@681c4e41ec69d5296761b2a7450e4920f703ef01
-git+https://github.com/huridocs/trainable-entity-extractor@7ad538aeca3c27498f00a48c4805e6af2dfad1d0
+git+https://github.com/huridocs/queue-processor@de5c3fb923a71e82239e900d625e90451140b34c
+git+https://github.com/huridocs/trainable-entity-extractor@b1f40441e7b6c6563f3b3ab25d1ffefce724eaf1
+git+https://github.com/huridocs/ml-cloud-connector@8cf2f0ab715339e50bdd4a168c6db795150b614a

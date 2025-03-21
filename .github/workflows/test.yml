@@ -45,3 +45,25 @@ jobs:
 
       - name: Test with unittest
         run: make test
+
+      - name: Stop service
+        run: make stop
+
+      - name: Replace variables for cloud
+        run: mv .env.cloud .env
+
+      - name: Start service
+        run: make start_detached
+
+      - name: Check API ready
+        uses: emilioschepis/wait-for-endpoint@v1.0.3
+        with:
+          url: http://localhost:5056
+          method: GET
+          expected-status: 200
+          timeout: 240000
+          interval: 500
+
+      - name: Test cloud
+        run: make test
+
