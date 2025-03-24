@@ -140,7 +140,6 @@ class Extractor:
             prediction_data_list = self.persistence_repository.load_prediction_data(self.extraction_identifier)
             prediction_samples = self.get_prediction_samples(self.extraction_identifier, prediction_data_list)
 
-        config_logger.info(f"::::::::::::::::::::::::::::::::::::")
         if prediction_samples:
             config_logger.info(prediction_samples[0].model_dump())
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
