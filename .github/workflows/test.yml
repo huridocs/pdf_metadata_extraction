@@ -65,5 +65,5 @@ jobs:
           interval: 500
 
       - name: Test cloud
-        run: make test
+        run: make test-cloud
 

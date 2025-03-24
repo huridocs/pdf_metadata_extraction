@@ -1,11 +1,11 @@
 import os
-from time import sleep
 
 import torch
 from ml_cloud_connector.adapters.google_v2.GoogleV2Repository import GoogleV2Repository
 from ml_cloud_connector.domain.ServerParameters import ServerParameters
 from ml_cloud_connector.domain.ServerType import ServerType
 from pydantic import ValidationError
+from queue_processor.QueueProcessResults import QueueProcessResults
 from queue_processor.QueueProcessor import QueueProcessor
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
@@ -54,13 +54,13 @@ def get_paragraphs(task: ParagraphExtractorTask):
     return ParagraphExtractionResultsMessage(key=task.key, xmls=task.xmls, success=True, error_message="", data_url=data_url)
 
 
-def process(message: dict[str, any]) -> tuple[dict[str, any] | None, bool]:
+def process(message: dict[str, any]) -> QueueProcessResults:
     try:
         task_type = TaskType(**message)
         config_logger.info(f"New task {message}")
     except ValidationError:
         config_logger.error(f"Not a valid Redis message: {message}")
-        return None, True
+        return QueueProcessResults(results=None, delete_message=True)
 
     if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
         if USE_LOCAL_EXTRACTORS:
@@ -68,9 +68,11 @@ def process(message: dict[str, any]) -> tuple[dict[str, any] | None, bool]:
             result_message = get_extraction(task)
         else:
             CLOUD_PROVIDER.start()
-            sleep(2)
-            return None, False
+            return QueueProcessResults(results=None, delete_message=False, invisibility_timeout=5)
     elif task_type.task == PARAGRAPH_EXTRACTION_NAME:
+        if IS_CLOUD_VM:
+            return QueueProcessResults(results=None, delete_message=False, invisibility_timeout=5)
+
         task = ParagraphExtractorTask(**message)
         result_message = get_paragraphs(task)
     else:
@@ -84,7 +86,7 @@ def process(message: dict[str, any]) -> tuple[dict[str, any] | None, bool]:
         )
         config_logger.error(f"Task not found: {task.model_dump()}")
 
-    return result_message.model_dump(), True
+    return QueueProcessResults(results=result_message.model_dump(), delete_message=True)
 
 
 def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask) -> ResultsMessage:
