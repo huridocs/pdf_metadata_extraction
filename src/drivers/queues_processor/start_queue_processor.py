@@ -22,8 +22,8 @@ from config import (
     QUEUES_NAMES,
     DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
-    USE_LOCAL_EXTRACTORS,
-    IS_CLOUD_VM,
+    START_CLOUD_VM,
+    EXECUTE_PARAGRAPH_EXTRACTION,
 )
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
@@ -33,7 +33,7 @@ from use_cases.Extractor import Extractor
 from domain.TaskType import TaskType
 
 
-if not USE_LOCAL_EXTRACTORS and not IS_CLOUD_VM:
+if START_CLOUD_VM:
     SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.DOCUMENT_LAYOUT_ANALYSIS)
     CLOUD_PROVIDER = GoogleV2Repository(server_parameters=SERVER_PARAMETERS, service_logger=config_logger)
 
@@ -63,14 +63,14 @@ def process(message: dict[str, any]) -> QueueProcessResults:
         return QueueProcessResults(results=None, delete_message=True)
 
     if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
-        if USE_LOCAL_EXTRACTORS:
-            task = TrainableEntityExtractionTask(**message)
-            result_message = get_extraction(task)
-        else:
+        if START_CLOUD_VM:
             CLOUD_PROVIDER.start()
             return QueueProcessResults(results=None, delete_message=False, invisibility_timeout=5)
+        else:
+            task = TrainableEntityExtractionTask(**message)
+            result_message = get_extraction(task)
     elif task_type.task == PARAGRAPH_EXTRACTION_NAME:
-        if IS_CLOUD_VM:
+        if not EXECUTE_PARAGRAPH_EXTRACTION:
             return QueueProcessResults(results=None, delete_message=False, invisibility_timeout=5)
 
         task = ParagraphExtractorTask(**message)

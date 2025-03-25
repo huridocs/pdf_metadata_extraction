@@ -25,7 +25,7 @@ from trainable_entity_extractor.use_cases.TrainableEntityExtractor import Traina
 from trainable_entity_extractor.use_cases.XmlFile import XmlFile
 from trainable_entity_extractor.use_cases.send_logs import send_logs
 
-from config import DATA_PATH, PARAGRAPH_EXTRACTION_NAME, USE_LOCAL_EXTRACTORS, SERVICE_HOST, SERVICE_PORT, IS_CLOUD_VM
+from config import DATA_PATH, PARAGRAPH_EXTRACTION_NAME, SERVICE_HOST, SERVICE_PORT, SAMPLES_IN_LOCAL_DB
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from ports.PersistenceRepository import PersistenceRepository
@@ -106,7 +106,7 @@ class Extractor:
         start = time()
         send_logs(self.extraction_identifier, "Loading data to create model")
 
-        if USE_LOCAL_EXTRACTORS:
+        if SAMPLES_IN_LOCAL_DB:
             labeled_data_list = self.persistence_repository.load_labeled_data(self.extraction_identifier)
             samples = self.get_samples_for_training(self.extraction_identifier, labeled_data_list)
         else:
@@ -134,11 +134,11 @@ class Extractor:
         return True, ""
 
     def get_suggestions(self) -> list[Suggestion]:
-        if IS_CLOUD_VM:
-            prediction_samples = self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
-        else:
+        if SAMPLES_IN_LOCAL_DB:
             prediction_data_list = self.persistence_repository.load_prediction_data(self.extraction_identifier)
             prediction_samples = self.get_prediction_samples(self.extraction_identifier, prediction_data_list)
+        else:
+            prediction_samples = self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
 
         if prediction_samples:
             config_logger.info(prediction_samples[0].model_dump())
@@ -229,9 +229,10 @@ class Extractor:
             if not suggestions:
                 return False, "No data to calculate suggestions"
 
-            if IS_CLOUD_VM:
-                return extractor.send_suggestions(extractor_identifier, suggestions)
-            return extractor.save_suggestions(suggestions)
+            if SAMPLES_IN_LOCAL_DB:
+                return extractor.save_suggestions(suggestions)
+
+            return extractor.send_suggestions(extractor_identifier, suggestions)
 
         if task.task == PARAGRAPH_EXTRACTION_NAME:
             extractor_identifier = ExtractionIdentifier(
