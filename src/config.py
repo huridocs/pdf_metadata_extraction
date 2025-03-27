@@ -16,9 +16,9 @@ MONGO_PORT = os.environ.get("MONGO_PORT", "29017")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
-SAMPLES_IN_LOCAL_DB = os.environ.get("SAMPLES_IN_LOCAL_DB", "True").lower() in ("true", "1", "t")
-START_CLOUD_VM = os.environ.get("START_CLOUD_VM", "False").lower() in ("true", "1", "t")
-EXECUTE_PARAGRAPH_EXTRACTION = os.environ.get("EXECUTE_PARAGRAPH_EXTRACTION", "True").lower() in ("true", "1", "t")
+UPLOAD_MODELS_TO_CLOUD_STORAGE = os.environ.get("UPLOAD_MODELS_TO_CLOUD_STORAGE", "false").lower().strip() == "true"
+SAMPLES_IN_LOCAL_DB = os.environ.get("SAMPLES_IN_LOCAL_DB", "true").lower().strip() == "true"
+CALCULATE_MODELS_LOCALLY = os.environ.get("CALCULATE_MODELS_LOCALLY", "true").lower().strip() == "true"
 
 APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()

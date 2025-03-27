@@ -1,9 +1,13 @@
 import os
 import shutil
 from os.path import join, exists
+from pathlib import Path
 from time import time, sleep
 
 import requests
+from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
+from ml_cloud_connector.domain.ServerParameters import ServerParameters
+from ml_cloud_connector.domain.ServerType import ServerType
 from multilingual_paragraph_extractor.domain.ParagraphFeatures import ParagraphFeatures
 from multilingual_paragraph_extractor.domain.ParagraphsFromLanguage import ParagraphsFromLanguage
 from multilingual_paragraph_extractor.use_cases.MultilingualParagraphAlignerUseCase import (
@@ -25,10 +29,21 @@ from trainable_entity_extractor.use_cases.TrainableEntityExtractor import Traina
 from trainable_entity_extractor.use_cases.XmlFile import XmlFile
 from trainable_entity_extractor.use_cases.send_logs import send_logs
 
-from config import DATA_PATH, PARAGRAPH_EXTRACTION_NAME, SERVICE_HOST, SERVICE_PORT, SAMPLES_IN_LOCAL_DB
+from config import (
+    DATA_PATH,
+    PARAGRAPH_EXTRACTION_NAME,
+    SERVICE_HOST,
+    SERVICE_PORT,
+    SAMPLES_IN_LOCAL_DB,
+    UPLOAD_MODELS_TO_CLOUD_STORAGE,
+)
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from ports.PersistenceRepository import PersistenceRepository
+
+if UPLOAD_MODELS_TO_CLOUD_STORAGE:
+    server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
+    google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
 
 
 class Extractor:
@@ -127,7 +142,6 @@ class Extractor:
         training_xml_path = XmlFile(extraction_identifier=self.extraction_identifier, to_train=True).xml_folder_path
         send_logs(self.extraction_identifier, f"Deleting training data in {training_xml_path}")
         shutil.rmtree(training_xml_path, ignore_errors=True)
-        self.persistence_repository.delete_labeled_data(self.extraction_identifier)
 
     def save_suggestions(self, suggestions: list[Suggestion]) -> (bool, str):
         self.persistence_repository.save_suggestions(self.extraction_identifier, suggestions)
@@ -142,6 +156,14 @@ class Extractor:
 
         if prediction_samples:
             config_logger.info(prediction_samples[0].model_dump())
+
+        if UPLOAD_MODELS_TO_CLOUD_STORAGE and not self.extraction_identifier.get_path().exists():
+            try:
+                extractor_path = Path(self.extraction_identifier.run_name, self.extraction_identifier.extraction_name)
+                google_cloud_storage.copy_from_cloud(extractor_path, Path(DATA_PATH, self.extraction_identifier.run_name))
+                config_logger.info(f"Model downloaded from cloud {self.extraction_identifier.get_path()}")
+            except:
+                config_logger.info(f"No model on cloud {self.extraction_identifier.get_path()}")
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.predict(prediction_samples)
 
@@ -195,9 +217,19 @@ class Extractor:
                 extractor_identifier_to_check = ExtractionIdentifier(
                     run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH
                 )
-                if extractor_identifier_to_check.is_old():
-                    config_logger.info(f"Removing old model folder {extractor_identifier_to_check.get_path()}")
-                    shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
+
+                if not extractor_identifier_to_check.is_old():
+                    continue
+
+                if UPLOAD_MODELS_TO_CLOUD_STORAGE:
+                    try:
+                        google_cloud_storage.upload_to_cloud(run_name, Path(extractor_identifier_to_check.get_path()))
+                        config_logger.info(f"Model uploaded to cloud {extractor_identifier_to_check.get_path()}")
+                    except:
+                        config_logger.error(f"Error uploading model to cloud {extractor_identifier_to_check.get_path()}")
+
+                config_logger.info(f"Removing old model folder {extractor_identifier_to_check.get_path()}")
+                shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
 
     @staticmethod
     def calculate_task(
@@ -305,9 +337,3 @@ class Extractor:
                     return False, "Could not send suggestions back"
 
         return True, ""
-
-
-if __name__ == "__main__":
-    extraction_identifier = ExtractionIdentifier(run_name="end_to_end_test", extraction_name="pdf_to_multi_option")
-    result = Extractor.import_samples(extraction_identifier, for_training=False)
-    print(result)

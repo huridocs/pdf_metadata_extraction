@@ -5,5 +5,5 @@ sentry-sdk==2.8.0
 redis==5.0.7
 requests==2.32.3
 git+https://github.com/huridocs/queue-processor@721cf01c7be6d9384c741b4f9c0664b3cfd0dc65
-git+https://github.com/huridocs/trainable-entity-extractor@b1f40441e7b6c6563f3b3ab25d1ffefce724eaf1
-git+https://github.com/huridocs/ml-cloud-connector@8cf2f0ab715339e50bdd4a168c6db795150b614a
+git+https://github.com/huridocs/trainable-entity-extractor@28068a817c1d6483ad830d672c55e369a599a60b
+git+https://github.com/huridocs/ml-cloud-connector@115de63844ac482dd3692151bbb46ee0659ddc30

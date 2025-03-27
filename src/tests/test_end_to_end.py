@@ -283,10 +283,21 @@ class TestEndToEnd(TestCase):
         labeled_data_json = {
             "id": extraction_id,
             "tenant": tenant,
-            "entity_name": "entity_name",
+            "entity_name": "entity_name_1",
             "language_iso": "en",
             "values": [{"id": "1", "label": "1"}, {"id": "2", "label": "2"}],
             "source_text": "Option 1 Option 2",
+        }
+
+        requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        labeled_data_json = {
+            "id": extraction_id,
+            "tenant": tenant,
+            "entity_name": "entity_name_2",
+            "language_iso": "en",
+            "values": [{"id": "2", "label": "2"}],
+            "source_text": "Option 2",
         }
 
         requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)

@@ -22,8 +22,7 @@ from config import (
     QUEUES_NAMES,
     DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
-    START_CLOUD_VM,
-    EXECUTE_PARAGRAPH_EXTRACTION,
+    CALCULATE_MODELS_LOCALLY,
 )
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
@@ -33,13 +32,9 @@ from use_cases.Extractor import Extractor
 from domain.TaskType import TaskType
 
 
-if START_CLOUD_VM:
+if not CALCULATE_MODELS_LOCALLY:
     SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.DOCUMENT_LAYOUT_ANALYSIS)
     CLOUD_PROVIDER = GoogleV2Repository(server_parameters=SERVER_PARAMETERS, service_logger=config_logger)
-
-
-def restart_condition(message: dict[str, any]) -> bool:
-    return TrainableEntityExtractionTask(**message).task == Extractor.CREATE_MODEL_TASK_NAME
 
 
 def get_paragraphs(task: ParagraphExtractorTask):
@@ -63,16 +58,14 @@ def process(message: dict[str, any]) -> QueueProcessResults:
         return QueueProcessResults(results=None, delete_message=True)
 
     if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
-        if START_CLOUD_VM:
-            CLOUD_PROVIDER.start()
-            return QueueProcessResults(results=None, delete_message=False, invisibility_timeout=5)
-        else:
+        if CALCULATE_MODELS_LOCALLY:
             task = TrainableEntityExtractionTask(**message)
             result_message = get_extraction(task)
-    elif task_type.task == PARAGRAPH_EXTRACTION_NAME:
-        if not EXECUTE_PARAGRAPH_EXTRACTION:
+        else:
+            CLOUD_PROVIDER.start()
             return QueueProcessResults(results=None, delete_message=False, invisibility_timeout=5)
 
+    elif task_type.task == PARAGRAPH_EXTRACTION_NAME:
         task = ParagraphExtractorTask(**message)
         result_message = get_paragraphs(task)
     else:
@@ -141,4 +134,4 @@ if __name__ == "__main__":
     config_logger.info(f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
-    queue_processor.start(process, restart_condition)
+    queue_processor.start(process)

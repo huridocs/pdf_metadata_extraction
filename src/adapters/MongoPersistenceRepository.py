@@ -67,7 +67,9 @@ class MongoPersistenceRepository(PersistenceRepository):
 
     def load_labeled_data(self, extraction_identifier: ExtractionIdentifier) -> list[LabeledData]:
         data = self.mongo_db.labeled_data.find(self.get_filter(extraction_identifier))
-        return [LabeledData(**document) for document in data]
+        labeled_data = [LabeledData(**document) for document in data]
+        self.mongo_db.labeled_data.delete_many(self.get_filter(extraction_identifier))
+        return labeled_data
 
     def load_and_delete_labeled_data(
         self, extraction_identifier: ExtractionIdentifier, batch_size: int
@@ -123,11 +125,3 @@ class MongoPersistenceRepository(PersistenceRepository):
     def delete_prediction_data(self, extraction_identifier: ExtractionIdentifier, filters: list[dict[str, str]]):
         for one_filter in filters:
             self.mongo_db.suggestions.delete_many({**self.get_filter(extraction_identifier), **one_filter})
-
-
-if __name__ == "__main__":
-    foo = MongoPersistenceRepository()
-    extraction_identifier = ExtractionIdentifier(run_name="end_to_end_test", extraction_name="pdf_to_multi_option")
-    # foo.mongo_db.prediction_data.delete_many({"_id": {"$in": ['']}})
-    aha = foo.load_and_delete_prediction_data(extraction_identifier=extraction_identifier, batch_size=1)
-    print(aha)
