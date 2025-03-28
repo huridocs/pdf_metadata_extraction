@@ -140,7 +140,7 @@ if __name__ == "__main__":
     send_logs(default_extractor_identifier, f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
     if RESTART_IF_NO_GPU and not torch.cuda.is_available():
         send_logs(default_extractor_identifier, "Restarting server because GPU is not available")
-        os.system("sudo reboot now")
-    queues_names = QUEUES_NAMES.split(" ")
-    queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
-    queue_processor.start(process)
+    else:
+        queues_names = QUEUES_NAMES.split(" ")
+        queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
+        queue_processor.start(process)
