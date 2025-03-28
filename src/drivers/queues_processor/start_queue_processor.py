@@ -11,6 +11,7 @@ from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.domain.LogSeverity import LogSeverity
 from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
@@ -22,7 +23,7 @@ from config import (
     QUEUES_NAMES,
     DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
-    CALCULATE_MODELS_LOCALLY,
+    CALCULATE_MODELS_LOCALLY, RESTART_IF_NO_GPU,
 )
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
@@ -36,13 +37,15 @@ if not CALCULATE_MODELS_LOCALLY:
     SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.DOCUMENT_LAYOUT_ANALYSIS)
     CLOUD_PROVIDER = GoogleV2Repository(server_parameters=SERVER_PARAMETERS, service_logger=config_logger)
 
+default_extractor_identifier = ExtractionIdentifier(extraction_name="default")
+
 
 def get_paragraphs(task: ParagraphExtractorTask):
     persistence_repository = MongoPersistenceRepository()
     task_calculated, error_message = Extractor.calculate_task(task, persistence_repository)
 
     if not task_calculated:
-        config_logger.info(f"Error: {error_message}")
+        send_logs(default_extractor_identifier, f"Error: {error_message}")
         return ParagraphExtractionResultsMessage(key=task.key, xmls=task.xmls, success=False, error_message=error_message)
 
     data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_paragraphs_translations/{task.key}"
@@ -52,9 +55,9 @@ def get_paragraphs(task: ParagraphExtractorTask):
 def process(message: dict[str, any]) -> QueueProcessResults:
     try:
         task_type = TaskType(**message)
-        config_logger.info(f"New task {message}")
+        send_logs(default_extractor_identifier, f"New task {message}")
     except ValidationError:
-        config_logger.error(f"Not a valid Redis message: {message}")
+        send_logs(default_extractor_identifier, f"Not a valid Redis message: {message}", LogSeverity.error)
         return QueueProcessResults(results=None, delete_message=True)
 
     if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
@@ -77,7 +80,7 @@ def process(message: dict[str, any]) -> QueueProcessResults:
             success=False,
             error_message="Task not found",
         )
-        config_logger.error(f"Task not found: {task.model_dump()}")
+        send_logs(default_extractor_identifier, f"Task not found: {task.model_dump()}", LogSeverity.error)
 
     return QueueProcessResults(results=result_message.model_dump(), delete_message=True)
 
@@ -110,7 +113,9 @@ def get_result_message(error_message, task, task_calculated):
             data_url=data_url,
         )
 
-    config_logger.info(f"Error: {error_message}")
+    extraction_identifier = ExtractionIdentifier(run_name=task.tenant, extraction_name="task.params.id")
+    send_logs(extraction_identifier, f"Error: {error_message}")
+
     return ResultsMessage(
         tenant=task.tenant,
         task=task.task,
@@ -131,7 +136,10 @@ if __name__ == "__main__":
     except Exception:
         pass
 
-    config_logger.info(f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
+    send_logs(default_extractor_identifier, f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
+    if RESTART_IF_NO_GPU and not torch.cuda.is_available():
+        send_logs(default_extractor_identifier, "Restarting server because GPU is not available")
+        os.system("sudo reboot now")
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
     queue_processor.start(process)
