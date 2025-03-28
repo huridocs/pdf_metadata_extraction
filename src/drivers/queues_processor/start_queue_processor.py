@@ -23,7 +23,8 @@ from config import (
     QUEUES_NAMES,
     DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
-    CALCULATE_MODELS_LOCALLY, RESTART_IF_NO_GPU,
+    CALCULATE_MODELS_LOCALLY,
+    RESTART_IF_NO_GPU,
 )
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
