@@ -154,9 +154,6 @@ class Extractor:
         else:
             prediction_samples = self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
 
-        if prediction_samples:
-            config_logger.info(prediction_samples[0].model_dump())
-
         if UPLOAD_MODELS_TO_CLOUD_STORAGE and not self.extraction_identifier.get_path().exists():
             try:
                 extractor_path = Path(self.extraction_identifier.run_name, self.extraction_identifier.extraction_name)
