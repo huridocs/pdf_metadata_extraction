@@ -2,10 +2,19 @@ import os
 from os.path import join
 from pathlib import Path
 
-PARAGRAPH_EXTRACTION_NAME = os.environ.get("PARAGRAPH_EXTRACTION_NAME", f"extract_paragraphs")
+UPLOAD_MODELS_TO_CLOUD_STORAGE = os.environ.get("UPLOAD_MODELS_TO_CLOUD_STORAGE", "false").lower().strip() == "true"
+SAMPLES_IN_LOCAL_DB = os.environ.get("SAMPLES_IN_LOCAL_DB", "true").lower().strip() == "true"
+CALCULATE_MODELS_LOCALLY = os.environ.get("CALCULATE_MODELS_LOCALLY", "true").lower().strip() == "true"
+RESTART_IF_NO_GPU = os.environ.get("RESTART_IF_NO_GPU", "false").lower().strip() == "true"
+EXECUTE_PARAGRAPH_EXTRACTION = os.environ.get("EXECUTE_PARAGRAPH_EXTRACTION", "true").lower().strip() == "true"
+
+if EXECUTE_PARAGRAPH_EXTRACTION:
+    PARAGRAPH_EXTRACTION_NAME = os.environ.get("PARAGRAPH_EXTRACTION_NAME", f"extract_paragraphs")
+else:
+    PARAGRAPH_EXTRACTION_NAME = f"not_used_extract_paragraphs"
+
 QUEUES_NAMES = os.environ.get("QUEUES_NAMES", f"information_extraction")
 QUEUES_NAMES += f" {PARAGRAPH_EXTRACTION_NAME}"
-
 
 SERVICE_HOST = os.environ.get("SERVICE_HOST", "http://127.0.0.1")
 SERVICE_PORT = os.environ.get("SERVICE_PORT", "5056")
@@ -15,11 +24,6 @@ MONGO_HOST = os.environ.get("MONGO_HOST", "mongodb://127.0.0.1")
 MONGO_PORT = os.environ.get("MONGO_PORT", "29017")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
-
-UPLOAD_MODELS_TO_CLOUD_STORAGE = os.environ.get("UPLOAD_MODELS_TO_CLOUD_STORAGE", "false").lower().strip() == "true"
-SAMPLES_IN_LOCAL_DB = os.environ.get("SAMPLES_IN_LOCAL_DB", "true").lower().strip() == "true"
-CALCULATE_MODELS_LOCALLY = os.environ.get("CALCULATE_MODELS_LOCALLY", "true").lower().strip() == "true"
-RESTART_IF_NO_GPU = os.environ.get("RESTART_IF_NO_GPU", "false").lower().strip() == "true"
 
 APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()
