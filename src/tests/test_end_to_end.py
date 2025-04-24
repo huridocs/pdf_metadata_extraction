@@ -371,3 +371,5 @@ class TestEndToEnd(TestCase):
             if message:
                 queue.deleteMessage(id=message["id"]).execute()
                 return ResultsMessage(**json.loads(message["message"]))
+
+        return None

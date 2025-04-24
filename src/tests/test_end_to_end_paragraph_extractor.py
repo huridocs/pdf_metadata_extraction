@@ -112,3 +112,5 @@ Ipsum."""
             if message:
                 queue.deleteMessage(id=message["id"]).execute()
                 return ParagraphExtractionResultsMessage(**json.loads(message["message"]))
+
+        return None
