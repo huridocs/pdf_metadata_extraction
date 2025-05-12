@@ -35,7 +35,7 @@ from domain.TaskType import TaskType
 
 
 if not CALCULATE_MODELS_LOCALLY:
-    SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.DOCUMENT_LAYOUT_ANALYSIS)
+    SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.METADATA_EXTRACTION)
     CLOUD_PROVIDER = GoogleV2Repository(server_parameters=SERVER_PARAMETERS, service_logger=config_logger)
 
 default_extractor_identifier = ExtractionIdentifier(extraction_name="default")
