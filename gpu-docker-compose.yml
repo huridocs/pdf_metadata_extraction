@@ -1,31 +1,51 @@
 version: "3.8"
 services:
   pdf_metadata_extraction_api:
-    extends:
-      file: docker-compose.yml
-      service: pdf_metadata_extraction_api
+    container_name: pdf_metadata_extraction_api
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"  ]
+    init: true
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - data:/app/models_data
     depends_on:
-      - mongo_metadata_extraction
       - pdf_metadata_extraction_worker
-
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - PARAGRAPH_EXTRACTION_NAME=development_extract_paragraphs
+    ports:
+      - "5056:5056"
+    env_file: .env
+    network_mode: host
   pdf_metadata_extraction_worker:
-    extends:
-      file: docker-compose.yml
-      service: pdf_metadata_extraction_worker
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+    container_name: pdf_metadata_extraction_worker
+    init: true
+    entrypoint: [ "python", "-m", "src.drivers.queues_processor.start_queue_processor" ]
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - data:/app/models_data
+    shm_size: '11gb'
     depends_on:
       - mongo_metadata_extraction
-
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - PARAGRAPH_EXTRACTION_NAME=development_extract_paragraphs
+    network_mode: host
+    env_file: .env
   mongo_metadata_extraction:
-    extends:
-      file: docker-compose.yml
-      service: mongo_metadata_extraction
+    restart: unless-stopped
+    command: mongod --port 29017
+    image: "mongo:7.0.12"
+    network_mode: host
+    ports:
+      - "29017:29017"
 
 volumes:
   data:

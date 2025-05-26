@@ -349,11 +349,13 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(tenant, suggestion_1.tenant)
         self.assertEqual(extraction_id, suggestion_1.id)
+        self.assertEqual("Option 1", suggestion_1.segment_text)
         self.assertEqual("entity_name_1", suggestion_1.entity_name)
         self.assertEqual([Option(id="1", label="1")], suggestion_1.values)
 
         self.assertEqual(tenant, suggestion_2.tenant)
         self.assertEqual(extraction_id, suggestion_2.id)
+        self.assertEqual("Option 2 Option 3", suggestion_2.segment_text)
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
         self.assertEqual([Option(id="2", label="2"), Option(id="3", label="3")], suggestion_2.values)
 
