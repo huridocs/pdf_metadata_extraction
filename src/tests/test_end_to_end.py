@@ -45,6 +45,48 @@ class TestEndToEnd(TestCase):
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
 
+    def test_create_model_without_data(self):
+        tenant = "end_to_end_test"
+        extraction_id = "extraction_id"
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id, metadata={"name": "test"}),
+        )
+
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        results_message = self.get_results_message()
+        expected_result = ResultsMessage(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id, metadata={"name": "test"}),
+            success=False,
+            error_message="No data to create model",
+            data_url=None,
+        )
+
+        self.assertEqual(expected_result, results_message)
+
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="suggestions",
+            params=Params(id=extraction_id, metadata={"name": "test"}),
+        )
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        results_message = self.get_results_message()
+        expected_result = ResultsMessage(
+            tenant=tenant,
+            task="suggestions",
+            params=Params(id=extraction_id, metadata={"name": "test"}),
+            success=False,
+            error_message="No data to calculate suggestions",
+            data_url=None,
+        )
+
+        self.assertEqual(expected_result, results_message)
+
     def test_pdf_to_text(self):
         tenant = "end_to_end_test"
         extraction_id = "extraction_id"
@@ -141,48 +183,6 @@ class TestEndToEnd(TestCase):
         self.assertEqual(100, suggestion.segments_boxes[0].width)
         self.assertEqual(15, suggestion.segments_boxes[0].height)
         self.assertEqual(1, suggestion.segments_boxes[0].page_number)
-
-    def test_create_model_without_data(self):
-        tenant = "end_to_end_test"
-        extraction_id = "extraction_id"
-        task = TrainableEntityExtractionTask(
-            tenant=tenant,
-            task="create_model",
-            params=Params(id=extraction_id, metadata={"name": "test"}),
-        )
-
-        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
-
-        results_message = self.get_results_message()
-        expected_result = ResultsMessage(
-            tenant=tenant,
-            task="create_model",
-            params=Params(id=extraction_id, metadata={"name": "test"}),
-            success=False,
-            error_message="No data to create model",
-            data_url=None,
-        )
-
-        self.assertEqual(expected_result, results_message)
-
-        task = TrainableEntityExtractionTask(
-            tenant=tenant,
-            task="suggestions",
-            params=Params(id=extraction_id, metadata={"name": "test"}),
-        )
-        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
-
-        results_message = self.get_results_message()
-        expected_result = ResultsMessage(
-            tenant=tenant,
-            task="suggestions",
-            params=Params(id=extraction_id, metadata={"name": "test"}),
-            success=False,
-            error_message="No data to calculate suggestions",
-            data_url=None,
-        )
-
-        self.assertEqual(expected_result, results_message)
 
     def test_pdf_to_multi_option(self):
         tenant = "end_to_end_test"
@@ -358,6 +358,89 @@ class TestEndToEnd(TestCase):
         self.assertEqual("Option 2 Option 3", suggestion_2.segment_text)
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
         self.assertEqual([Option(id="2", label="2"), Option(id="3", label="3")], suggestion_2.values)
+
+    def test_text_to_text(self):
+        tenant = "end_to_end_test"
+        extraction_id = "text_to_text"
+
+        labeled_data_json = {
+            "id": extraction_id,
+            "tenant": tenant,
+            "entity_name": "entity_name_1",
+            "language_iso": "en",
+            "label_text": "1",
+            "source_text": "Option 1",
+        }
+
+        requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        labeled_data_json = {
+            "id": extraction_id,
+            "tenant": tenant,
+            "entity_name": "entity_name_2",
+            "language_iso": "en",
+            "label_text": "2",
+            "source_text": "Option 2",
+        }
+
+        requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id, metadata={"name": "test"}),
+        )
+
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        predict_data_json = {
+            "tenant": tenant,
+            "id": extraction_id,
+            "source_text": "Option 1",
+            "entity_name": "entity_name_1",
+        }
+
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        predict_data_json = {
+            "tenant": tenant,
+            "id": extraction_id,
+            "source_text": "Option 3",
+            "entity_name": "entity_name_2",
+        }
+
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        self.get_results_message()
+
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="suggestions",
+            params=Params(id=extraction_id, metadata={"name": "test"}),
+        )
+
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        results_message = self.get_results_message()
+        response = requests.get(results_message.data_url)
+
+        suggestions = json.loads(response.json())
+        suggestion_1 = Suggestion(**suggestions[0])
+        suggestion_2 = Suggestion(**suggestions[1])
+
+        self.assertEqual(2, len(suggestions))
+
+        self.assertEqual(tenant, suggestion_1.tenant)
+        self.assertEqual(extraction_id, suggestion_1.id)
+        self.assertEqual("Option 1", suggestion_1.segment_text)
+        self.assertEqual("entity_name_1", suggestion_1.entity_name)
+        self.assertEqual("1", suggestion_1.text)
+
+        self.assertEqual(tenant, suggestion_2.tenant)
+        self.assertEqual(extraction_id, suggestion_2.id)
+        self.assertEqual("Option 3", suggestion_2.segment_text)
+        self.assertEqual("entity_name_2", suggestion_2.entity_name)
+        self.assertEqual("3", suggestion_2.text)
 
     @staticmethod
     def get_results_message() -> ResultsMessage | ParagraphExtractionResultsMessage | None:
