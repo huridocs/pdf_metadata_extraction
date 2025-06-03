@@ -1,4 +1,5 @@
 FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apt-get update && apt-get -y -q --no-install-recommends install libgomp1 pdftohtml
 RUN apt-get -y install git
@@ -13,8 +14,8 @@ RUN python -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 COPY requirements.txt requirements.txt
-RUN pip install --upgrade pip
-RUN pip --default-timeout=1000 install -r requirements.txt
+RUN uv pip install --upgrade pip
+RUN uv pip install -r requirements.txt
 
 WORKDIR /app
 COPY ./src ./src

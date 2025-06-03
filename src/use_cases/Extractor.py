@@ -134,6 +134,10 @@ class Extractor:
             extraction_identifier=self.extraction_identifier,
         )
         send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
+        for sample in extraction_data.samples:
+            send_logs(self.extraction_identifier, f"Sample: {sample.labeled_data.source_text}")
+            send_logs(self.extraction_identifier, f"Labels: {sample.labeled_data.values}")
+
         self.delete_training_data()
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.train(extraction_data)
