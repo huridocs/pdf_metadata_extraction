@@ -20,16 +20,16 @@ jobs:
           python-version: 3.11
 
       - name: Free up space
-        run: make free_up_space
+        run: make free-up-space
 
       - name: Install venv
-        run: make install_venv
+        run: make install-venv
 
       - name: Lint with black
-        run: make check_format
+        run: make check-format
 
       - name: Start service
-        run: make start_detached
+        run: make start-detached
 
       - name: Check API ready
         uses: emilioschepis/wait-for-endpoint@v1.0.3
@@ -41,7 +41,7 @@ jobs:
           interval: 500
 
       - name: Wait for queues
-        run: make wait_for_queues
+        run: make wait-for-queues
 
       - name: Test with unittest
         run: make test
@@ -53,7 +53,7 @@ jobs:
         run: mv .env.cloud .env
 
       - name: Start service
-        run: make start_detached
+        run: make start-detached
 
       - name: Check API ready
         uses: emilioschepis/wait-for-endpoint@v1.0.3

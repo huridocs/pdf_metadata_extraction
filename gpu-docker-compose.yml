@@ -30,7 +30,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - data:/app/models_data
-    shm_size: '11gb'
     depends_on:
       - mongo_metadata_extraction
     environment:
@@ -39,6 +38,13 @@ services:
       - PARAGRAPH_EXTRACTION_NAME=development_extract_paragraphs
     network_mode: host
     env_file: .env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
   mongo_metadata_extraction:
     restart: unless-stopped
     command: mongod --port 29017

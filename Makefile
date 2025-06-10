@@ -4,7 +4,7 @@ install:
 activate:
 	. .venv/bin/activate
 
-install_venv:
+install-venv:
 	python3 -m venv .venv
 	. .venv/bin/activate; python -m pip install --upgrade pip
 	. .venv/bin/activate; python -m pip install -r dev-requirements.txt
@@ -12,7 +12,7 @@ install_venv:
 formatter:
 	. .venv/bin/activate; command black --line-length 125 .
 
-check_format:
+check-format:
 	. .venv/bin/activate; command black --line-length 125 . --check
 
 test:
@@ -22,26 +22,26 @@ test:
 test-cloud:
 	. .venv/bin/activate; command cd src; command python -m pytest tests/test_end_to_end.py
 
-wait_for_queues:
+wait-for-queues:
 	. .venv/bin/activate; command cd scripts; command python wait_for_queues.py
 
-remove_docker_containers:
+remove-docker-containers:
 	docker compose ps -q | xargs docker rm
 
-remove_docker_images:
+remove-docker-images:
 	docker compose config --images | xargs docker rmi
 
 start:
 	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
-start_gpu:
+start-gpu:
 	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
 
-start_local_gpu:
+start-local-gpu:
 	docker compose -f local-gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
-start_detached:
+start-detached:
 	docker compose up --build -d
 
 start-test:
@@ -50,13 +50,13 @@ start-test:
 stop:
 	docker compose stop
 
-delete_queues:
+delete-queues:
 	. .venv/bin/activate; python scripts/delete_queues.py
 
 gpu:
 	. .venv/bin/activate; command cd src; python is_gpu_available.py
 
-free_up_space:
+free-up-space:
 	df -h
 	sudo rm -rf /usr/share/dotnet
 	sudo rm -rf /opt/ghc
