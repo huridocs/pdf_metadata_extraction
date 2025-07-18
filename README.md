@@ -215,16 +215,14 @@ Multi-option case:
         "tenant": "tenant", 
         "id": "property_id", 
         "xml_file_name": "xml_file_name_1", 
-        "values": [{"id": "1", "label": "option 1"}], 
-        "segment_text": "segment_text_1",
+        "values": [{"id": "1", "label": "option 1", "segment_text": "segment_text_1"}], 
         "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 1}]
         }, 
         {
         "tenant": "tenant", 
         "id": "property_id", 
         "xml_file_name": "xml_file_name_2", 
-        "values": [{"id": "2", "label": "option 2"}], 
-        "segment_text": "segment_text_2",
+        "values": [{"id": "2", "label": "option 2", "segment_text": "segment_text_2"}],
         "segments_boxes": [{"left": 1, "top": 2, "width": 3, "height": 4, "page_number": 2}]
         }, ... ]
 
