@@ -391,7 +391,7 @@ class TestApp(TestCase):
                 "tenant": "wrong tenant",
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
-                "values": [{"id": "one_id", "label": "one_label"}],
+                "values": [{"id": "one_id", "label": "one_label", "segment_text": "one_segment_text"}],
                 "segment_text": "one_segment_text",
                 "page_number": 1,
                 "segments_boxes": [
@@ -404,7 +404,7 @@ class TestApp(TestCase):
                 "tenant": tenant,
                 "id": extraction_id,
                 "xml_file_name": "one_file_name",
-                "values": [{"id": "one_id", "label": "one_label"}],
+                "values": [{"id": "one_id", "label": "one_label", "segment_text": "one_segment_text"}],
                 "segment_text": "one_segment_text",
                 "page_number": 2,
                 "segments_boxes": [
@@ -418,8 +418,8 @@ class TestApp(TestCase):
                 "id": extraction_id,
                 "xml_file_name": "other_file_name",
                 "values": [
-                    {"id": "other_id", "label": "other_label"},
-                    {"id": "other_id_2", "label": "other_label_2"},
+                    {"id": "other_id", "label": "other_label", "segment_text": "other_segment_text"},
+                    {"id": "other_id_2", "label": "other_label_2", "segment_text": "other_segment_text_2"},
                 ],
                 "segment_text": "other_segment_text",
                 "page_number": 3,
@@ -433,7 +433,7 @@ class TestApp(TestCase):
                 "tenant": tenant,
                 "id": "wrong extraction name",
                 "xml_file_name": "other_file_name",
-                "values": [{"id": "other_id", "label": "other_label"}],
+                "values": [{"id": "other_id", "label": "other_label", "segment_text": "other_segment_text"}],
                 "segment_text": "other_segment_text",
                 "page_number": 4,
                 "segments_boxes": [
@@ -457,15 +457,17 @@ class TestApp(TestCase):
 
         self.assertEqual("one_file_name", suggestions[0]["xml_file_name"])
         self.assertEqual("one_segment_text", suggestions[0]["segment_text"])
-        self.assertEqual([{"id": "one_id", "label": "one_label"}], suggestions[0]["values"])
+        self.assertEqual(
+            [{"id": "one_id", "label": "one_label", "segment_text": "one_segment_text"}], suggestions[0]["values"]
+        )
         self.assertEqual(2, suggestions[0]["page_number"])
 
         self.assertEqual("other_file_name", suggestions[1]["xml_file_name"])
         self.assertEqual("other_segment_text", suggestions[1]["segment_text"])
         self.assertEqual(
             [
-                {"id": "other_id", "label": "other_label"},
-                {"id": "other_id_2", "label": "other_label_2"},
+                {"id": "other_id", "label": "other_label", "segment_text": "other_segment_text"},
+                {"id": "other_id_2", "label": "other_label_2", "segment_text": "other_segment_text_2"},
             ],
             suggestions[1]["values"],
         )

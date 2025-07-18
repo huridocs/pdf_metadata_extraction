@@ -12,6 +12,7 @@ import requests
 from trainable_entity_extractor.domain.Option import Option
 from trainable_entity_extractor.domain.SegmentBox import SegmentBox
 from trainable_entity_extractor.domain.Suggestion import Suggestion
+from trainable_entity_extractor.domain.Value import Value
 
 from config import APP_PATH, DATA_PATH
 from domain.ParagraphExtractionData import ParagraphExtractionData, XmlData
@@ -272,7 +273,7 @@ class TestEndToEnd(TestCase):
             ],
             suggestion.segments_boxes,
         )
-        self.assertEqual([Option(id="1", label="United Nations")], suggestion.values)
+        self.assertEqual([Value(id="1", label="United Nations", segment_text="United Nations")], suggestion.values)
 
     def test_text_to_multi_option(self):
         tenant = "end_to_end_test"
@@ -349,15 +350,19 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(tenant, suggestion_1.tenant)
         self.assertEqual(extraction_id, suggestion_1.id)
-        self.assertEqual("Option 1", suggestion_1.segment_text)
         self.assertEqual("entity_name_1", suggestion_1.entity_name)
-        self.assertEqual([Option(id="1", label="1")], suggestion_1.values)
+        self.assertEqual([Value(id="1", label="1", segment_text="Option 1")], suggestion_1.values)
 
         self.assertEqual(tenant, suggestion_2.tenant)
         self.assertEqual(extraction_id, suggestion_2.id)
-        self.assertEqual("Option 2 Option 3", suggestion_2.segment_text)
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
-        self.assertEqual([Option(id="2", label="2"), Option(id="3", label="3")], suggestion_2.values)
+        self.assertEqual(
+            [
+                Value(id="2", label="2", segment_text="Option 2 Option 3"),
+                Value(id="3", label="3", segment_text="Option 2 Option 3"),
+            ],
+            suggestion_2.values,
+        )
 
     def test_text_to_text(self):
         tenant = "end_to_end_test"

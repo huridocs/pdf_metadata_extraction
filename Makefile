@@ -18,7 +18,6 @@ check-format:
 test:
 	. .venv/bin/activate; command cd src; command python -m pytest tests/test_app.py tests/test_end_to_end.py tests/test_end_to_end_paragraph_extractor.py
 
-
 test-cloud:
 	. .venv/bin/activate; command cd src; command python -m pytest tests/test_end_to_end.py
 
