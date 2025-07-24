@@ -133,8 +133,8 @@ class Extractor:
             multi_value=self.multi_value,
             extraction_identifier=self.extraction_identifier,
         )
-        send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
         self.delete_training_data()
+        send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.train(extraction_data)
 
