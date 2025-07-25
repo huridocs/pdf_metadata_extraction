@@ -1,5 +1,6 @@
 import os
 import shutil
+import pickle
 from os.path import join, exists
 from pathlib import Path
 from time import time, sleep
@@ -36,6 +37,7 @@ from config import (
     SERVICE_PORT,
     SAMPLES_IN_LOCAL_DB,
     UPLOAD_MODELS_TO_CLOUD_STORAGE,
+    LAST_RUN_PATH,
 )
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
@@ -133,10 +135,27 @@ class Extractor:
             multi_value=self.multi_value,
             extraction_identifier=self.extraction_identifier,
         )
+
+        self.save_last_extraction_data(extraction_data)
+
         self.delete_training_data()
         send_logs(self.extraction_identifier, f"Set data in {round(time() - start, 2)} seconds")
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.train(extraction_data)
+
+    def save_last_extraction_data(self, extraction_data: ExtractionData):
+        try:
+            if LAST_RUN_PATH.exists():
+                shutil.rmtree(LAST_RUN_PATH, ignore_errors=True)
+
+            LAST_RUN_PATH.mkdir(parents=True, exist_ok=True)
+            extraction_name = f"{self.extraction_identifier.run_name}_{self.extraction_identifier.extraction_name}.pickle"
+            path = LAST_RUN_PATH / extraction_name
+            with open(path, "wb") as file:
+                pickle.dump(extraction_data, file)
+            send_logs(self.extraction_identifier, f"Saved last run at {path}")
+        except Exception as e:
+            send_logs(self.extraction_identifier, f"Error saving extraction_data for debugging: {e}")
 
     def delete_training_data(self):
         training_xml_path = XmlFile(extraction_identifier=self.extraction_identifier, to_train=True).xml_folder_path
