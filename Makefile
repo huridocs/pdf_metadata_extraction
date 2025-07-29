@@ -33,12 +33,8 @@ remove-docker-images:
 start:
 	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
-start-gpu:
-	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
-
-
-start-local-gpu:
-	docker compose -f local-gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+start-windows:
+	docker compose -f windows-gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
 start-detached:
 	docker compose up --build -d
