@@ -19,17 +19,20 @@ jobs:
         with:
           python-version: 3.11
 
+      - name: Install just
+        run: apt-get install -y just
+
       - name: Free up space
-        run: make free-up-space
+        run: just free-up-space
 
       - name: Install venv
-        run: make install-venv
+        run: just install-venv
 
       - name: Lint with black
-        run: make check-format
+        run: just check-format
 
       - name: Start service
-        run: make start-detached
+        run: just start-detached
 
       - name: Check API ready
         uses: emilioschepis/wait-for-endpoint@v1.0.3
@@ -41,19 +44,19 @@ jobs:
           interval: 500
 
       - name: Wait for queues
-        run: make wait-for-queues
+        run: just wait-for-queues
 
       - name: Test with unittest
-        run: make test
+        run: just test
 
       - name: Stop service
-        run: make stop
+        run: just stop
 
       - name: Replace variables for cloud
         run: mv .env.cloud .env
 
       - name: Start service
-        run: make start-detached
+        run: just start-detached
 
       - name: Check API ready
         uses: emilioschepis/wait-for-endpoint@v1.0.3
@@ -65,5 +68,5 @@ jobs:
           interval: 500
 
       - name: Test cloud
-        run: make test-cloud
+        run: just test-cloud
 

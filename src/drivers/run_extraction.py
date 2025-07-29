@@ -32,7 +32,7 @@ def run_extraction(extraction_data_pickle_path: Path):
         if performance_summary_path.exists()
         else "No performance summary available"
     )
-    print("\n\n\n")
+    print("\n\n")
     print(performance_summary)
 
 

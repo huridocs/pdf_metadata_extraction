@@ -19,8 +19,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install just
+        run: apt-get install -y just
+
       - name: Free up space
-        run: make free-up-space
+        run: just free-up-space
 
       - name: Log in to the Container registry
         uses: docker/login-action@v2
