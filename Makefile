@@ -40,7 +40,7 @@ start-detached:
 	docker compose up --build -d
 
 start-test:
-	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+	docker compose up --attach pdf_metadata_extraction_api --build
 
 stop:
 	docker compose stop

@@ -30,14 +30,17 @@ remove-docker-containers:
 remove-docker-images:
 	docker compose config --images | xargs docker rmi
 
-start:
-	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+start-test:
+	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+
+start-windows:
+	docker compose -f windows-gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
 start-detached:
 	docker compose up --build -d
 
-start-test:
-	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+start:
+	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
 stop:
 	docker compose stop

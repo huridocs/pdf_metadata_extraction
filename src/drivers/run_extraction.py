@@ -4,7 +4,7 @@ from pathlib import Path
 
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.use_cases.TrainableEntityExtractor import TrainableEntityExtractor
-from config import LAST_RUN_PATH, DATA_PATH
+from config import DATA_PATH
 
 
 def run_extraction(extraction_data_pickle_path: Path):
@@ -37,4 +37,4 @@ def run_extraction(extraction_data_pickle_path: Path):
 
 
 if __name__ == "__main__":
-    run_extraction(LAST_RUN_PATH / "end_to_end_test_text_to_text.pickle")
+    run_extraction(Path(DATA_PATH) / "debug_runs" / "right-docs-ix_6888e016735c6fe6d36fbb5b.pickle")

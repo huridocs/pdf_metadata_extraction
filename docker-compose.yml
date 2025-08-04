@@ -2,7 +2,7 @@ version: "3.8"
 services:
   pdf_metadata_extraction_api:
     container_name: pdf_metadata_extraction_api
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"  ]
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--workers", "1", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"  ]
     init: true
     restart: unless-stopped
     build:
@@ -29,7 +29,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - data:/app/models_data
-    shm_size: '11gb'
     depends_on:
       - mongo_metadata_extraction
       - redis_metadata_extraction

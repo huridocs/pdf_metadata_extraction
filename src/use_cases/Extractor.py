@@ -43,9 +43,16 @@ from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from ports.PersistenceRepository import PersistenceRepository
 
+# Always initialize Google Cloud Storage client but only use it when flag is True
+google_cloud_storage = None
 if UPLOAD_MODELS_TO_CLOUD_STORAGE:
-    server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
-    google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
+    try:
+        server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
+        google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
+        config_logger.info("Google Cloud Storage client initialized successfully")
+    except Exception as e:
+        config_logger.error(f"Failed to initialize Google Cloud Storage client: {e}")
+        google_cloud_storage = None
 
 
 class Extractor:
@@ -173,13 +180,20 @@ class Extractor:
         else:
             prediction_samples = self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
 
-        if UPLOAD_MODELS_TO_CLOUD_STORAGE and not self.extraction_identifier.get_path().exists():
+        if (
+            UPLOAD_MODELS_TO_CLOUD_STORAGE
+            and google_cloud_storage is not None
+            and not self.extraction_identifier.get_path().exists()
+        ):
             try:
                 extractor_path = Path(self.extraction_identifier.run_name, self.extraction_identifier.extraction_name)
                 google_cloud_storage.copy_from_cloud(extractor_path, Path(DATA_PATH, self.extraction_identifier.run_name))
                 config_logger.info(f"Model downloaded from cloud {self.extraction_identifier.get_path()}")
-            except:
-                config_logger.info(f"No model on cloud {self.extraction_identifier.get_path()}")
+            except Exception as e:
+                config_logger.error(f"Error downloading model from cloud: {e}")
+                config_logger.warning(f"No model available on cloud for {self.extraction_identifier.get_path()}")
+                # Continue without the model - let TrainableEntityExtractor handle the missing model
+
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.predict(prediction_samples)
 
@@ -237,15 +251,29 @@ class Extractor:
                 if not extractor_identifier_to_check.is_old():
                     continue
 
-                if UPLOAD_MODELS_TO_CLOUD_STORAGE:
+                # Only delete local model if cloud upload is disabled OR upload succeeds
+                should_delete_local = True
+
+                if UPLOAD_MODELS_TO_CLOUD_STORAGE and google_cloud_storage is not None:
                     try:
                         google_cloud_storage.upload_to_cloud(run_name, Path(extractor_identifier_to_check.get_path()))
                         config_logger.info(f"Model uploaded to cloud {extractor_identifier_to_check.get_path()}")
-                    except:
-                        config_logger.error(f"Error uploading model to cloud {extractor_identifier_to_check.get_path()}")
+                    except Exception as e:
+                        config_logger.error(
+                            f"Error uploading model to cloud {extractor_identifier_to_check.get_path()}: {e}"
+                        )
+                        should_delete_local = False  # Don't delete if upload failed
+                        config_logger.warning(
+                            f"Keeping local model due to failed cloud upload: {extractor_identifier_to_check.get_path()}"
+                        )
 
-                config_logger.info(f"Removing old model folder {extractor_identifier_to_check.get_path()}")
-                shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
+                if should_delete_local:
+                    config_logger.info(f"Removing old model folder {extractor_identifier_to_check.get_path()}")
+                    shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
+                else:
+                    config_logger.info(
+                        f"Keeping model locally due to cloud upload failure: {extractor_identifier_to_check.get_path()}"
+                    )
 
     @staticmethod
     def calculate_task(

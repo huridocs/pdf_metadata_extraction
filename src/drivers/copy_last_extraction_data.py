@@ -4,7 +4,7 @@ import argparse
 
 from config import LAST_RUN_PATH
 
-CONTAINER_NAME = "pdf_metadata_extraction_worker"
+CONTAINER_NAME = "pdf-metadata-extraction-worker-production"
 CONTAINER_DATA_PATH = f"/app/{LAST_RUN_PATH.parent.name}/{LAST_RUN_PATH.name}"
 
 
