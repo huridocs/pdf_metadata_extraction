@@ -15,7 +15,7 @@ from trainable_entity_extractor.domain.SegmentBox import SegmentBox
 from trainable_entity_extractor.domain.TrainingSample import TrainingSample
 
 from drivers.rest.app import app
-from config import DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
+from config import MODELS_DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
 
 
 class TestApp(TestCase):
@@ -31,7 +31,7 @@ class TestApp(TestCase):
         run_name = "endpoint_test"
         extraction_name = "extraction_id"
 
-        shutil.rmtree(join(DATA_PATH, run_name), ignore_errors=True)
+        shutil.rmtree(join(MODELS_DATA_PATH, run_name), ignore_errors=True)
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
@@ -39,16 +39,16 @@ class TestApp(TestCase):
                 response = client.post(f"/xml_to_train/{run_name}/{extraction_name}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f"{DATA_PATH}/{run_name}/{extraction_name}/xml_to_train/test.xml"
+        to_train_xml_path = f"{MODELS_DATA_PATH}/{run_name}/{extraction_name}/xml_to_train/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
-        shutil.rmtree(join(DATA_PATH, run_name), ignore_errors=True)
+        shutil.rmtree(join(MODELS_DATA_PATH, run_name), ignore_errors=True)
 
     def test_post_xml_to_predict(self):
         tenant = "endpoint_test"
         extraction_id = "extraction_id"
 
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(MODELS_DATA_PATH, tenant), ignore_errors=True)
 
         with open(self.test_file_path, "rb") as stream:
             files = {"file": stream}
@@ -56,10 +56,10 @@ class TestApp(TestCase):
                 response = client.post(f"/xml_to_predict/{tenant}/{extraction_id}", files=files)
 
         self.assertEqual(200, response.status_code)
-        to_train_xml_path = f"{DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"
+        to_train_xml_path = f"{MODELS_DATA_PATH}/{tenant}/{extraction_id}/xml_to_predict/test.xml"
         self.assertTrue(os.path.exists(to_train_xml_path))
 
-        shutil.rmtree(join(DATA_PATH, tenant), ignore_errors=True)
+        shutil.rmtree(join(MODELS_DATA_PATH, tenant), ignore_errors=True)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data(self):

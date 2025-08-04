@@ -21,7 +21,7 @@ from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIde
 from trainable_entity_extractor.domain.LabeledData import LabeledData
 from trainable_entity_extractor.domain.PredictionData import PredictionData
 
-from config import DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME
+from config import MODELS_DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME
 from domain.ParagraphExtractionData import ParagraphExtractionData
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.XML import XML
@@ -69,7 +69,9 @@ async def error():
 async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...)):
     filename = file.filename
     xml_file = XmlFile(
-        extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH),
+        extraction_identifier=ExtractionIdentifier(
+            run_name=tenant, extraction_name=extraction_id, output_path=MODELS_DATA_PATH
+        ),
         to_train=True,
         xml_file_name=filename,
     )
@@ -82,7 +84,9 @@ async def to_train_xml_file(tenant, extraction_id, file: UploadFile = File(...))
 async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...)):
     filename = file.filename
     xml_file = XmlFile(
-        extraction_identifier=ExtractionIdentifier(run_name=tenant, extraction_name=extraction_id, output_path=DATA_PATH),
+        extraction_identifier=ExtractionIdentifier(
+            run_name=tenant, extraction_name=extraction_id, output_path=MODELS_DATA_PATH
+        ),
         to_train=False,
         xml_file_name=filename,
     )
@@ -95,7 +99,7 @@ async def to_predict_xml_file(tenant, extraction_id, file: UploadFile = File(...
 async def labeled_data_post(labeled_data: LabeledData):
     labeled_data.scale_down_labels()
     extraction_identifier = ExtractionIdentifier(
-        run_name=labeled_data.tenant, extraction_name=labeled_data.id, output_path=DATA_PATH
+        run_name=labeled_data.tenant, extraction_name=labeled_data.id, output_path=MODELS_DATA_PATH
     )
     app.persistence_repository.save_labeled_data(extraction_identifier, labeled_data)
     return "labeled data saved"
@@ -104,7 +108,9 @@ async def labeled_data_post(labeled_data: LabeledData):
 @app.get("/get_samples_training/{run_name}/{extraction_name}")
 @catch_exceptions
 async def get_samples_training(run_name: str, extraction_name: str):
-    extraction_identifier = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH)
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
     labeled_data = app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 50)
     return Extractor.get_samples_for_training(extraction_identifier=extraction_identifier, labeled_data_list=labeled_data)
 
@@ -112,7 +118,9 @@ async def get_samples_training(run_name: str, extraction_name: str):
 @app.get("/get_samples_prediction/{run_name}/{extraction_name}")
 @catch_exceptions
 async def get_samples_prediction(run_name: str, extraction_name: str):
-    extraction_identifier = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH)
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
     prediction_data = app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 50)
     return Extractor.get_prediction_samples(extractor_identifier=extraction_identifier, prediction_data_list=prediction_data)
 
@@ -121,7 +129,7 @@ async def get_samples_prediction(run_name: str, extraction_name: str):
 @catch_exceptions
 async def prediction_data_post(prediction_data: PredictionData):
     extraction_identifier = ExtractionIdentifier(
-        run_name=prediction_data.tenant, extraction_name=prediction_data.id, output_path=DATA_PATH
+        run_name=prediction_data.tenant, extraction_name=prediction_data.id, output_path=MODELS_DATA_PATH
     )
     app.persistence_repository.save_prediction_data(extraction_identifier, prediction_data)
     return "prediction data saved"
@@ -130,7 +138,9 @@ async def prediction_data_post(prediction_data: PredictionData):
 @app.get("/get_suggestions/{run_name}/{extraction_name}")
 @catch_exceptions
 async def get_suggestions(run_name: str, extraction_name: str):
-    extraction_identifier = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH)
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
     suggestions = app.persistence_repository.load_suggestions(extraction_identifier)
     suggestions_list = [x.scale_up().to_output() for x in suggestions]
     send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
@@ -141,7 +151,9 @@ async def get_suggestions(run_name: str, extraction_name: str):
 @app.post("/save_suggestions/{run_name}/{extraction_name}")
 @catch_exceptions
 async def save_suggestions(run_name: str, extraction_name: str, suggestions: list[Suggestion]):
-    extraction_identifier = ExtractionIdentifier(run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH)
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
     app.persistence_repository.save_suggestions(extraction_identifier, suggestions)
     send_logs(extraction_identifier, f"{len(suggestions)} suggestions saved")
     return True
@@ -149,7 +161,7 @@ async def save_suggestions(run_name: str, extraction_name: str, suggestions: lis
 
 @app.delete("/{run_name}/{extraction_name}")
 async def remove_extractor(run_name: str, extraction_name: str):
-    shutil.rmtree(join(DATA_PATH, run_name, extraction_name), ignore_errors=True)
+    shutil.rmtree(join(MODELS_DATA_PATH, run_name, extraction_name), ignore_errors=True)
     return True
 
 
@@ -159,7 +171,7 @@ async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadF
     paragraph_extraction_data = ParagraphExtractionData(**json.loads(json_data))
 
     extractor_identifier = ExtractionIdentifier(
-        run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=paragraph_extraction_data.key, output_path=DATA_PATH
+        run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=paragraph_extraction_data.key, output_path=MODELS_DATA_PATH
     )
 
     config_logger.info(f"extract_paragraphs endpoint called for {extractor_identifier.extraction_name}")
@@ -190,7 +202,7 @@ async def extract_paragraphs(json_data: str = Form(...), xml_files: list[UploadF
 @catch_exceptions
 async def get_paragraphs_translations(key: str) -> ParagraphsTranslations:
     extractor_identifier = ExtractionIdentifier(
-        run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=key, output_path=DATA_PATH
+        run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=key, output_path=MODELS_DATA_PATH
     )
     paragraphs_from_languages = app.persistence_repository.load_paragraphs_from_languages(extractor_identifier)
     return ParagraphsTranslations.from_paragraphs_from_languages(key, paragraphs_from_languages)

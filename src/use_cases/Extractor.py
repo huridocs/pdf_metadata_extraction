@@ -31,7 +31,7 @@ from trainable_entity_extractor.use_cases.XmlFile import XmlFile
 from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 from config import (
-    DATA_PATH,
+    MODELS_DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
     SERVICE_HOST,
     SERVICE_PORT,
@@ -187,7 +187,9 @@ class Extractor:
         ):
             try:
                 extractor_path = Path(self.extraction_identifier.run_name, self.extraction_identifier.extraction_name)
-                google_cloud_storage.copy_from_cloud(extractor_path, Path(DATA_PATH, self.extraction_identifier.run_name))
+                google_cloud_storage.copy_from_cloud(
+                    extractor_path, Path(MODELS_DATA_PATH, self.extraction_identifier.run_name)
+                )
                 config_logger.info(f"Model downloaded from cloud {self.extraction_identifier.get_path()}")
             except Exception as e:
                 config_logger.error(f"Error downloading model from cloud: {e}")
@@ -239,13 +241,13 @@ class Extractor:
         if exists(extractor_identifier.get_path()):
             os.utime(extractor_identifier.get_path())
 
-        for run_name in os.listdir(DATA_PATH):
+        for run_name in os.listdir(MODELS_DATA_PATH):
             if run_name == "cache":
                 continue
 
-            for extraction_name in os.listdir(join(DATA_PATH, run_name)):
+            for extraction_name in os.listdir(join(MODELS_DATA_PATH, run_name)):
                 extractor_identifier_to_check = ExtractionIdentifier(
-                    run_name=run_name, extraction_name=extraction_name, output_path=DATA_PATH
+                    run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
                 )
 
                 if not extractor_identifier_to_check.is_old():
@@ -281,7 +283,10 @@ class Extractor:
     ) -> (bool, str):
         if task.task == Extractor.CREATE_MODEL_TASK_NAME:
             extractor_identifier = ExtractionIdentifier(
-                run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
+                run_name=task.tenant,
+                extraction_name=task.params.id,
+                metadata=task.params.metadata,
+                output_path=MODELS_DATA_PATH,
             )
 
             Extractor.remove_old_models(extractor_identifier)
@@ -297,7 +302,10 @@ class Extractor:
 
         if task.task == Extractor.SUGGESTIONS_TASK_NAME:
             extractor_identifier = ExtractionIdentifier(
-                run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
+                run_name=task.tenant,
+                extraction_name=task.params.id,
+                metadata=task.params.metadata,
+                output_path=MODELS_DATA_PATH,
             )
             extractor = Extractor(extractor_identifier, persistence_repository)
             suggestions = extractor.get_suggestions()
@@ -312,7 +320,7 @@ class Extractor:
 
         if task.task == PARAGRAPH_EXTRACTION_NAME:
             extractor_identifier = ExtractionIdentifier(
-                run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=task.key, output_path=DATA_PATH
+                run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=task.key, output_path=MODELS_DATA_PATH
             )
             extractor = Extractor(extractor_identifier, persistence_repository)
             return extractor.save_paragraphs_from_languages()

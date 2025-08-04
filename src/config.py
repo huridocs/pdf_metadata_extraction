@@ -27,5 +27,6 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()
-DATA_PATH = join(ROOT_PATH, "models_data")
-LAST_RUN_PATH = Path(DATA_PATH, "last_run_data")
+MODELS_DATA_PATH = join(ROOT_PATH, "models_data")
+DATA_PATH = join(ROOT_PATH, "data")
+LAST_RUN_PATH = Path(MODELS_DATA_PATH, "last_run_data")

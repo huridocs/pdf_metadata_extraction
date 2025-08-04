@@ -21,7 +21,7 @@ from config import (
     REDIS_HOST,
     REDIS_PORT,
     QUEUES_NAMES,
-    DATA_PATH,
+    MODELS_DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
     CALCULATE_MODELS_LOCALLY,
     RESTART_IF_NO_GPU,
@@ -92,7 +92,7 @@ def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask)
 
     model_results_message = get_result_message(error_message, task, task_calculated)
     extraction_identifier = ExtractionIdentifier(
-        run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=DATA_PATH
+        run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=MODELS_DATA_PATH
     )
     send_logs(extraction_identifier, f"Result message: {model_results_message.to_string()}")
     return model_results_message

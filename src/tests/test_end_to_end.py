@@ -14,7 +14,7 @@ from trainable_entity_extractor.domain.SegmentBox import SegmentBox
 from trainable_entity_extractor.domain.Suggestion import Suggestion
 from trainable_entity_extractor.domain.Value import Value
 
-from config import APP_PATH, DATA_PATH
+from config import APP_PATH, MODELS_DATA_PATH
 from domain.ParagraphExtractionData import ParagraphExtractionData, XmlData
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
@@ -191,7 +191,7 @@ class TestEndToEnd(TestCase):
         test_xml_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_train/test.xml"
 
         for i in range(10):
-            new_test_xml_path = f"{DATA_PATH}/test_{i}.xml"
+            new_test_xml_path = f"{MODELS_DATA_PATH}/test_{i}.xml"
             shutil.copyfile(test_xml_path, new_test_xml_path)
 
             with open(new_test_xml_path, mode="rb") as stream:

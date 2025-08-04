@@ -4,7 +4,7 @@ from pathlib import Path
 
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.use_cases.TrainableEntityExtractor import TrainableEntityExtractor
-from config import DATA_PATH
+from config import MODELS_DATA_PATH, DATA_PATH
 
 
 def run_extraction(extraction_data_pickle_path: Path):
@@ -20,7 +20,7 @@ def run_extraction(extraction_data_pickle_path: Path):
     extraction_data.extraction_identifier = ExtractionIdentifier(
         run_name=extraction_data.extraction_identifier.run_name,
         extraction_name=extraction_data.extraction_identifier.extraction_name,
-        output_path=DATA_PATH,
+        output_path=MODELS_DATA_PATH,
     )
 
     trainable_entity_extractor = TrainableEntityExtractor(extraction_data.extraction_identifier)
@@ -37,4 +37,4 @@ def run_extraction(extraction_data_pickle_path: Path):
 
 
 if __name__ == "__main__":
-    run_extraction(Path(DATA_PATH) / "debug_runs" / "right-docs-ix_6888e016735c6fe6d36fbb5b.pickle")
+    run_extraction(Path(DATA_PATH) / "debug_runs" / "cejil_67e44bb41312279a04cfdea8.pickle")
