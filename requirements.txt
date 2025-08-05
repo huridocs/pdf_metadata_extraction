@@ -6,6 +6,6 @@ redis==5.0.7
 requests==2.32.3
 git+https://github.com/huridocs/queue-processor@721cf01c7be6d9384c741b4f9c0664b3cfd0dc65
 git+https://github.com/huridocs/ml-cloud-connector@b44ec928f7b1743df7e6270a380cd11cced8a95b
-git+https://github.com/huridocs/trainable-entity-extractor@2025.8.4.19
+git+https://github.com/huridocs/trainable-entity-extractor@2025.8.5.1
 
 
