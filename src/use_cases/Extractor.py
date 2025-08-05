@@ -126,7 +126,7 @@ class Extractor:
 
         return multi_option_samples
 
-    def create_models(self) -> (bool, str):
+    def create_models(self) -> tuple[bool, str]:
         start = time()
         send_logs(self.extraction_identifier, "Loading data to create model")
 
@@ -169,7 +169,7 @@ class Extractor:
         send_logs(self.extraction_identifier, f"Deleting training data in {training_xml_path}")
         shutil.rmtree(training_xml_path, ignore_errors=True)
 
-    def save_suggestions(self, suggestions: list[Suggestion]) -> (bool, str):
+    def save_suggestions(self, suggestions: list[Suggestion]) -> tuple[bool, str]:
         self.persistence_repository.save_suggestions(self.extraction_identifier, suggestions)
         return True, ""
 
@@ -183,7 +183,7 @@ class Extractor:
         if (
             UPLOAD_MODELS_TO_CLOUD_STORAGE
             and google_cloud_storage is not None
-            and not self.extraction_identifier.get_path().exists()
+            and not exists(self.extraction_identifier.get_path())
         ):
             try:
                 extractor_path = Path(self.extraction_identifier.run_name, self.extraction_identifier.extraction_name)
@@ -199,7 +199,7 @@ class Extractor:
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.predict(prediction_samples)
 
-    def save_paragraphs_from_languages(self) -> (bool, str):
+    def save_paragraphs_from_languages(self) -> tuple[bool, str]:
         paragraph_extraction_data = self.persistence_repository.load_paragraph_extraction_data(self.extraction_identifier)
         if not paragraph_extraction_data:
             return False, "No data to extract paragraphs"
@@ -246,6 +246,9 @@ class Extractor:
                 continue
 
             for extraction_name in os.listdir(join(MODELS_DATA_PATH, run_name)):
+                if not Path(MODELS_DATA_PATH, run_name, extraction_name).is_dir():
+                    continue
+
                 extractor_identifier_to_check = ExtractionIdentifier(
                     run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
                 )
@@ -280,7 +283,7 @@ class Extractor:
     @staticmethod
     def calculate_task(
         task: TrainableEntityExtractionTask | ParagraphExtractorTask, persistence_repository: PersistenceRepository
-    ) -> (bool, str):
+    ) -> tuple[bool, str]:
         if task.task == Extractor.CREATE_MODEL_TASK_NAME:
             extractor_identifier = ExtractionIdentifier(
                 run_name=task.tenant,
@@ -362,7 +365,7 @@ class Extractor:
         return samples
 
     @staticmethod
-    def send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> (bool, str):
+    def send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> tuple[bool, str]:
         max_retries = 3
         retry_delay = 5  # seconds
 
