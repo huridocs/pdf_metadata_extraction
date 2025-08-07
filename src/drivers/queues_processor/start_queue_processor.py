@@ -67,7 +67,7 @@ def process(message: dict[str, any]) -> QueueProcessResults:
             result_message = get_extraction(task)
         else:
             CLOUD_PROVIDER.start()
-            return QueueProcessResults(results=None, delete_message=False, invisibility_timeout=5)
+            return QueueProcessResults(results=None, delete_message=False, invisibility_timeout=20)
 
     elif task_type.task == PARAGRAPH_EXTRACTION_NAME:
         task = ParagraphExtractorTask(**message)

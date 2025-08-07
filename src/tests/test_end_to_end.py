@@ -2,7 +2,6 @@ import json
 import os
 import shutil
 import time
-from pathlib import Path
 from unittest import TestCase
 
 from pdf_token_type_labels.TokenType import TokenType
@@ -15,9 +14,7 @@ from trainable_entity_extractor.domain.Suggestion import Suggestion
 from trainable_entity_extractor.domain.Value import Value
 
 from config import APP_PATH, MODELS_DATA_PATH
-from domain.ParagraphExtractionData import ParagraphExtractionData, XmlData
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
-from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
 from domain.Params import Params
 from domain.ResultsMessage import ResultsMessage
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
