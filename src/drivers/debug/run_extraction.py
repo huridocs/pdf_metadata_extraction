@@ -37,4 +37,4 @@ def run_extraction(extraction_data_pickle_path: Path):
 
 
 if __name__ == "__main__":
-    run_extraction(Path(DATA_PATH) / "debug_runs" / "cejil_67e44bb41312279a04cfdea8.pickle")
+    run_extraction(Path(DATA_PATH) / "debug_runs" / "default_68938b5f559a8807582ad8e3.pickle")
