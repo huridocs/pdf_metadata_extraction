@@ -253,10 +253,20 @@ class Extractor:
                     run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
                 )
 
+                if extractor_identifier_to_check.is_training_canceled():
+                    if UPLOAD_MODELS_TO_CLOUD_STORAGE and google_cloud_storage is not None:
+                        try:
+                            google_cloud_storage.delete_from_cloud(run_name, extraction_name)
+                            config_logger.info(f"Delete model from cloud {extractor_identifier_to_check.get_path()}")
+                        except Exception as e:
+                            config_logger.error(
+                                f"Error deleting model from cloud {extractor_identifier_to_check.get_path()}: {e}"
+                            )
+                    continue
+
                 if not extractor_identifier_to_check.is_old():
                     continue
 
-                # Only delete local model if cloud upload is disabled OR upload succeeds
                 should_delete_local = True
 
                 if UPLOAD_MODELS_TO_CLOUD_STORAGE and google_cloud_storage is not None:
@@ -275,6 +285,7 @@ class Extractor:
                 if should_delete_local:
                     config_logger.info(f"Removing old model folder {extractor_identifier_to_check.get_path()}")
                     shutil.rmtree(extractor_identifier_to_check.get_path(), ignore_errors=True)
+                    return
                 else:
                     config_logger.info(
                         f"Keeping model locally due to cloud upload failure: {extractor_identifier_to_check.get_path()}"

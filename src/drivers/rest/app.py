@@ -3,6 +3,7 @@ import shutil
 from contextlib import asynccontextmanager
 import json
 from os.path import join
+from pathlib import Path
 
 from queue_processor.QueueProcessor import QueueProcessor
 from trainable_entity_extractor.domain.Suggestion import Suggestion
@@ -160,8 +161,11 @@ async def save_suggestions(run_name: str, extraction_name: str, suggestions: lis
 
 
 @app.delete("/{run_name}/{extraction_name}")
-async def remove_extractor(run_name: str, extraction_name: str):
-    shutil.rmtree(join(MODELS_DATA_PATH, run_name, extraction_name), ignore_errors=True)
+async def delete_extractor(run_name: str, extraction_name: str):
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
+    extraction_identifier.cancel_training()
     return True
 
 

@@ -1,7 +1,9 @@
 import json
 import os
 import shutil
+import time
 from os.path import join
+from unittest.mock import patch
 
 import mongomock
 import pymongo
@@ -9,6 +11,7 @@ from fastapi.testclient import TestClient
 from unittest import TestCase
 
 from pdf_token_type_labels.TokenType import TokenType
+from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.PredictionSample import PredictionSample
 from trainable_entity_extractor.domain.Suggestion import Suggestion
 from trainable_entity_extractor.domain.SegmentBox import SegmentBox
@@ -16,10 +19,35 @@ from trainable_entity_extractor.domain.TrainingSample import TrainingSample
 
 from drivers.rest.app import app
 from config import MODELS_DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
+from use_cases.Extractor import Extractor
 
 
 class TestApp(TestCase):
     test_file_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_predict/test.xml"
+
+    def setUp(self):
+        """Set up test environment before each test."""
+        # Create a temporary test directory
+        self.test_base_dir = os.path.join(MODELS_DATA_PATH, "test_temp")
+        os.makedirs(self.test_base_dir, exist_ok=True)
+
+    def tearDown(self):
+        """Clean up test environment after each test."""
+        # Remove temporary test directory
+        if os.path.exists(self.test_base_dir):
+            shutil.rmtree(self.test_base_dir, ignore_errors=True)
+
+    @staticmethod
+    def _create_test_extraction_folder(extraction_identifier: ExtractionIdentifier):
+        os.makedirs(extraction_identifier.get_path(), exist_ok=True)
+
+        # Create some test files
+        test_files = ["model.pkl", "training_data.json", "config.yaml", "logs.txt"]
+
+        for filename in test_files:
+            file_path = os.path.join(extraction_identifier.get_path(), filename)
+            with open(file_path, "w") as f:
+                f.write(f"Test content for {filename}")
 
     def test_info(self):
         with TestClient(app) as client:
@@ -730,3 +758,28 @@ class TestApp(TestCase):
         self.assertEqual("other_text", prediction_samples[1].source_text)
         self.assertEqual("entity_name", prediction_samples[0].entity_name)
         self.assertEqual("other_entity_name", prediction_samples[1].entity_name)
+
+    def test_delete_extractor(self):
+        run_name = "test_run"
+        extraction_name = "test_extraction"
+
+        extractor_identifier = ExtractionIdentifier(
+            run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+        )
+
+        self._create_test_extraction_folder(extractor_identifier)
+
+        Extractor.remove_old_models(extractor_identifier)
+
+        self.assertTrue(os.path.exists(extractor_identifier.get_path()))
+        self.assertLessEqual(4, len(os.listdir(extractor_identifier.get_path())))
+
+        with TestClient(app) as client:
+            response = client.delete(f"/{run_name}/{extraction_name}")
+
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(response.json())
+
+        Extractor.remove_old_models(extractor_identifier)
+
+        self.assertFalse(os.path.exists(extractor_identifier.get_path()))
