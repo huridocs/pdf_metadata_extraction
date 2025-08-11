@@ -36,16 +36,19 @@ SERVER_URL = "http://127.0.0.1:5056"
 
 class TestEndToEnd(TestCase):
     def tearDown(self):
-        requests.delete(f"{SERVER_URL}/end_to_end_test/extraction_id")
-        requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_multi_option")
-        requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_multi_option")
+        requests.delete(f"{SERVER_URL}/delete_folder/end_to_end_test/extraction_id")
+        requests.delete(f"{SERVER_URL}/delete_folder/end_to_end_test/model_without_data")
+        requests.delete(f"{SERVER_URL}/delete_folder/end_to_end_test/pdf_to_multi_option")
+        requests.delete(f"{SERVER_URL}/delete_folder/end_to_end_test/pdf_to_text")
+        requests.delete(f"{SERVER_URL}/delete_folder/end_to_end_test/text_to_multi_option")
+        requests.delete(f"{SERVER_URL}/delete_folder/end_to_end_test/text_to_text")
 
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
 
     def test_create_model_without_data(self):
         tenant = "end_to_end_test"
-        extraction_id = "extraction_id"
+        extraction_id = "model_without_data"
         task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="create_model",
@@ -87,7 +90,7 @@ class TestEndToEnd(TestCase):
 
     def test_pdf_to_text(self):
         tenant = "end_to_end_test"
-        extraction_id = "extraction_id"
+        extraction_id = "pdf_to_text"
 
         test_xml_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_train/test.xml"
         with open(test_xml_path, mode="rb") as stream:
@@ -209,6 +212,17 @@ class TestEndToEnd(TestCase):
             }
             requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
 
+        options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id, multi_value=False, metadata={"name": "test"}, options=options),
+        )
+
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        message = self.get_results_message()
+
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
             requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
@@ -224,17 +238,6 @@ class TestEndToEnd(TestCase):
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
 
-        options = [Option(id="1", label="United Nations"), Option(id="2", label="Other")]
-        task = TrainableEntityExtractionTask(
-            tenant=tenant,
-            task="create_model",
-            params=Params(id=extraction_id, multi_value=False, metadata={"name": "test"}, options=options),
-        )
-
-        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
-
-        self.get_results_message()
-
         task = TrainableEntityExtractionTask(
             tenant=tenant,
             task="suggestions",
@@ -244,6 +247,7 @@ class TestEndToEnd(TestCase):
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
         results_message = self.get_results_message()
+        assert results_message.data_url is not None, "Data URL should not be None"
         response = requests.get(results_message.data_url)
 
         suggestions = json.loads(response.json())

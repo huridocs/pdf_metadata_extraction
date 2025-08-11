@@ -16,10 +16,10 @@ check-format:
 	. .venv/bin/activate; command black --line-length 125 . --check
 
 test:
-	. .venv/bin/activate; command cd src; command python -m pytest tests/test_app.py tests/test_end_to_end.py tests/test_end_to_end_paragraph_extractor.py
+	. .venv/bin/activate; command cd src; command python -m pytest -n 0 tests/test_app.py tests/test_end_to_end.py tests/test_end_to_end_paragraph_extractor.py
 
 test-cloud:
-	. .venv/bin/activate; command cd src; command python -m pytest tests/test_end_to_end.py
+	. .venv/bin/activate; command cd src; command python -m pytest -n 0 tests/test_end_to_end.py
 
 wait-for-queues:
 	. .venv/bin/activate; command cd scripts; command python wait_for_queues.py

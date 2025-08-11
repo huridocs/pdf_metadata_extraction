@@ -17,7 +17,7 @@ import sys
 
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
-from trainable_entity_extractor.config import config_logger
+from trainable_entity_extractor.config import config_logger, IS_TRAINING_CANCELED_FILE_NAME
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.LabeledData import LabeledData
 from trainable_entity_extractor.domain.PredictionData import PredictionData
@@ -158,6 +158,14 @@ async def save_suggestions(run_name: str, extraction_name: str, suggestions: lis
     app.persistence_repository.save_suggestions(extraction_identifier, suggestions)
     send_logs(extraction_identifier, f"{len(suggestions)} suggestions saved")
     return True
+
+
+@app.delete("delete_folder/{run_name}/{extraction_name}")
+async def delete_folder(run_name: str, extraction_name: str):
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
+    return extraction_identifier.is_training_canceled()
 
 
 @app.delete("/{run_name}/{extraction_name}")
