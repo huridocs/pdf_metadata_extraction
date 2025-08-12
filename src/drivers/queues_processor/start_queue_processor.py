@@ -30,7 +30,7 @@ from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsM
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from domain.ResultsMessage import ResultsMessage
-from use_cases.Extractor import Extractor
+from use_cases.ExtractorUseCase import ExtractorUseCase
 from domain.TaskType import TaskType
 
 
@@ -43,7 +43,7 @@ default_extractor_identifier = ExtractionIdentifier(extraction_name="default")
 
 def get_paragraphs(task: ParagraphExtractorTask):
     persistence_repository = MongoPersistenceRepository()
-    task_calculated, error_message = Extractor.calculate_task(task, persistence_repository)
+    task_calculated, error_message = ExtractorUseCase.calculate_task(task, persistence_repository)
 
     if not task_calculated:
         send_logs(default_extractor_identifier, f"Error: {error_message}")
@@ -61,7 +61,7 @@ def process(message: dict[str, any]) -> QueueProcessResults:
         send_logs(default_extractor_identifier, f"Not a valid Redis message: {message}", LogSeverity.error)
         return QueueProcessResults(results=None, delete_message=True)
 
-    if task_type.task in [Extractor.CREATE_MODEL_TASK_NAME, Extractor.SUGGESTIONS_TASK_NAME]:
+    if task_type.task in [ExtractorUseCase.CREATE_MODEL_TASK_NAME, ExtractorUseCase.SUGGESTIONS_TASK_NAME]:
         if CALCULATE_MODELS_LOCALLY:
             task = TrainableEntityExtractionTask(**message)
             result_message = get_extraction(task)
@@ -88,7 +88,7 @@ def process(message: dict[str, any]) -> QueueProcessResults:
 
 def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask) -> ResultsMessage:
     persistence_repository = MongoPersistenceRepository()
-    task_calculated, error_message = Extractor.calculate_task(task, persistence_repository)
+    task_calculated, error_message = ExtractorUseCase.calculate_task(task, persistence_repository)
 
     model_results_message = get_result_message(error_message, task, task_calculated)
     extraction_identifier = ExtractionIdentifier(
@@ -100,7 +100,7 @@ def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask)
 
 def get_result_message(error_message, task, task_calculated):
     if task_calculated:
-        if task.task == Extractor.SUGGESTIONS_TASK_NAME:
+        if task.task == ExtractorUseCase.SUGGESTIONS_TASK_NAME:
             data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.params.id}"
         else:
             data_url = None

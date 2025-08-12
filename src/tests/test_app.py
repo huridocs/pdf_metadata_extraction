@@ -1,9 +1,7 @@
 import json
 import os
 import shutil
-import time
 from os.path import join
-from unittest.mock import patch
 
 import mongomock
 import pymongo
@@ -19,7 +17,7 @@ from trainable_entity_extractor.domain.TrainingSample import TrainingSample
 
 from drivers.rest.app import app
 from config import MODELS_DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
-from use_cases.Extractor import Extractor
+from use_cases.ExtractorUseCase import ExtractorUseCase
 
 
 class TestApp(TestCase):
@@ -769,7 +767,7 @@ class TestApp(TestCase):
 
         self._create_test_extraction_folder(extractor_identifier)
 
-        Extractor.remove_old_models(extractor_identifier)
+        ExtractorUseCase.remove_old_models(extractor_identifier)
 
         self.assertTrue(os.path.exists(extractor_identifier.get_path()))
         self.assertLessEqual(4, len(os.listdir(extractor_identifier.get_path())))
@@ -780,6 +778,6 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertTrue(response.json())
 
-        Extractor.remove_old_models(extractor_identifier)
+        ExtractorUseCase.remove_old_models(extractor_identifier)
 
         self.assertFalse(os.path.exists(extractor_identifier.get_path()))

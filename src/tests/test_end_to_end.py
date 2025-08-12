@@ -35,7 +35,7 @@ SERVER_URL = "http://127.0.0.1:5056"
 
 
 class TestEndToEnd(TestCase):
-    def tearDown(self):
+    def setUp(self):
         requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/extraction_id")
         requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/model_without_data")
         requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/pdf_to_multi_option")

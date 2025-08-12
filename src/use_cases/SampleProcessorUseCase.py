@@ -47,7 +47,7 @@ class SampleProcessorUseCase:
             multi_option_samples.append(sample)
             xml_file.delete()
 
-        return SampleProcessorUseCase.remove_empty_training_samples(multi_option_samples)
+        return multi_option_samples
 
     @staticmethod
     def get_prediction_samples(
