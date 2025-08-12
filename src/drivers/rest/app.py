@@ -160,11 +160,12 @@ async def save_suggestions(run_name: str, extraction_name: str, suggestions: lis
     return True
 
 
-@app.delete("delete_folder/{run_name}/{extraction_name}")
-async def delete_folder(run_name: str, extraction_name: str):
+@app.delete("delete_extractor/{run_name}/{extraction_name}")
+async def delete_extractor(run_name: str, extraction_name: str):
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
+    app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 500000)
     return extraction_identifier.is_training_canceled()
 
 
