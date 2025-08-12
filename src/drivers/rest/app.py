@@ -27,7 +27,7 @@ from domain.ParagraphExtractionData import ParagraphExtractionData
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.XML import XML
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
-from use_cases.Extractor import Extractor
+from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 
 @asynccontextmanager
@@ -113,7 +113,9 @@ async def get_samples_training(run_name: str, extraction_name: str):
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
     labeled_data = app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 50)
-    return Extractor.get_samples_for_training(extraction_identifier=extraction_identifier, labeled_data_list=labeled_data)
+    return SampleProcessorUseCase.get_samples_for_training(
+        extraction_identifier=extraction_identifier, labeled_data_list=labeled_data
+    )
 
 
 @app.get("/get_samples_prediction/{run_name}/{extraction_name}")
@@ -123,7 +125,9 @@ async def get_samples_prediction(run_name: str, extraction_name: str):
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
     prediction_data = app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 50)
-    return Extractor.get_prediction_samples(extractor_identifier=extraction_identifier, prediction_data_list=prediction_data)
+    return SampleProcessorUseCase.get_prediction_samples(
+        extractor_identifier=extraction_identifier, prediction_data_list=prediction_data
+    )
 
 
 @app.post("/prediction_data")
