@@ -2,8 +2,6 @@ import os
 import shutil
 from contextlib import asynccontextmanager
 import json
-from os.path import join
-from pathlib import Path
 
 from queue_processor.QueueProcessor import QueueProcessor
 from trainable_entity_extractor.domain.Suggestion import Suggestion
@@ -164,13 +162,14 @@ async def save_suggestions(run_name: str, extraction_name: str, suggestions: lis
     return True
 
 
-@app.delete("delete_extractor/{run_name}/{extraction_name}")
-async def delete_extractor(run_name: str, extraction_name: str):
+@app.post("/cancel_training/{run_name}/{extraction_name}")
+async def cancel_training(run_name: str, extraction_name: str):
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
-    app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 500000)
-    return extraction_identifier.is_training_canceled()
+    app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 5000000)
+    extraction_identifier.cancel_training()
+    return True
 
 
 @app.delete("/{run_name}/{extraction_name}")
@@ -178,7 +177,9 @@ async def delete_extractor(run_name: str, extraction_name: str):
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
-    extraction_identifier.cancel_training()
+    shutil.rmtree(extraction_identifier.get_path(), ignore_errors=True)
+    app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 5000000)
+    app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 5000000)
     return True
 
 

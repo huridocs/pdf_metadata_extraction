@@ -17,7 +17,6 @@ from trainable_entity_extractor.domain.TrainingSample import TrainingSample
 
 from drivers.rest.app import app
 from config import MODELS_DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
-from use_cases.ExtractorUseCase import ExtractorUseCase
 
 
 class TestApp(TestCase):
@@ -757,6 +756,7 @@ class TestApp(TestCase):
         self.assertEqual("entity_name", prediction_samples[0].entity_name)
         self.assertEqual("other_entity_name", prediction_samples[1].entity_name)
 
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_delete_extractor(self):
         run_name = "test_run"
         extraction_name = "test_extraction"
@@ -767,8 +767,6 @@ class TestApp(TestCase):
 
         self._create_test_extraction_folder(extractor_identifier)
 
-        ExtractorUseCase.remove_old_models(extractor_identifier)
-
         self.assertTrue(os.path.exists(extractor_identifier.get_path()))
         self.assertLessEqual(4, len(os.listdir(extractor_identifier.get_path())))
 
@@ -778,6 +776,26 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertTrue(response.json())
 
-        ExtractorUseCase.remove_old_models(extractor_identifier)
-
         self.assertFalse(os.path.exists(extractor_identifier.get_path()))
+
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+    def test_cancel_training(self):
+        run_name = "test_run"
+        extraction_name = "test_extraction"
+
+        extractor_identifier = ExtractionIdentifier(
+            run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+        )
+
+        self._create_test_extraction_folder(extractor_identifier)
+
+        self.assertTrue(os.path.exists(extractor_identifier.get_path()))
+        self.assertLessEqual(4, len(os.listdir(extractor_identifier.get_path())))
+
+        with TestClient(app) as client:
+            response = client.post(f"/cancel_training/{run_name}/{extraction_name}")
+
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(response.json())
+
+        self.assertTrue(extractor_identifier.is_training_canceled())

@@ -36,12 +36,12 @@ SERVER_URL = "http://127.0.0.1:5056"
 
 class TestEndToEnd(TestCase):
     def setUp(self):
-        requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/extraction_id")
-        requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/model_without_data")
-        requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/pdf_to_multi_option")
-        requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/pdf_to_text")
-        requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/text_to_multi_option")
-        requests.delete(f"{SERVER_URL}/delete_extractor/end_to_end_test/text_to_text")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/extraction_id")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/model_without_data")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_multi_option")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_text")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_multi_option")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_text")
 
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()

@@ -127,7 +127,6 @@ class ExtractorUseCase:
             except Exception as e:
                 config_logger.error(f"Error downloading model from cloud: {e}")
                 config_logger.warning(f"No model available on cloud for {self.extraction_identifier.get_path()}")
-                # Continue without the model - let TrainableEntityExtractor handle the missing model
 
         trainable_entity_extractor = TrainableEntityExtractor(self.extraction_identifier)
         return trainable_entity_extractor.predict(prediction_samples)
@@ -228,6 +227,35 @@ class ExtractorUseCase:
             config_logger.info(f"Keeping model locally due to cloud upload failure: {extractor_identifier.get_path()}")
 
     @staticmethod
+    def send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> tuple[bool, str]:
+        max_retries = 3
+        retry_delay = 5  # seconds
+
+        url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+        url += "/save_suggestions"
+        url += f"/{extraction_identifier.run_name}/{extraction_identifier.extraction_name}"
+        headers = {"accept": "application/json", "Content-Type": "application/json"}
+        json_data = [x.model_dump() for x in suggestions]
+
+        while True:
+            try:
+                response = requests.post(url, headers=headers, json=json_data)
+                response.raise_for_status()
+                break
+            except requests.exceptions.RequestException as e:
+                config_logger.error(f"Error fetching training samples: {e}")
+                if max_retries > 0:
+                    max_retries -= 1
+                    config_logger.info(f"Retrying in {retry_delay} seconds...")
+                    sleep(retry_delay)
+                    continue
+                else:
+                    config_logger.error("Max retries reached. Exiting.")
+                    return False, "Could not send suggestions back"
+
+        return True, ""
+
+    @staticmethod
     def calculate_task(
         task: TrainableEntityExtractionTask | ParagraphExtractorTask, persistence_repository: PersistenceRepository
     ) -> tuple[bool, str]:
@@ -276,32 +304,3 @@ class ExtractorUseCase:
             return extractor.save_paragraphs_from_languages()
 
         return False, "Error"
-
-    @staticmethod
-    def send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> tuple[bool, str]:
-        max_retries = 3
-        retry_delay = 5  # seconds
-
-        url = f"{SERVICE_HOST}:{SERVICE_PORT}"
-        url += "/save_suggestions"
-        url += f"/{extraction_identifier.run_name}/{extraction_identifier.extraction_name}"
-        headers = {"accept": "application/json", "Content-Type": "application/json"}
-        json_data = [x.model_dump() for x in suggestions]
-
-        while True:
-            try:
-                response = requests.post(url, headers=headers, json=json_data)
-                response.raise_for_status()
-                break
-            except requests.exceptions.RequestException as e:
-                config_logger.error(f"Error fetching training samples: {e}")
-                if max_retries > 0:
-                    max_retries -= 1
-                    config_logger.info(f"Retrying in {retry_delay} seconds...")
-                    sleep(retry_delay)
-                    continue
-                else:
-                    config_logger.error("Max retries reached. Exiting.")
-                    return False, "Could not send suggestions back"
-
-        return True, ""
