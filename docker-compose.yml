@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   pdf_metadata_extraction_api:
     container_name: pdf_metadata_extraction_api
