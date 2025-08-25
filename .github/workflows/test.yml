@@ -27,6 +27,9 @@ jobs:
       - name: Free up space
         run: just free-up-space
 
+      - name: install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
       - name: Install venv
         run: just install-venv
 
