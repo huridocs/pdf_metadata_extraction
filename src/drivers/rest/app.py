@@ -9,7 +9,6 @@ from trainable_entity_extractor.use_cases.XmlFile import XmlFile
 from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
-from catch_exceptions import catch_exceptions
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 import sys
 
@@ -25,6 +24,7 @@ from domain.ParagraphExtractionData import ParagraphExtractionData
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.XML import XML
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
+from drivers.rest.catch_exceptions import catch_exceptions
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 
