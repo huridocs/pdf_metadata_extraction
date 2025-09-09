@@ -221,7 +221,7 @@ class TestEndToEnd(TestCase):
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
-        message = self.get_results_message()
+        self.get_results_message()
 
         with open(test_xml_path, mode="rb") as stream:
             files = {"file": stream}
@@ -258,7 +258,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(tenant, suggestion.tenant)
         self.assertEqual(extraction_id, suggestion.id)
         self.assertEqual("test.xml", suggestion.xml_file_name)
-        self.assertEqual("United Nations", suggestion.segment_text)
+        self.assertEqual('<p class="ix_paragraph">United Nations</p>', suggestion.segment_text)
         self.assertEqual(
             [
                 SegmentBox(
@@ -274,7 +274,16 @@ class TestEndToEnd(TestCase):
             ],
             suggestion.segments_boxes,
         )
-        self.assertEqual([Value(id="1", label="United Nations", segment_text="United Nations")], suggestion.values)
+        self.assertEqual(
+            [
+                Value(
+                    id="1",
+                    label="United Nations",
+                    segment_text='<p class="ix_matching_paragraph"><span class="ix_match">United Nations</span></p>',
+                )
+            ],
+            suggestion.values,
+        )
 
     def test_text_to_multi_option(self):
         tenant = "end_to_end_test"
