@@ -2,8 +2,8 @@ import os
 from os.path import join
 from pathlib import Path
 
+NAME="metadata_extractor"
 UPLOAD_MODELS_TO_CLOUD_STORAGE = os.environ.get("UPLOAD_MODELS_TO_CLOUD_STORAGE", "false").lower().strip() == "true"
-SAMPLES_IN_LOCAL_DB = os.environ.get("SAMPLES_IN_LOCAL_DB", "true").lower().strip() == "true"
 CALCULATE_MODELS_LOCALLY = os.environ.get("CALCULATE_MODELS_LOCALLY", "true").lower().strip() == "true"
 RESTART_IF_NO_GPU = os.environ.get("RESTART_IF_NO_GPU", "false").lower().strip() == "true"
 EXECUTE_PARAGRAPH_EXTRACTION = os.environ.get("EXECUTE_PARAGRAPH_EXTRACTION", "true").lower().strip() == "true"

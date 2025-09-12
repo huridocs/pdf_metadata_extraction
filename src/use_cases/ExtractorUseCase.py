@@ -3,9 +3,8 @@ import shutil
 import pickle
 from os.path import join, exists
 from pathlib import Path
-from time import time, sleep
+from time import time
 
-import requests
 from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
 from ml_cloud_connector.domain.ServerParameters import ServerParameters
 from ml_cloud_connector.domain.ServerType import ServerType
@@ -28,9 +27,6 @@ from trainable_entity_extractor.use_cases.send_logs import send_logs
 from config import (
     MODELS_DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
-    SERVICE_HOST,
-    SERVICE_PORT,
-    SAMPLES_IN_LOCAL_DB,
     UPLOAD_MODELS_TO_CLOUD_STORAGE,
     LAST_RUN_PATH,
 )
@@ -203,21 +199,6 @@ class ExtractorUseCase:
                 config_logger.error(f"Error deleting model from cloud {extractor_identifier.get_path()}: {e}")
 
     @staticmethod
-    def _upload_model_to_cloud(extractor_identifier: ExtractionIdentifier, run_name: str) -> bool:
-        should_delete_local = True
-
-        if UPLOAD_MODELS_TO_CLOUD_STORAGE and google_cloud_storage is not None:
-            try:
-                google_cloud_storage.upload_to_cloud(run_name, Path(extractor_identifier.get_path()))
-                config_logger.info(f"Model uploaded to cloud {extractor_identifier.get_path()}")
-            except Exception as e:
-                config_logger.error(f"Error uploading model to cloud {extractor_identifier.get_path()}: {e}")
-                should_delete_local = False  # Don't delete if upload failed
-                config_logger.warning(f"Keeping local model due to failed cloud upload: {extractor_identifier.get_path()}")
-
-        return should_delete_local
-
-    @staticmethod
     def _handle_local_model_deletion(extractor_identifier: ExtractionIdentifier, should_delete_local: bool):
         """Handle local model deletion based on cloud upload success"""
         if should_delete_local:
@@ -225,35 +206,6 @@ class ExtractorUseCase:
             shutil.rmtree(extractor_identifier.get_path(), ignore_errors=True)
         else:
             config_logger.info(f"Keeping model locally due to cloud upload failure: {extractor_identifier.get_path()}")
-
-    @staticmethod
-    def send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> tuple[bool, str]:
-        max_retries = 3
-        retry_delay = 5  # seconds
-
-        url = f"{SERVICE_HOST}:{SERVICE_PORT}"
-        url += "/save_suggestions"
-        url += f"/{extraction_identifier.run_name}/{extraction_identifier.extraction_name}"
-        headers = {"accept": "application/json", "Content-Type": "application/json"}
-        json_data = [x.model_dump() for x in suggestions]
-
-        while True:
-            try:
-                response = requests.post(url, headers=headers, json=json_data)
-                response.raise_for_status()
-                break
-            except requests.exceptions.RequestException as e:
-                config_logger.error(f"Error fetching training samples: {e}")
-                if max_retries > 0:
-                    max_retries -= 1
-                    config_logger.info(f"Retrying in {retry_delay} seconds...")
-                    sleep(retry_delay)
-                    continue
-                else:
-                    config_logger.error("Max retries reached. Exiting.")
-                    return False, "Could not send suggestions back"
-
-        return True, ""
 
     @staticmethod
     def calculate_task(
@@ -290,9 +242,6 @@ class ExtractorUseCase:
 
             if not suggestions:
                 return False, "No data to calculate suggestions"
-
-            if SAMPLES_IN_LOCAL_DB:
-                return extractor.save_suggestions(suggestions)
 
             return extractor.send_suggestions(extractor_identifier, suggestions)
 

@@ -1,10 +1,10 @@
 import os
 
-import torch
 from ml_cloud_connector.adapters.google_v2.GoogleV2Repository import GoogleV2Repository
 from ml_cloud_connector.domain.ServerParameters import ServerParameters
 from ml_cloud_connector.domain.ServerType import ServerType
 from pydantic import ValidationError
+from queue_processor.QueueProcess import QueueProcess
 from queue_processor.QueueProcessResults import QueueProcessResults
 from queue_processor.QueueProcessor import QueueProcessor
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -24,8 +24,8 @@ from config import (
     MODELS_DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
     CALCULATE_MODELS_LOCALLY,
-    RESTART_IF_NO_GPU,
 )
+from domain.DistributedJob import DistributedJob
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
@@ -53,7 +53,7 @@ def get_paragraphs(task: ParagraphExtractorTask):
     return ParagraphExtractionResultsMessage(key=task.key, xmls=task.xmls, success=True, error_message="", data_url=data_url)
 
 
-def process(message: dict[str, any]) -> QueueProcessResults:
+def old_process(message: dict[str, any]) -> QueueProcessResults:
     try:
         task_type = TaskType(**message)
         send_logs(default_extractor_identifier, f"New task {message}")
@@ -90,7 +90,7 @@ def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask)
     persistence_repository = MongoPersistenceRepository()
     task_calculated, error_message = ExtractorUseCase.calculate_task(task, persistence_repository)
 
-    model_results_message = get_result_message(error_message, task, task_calculated)
+    model_results_message = get_message_for_suggestions_result(error_message, task, task_calculated)
     extraction_identifier = ExtractionIdentifier(
         run_name=task.tenant, extraction_name=task.params.id, metadata=task.params.metadata, output_path=MODELS_DATA_PATH
     )
@@ -98,7 +98,7 @@ def get_extraction(task: TrainableEntityExtractionTask | ParagraphExtractorTask)
     return model_results_message
 
 
-def get_result_message(error_message, task, task_calculated):
+def get_message_for_suggestions_result(error_message, task, task_calculated):
     if task_calculated:
         if task.task == ExtractorUseCase.SUGGESTIONS_TASK_NAME:
             data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{task.tenant}/{task.params.id}"
@@ -125,6 +125,18 @@ def get_result_message(error_message, task, task_calculated):
         error_message=error_message,
     )
 
+class Process(QueueProcess):
+    def __init__(self):
+        super().__init__()
+        jobs: list[DistributedJob] = list()
+
+    def process_message(self, queue_name: str,  message) -> QueueProcessResults:
+        pass
+
+    def process(self, queue_name: str) -> QueueProcessResults:
+        pass
+
+
 
 if __name__ == "__main__":
     try:
@@ -137,10 +149,8 @@ if __name__ == "__main__":
     except Exception:
         pass
 
-    send_logs(default_extractor_identifier, f"Waiting for messages. Is GPU used? {torch.cuda.is_available()}")
-    if RESTART_IF_NO_GPU and not torch.cuda.is_available():
-        send_logs(default_extractor_identifier, "Restarting server because GPU is not available")
-    else:
-        queues_names = QUEUES_NAMES.split(" ")
-        queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
-        queue_processor.start(process)
+    process = Process()
+
+    queues_names = QUEUES_NAMES.split(" ")
+    queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, config_logger)
+    queue_processor.start(process)

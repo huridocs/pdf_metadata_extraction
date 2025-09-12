@@ -14,14 +14,12 @@ from trainable_entity_extractor.domain.TrainingSample import TrainingSample
 from trainable_entity_extractor.use_cases.FilterValidSegmentsPages import FilterValidSegmentsPages
 from trainable_entity_extractor.use_cases.XmlFile import XmlFile
 
-from config import SERVICE_HOST, SERVICE_PORT, SAMPLES_IN_LOCAL_DB
-from ports.PersistenceRepository import PersistenceRepository
+from config import SERVICE_HOST, SERVICE_PORT
 
 
 class SampleProcessorUseCase:
-    def __init__(self, extraction_identifier: ExtractionIdentifier, persistence_repository: PersistenceRepository):
+    def __init__(self, extraction_identifier: ExtractionIdentifier):
         self.extraction_identifier = extraction_identifier
-        self.persistence_repository = persistence_repository
 
     @staticmethod
     def get_samples_for_training(
@@ -113,17 +111,7 @@ class SampleProcessorUseCase:
         return samples
 
     def get_training_samples(self) -> list[TrainingSample]:
-        """Get training samples either from local DB or external service"""
-        if SAMPLES_IN_LOCAL_DB:
-            labeled_data_list = self.persistence_repository.load_labeled_data(self.extraction_identifier)
-            return self.get_samples_for_training(self.extraction_identifier, labeled_data_list)
-        else:
-            return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=True)
+        return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=True)
 
     def get_prediction_samples_for_suggestions(self) -> list[PredictionSample]:
-        """Get prediction samples either from local DB or external service"""
-        if SAMPLES_IN_LOCAL_DB:
-            prediction_data_list = self.persistence_repository.load_prediction_data(self.extraction_identifier)
-            return self.get_prediction_samples(self.extraction_identifier, prediction_data_list)
-        else:
-            return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
+        return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
