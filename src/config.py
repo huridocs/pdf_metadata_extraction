@@ -3,16 +3,7 @@ from os.path import join
 from pathlib import Path
 
 NAME="metadata_extractor"
-UPLOAD_MODELS_TO_CLOUD_STORAGE = os.environ.get("UPLOAD_MODELS_TO_CLOUD_STORAGE", "false").lower().strip() == "true"
-CALCULATE_MODELS_LOCALLY = os.environ.get("CALCULATE_MODELS_LOCALLY", "true").lower().strip() == "true"
-RESTART_IF_NO_GPU = os.environ.get("RESTART_IF_NO_GPU", "false").lower().strip() == "true"
-EXECUTE_PARAGRAPH_EXTRACTION = os.environ.get("EXECUTE_PARAGRAPH_EXTRACTION", "true").lower().strip() == "true"
-
-if EXECUTE_PARAGRAPH_EXTRACTION:
-    PARAGRAPH_EXTRACTION_NAME = os.environ.get("PARAGRAPH_EXTRACTION_NAME", f"extract_paragraphs")
-else:
-    PARAGRAPH_EXTRACTION_NAME = f"not_used_extract_paragraphs"
-
+PARAGRAPH_EXTRACTION_NAME = os.environ.get("PARAGRAPH_EXTRACTION_NAME", f"extract_paragraphs")
 QUEUES_NAMES = os.environ.get("QUEUES_NAMES", f"information_extraction")
 QUEUES_NAMES += f" {PARAGRAPH_EXTRACTION_NAME}"
 

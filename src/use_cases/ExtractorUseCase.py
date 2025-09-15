@@ -27,7 +27,6 @@ from trainable_entity_extractor.use_cases.send_logs import send_logs
 from config import (
     MODELS_DATA_PATH,
     PARAGRAPH_EXTRACTION_NAME,
-    UPLOAD_MODELS_TO_CLOUD_STORAGE,
     LAST_RUN_PATH,
 )
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
@@ -36,14 +35,13 @@ from ports.PersistenceRepository import PersistenceRepository
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 google_cloud_storage = None
-if UPLOAD_MODELS_TO_CLOUD_STORAGE:
-    try:
-        server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
-        google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
-        config_logger.info("Google Cloud Storage client initialized successfully")
-    except Exception as e:
-        config_logger.error(f"Failed to initialize Google Cloud Storage client: {e}")
-        google_cloud_storage = None
+try:
+    server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
+    google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
+    config_logger.info("Google Cloud Storage client initialized successfully")
+except Exception as e:
+    config_logger.error(f"Failed to initialize Google Cloud Storage client: {e}")
+    google_cloud_storage = None
 
 
 class ExtractorUseCase:
@@ -109,11 +107,8 @@ class ExtractorUseCase:
     def get_suggestions(self) -> list[Suggestion]:
         prediction_samples = self.sample_processor.get_prediction_samples_for_suggestions()
 
-        if (
-            UPLOAD_MODELS_TO_CLOUD_STORAGE
-            and google_cloud_storage is not None
-            and not exists(self.extraction_identifier.get_path())
-        ):
+        if (google_cloud_storage is not None
+            and not exists(self.extraction_identifier.get_path())):
             try:
                 extractor_path = Path(self.extraction_identifier.run_name, self.extraction_identifier.extraction_name)
                 google_cloud_storage.copy_from_cloud(
@@ -208,7 +203,7 @@ class ExtractorUseCase:
             config_logger.info(f"Keeping model locally due to cloud upload failure: {extractor_identifier.get_path()}")
 
     @staticmethod
-    def calculate_task(
+    def execute_task(
         task: TrainableEntityExtractionTask | ParagraphExtractorTask, persistence_repository: PersistenceRepository
     ) -> tuple[bool, str]:
         if task.task == ExtractorUseCase.CREATE_MODEL_TASK_NAME:
