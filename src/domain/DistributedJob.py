@@ -6,7 +6,7 @@ from datetime import datetime
 
 class DistributedJob(BaseModel):
     type: DistributedJobType
-    task_message: TrainableEntityExtractionTask
+    task: TrainableEntityExtractionTask
     sub_jobs: list[DistributedSubJob]
     start_time: datetime = Field(default_factory=datetime.now)
     queue_name: str
