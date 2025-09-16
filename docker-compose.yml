@@ -10,7 +10,7 @@ services:
     volumes:
       - data:/app/models_data
     depends_on:
-      - pdf_metadata_extraction_worker
+      - pdf_metadata_extraction_queue_processor
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
@@ -18,8 +18,8 @@ services:
       - "5056:5056"
     env_file: .env
     network_mode: host
-  pdf_metadata_extraction_worker:
-    container_name: pdf_metadata_extraction_worker
+  pdf_metadata_extraction_queue_processor:
+    container_name: pdf_metadata_extraction_queue_processor
     init: true
     entrypoint: [ "python", "-m", "src.drivers.queues_processor.start_queue_processor" ]
     restart: unless-stopped
@@ -31,6 +31,19 @@ services:
     depends_on:
       - mongo_metadata_extraction
       - redis_metadata_extraction
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    network_mode: host
+    env_file: .env
+  pdf_metadata_extraction_worker:
+    container_name: pdf_metadata_extraction_worker
+    init: true
+    entrypoint: [ "celery", "-A", "src.drivers.distributed_worker.distributed_no_gpu", "worker", "--loglevel=info" ]
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
