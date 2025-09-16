@@ -60,12 +60,14 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         task = TrainableEntityExtractionTask(**message)
         extraction_identifier = self._create_extraction_identifier(task)
 
-        if task_type.task == TasksNames.SUGGESTIONS_TASK_NAME:
-            return self._handle_suggestions_task(task, extraction_identifier, queue_name)
-        elif task_type.task == TasksNames.CREATE_MODEL_TASK_NAME:
-            return self._handle_create_model_task(task, extraction_identifier, queue_name)
+        if task.task == TasksNames.SUGGESTIONS_TASK_NAME:
+            self._handle_suggestions_task(task, extraction_identifier, queue_name)
+        elif task.task == TasksNames.CREATE_MODEL_TASK_NAME:
+            self._handle_create_model_task(task, extraction_identifier, queue_name)
         else:
             return self._create_task_not_found_result(task)
+
+        return self.process(queue_name)
 
     def process(self, queue_name: str) -> QueueProcessResults:
         for job in self.jobs:
@@ -77,13 +79,16 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         return QueueProcessResults()
 
     def process_job(self, job: DistributedJob) -> QueueProcessResults:
-        self.CLOUD_PROVIDER.start()
         if job.type == DistributedJobType.PREDICT:
-            orchestrator = PredictionJobOrchestrator(self.jobs)
-            return orchestrator.process_prediction_job(job)
-        elif job.type == DistributedJobType.TRAIN:
-            orchestrator = TrainingJobOrchestrator(self.jobs, self.google_cloud_storage)
-            return orchestrator.process_training_job(job)
+            if job.sub_jobs[0].extractor_job.gpu_needed:
+                self.CLOUD_PROVIDER.start()
+
+            return PredictionJobOrchestrator(self.jobs).process_prediction_job(job)
+        elif job.type in [DistributedJobType.TRAIN, DistributedJobType.PERFORMANCE]:
+            if any(sub_job.extractor_job.gpu_needed for sub_job in job.sub_jobs):
+                self.CLOUD_PROVIDER.start()
+
+            return TrainingJobOrchestrator(self.jobs, self.google_cloud_storage).process_training_job(job)
 
         return QueueProcessResults()
 
@@ -104,7 +109,8 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             send_logs(extraction_identifier, f"Error reading extractor job file: {e}", LogSeverity.error)
             return None
 
-    def _validate_and_parse_message(self, message: dict[str, Any]) -> TaskType | None:
+    @staticmethod
+    def _validate_and_parse_message(message: dict[str, Any]) -> TaskType | None:
         try:
             task_type = TaskType(**message)
             send_logs(ExtractionIdentifier.get_default(), f"New task {message}")
@@ -113,7 +119,8 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             send_logs(ExtractionIdentifier.get_default(), f"Not a valid Redis message: {message}", LogSeverity.error)
             return None
 
-    def _handle_paragraph_extraction_task(self, message: dict[str, Any]) -> QueueProcessResults:
+    @staticmethod
+    def _handle_paragraph_extraction_task(message: dict[str, Any]) -> QueueProcessResults:
         task = ParagraphExtractorTask(**message)
         persistence_repository = MongoPersistenceRepository()
         task_calculated, error_message = ParagraphExtractorUseCase.execute_task(task, persistence_repository)
@@ -143,7 +150,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
 
     def _handle_suggestions_task(
         self, task: TrainableEntityExtractionTask, extraction_identifier: ExtractionIdentifier, queue_name: str
-    ) -> QueueProcessResults:
+    ):
         extractor_job = self.get_extractor_job(extraction_identifier)
 
         if not extractor_job:
@@ -156,19 +163,16 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             queue_name=queue_name,
         )
         self.jobs.append(distributed_job)
-        return self.process(queue_name)
 
     def _handle_create_model_task(
         self, task: TrainableEntityExtractionTask, extraction_identifier: ExtractionIdentifier, queue_name: str
-    ) -> QueueProcessResults:
-        train_use_case = TrainUseCase(
-            extraction_identifier, task.params.options, task.params.multi_value
-        )
+    ):
+        train_use_case = TrainUseCase(extraction_identifier, task.params.options, task.params.multi_value)
         distributed_job = train_use_case.get_distributed_job(task, queue_name)
         self.jobs.append(distributed_job)
-        return self.process(queue_name)
 
-    def _create_extractor_not_found_result(self, task: TrainableEntityExtractionTask) -> QueueProcessResults:
+    @staticmethod
+    def _create_extractor_not_found_result(task: TrainableEntityExtractionTask) -> QueueProcessResults:
         result_message = ResultsMessage(
             tenant=task.tenant,
             task=task.task,
@@ -179,7 +183,8 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         send_logs(ExtractionIdentifier.get_default(), f"Extractor job not found: {task.model_dump()}", LogSeverity.error)
         return QueueProcessResults(results=result_message.model_dump())
 
-    def _create_task_not_found_result(self, task: TrainableEntityExtractionTask) -> QueueProcessResults:
+    @staticmethod
+    def _create_task_not_found_result(task: TrainableEntityExtractionTask) -> QueueProcessResults:
         result_message = ResultsMessage(
             tenant=task.tenant,
             task=task.task,

@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
     yield
     app.persistence_repository.close()
 
+
 app = FastAPI(lifespan=lifespan)
 
 config_logger.info("PDF information extraction service has started")
