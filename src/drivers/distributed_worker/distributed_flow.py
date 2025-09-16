@@ -15,11 +15,12 @@ from drivers.distributed_worker.model_to_cloud import upload_model_to_cloud
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 
-def performance_one_method(extractor_job: TrainableEntityExtractorJob,
-                     options: list[Option], multi_value: bool) -> Performance:
-    extraction_identifier = ExtractionIdentifier(run_name=extractor_job.run_name,
-                                                 output_path=DATA_PATH,
-                                                 extraction_name=extractor_job.extraction_name)
+def performance_one_method(
+    extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool
+) -> Performance:
+    extraction_identifier = ExtractionIdentifier(
+        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
+    )
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
     trainable_entity_extractor = TrainableEntityExtractor(extraction_identifier)
@@ -31,11 +32,13 @@ def performance_one_method(extractor_job: TrainableEntityExtractorJob,
     )
     return trainable_entity_extractor.get_performance(extractor_job, extraction_data)
 
-def train_one_method(extractor_job: TrainableEntityExtractorJob,
-                     options: list[Option], multi_value: bool) -> tuple[bool, str]:
-    extraction_identifier = ExtractionIdentifier(run_name=extractor_job.run_name,
-                                                 output_path=DATA_PATH,
-                                                 extraction_name=extractor_job.extraction_name)
+
+def train_one_method(
+    extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool
+) -> tuple[bool, str]:
+    extraction_identifier = ExtractionIdentifier(
+        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
+    )
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
     trainable_entity_extractor = TrainableEntityExtractor(extraction_identifier)
@@ -49,15 +52,17 @@ def train_one_method(extractor_job: TrainableEntityExtractorJob,
     upload_model_to_cloud(extraction_identifier, extractor_job.run_name)
     return success, message
 
+
 def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> tuple[bool, str]:
-    extraction_identifier = ExtractionIdentifier(run_name=extractor_job.run_name,
-                                                 output_path=DATA_PATH,
-                                                 extraction_name=extractor_job.extraction_name)
+    extraction_identifier = ExtractionIdentifier(
+        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
+    )
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_prediction_samples_for_suggestions()
     trainable_entity_extractor = TrainableEntityExtractor(extraction_identifier)
     suggestions = trainable_entity_extractor.predict(samples)
     return _send_suggestions(extraction_identifier, suggestions)
+
 
 def _send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> tuple[bool, str]:
     max_retries = 3
@@ -86,4 +91,3 @@ def _send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: 
                 return False, "Could not send suggestions back"
 
     return True, ""
-

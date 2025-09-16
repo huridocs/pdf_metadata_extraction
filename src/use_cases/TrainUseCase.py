@@ -38,9 +38,4 @@ class TrainUseCase:
 
         sub_jobs = [DistributedSubJob(extractor_job=job) for job in extractor_jobs]
 
-        return DistributedJob(
-            type=DistributedJobType.TRAIN,
-            task=task,
-            sub_jobs=sub_jobs,
-            queue_name=queue_name
-        )
+        return DistributedJob(type=DistributedJobType.TRAIN, task=task, sub_jobs=sub_jobs, queue_name=queue_name)

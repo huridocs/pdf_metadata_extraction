@@ -10,9 +10,8 @@ from config import REDIS_HOST, REDIS_PORT, NAME
 from drivers.distributed_worker.distributed_flow import distributed_predict, train_one_method, performance_one_method
 from drivers.distributed_worker.model_to_cloud import upload_model_to_cloud
 
-app = Celery(NAME,
-             broker=f'redis://{REDIS_HOST}:{REDIS_PORT}',
-             backend=f'redis://{REDIS_HOST}:{REDIS_PORT}')
+app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis://{REDIS_HOST}:{REDIS_PORT}")
+
 
 @app.task
 def upload_model(extraction_identifier: ExtractionIdentifier, method_name: str):
@@ -21,13 +20,16 @@ def upload_model(extraction_identifier: ExtractionIdentifier, method_name: str):
 
     upload_model_to_cloud(extraction_identifier, extraction_identifier.run_name)
 
+
 @app.task
 def predict_no_gpu(extractor_job: TrainableEntityExtractorJob) -> tuple[bool, str]:
     return distributed_predict(extractor_job)
 
+
 @app.task
 def train_no_gpu(extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool) -> tuple[bool, str]:
     return train_one_method(extractor_job, options, multi_value)
+
 
 @app.task
 def performance_no_gpu(extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool) -> Performance:

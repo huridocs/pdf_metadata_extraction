@@ -2,7 +2,7 @@ import os
 from os.path import join
 from pathlib import Path
 
-NAME="metadata_extractor"
+NAME = "metadata_extractor"
 PARAGRAPH_EXTRACTION_NAME = os.environ.get("PARAGRAPH_EXTRACTION_NAME", f"extract_paragraphs")
 QUEUES_NAMES = os.environ.get("QUEUES_NAMES", f"information_extraction")
 QUEUES_NAMES += f" {PARAGRAPH_EXTRACTION_NAME}"

@@ -28,12 +28,11 @@ def upload_model_to_cloud(extractor_identifier: ExtractionIdentifier, run_name: 
 
     return True
 
+
 def download_model_from_cloud(self) -> bool:
     try:
         extractor_path = Path(self.extraction_identifier.run_name, self.extraction_identifier.extraction_name)
-        google_cloud_storage.copy_from_cloud(
-            extractor_path, Path(MODELS_DATA_PATH, self.extraction_identifier.run_name)
-        )
+        google_cloud_storage.copy_from_cloud(extractor_path, Path(MODELS_DATA_PATH, self.extraction_identifier.run_name))
         config_logger.info(f"Model downloaded from cloud {self.extraction_identifier.get_path()}")
         return True
     except Exception as e:

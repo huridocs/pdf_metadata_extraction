@@ -4,6 +4,7 @@ from domain.DistributedSubJob import DistributedSubJob
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from datetime import datetime
 
+
 class DistributedJob(BaseModel):
     type: DistributedJobType
     task: TrainableEntityExtractionTask

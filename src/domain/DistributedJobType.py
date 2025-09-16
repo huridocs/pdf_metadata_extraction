@@ -5,4 +5,3 @@ class DistributedJobType(StrEnum):
     PERFORMANCE = "PERFORMANCE"
     TRAIN = "TRAIN"
     PREDICT = "PREDICT"
-
