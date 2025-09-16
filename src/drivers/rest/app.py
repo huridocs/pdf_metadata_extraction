@@ -35,7 +35,6 @@ async def lifespan(app: FastAPI):
     yield
     app.persistence_repository.close()
 
-
 app = FastAPI(lifespan=lifespan)
 
 config_logger.info("PDF information extraction service has started")
@@ -103,7 +102,6 @@ async def labeled_data_post(labeled_data: LabeledData):
     )
     app.persistence_repository.save_labeled_data(extraction_identifier, labeled_data)
 
-    # Delete training cache since new labeled data invalidates existing training samples
     try:
         training_cache_key = file_cache_manager.get_training_cache_key(labeled_data.tenant, labeled_data.id)
         file_cache_manager.delete_cache(training_cache_key)
@@ -150,7 +148,6 @@ async def get_samples_prediction(run_name: str, extraction_name: str):
         config_logger.info(f"Returning cached prediction samples from file for {run_name}/{extraction_name}")
         return cached_samples
 
-    # If not cached, compute and cache the result
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
@@ -172,7 +169,6 @@ async def prediction_data_post(prediction_data: PredictionData):
     )
     app.persistence_repository.save_prediction_data(extraction_identifier, prediction_data)
 
-    # Delete prediction cache since new prediction data invalidates existing prediction samples
     prediction_cache_key = file_cache_manager.get_prediction_cache_key(prediction_data.tenant, prediction_data.id)
     try:
         file_cache_manager.delete_cache(prediction_cache_key)
@@ -215,7 +211,6 @@ async def cancel_training(run_name: str, extraction_name: str):
     app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 5000000)
     extraction_identifier.cancel_training()
 
-    # Delete training and prediction cache for this extractor
     try:
         training_cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
         file_cache_manager.delete_cache(training_cache_key)
@@ -239,7 +234,6 @@ async def delete_extractor(run_name: str, extraction_name: str):
     app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 5000000)
     app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 5000000)
 
-    # Delete training and prediction cache for this extractor
     try:
         training_cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
         file_cache_manager.delete_cache(training_cache_key)

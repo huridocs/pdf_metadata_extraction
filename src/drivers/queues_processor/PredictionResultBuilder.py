@@ -5,11 +5,9 @@ from config import SERVICE_HOST, SERVICE_PORT
 
 
 class PredictionResultBuilder:
-    """Handles building different types of result messages for prediction jobs."""
 
     @staticmethod
     def build_success_result(job: DistributedJob) -> QueueProcessResults:
-        """Build a successful prediction result with data URL."""
         data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_suggestions/{job.task.tenant}/{job.task.params.id}"
         result_message = ResultsMessage(
             tenant=job.task.tenant,
@@ -23,7 +21,6 @@ class PredictionResultBuilder:
 
     @staticmethod
     def build_failure_result(job: DistributedJob, error_message: str) -> QueueProcessResults:
-        """Build a failed prediction result with error message."""
         result_message = ResultsMessage(
             tenant=job.task.tenant,
             task=job.task.task,
@@ -35,5 +32,4 @@ class PredictionResultBuilder:
 
     @staticmethod
     def build_max_retries_result(job: DistributedJob) -> QueueProcessResults:
-        """Build a result for when max retries are reached."""
         return PredictionResultBuilder.build_failure_result(job, "Max retries reached for prediction job")
