@@ -11,8 +11,14 @@ from drivers.queues_processor.TrainingResultBuilder import TrainingResultBuilder
 
 class TrainingJobOrchestrator:
     """Orchestrates the complete training job workflow."""
-    
-    def __init__(self, jobs_list: List[DistributedJob], default_extractor_identifier: ExtractionIdentifier, google_cloud_storage, extractor_job_path: Path):
+
+    def __init__(
+        self,
+        jobs_list: List[DistributedJob],
+        default_extractor_identifier: ExtractionIdentifier,
+        google_cloud_storage,
+        extractor_job_path: Path,
+    ):
         self.jobs_list = jobs_list
         self.default_extractor_identifier = default_extractor_identifier
         self.google_cloud_storage = google_cloud_storage
@@ -22,14 +28,14 @@ class TrainingJobOrchestrator:
         """Main workflow for processing a training job."""
         # Start performance evaluation for all sub jobs
         self._start_performance_evaluations(job)
-        
+
         # Process completed jobs and handle retries
         completed_performance_jobs = []
         perfect_performance_job = None
 
         for sub_job in job.sub_jobs:
             runner = TrainingJobRunner(sub_job, job.task.params.options, job.task.params.multi_value)
-            
+
             if runner.get_status() == "SUCCESS":
                 performance_result = runner.get_performance_result()
                 completed_performance_jobs.append((sub_job, performance_result))
@@ -44,7 +50,7 @@ class TrainingJobOrchestrator:
 
         # Select the best performing job
         selected_job = self._select_best_job(perfect_performance_job, completed_performance_jobs, job.sub_jobs)
-        
+
         if not selected_job:
             return QueueProcessResults()
 
@@ -95,9 +101,5 @@ class TrainingJobOrchestrator:
                 job, selected_job, self.google_cloud_storage, self.extractor_job_path
             )
         else:
-            send_logs(
-                self.default_extractor_identifier, 
-                f"Training failed: {error_message}", 
-                LogSeverity.error
-            )
+            send_logs(self.default_extractor_identifier, f"Training failed: {error_message}", LogSeverity.error)
             return TrainingResultBuilder.build_no_suitable_method_result(job)

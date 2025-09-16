@@ -6,7 +6,7 @@ from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performa
 
 class TrainingJobRunner:
     """Handles the execution and retry logic for training jobs."""
-    
+
     def __init__(self, sub_job: DistributedSubJob, options, multi_value: bool):
         self.sub_job = sub_job
         self.options = options
@@ -16,13 +16,9 @@ class TrainingJobRunner:
         """Start the performance evaluation task if not already running."""
         if self.sub_job.job_id is None:
             if self.sub_job.extractor_job.gpu_needed:
-                celery_result = performance_gpu.delay(
-                    self.sub_job.extractor_job, self.options, self.multi_value
-                )
+                celery_result = performance_gpu.delay(self.sub_job.extractor_job, self.options, self.multi_value)
             else:
-                celery_result = performance_no_gpu.delay(
-                    self.sub_job.extractor_job, self.options, self.multi_value
-                )
+                celery_result = performance_no_gpu.delay(self.sub_job.extractor_job, self.options, self.multi_value)
             self.sub_job.job_id = celery_result.id
 
     def handle_retry_if_possible(self) -> bool:
@@ -31,19 +27,13 @@ class TrainingJobRunner:
             self.sub_job.retry_count += 1
             if self.sub_job.extractor_job.gpu_needed:
                 try:
-                    celery_result = performance_gpu.delay(
-                        self.sub_job.extractor_job, self.options, self.multi_value
-                    )
+                    celery_result = performance_gpu.delay(self.sub_job.extractor_job, self.options, self.multi_value)
                     self.sub_job.job_id = celery_result.id
                 except Exception:
-                    celery_result = performance_no_gpu.delay(
-                        self.sub_job.extractor_job, self.options, self.multi_value
-                    )
+                    celery_result = performance_no_gpu.delay(self.sub_job.extractor_job, self.options, self.multi_value)
                     self.sub_job.job_id = celery_result.id
             else:
-                celery_result = performance_no_gpu.delay(
-                    self.sub_job.extractor_job, self.options, self.multi_value
-                )
+                celery_result = performance_no_gpu.delay(self.sub_job.extractor_job, self.options, self.multi_value)
                 self.sub_job.job_id = celery_result.id
             return True
         return False
@@ -52,17 +42,11 @@ class TrainingJobRunner:
         """Execute the actual training with the selected method."""
         if self.sub_job.extractor_job.gpu_needed:
             try:
-                train_result = train_gpu.delay(
-                    self.sub_job.extractor_job, self.options, self.multi_value
-                )
+                train_result = train_gpu.delay(self.sub_job.extractor_job, self.options, self.multi_value)
             except Exception:
-                train_result = train_no_gpu.delay(
-                    self.sub_job.extractor_job, self.options, self.multi_value
-                )
+                train_result = train_no_gpu.delay(self.sub_job.extractor_job, self.options, self.multi_value)
         else:
-            train_result = train_no_gpu.delay(
-                self.sub_job.extractor_job, self.options, self.multi_value
-            )
+            train_result = train_no_gpu.delay(self.sub_job.extractor_job, self.options, self.multi_value)
 
         while train_result.status not in ["SUCCESS", "FAILURE"]:
             continue

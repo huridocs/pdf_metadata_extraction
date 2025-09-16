@@ -12,7 +12,7 @@ from config import MODELS_DATA_PATH
 
 class TrainingResultBuilder:
     """Handles building different types of result messages for training jobs."""
-    
+
     @staticmethod
     def build_success_result(job: DistributedJob) -> QueueProcessResults:
         """Build a successful training result."""
@@ -40,12 +40,12 @@ class TrainingResultBuilder:
     @staticmethod
     def build_no_suitable_method_result(job: DistributedJob) -> QueueProcessResults:
         """Build a result for when no suitable method is found."""
-        return TrainingResultBuilder.build_failure_result(
-            job, "No suitable method found or training failed"
-        )
+        return TrainingResultBuilder.build_failure_result(job, "No suitable method found or training failed")
 
     @staticmethod
-    def handle_successful_training(job: DistributedJob, selected_job, google_cloud_storage, extractor_job_path: Path) -> QueueProcessResults:
+    def handle_successful_training(
+        job: DistributedJob, selected_job, google_cloud_storage, extractor_job_path: Path
+    ) -> QueueProcessResults:
         """Handle successful training completion including model upload and job saving."""
         extraction_identifier = ExtractionIdentifier(
             run_name=selected_job.extractor_job.run_name,
@@ -56,7 +56,7 @@ class TrainingResultBuilder:
 
         # Upload model to cloud
         upload_model.delay(extraction_identifier, selected_job.extractor_job.method_name)
-        
+
         # Save extractor job
         TrainingResultBuilder._save_extractor_job(
             extraction_identifier, selected_job.extractor_job, google_cloud_storage, extractor_job_path
@@ -65,7 +65,12 @@ class TrainingResultBuilder:
         return TrainingResultBuilder.build_success_result(job)
 
     @staticmethod
-    def _save_extractor_job(extraction_identifier: ExtractionIdentifier, extractor_job: TrainableEntityExtractorJob, google_cloud_storage, extractor_job_path: Path):
+    def _save_extractor_job(
+        extraction_identifier: ExtractionIdentifier,
+        extractor_job: TrainableEntityExtractorJob,
+        google_cloud_storage,
+        extractor_job_path: Path,
+    ):
         """Save the extractor job to file and upload to cloud."""
         job_path = Path(extraction_identifier.get_path(), extractor_job_path)
         job_path.parent.mkdir(parents=True, exist_ok=True)

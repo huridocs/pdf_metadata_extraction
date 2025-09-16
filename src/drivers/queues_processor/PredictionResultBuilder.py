@@ -6,7 +6,7 @@ from config import SERVICE_HOST, SERVICE_PORT
 
 class PredictionResultBuilder:
     """Handles building different types of result messages for prediction jobs."""
-    
+
     @staticmethod
     def build_success_result(job: DistributedJob) -> QueueProcessResults:
         """Build a successful prediction result with data URL."""
@@ -36,6 +36,4 @@ class PredictionResultBuilder:
     @staticmethod
     def build_max_retries_result(job: DistributedJob) -> QueueProcessResults:
         """Build a result for when max retries are reached."""
-        return PredictionResultBuilder.build_failure_result(
-            job, "Max retries reached for prediction job"
-        )
+        return PredictionResultBuilder.build_failure_result(job, "Max retries reached for prediction job")

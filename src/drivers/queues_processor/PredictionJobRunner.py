@@ -6,7 +6,7 @@ from drivers.distributed_worker.distributed_no_gpu import predict_no_gpu
 
 class PredictionJobRunner:
     """Handles the execution and retry logic for prediction jobs."""
-    
+
     def __init__(self, sub_job: DistributedSubJob):
         self.sub_job = sub_job
 

@@ -77,10 +77,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             return orchestrator.process_prediction_job(job)
         elif job.type == DistributedJobType.TRAIN:
             orchestrator = TrainingJobOrchestrator(
-                self.jobs,
-                self.DEFAULT_EXTRACTOR_IDENTIFIER,
-                self.google_cloud_storage,
-                self.EXTRACTOR_JOB_PATH
+                self.jobs, self.DEFAULT_EXTRACTOR_IDENTIFIER, self.google_cloud_storage, self.EXTRACTOR_JOB_PATH
             )
             return orchestrator.process_training_job(job)
 
