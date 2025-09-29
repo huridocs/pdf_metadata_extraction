@@ -1,5 +1,5 @@
 from pathlib import Path
-from domain.DistributedJob import DistributedJob
+from trainable_entity_extractor.domain.DistributedJob import DistributedJob
 from domain.ResultsMessage import ResultsMessage
 from queue_processor.QueueProcessResults import QueueProcessResults
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier

@@ -4,7 +4,9 @@ from trainable_entity_extractor.domain.DistributedJob import DistributedJob
 from trainable_entity_extractor.domain.DistributedSubJob import DistributedSubJob
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.JobStatus import JobStatus
+from trainable_entity_extractor.domain.LogSeverity import LogSeverity
 from trainable_entity_extractor.ports.JobExecutor import JobExecutor
+from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
 
 from drivers.distributed_worker.celery_app import app
 from drivers.distributed_worker.distributed_gpu import train_gpu, performance_gpu, predict_gpu
@@ -13,6 +15,10 @@ from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performa
 
 class CeleryJobExecutor(JobExecutor):
     """Celery implementation of the JobExecutor interface"""
+
+    def __init__(self):
+        super().__init__()
+        self.logger = ExtractorLogger()
 
     def start_performance_evaluation(
         self, extraction_identifier: ExtractionIdentifier, distributed_sub_job: DistributedSubJob
@@ -33,7 +39,7 @@ class CeleryJobExecutor(JobExecutor):
             self.logger.log(
                 extraction_identifier,
                 f"Performance evaluation startup failed for {distributed_sub_job.extractor_job.method_name}: {e}",
-                "error",
+                LogSeverity.error,
             )
             distributed_sub_job.status = JobStatus.FAILURE
 
@@ -54,7 +60,7 @@ class CeleryJobExecutor(JobExecutor):
             self.logger.log(
                 extraction_identifier,
                 f"Training startup failed for {distributed_sub_job.extractor_job.method_name}: {e}",
-                "error",
+                LogSeverity.error,
             )
             distributed_sub_job.status = JobStatus.FAILURE
 
@@ -72,7 +78,7 @@ class CeleryJobExecutor(JobExecutor):
             self.logger.log(
                 extraction_identifier,
                 f"Prediction startup failed for {distributed_sub_job.extractor_job.method_name}: {e}",
-                "error",
+                LogSeverity.error,
             )
             distributed_sub_job.status = JobStatus.FAILURE
 
@@ -92,7 +98,7 @@ class CeleryJobExecutor(JobExecutor):
                     self.logger.log(
                         distributed_job.extraction_identifier,
                         f"Error updating status for job {sub_job.job_id}: {e}",
-                        "error",
+                        LogSeverity.error,
                     )
                     sub_job.status = JobStatus.FAILURE
 
@@ -103,4 +109,6 @@ class CeleryJobExecutor(JobExecutor):
                     app.control.revoke(sub_job.job_id, terminate=True)
                     sub_job.status = JobStatus.CANCELED
                 except Exception as e:
-                    self.logger.log(job.extraction_identifier, f"Error canceling job {sub_job.job_id}: {e}", "error")
+                    self.logger.log(
+                        job.extraction_identifier, f"Error canceling job {sub_job.job_id}: {e}", LogSeverity.error
+                    )
