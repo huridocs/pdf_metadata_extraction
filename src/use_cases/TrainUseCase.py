@@ -1,12 +1,6 @@
 from trainable_entity_extractor.domain.ExtractionData import ExtractionData
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.Option import Option
-from trainable_entity_extractor.use_cases.TrainableEntityExtractor import TrainableEntityExtractor
-
-from domain.DistributedJob import DistributedJob
-from domain.DistributedJobType import DistributedJobType
-from domain.DistributedSubJob import DistributedSubJob
-from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 

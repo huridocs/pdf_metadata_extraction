@@ -39,14 +39,17 @@ class CloudModelStorage(ModelStorage):
             self.logger.log(extraction_identifier, f"Model upload failed: {e}", "error")
             return False
 
-    def download_model(self, extraction_identifier: ExtractionIdentifier, destination_path: str = None) -> bool:
-        """Download a model from Google Cloud Storage"""
+    def download_model(self, extraction_identifier: ExtractionIdentifier) -> bool:
+        destination_path = extraction_identifier.get_path()
+
+        if self.model_exists_locally(extraction_identifier):
+            return True
+
         try:
             if self.google_cloud_storage is None:
                 self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
                 return False
 
-            # Copy model files from cloud to local storage
             cloud_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
 
             if destination_path is None:
@@ -134,3 +137,19 @@ class CloudModelStorage(ModelStorage):
         except Exception as e:
             self.logger.log(extraction_identifier, f"Error creating model completion signal: {e}", "error")
             return False
+
+    @staticmethod
+    def model_exists_locally(extraction_identifier: ExtractionIdentifier) -> bool:
+        model_path = Path(extraction_identifier.get_path())
+        if not model_path.exists() or not model_path.is_dir():
+            return False
+
+        files = list(model_path.iterdir())
+        if not files:
+            return False
+
+        for file in files:
+            if file.name != EXTRACTOR_JOB_PATH.parent:
+                return True
+
+        return False

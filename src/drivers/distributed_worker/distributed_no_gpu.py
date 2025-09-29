@@ -1,16 +1,15 @@
 from pathlib import Path
 
 from celery import Celery
+from trainable_entity_extractor.config import EXTRACTOR_JOB_PATH
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.Option import Option
 from trainable_entity_extractor.domain.Performance import Performance
 
 from config import REDIS_HOST, REDIS_PORT, NAME
-from drivers.distributed_worker.distributed_flow import distributed_predict, train_one_method, performance_one_method
+from drivers.distributed_worker.distributed_flow import distributed_predict, train_one_method, performance_one_method, logger
 from drivers.distributed_worker.model_to_cloud import upload_model_to_cloud, upload_completion_signal
-from config import EXTRACTOR_JOB_PATH
-from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 
 app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis://{REDIS_HOST}:{REDIS_PORT}")
@@ -29,9 +28,9 @@ def upload_model(
         try:
             with open(job_path, "w", encoding="utf-8") as file:
                 file.write(extractor_job.model_dump_json())
-            send_logs(extraction_identifier, f"Extractor job saved successfully to {job_path}")
+            logger.log(extraction_identifier, f"Extractor job saved successfully to {job_path}")
         except Exception as e:
-            send_logs(extraction_identifier, f"Error saving extractor job: {e}")
+            logger.log(extraction_identifier, f"Error saving extractor job: {e}")
             return False
 
     # Upload model to cloud
