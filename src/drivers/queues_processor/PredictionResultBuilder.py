@@ -1,4 +1,3 @@
-from domain.DistributedJob import DistributedJob
 from domain.ResultsMessage import ResultsMessage
 from queue_processor.QueueProcessResults import QueueProcessResults
 from config import SERVICE_HOST, SERVICE_PORT

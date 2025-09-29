@@ -12,23 +12,16 @@ from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.LogSeverity import LogSeverity
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
-from trainable_entity_extractor.use_cases.send_logs import send_logs
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
-from config import SERVICE_HOST, SERVICE_PORT, MODELS_DATA_PATH, EXTRACTOR_JOB_PATH
-from domain.DistributedJob import DistributedJob
-from domain.DistributedJobType import DistributedJobType
-from domain.DistributedSubJob import DistributedSubJob
+from config import SERVICE_HOST, SERVICE_PORT, MODELS_DATA_PATH
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
-from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from domain.ResultsMessage import ResultsMessage
 from domain.TasksNames import TasksNames
 from use_cases.ParagraphExtractorUseCase import ParagraphExtractorUseCase
 from domain.TaskType import TaskType
 from use_cases.TrainUseCase import TrainUseCase
-from drivers.queues_processor.PredictionJobOrchestrator import PredictionJobOrchestrator
-from drivers.queues_processor.TrainingJobOrchestrator import TrainingJobOrchestrator
 
 
 class MetadataExtractorQueueProcessor(QueueProcess):
