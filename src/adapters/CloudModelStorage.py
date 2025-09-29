@@ -1,49 +1,47 @@
 from pathlib import Path
+
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
-from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
-from trainable_entity_extractor.domain.LogSeverity import LogSeverity
-from trainable_entity_extractor.use_cases.send_logs import send_logs
-
-from trainable_entity_extractor_abstractions.interfaces.ModelStorage import ModelStorage
-from drivers.distributed_worker.distributed_no_gpu import upload_model
+from trainable_entity_extractor.ports.Logger import Logger
+from trainable_entity_extractor.ports.ModelStorage import ModelStorage
 
 
-class CeleryModelStorage(ModelStorage):
-    """Celery/Google Cloud Storage implementation of the ModelStorage interface"""
+class CloudModelStorage(ModelStorage):
 
-    def __init__(self, google_cloud_storage):
+    def __init__(self, google_cloud_storage, logger: Logger):
         self.google_cloud_storage = google_cloud_storage
+        self.logger = logger
 
-    def upload_model(
-        self, extraction_identifier: ExtractionIdentifier, method_name: str, extractor_job: TrainableEntityExtractorJob
-    ) -> bool:
-        """Upload a trained model using Celery broadcast to all workers"""
+    def upload_model(self, extraction_identifier: ExtractionIdentifier, source_path: str) -> bool:
+        """Upload a trained model to Google Cloud Storage"""
         try:
-            # Use broadcast to send upload task to all Celery workers
-            upload_model.broadcast(extraction_identifier, method_name, extractor_job)
-            send_logs(extraction_identifier, f"Upload task broadcasted to all workers for method {method_name}")
+            if self.google_cloud_storage is None:
+                self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
+                return False
+
+            cloud_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
+            self.google_cloud_storage.copy_to_cloud(Path(source_path), cloud_path)
+            self.logger.log(extraction_identifier, f"Model uploaded to cloud storage from {source_path}")
             return True
         except Exception as e:
-            send_logs(extraction_identifier, f"Upload broadcast failed: {e}", LogSeverity.error)
+            self.logger.log(extraction_identifier, f"Model upload failed: {e}", "error")
             return False
 
     def download_model(self, extraction_identifier: ExtractionIdentifier) -> bool:
         """Download a model from Google Cloud Storage"""
         try:
             if self.google_cloud_storage is None:
-                send_logs(extraction_identifier, "Google Cloud Storage not available", LogSeverity.error)
+                self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
                 return False
 
             # Copy model files from cloud to local storage
-            local_path = Path(extraction_identifier.get_path())
             cloud_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
-
-            self.google_cloud_storage.copy_from_cloud(local_path.parent, cloud_path)
-            send_logs(extraction_identifier, f"Model downloaded from cloud storage")
+            destination_path = extraction_identifier.get_path()
+            self.google_cloud_storage.copy_from_cloud(Path(destination_path), cloud_path)
+            self.logger.log(extraction_identifier, f"Model downloaded from cloud storage to {destination_path}")
             return True
 
         except Exception as e:
-            send_logs(extraction_identifier, f"Model download failed: {e}", LogSeverity.error)
+            self.logger.log(extraction_identifier, f"Model download failed: {e}", "error")
             return False
 
     def check_model_completion_signal(self, extraction_identifier: ExtractionIdentifier) -> bool:
@@ -70,7 +68,7 @@ class CeleryModelStorage(ModelStorage):
             return False
 
         except Exception as e:
-            send_logs(extraction_identifier, f"Error checking model completion signal: {e}", LogSeverity.error)
+            self.logger.log(extraction_identifier, f"Error checking model completion signal: {e}", "error")
             return False
 
     def create_model_completion_signal(self, extraction_identifier: ExtractionIdentifier) -> bool:
@@ -88,12 +86,12 @@ class CeleryModelStorage(ModelStorage):
                 cloud_signal_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
                 try:
                     self.google_cloud_storage.copy_to_cloud(completion_signal_path.parent, cloud_signal_path)
-                    send_logs(extraction_identifier, "Model completion signal uploaded to cloud storage")
+                    self.logger.log(extraction_identifier, "Model completion signal uploaded to cloud storage")
                 except Exception as e:
-                    send_logs(extraction_identifier, f"Failed to upload completion signal to cloud: {e}", LogSeverity.error)
+                    self.logger.log(extraction_identifier, f"Failed to upload completion signal to cloud: {e}", "error")
 
             return True
 
         except Exception as e:
-            send_logs(extraction_identifier, f"Error creating model completion signal: {e}", LogSeverity.error)
+            self.logger.log(extraction_identifier, f"Error creating model completion signal: {e}", "error")
             return False

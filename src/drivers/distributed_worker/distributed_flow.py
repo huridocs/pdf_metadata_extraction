@@ -9,7 +9,6 @@ from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIde
 from trainable_entity_extractor.domain.Option import Option
 from trainable_entity_extractor.domain.Performance import Performance
 from trainable_entity_extractor.domain.Suggestion import Suggestion
-from trainable_entity_extractor.use_cases.TrainableEntityExtractor import TrainableEntityExtractor
 
 from config import DATA_PATH, SERVICE_HOST, SERVICE_PORT
 from drivers.distributed_worker.model_to_cloud import (
