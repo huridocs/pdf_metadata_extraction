@@ -12,7 +12,11 @@ from trainable_entity_extractor.domain.Suggestion import Suggestion
 from trainable_entity_extractor.use_cases.TrainableEntityExtractor import TrainableEntityExtractor
 
 from config import DATA_PATH, SERVICE_HOST, SERVICE_PORT
-from drivers.distributed_worker.model_to_cloud import upload_model_to_cloud, download_model_from_cloud, check_model_completion_signal
+from drivers.distributed_worker.model_to_cloud import (
+    upload_model_to_cloud,
+    download_model_from_cloud,
+    check_model_completion_signal,
+)
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 
@@ -64,7 +68,7 @@ def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> tuple[boo
     if not os.path.exists(model_path):
         max_retries = 10
         base_delay = 30
-        max_delay = 15*60
+        max_delay = 15 * 60
 
         for attempt in range(max_retries + 1):
             if check_model_completion_signal(extraction_identifier):
@@ -75,10 +79,15 @@ def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> tuple[boo
                     return False, f"Model not found locally and could not be downloaded from cloud: {model_path}"
             else:
                 if attempt == max_retries:
-                    return False, f"Model upload not yet complete for {model_path}. Completion signal not found after {max_retries} retries."
+                    return (
+                        False,
+                        f"Model upload not yet complete for {model_path}. Completion signal not found after {max_retries} retries.",
+                    )
 
-                delay = min(base_delay * (2 ** attempt), max_delay)
-                config_logger.info(f"Model upload not complete for {model_path}. Retrying in {delay} seconds... (attempt {attempt + 1}/{max_retries + 1})")
+                delay = min(base_delay * (2**attempt), max_delay)
+                config_logger.info(
+                    f"Model upload not complete for {model_path}. Retrying in {delay} seconds... (attempt {attempt + 1}/{max_retries + 1})"
+                )
                 sleep(delay)
 
     sample_processor = SampleProcessorUseCase(extraction_identifier)

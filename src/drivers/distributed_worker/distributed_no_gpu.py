@@ -17,7 +17,9 @@ app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis:
 
 
 @app.task
-def upload_model(extraction_identifier: ExtractionIdentifier, method_name: str, extractor_job: TrainableEntityExtractorJob = None):
+def upload_model(
+    extraction_identifier: ExtractionIdentifier, method_name: str, extractor_job: TrainableEntityExtractorJob = None
+):
     if not Path(extraction_identifier.get_path(), method_name).exists():
         return False  # Model not found on this worker
 

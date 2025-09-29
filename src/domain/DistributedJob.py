@@ -10,4 +10,4 @@ class DistributedJob(BaseModel):
     task: TrainableEntityExtractionTask
     sub_jobs: list[DistributedSubJob]
     start_time: datetime = Field(default_factory=datetime.now)
-    queue_name: str
+    domain_name: str

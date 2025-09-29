@@ -71,7 +71,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
 
     def process(self, queue_name: str) -> QueueProcessResults:
         for job in self.jobs:
-            if job.queue_name != queue_name:
+            if job.domain_name != queue_name:
                 continue
 
             return self.process_job(job)
@@ -160,7 +160,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             type=DistributedJobType.PREDICT,
             task=task,
             sub_jobs=[DistributedSubJob(extractor_job=extractor_job)],
-            queue_name=queue_name,
+            domain_name=queue_name,
         )
         self.jobs.append(distributed_job)
 

@@ -34,13 +34,15 @@ def upload_completion_signal(extractor_identifier: ExtractionIdentifier, run_nam
     """Upload a completion signal file to indicate model upload is complete"""
     try:
         # Create a temporary completion signal file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.completed', delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".completed", delete=False) as temp_file:
             temp_file.write(f"Model upload completed for {extractor_identifier.get_path()}")
             temp_file_path = temp_file.name
 
         # Upload the completion signal file
         completion_file_path = Path(temp_file_path)
-        google_cloud_storage.upload_file_to_cloud(run_name, completion_file_path, f"{extractor_identifier.extraction_name}.completed")
+        google_cloud_storage.upload_file_to_cloud(
+            run_name, completion_file_path, f"{extractor_identifier.extraction_name}.completed"
+        )
 
         # Clean up temp file
         Path(temp_file_path).unlink()
