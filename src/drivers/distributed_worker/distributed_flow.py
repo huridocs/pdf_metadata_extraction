@@ -39,15 +39,12 @@ logger = ExtractorLogger()
 train_use_case = TrainUseCase(EXTRACTORS, logger)
 predict_use_case = PredictUseCase(EXTRACTORS, logger)
 
-try:
+google_cloud_storage = None
+
+if GoogleCloudStorage.could_be_configured():
     server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
     google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
-    if not google_cloud_storage.is_properly_configured():
-        google_cloud_storage = None
     config_logger.info("Google Cloud Storage client initialized successfully")
-except Exception as e:
-    config_logger.error(f"Failed to initialize Google Cloud Storage client: {e}")
-    google_cloud_storage = None
 
 cloud_storage = CloudModelStorage(google_cloud_storage, logger)
 

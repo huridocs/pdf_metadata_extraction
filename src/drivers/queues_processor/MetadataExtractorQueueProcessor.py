@@ -46,19 +46,12 @@ class MetadataExtractorQueueProcessor(QueueProcess):
     def __init__(self):
         super().__init__()
         self.logger = ExtractorLogger()
+        self.google_cloud_storage = None
 
-        try:
+        if GoogleCloudStorage.could_be_configured():
             server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
             self.google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
             self.logger.log(ExtractionIdentifier.get_default(), "Google Cloud Storage client initialized successfully")
-        except Exception as e:
-            self.logger.log(
-                ExtractionIdentifier.get_default(),
-                f"Failed to initialize Google Cloud Storage client: {e}",
-                LogSeverity.error,
-                e,
-            )
-            self.google_cloud_storage = None
 
         self.model_storage = CloudModelStorage(self.google_cloud_storage, self.logger)
         self.job_executor = CeleryJobExecutor(self.logger)
@@ -158,7 +151,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         get_performance_job_use_case = GetPerformanceJobUseCase(
             extraction_identifier, task.params.options, task.params.multi_value
         )
-        distributed_job = get_performance_job_use_case.get_distributed_job(task, queue_name)
+        distributed_job = get_performance_job_use_case.get_distributed_job(queue_name, self.extractors, self.logger)
         self.orchestrator.add_job(distributed_job)
         return self.process(queue_name)
 

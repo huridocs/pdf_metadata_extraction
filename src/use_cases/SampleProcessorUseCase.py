@@ -115,3 +115,22 @@ class SampleProcessorUseCase:
 
     def get_prediction_samples_for_suggestions(self) -> list[PredictionSample]:
         return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
+
+    def is_extractor_cancelled(self) -> bool:
+        try:
+            url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+            url += (
+                f"/is_extractor_cancelled/{self.extraction_identifier.run_name}/{self.extraction_identifier.extraction_name}"
+            )
+
+            response = requests.get(url)
+            response.raise_for_status()
+
+            if response.status_code == 200:
+                return response.json().get("cancelled", False)
+            else:
+                return False
+
+        except requests.exceptions.RequestException as e:
+            config_logger.error(f"Error checking if extractor is cancelled: {e}")
+            return False

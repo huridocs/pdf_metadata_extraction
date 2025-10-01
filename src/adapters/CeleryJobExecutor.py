@@ -11,6 +11,7 @@ from trainable_entity_extractor.ports.Logger import Logger
 from config import NAME, REDIS_HOST, REDIS_PORT
 from drivers.distributed_worker.distributed_gpu import train_gpu, performance_gpu, predict_gpu
 from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performance_no_gpu, predict_no_gpu, upload_model
+from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 
 class CeleryJobExecutor(JobExecutor):
@@ -83,6 +84,8 @@ class CeleryJobExecutor(JobExecutor):
     def update_job_statuses(self, distributed_job: DistributedJob):
         for sub_job in distributed_job.sub_jobs:
             if sub_job.status not in self.get_finished_status():
+                if not sub_job.job_id:
+                    continue
                 try:
                     celery_result = AsyncResult(sub_job.job_id, app=self.app)
                     if celery_result.state == "SUCCESS":
@@ -156,3 +159,6 @@ class CeleryJobExecutor(JobExecutor):
                 LogSeverity.error,
             )
             return False
+
+    def is_extractor_cancelled(self, extractor_identifier: ExtractionIdentifier) -> bool:
+        return SampleProcessorUseCase(extractor_identifier).is_extractor_cancelled()

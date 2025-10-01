@@ -2,7 +2,7 @@ import os
 import shutil
 from contextlib import asynccontextmanager
 import json
-
+import redis
 from queue_processor.QueueProcessor import QueueProcessor
 from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
 from trainable_entity_extractor.domain.Suggestion import Suggestion
@@ -19,7 +19,7 @@ from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIde
 from trainable_entity_extractor.domain.LabeledData import LabeledData
 from trainable_entity_extractor.domain.PredictionData import PredictionData
 
-from config import MODELS_DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME
+from config import MODELS_DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME, NAME
 from domain.ParagraphExtractionData import ParagraphExtractionData
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.XML import XML
@@ -205,13 +205,28 @@ async def save_suggestions(run_name: str, extraction_name: str, suggestions: lis
     return True
 
 
+@app.get("/is_extractor_cancelled/{run_name}/{extraction_name}")
+async def is_extractor_cancelled(run_name: str, extraction_name: str):
+    r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+    key = f"{NAME}_training:{run_name}:{extraction_name}:canceled"
+    cancelled_flag = r.get(key)
+    if cancelled_flag == "true":
+        await r.delete(key)
+    return {"cancelled": cancelled_flag == "true"}
+
+
 @app.post("/cancel_training/{run_name}/{extraction_name}")
 async def cancel_training(run_name: str, extraction_name: str):
+    try:
+        r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+        await r.set(f"{NAME}_training:{run_name}:{extraction_name}:canceled", "true")
+    except:
+        return False
+
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
     app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 5000000)
-    extraction_identifier.cancel_training()
 
     try:
         training_cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
