@@ -1,7 +1,4 @@
-from pathlib import Path
-
 from celery import Celery
-from trainable_entity_extractor.config import EXTRACTOR_JOB_PATH
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.Option import Option
