@@ -6,7 +6,7 @@ from multilingual_paragraph_extractor.use_cases.MultilingualParagraphAlignerUseC
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.PdfData import PdfData
 from trainable_entity_extractor.domain.SegmentationData import SegmentationData
-from trainable_entity_extractor.use_cases.XmlFile import XmlFile
+from trainable_entity_extractor.domain.XmlFile import XmlFile
 
 from config import MODELS_DATA_PATH, PARAGRAPH_EXTRACTION_NAME
 from domain.ParagraphExtractorTask import ParagraphExtractorTask

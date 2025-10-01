@@ -4,9 +4,9 @@ from contextlib import asynccontextmanager
 import json
 
 from queue_processor.QueueProcessor import QueueProcessor
+from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
 from trainable_entity_extractor.domain.Suggestion import Suggestion
-from trainable_entity_extractor.use_cases.XmlFile import XmlFile
-from trainable_entity_extractor.use_cases.send_logs import send_logs
+from trainable_entity_extractor.domain.XmlFile import XmlFile
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
@@ -32,6 +32,7 @@ from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.persistence_repository = MongoPersistenceRepository()
+    app.logger = ExtractorLogger()
     yield
     app.persistence_repository.close()
 
@@ -188,7 +189,7 @@ async def get_suggestions(run_name: str, extraction_name: str):
     )
     suggestions = app.persistence_repository.load_suggestions(extraction_identifier)
     suggestions_list = [x.scale_up().to_output() for x in suggestions]
-    send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
+    app.logger.log(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
 
     return json.dumps(suggestions_list)
 
@@ -200,7 +201,7 @@ async def save_suggestions(run_name: str, extraction_name: str, suggestions: lis
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
     app.persistence_repository.save_suggestions(extraction_identifier, suggestions)
-    send_logs(extraction_identifier, f"{len(suggestions)} suggestions saved")
+    app.logger.log(extraction_identifier, f"{len(suggestions)} suggestions saved")
     return True
 
 

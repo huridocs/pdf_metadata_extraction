@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 
 from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
@@ -16,11 +15,10 @@ from trainable_entity_extractor.adapters.extractors.text_to_multi_option_extract
     TextToMultiOptionExtractor,
 )
 from trainable_entity_extractor.adapters.extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
-from trainable_entity_extractor.config import config_logger, EXTRACTOR_JOB_PATH
+from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.JobProcessingResult import JobProcessingResult
 from trainable_entity_extractor.domain.LogSeverity import LogSeverity
-from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
 from trainable_entity_extractor.domain.DistributedJob import DistributedJob
 from trainable_entity_extractor.domain.JobType import JobType
 from trainable_entity_extractor.domain.DistributedSubJob import DistributedSubJob
@@ -66,7 +64,10 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         self.job_executor = CeleryJobExecutor(self.logger)
         self.orchestrator = OrchestratorUseCase(self.job_executor, self.logger)
         server_parameters = ServerParameters(namespace="google_v2", server_type=ServerType.METADATA_EXTRACTION)
-        self.cloud_provider = GoogleV2Repository(server_parameters=server_parameters, service_logger=config_logger)
+        try:
+            self.cloud_provider = GoogleV2Repository(server_parameters=server_parameters, service_logger=config_logger)
+        except:
+            self.cloud_provider = None
         self.extractors: list[type[ExtractorBase]] = [
             PdfToMultiOptionExtractor,
             TextToMultiOptionExtractor,
@@ -87,7 +88,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
     def process(self, queue_name: str) -> QueueProcessResults:
         job_processing_result, distributed_job = self.orchestrator.execute_job_for_domain(queue_name)
 
-        if job_processing_result.gpu_needed:
+        if job_processing_result.gpu_needed and self.cloud_provider:
             self.cloud_provider.start()
 
         if not job_processing_result.finished:

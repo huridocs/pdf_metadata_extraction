@@ -11,8 +11,8 @@ from trainable_entity_extractor.domain.PredictionData import PredictionData
 from trainable_entity_extractor.domain.PredictionSample import PredictionSample
 from trainable_entity_extractor.domain.SegmentationData import SegmentationData
 from trainable_entity_extractor.domain.TrainingSample import TrainingSample
-from trainable_entity_extractor.use_cases.FilterValidSegmentsPages import FilterValidSegmentsPages
-from trainable_entity_extractor.use_cases.XmlFile import XmlFile
+from trainable_entity_extractor.domain.XmlFile import XmlFile
+from trainable_entity_extractor.use_cases.FilterValidSegmentsPagesUseCase import FilterValidSegmentsPagesUseCase
 
 from config import SERVICE_HOST, SERVICE_PORT
 
@@ -26,7 +26,7 @@ class SampleProcessorUseCase:
         extraction_identifier: ExtractionIdentifier, labeled_data_list: list[LabeledData]
     ) -> list[TrainingSample]:
         multi_option_samples: list[TrainingSample] = list()
-        page_numbers_list = FilterValidSegmentsPages(extraction_identifier).for_training(labeled_data_list)
+        page_numbers_list = FilterValidSegmentsPagesUseCase(extraction_identifier).for_training(labeled_data_list)
         for labeled_data, page_numbers_to_keep in zip(labeled_data_list, page_numbers_list):
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             xml_file = XmlFile(
@@ -51,7 +51,7 @@ class SampleProcessorUseCase:
     def get_prediction_samples(
         extractor_identifier: ExtractionIdentifier, prediction_data_list: list[PredictionData] = None
     ) -> list[PredictionSample]:
-        filter_valid_pages = FilterValidSegmentsPages(extractor_identifier)
+        filter_valid_pages = FilterValidSegmentsPagesUseCase(extractor_identifier)
         page_numbers_list = filter_valid_pages.for_prediction(prediction_data_list)
         prediction_samples: list[PredictionSample] = []
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):

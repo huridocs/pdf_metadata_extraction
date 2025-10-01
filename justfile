@@ -31,7 +31,7 @@ remove-docker-images:
 	docker compose config --images | xargs docker rmi
 
 start-test:
-	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --attach pdf_metadata_extraction_queue_processor --build
 
 start-windows:
 	docker compose -f windows-gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build

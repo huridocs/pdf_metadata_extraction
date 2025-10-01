@@ -67,6 +67,14 @@ services:
     network_mode: host
     ports:
       - "6379:6379"
-
+  redis_commander:
+    container_name: redis_commander
+    image: "rediscommander/redis-commander:latest"
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis_metadata_extraction:6379
+    ports:
+      - "8081:8081"
+    network_mode: host
 volumes:
   data:
