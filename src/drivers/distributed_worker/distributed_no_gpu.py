@@ -8,8 +8,12 @@ from trainable_entity_extractor.domain.Option import Option
 from trainable_entity_extractor.domain.Performance import Performance
 
 from config import REDIS_HOST, REDIS_PORT, NAME
-from drivers.distributed_worker.distributed_flow import distributed_predict, train_one_method, performance_one_method, logger
-from drivers.distributed_worker.model_to_cloud import upload_model_to_cloud, upload_completion_signal
+from drivers.distributed_worker.distributed_flow import (
+    distributed_predict,
+    train_one_method,
+    performance_one_method,
+    cloud_storage,
+)
 
 
 app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis://{REDIS_HOST}:{REDIS_PORT}")
@@ -19,27 +23,15 @@ app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis:
 def upload_model(
     extraction_identifier: ExtractionIdentifier, method_name: str, extractor_job: TrainableEntityExtractorJob = None
 ):
-    if not Path(extraction_identifier.get_path(), method_name).exists():
-        return False  # Model not found on this worker
-
-    if extractor_job:
-        job_path = Path(extraction_identifier.get_path(), EXTRACTOR_JOB_PATH)
-        job_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            with open(job_path, "w", encoding="utf-8") as file:
-                file.write(extractor_job.model_dump_json())
-            logger.log(extraction_identifier, f"Extractor job saved successfully to {job_path}")
-        except Exception as e:
-            logger.log(extraction_identifier, f"Error saving extractor job: {e}")
-            return False
-
-    # Upload model to cloud
-    upload_success = upload_model_to_cloud(extraction_identifier, extraction_identifier.run_name)
-    if upload_success:
-        # Upload completion signal to indicate model is fully uploaded
-        upload_completion_signal(extraction_identifier, extraction_identifier.run_name)
-
-    return upload_success
+    try:
+        success = cloud_storage.upload_model(extraction_identifier, extractor_job)
+        if success:
+            cloud_storage.create_model_completion_signal(extraction_identifier)
+            return True, "Model uploaded successfully"
+        else:
+            return False, "Failed to upload model to cloud storage"
+    except Exception as e:
+        return False, f"Error uploading model: {str(e)}"
 
 
 @app.task
