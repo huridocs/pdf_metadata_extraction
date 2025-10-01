@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +20,10 @@ class CloudModelStorage(ModelStorage):
 
     def upload_model(self, extraction_identifier: ExtractionIdentifier, extractor_job: TrainableEntityExtractorJob) -> bool:
         try:
+            model_path = extraction_identifier.get_path()
+            if not os.path.exists(model_path):
+                return False
+
             local_storage = LocalModelStorage()
             if not local_storage.upload_model(extraction_identifier, extractor_job):
                 self.logger.log(

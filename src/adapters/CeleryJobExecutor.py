@@ -121,12 +121,6 @@ class CeleryJobExecutor(JobExecutor):
                     if result and len(result) > 0:
                         success, message = result[0]
                         results.append(success)
-                        if not success:
-                            self.logger.log(
-                                extraction_identifier,
-                                f"Upload failed on worker {worker_name}: {message}",
-                                LogSeverity.error,
-                            )
 
             if not results:
                 self.logger.log(
@@ -136,21 +130,24 @@ class CeleryJobExecutor(JobExecutor):
                 )
                 return False
 
-            all_successful = all(results)
-            if all_successful:
+            any_successful = any(results)
+            successful_count = sum(results)
+            total_workers = len(results)
+
+            if any_successful:
                 self.logger.log(
                     extraction_identifier,
-                    "Model uploaded successfully to all workers",
+                    f"Model uploaded successfully. Success rate: {successful_count}/{total_workers} workers",
                     LogSeverity.info,
                 )
             else:
                 self.logger.log(
                     extraction_identifier,
-                    f"Model upload failed on some workers. Success rate: {sum(results)}/{len(results)}",
+                    f"Model upload failed on all workers. Failed on {total_workers} workers",
                     LogSeverity.error,
                 )
 
-            return all_successful
+            return any_successful
 
         except Exception as e:
             self.logger.log(
