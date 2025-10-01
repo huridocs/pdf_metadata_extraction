@@ -11,7 +11,7 @@ from trainable_entity_extractor.use_cases.TrainUseCase import TrainUseCase
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 
-class GetPerformanceJobsUseCase:
+class GetPerformanceJobUseCase:
     def __init__(
         self,
         extraction_identifier: ExtractionIdentifier,
@@ -38,8 +38,8 @@ class GetPerformanceJobsUseCase:
         sub_jobs = [DistributedSubJob(extractor_job=job) for job in extractor_jobs]
 
         return DistributedJob(
-            extraction_identifier=self.extraction_identifier,
             type=JobType.PERFORMANCE,
             sub_jobs=sub_jobs,
             domain_name=queue_name,
+            extraction_identifier=self.extraction_identifier,
         )

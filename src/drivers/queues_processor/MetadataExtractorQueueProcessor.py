@@ -18,6 +18,7 @@ from trainable_entity_extractor.adapters.extractors.text_to_multi_option_extract
 from trainable_entity_extractor.adapters.extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
 from trainable_entity_extractor.config import config_logger, EXTRACTOR_JOB_PATH
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.domain.JobProcessingResult import JobProcessingResult
 from trainable_entity_extractor.domain.LogSeverity import LogSeverity
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
 from trainable_entity_extractor.domain.DistributedJob import DistributedJob
@@ -37,9 +38,8 @@ from domain.ResultsMessage import ResultsMessage
 from domain.TasksNames import TasksNames
 from domain.TaskType import TaskType
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
-from use_cases.GetPerformanceJobsUseCase import GetPerformanceJobsUseCase
+from use_cases.GetPerformanceJobUseCase import GetPerformanceJobUseCase
 from use_cases.ParagraphExtractorUseCase import ParagraphExtractorUseCase
-from use_cases.TrainUseCase import TrainUseCase
 from drivers.queues_processor.PredictionResultBuilder import PredictionResultBuilder
 from drivers.queues_processor.TrainingResultBuilder import TrainingResultBuilder
 
@@ -85,40 +85,33 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         return self._handle_trainable_entity_extraction_task(queue_name, message)
 
     def process(self, queue_name: str) -> QueueProcessResults:
-        result = self.orchestrator.execute_job_for_domain(queue_name)
+        job_processing_result, distributed_job = self.orchestrator.execute_job_for_domain(queue_name)
 
-        if result.gpu_needed:
+        if job_processing_result.gpu_needed:
             self.cloud_provider.start()
 
-        if not result.finished:
+        if not job_processing_result.finished:
             return QueueProcessResults()
 
-        return self._convert_orchestrator_result_to_queue_result(result, queue_name)
+        return self._convert_orchestrator_result_to_queue_result(job_processing_result, distributed_job)
 
-    def _convert_orchestrator_result_to_queue_result(self, result, queue_name: str) -> QueueProcessResults:
-        if not result.finished:
-            return QueueProcessResults()
-
-        processed_job = None
-        for job in self.orchestrator.distributed_jobs:
-            if job.domain_name == queue_name:
-                processed_job = job
-                break
-
+    def _convert_orchestrator_result_to_queue_result(
+        self, job_processing_result: JobProcessingResult, processed_job: DistributedJob
+    ) -> QueueProcessResults:
         if not processed_job:
             return QueueProcessResults()
 
         try:
             if processed_job.type == JobType.PREDICT:
-                if result.success:
+                if job_processing_result.success:
                     return PredictionResultBuilder.build_success_result(processed_job)
                 else:
-                    return PredictionResultBuilder.build_failure_result(processed_job, result.error_message)
+                    return PredictionResultBuilder.build_failure_result(processed_job, job_processing_result.error_message)
             elif processed_job.type in [JobType.TRAIN, JobType.PERFORMANCE]:
-                if result.success:
+                if job_processing_result.success:
                     return TrainingResultBuilder.build_success_result(processed_job)
                 else:
-                    return TrainingResultBuilder.build_failure_result(processed_job, result.error_message)
+                    return TrainingResultBuilder.build_failure_result(processed_job, job_processing_result.error_message)
         except Exception as e:
             self.logger.log(
                 processed_job.extraction_identifier, f"Error converting orchestrator result: {e}", LogSeverity.error
@@ -156,17 +149,17 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             extraction_identifier=extraction_identifier,
         )
         self.orchestrator.add_job(distributed_job)
-        return QueueProcessResults()
+        return self.process(queue_name)
 
     def _handle_create_model_task(
         self, task: TrainableEntityExtractionTask, extraction_identifier: ExtractionIdentifier, queue_name: str
     ):
-        get_performance_jobs_use_case = GetPerformanceJobsUseCase(
+        get_performance_job_use_case = GetPerformanceJobUseCase(
             extraction_identifier, task.params.options, task.params.multi_value
         )
-        distributed_job = get_performance_jobs_use_case.get_distributed_job(task, queue_name)
+        distributed_job = get_performance_job_use_case.get_distributed_job(task, queue_name)
         self.orchestrator.add_job(distributed_job)
-        return QueueProcessResults()
+        return self.process(queue_name)
 
     def get_extractor_job(self, extraction_identifier: ExtractionIdentifier) -> TrainableEntityExtractorJob | None:
         path = Path(extraction_identifier.get_path(), EXTRACTOR_JOB_PATH)
