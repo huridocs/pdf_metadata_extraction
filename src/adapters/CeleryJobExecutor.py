@@ -1,4 +1,4 @@
-from typing import Tuple
+from celery import Celery
 from celery.result import AsyncResult
 from trainable_entity_extractor.domain.DistributedJob import DistributedJob
 from trainable_entity_extractor.domain.DistributedSubJob import DistributedSubJob
@@ -6,19 +6,17 @@ from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIde
 from trainable_entity_extractor.domain.JobStatus import JobStatus
 from trainable_entity_extractor.domain.LogSeverity import LogSeverity
 from trainable_entity_extractor.ports.JobExecutor import JobExecutor
-from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
+from trainable_entity_extractor.ports.Logger import Logger
 
-from drivers.distributed_worker.celery_app import app
+from config import NAME, REDIS_HOST, REDIS_PORT
 from drivers.distributed_worker.distributed_gpu import train_gpu, performance_gpu, predict_gpu
 from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performance_no_gpu, predict_no_gpu
 
 
 class CeleryJobExecutor(JobExecutor):
-    """Celery implementation of the JobExecutor interface"""
-
-    def __init__(self):
-        super().__init__()
-        self.logger = ExtractorLogger()
+    def __init__(self, logger: Logger):
+        super().__init__([], None, None, logger)
+        self.app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
     def start_performance_evaluation(
         self, extraction_identifier: ExtractionIdentifier, distributed_sub_job: DistributedSubJob
@@ -86,7 +84,7 @@ class CeleryJobExecutor(JobExecutor):
         for sub_job in distributed_job.sub_jobs:
             if sub_job.status not in self.get_finished_status():
                 try:
-                    celery_result = AsyncResult(sub_job.job_id, app=app)
+                    celery_result = AsyncResult(sub_job.job_id, app=self.app)
                     if celery_result.state == "SUCCESS":
                         sub_job.status = JobStatus.SUCCESS
                         sub_job.result = celery_result.result
@@ -106,7 +104,7 @@ class CeleryJobExecutor(JobExecutor):
         for sub_job in job.sub_jobs:
             if sub_job.status not in self.get_finished_status():
                 try:
-                    app.control.revoke(sub_job.job_id, terminate=True)
+                    self.app.control.revoke(sub_job.job_id, terminate=True)
                     sub_job.status = JobStatus.CANCELED
                 except Exception as e:
                     self.logger.log(

@@ -17,7 +17,6 @@ class CloudModelStorage(ModelStorage):
         self.logger = logger
 
     def upload_model(self, extraction_identifier: ExtractionIdentifier, extractor_job: TrainableEntityExtractorJob) -> bool:
-        """Upload a trained model to Google Cloud Storage"""
         try:
             if self.google_cloud_storage is None:
                 self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
@@ -25,7 +24,6 @@ class CloudModelStorage(ModelStorage):
 
             source_path = Path(extraction_identifier.get_path())
 
-            # Save the job data locally first
             local_storage = LocalModelStorage()
             if not local_storage.upload_model(extraction_identifier, extractor_job):
                 self.logger.log(extraction_identifier, "Failed to save extractor job locally before upload", "error")
@@ -87,15 +85,12 @@ class CloudModelStorage(ModelStorage):
             return None
 
     def check_model_completion_signal(self, extraction_identifier: ExtractionIdentifier) -> bool:
-        """Check if model upload is completed by checking for completion signal file"""
         try:
-            # Check for a completion signal file in cloud storage
             completion_signal_path = Path(extraction_identifier.get_path(), "model_upload_complete.signal")
 
             if completion_signal_path.exists():
                 return True
 
-            # Try to download the signal file from cloud storage
             if self.google_cloud_storage is not None:
                 cloud_signal_path = Path(
                     extraction_identifier.run_name, extraction_identifier.extraction_name, "model_upload_complete.signal"
@@ -104,7 +99,6 @@ class CloudModelStorage(ModelStorage):
                     self.google_cloud_storage.copy_from_cloud(completion_signal_path.parent, cloud_signal_path.parent)
                     return completion_signal_path.exists()
                 except Exception:
-                    # Signal file doesn't exist in cloud storage
                     return False
 
             return False
@@ -114,16 +108,13 @@ class CloudModelStorage(ModelStorage):
             return False
 
     def create_model_completion_signal(self, extraction_identifier: ExtractionIdentifier) -> bool:
-        """Create a completion signal file after successful model upload"""
         try:
-            # Create a local signal file
             completion_signal_path = Path(extraction_identifier.get_path(), "model_upload_complete.signal")
             completion_signal_path.parent.mkdir(parents=True, exist_ok=True)
 
             with open(completion_signal_path, "w") as f:
                 f.write("Model upload completed successfully")
 
-            # Upload the signal file to cloud storage
             if self.google_cloud_storage is not None:
                 cloud_signal_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
                 try:

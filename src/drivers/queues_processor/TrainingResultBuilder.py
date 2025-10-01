@@ -1,4 +1,3 @@
-from pathlib import Path
 from trainable_entity_extractor.domain.DistributedJob import DistributedJob
 from domain.ResultsMessage import ResultsMessage
 from queue_processor.QueueProcessResults import QueueProcessResults
@@ -12,9 +11,9 @@ class TrainingResultBuilder:
     @staticmethod
     def build_success_result(job: DistributedJob) -> QueueProcessResults:
         result_message = ResultsMessage(
-            tenant=job.task.tenant,
-            task=job.task.task,
-            params=job.task.params,
+            tenant=job.extraction_identifier.run_name,
+            task=job.extraction_identifier.task,
+            params=job.extraction_identifier.params,
             success=True,
             error_message="",
         )
