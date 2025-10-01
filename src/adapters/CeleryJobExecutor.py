@@ -10,7 +10,7 @@ from trainable_entity_extractor.ports.Logger import Logger
 
 from config import NAME, REDIS_HOST, REDIS_PORT
 from drivers.distributed_worker.distributed_gpu import train_gpu, performance_gpu, predict_gpu
-from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performance_no_gpu, predict_no_gpu
+from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performance_no_gpu, predict_no_gpu, upload_model
 
 
 class CeleryJobExecutor(JobExecutor):
@@ -110,3 +110,52 @@ class CeleryJobExecutor(JobExecutor):
                     self.logger.log(
                         job.extraction_identifier, f"Error canceling job {sub_job.job_id}: {e}", LogSeverity.error
                     )
+
+    def upload_model(self, extraction_identifier: ExtractionIdentifier, extractor_job) -> bool:
+        try:
+            job = self.app.control.broadcast("upload_model", args=[extraction_identifier, extractor_job], reply=True)
+
+            results = []
+            for worker_reply in job:
+                for worker_name, result in worker_reply.items():
+                    if result and len(result) > 0:
+                        success, message = result[0]
+                        results.append(success)
+                        if not success:
+                            self.logger.log(
+                                extraction_identifier,
+                                f"Upload failed on worker {worker_name}: {message}",
+                                LogSeverity.error,
+                            )
+
+            if not results:
+                self.logger.log(
+                    extraction_identifier,
+                    "No workers responded to upload_model broadcast",
+                    LogSeverity.error,
+                )
+                return False
+
+            all_successful = all(results)
+            if all_successful:
+                self.logger.log(
+                    extraction_identifier,
+                    "Model uploaded successfully to all workers",
+                    LogSeverity.info,
+                )
+            else:
+                self.logger.log(
+                    extraction_identifier,
+                    f"Model upload failed on some workers. Success rate: {sum(results)}/{len(results)}",
+                    LogSeverity.error,
+                )
+
+            return all_successful
+
+        except Exception as e:
+            self.logger.log(
+                extraction_identifier,
+                f"Error broadcasting upload_model: {e}",
+                LogSeverity.error,
+            )
+            return False

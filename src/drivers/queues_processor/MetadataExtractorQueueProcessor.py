@@ -137,7 +137,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
     def _handle_suggestions_task(
         self, task: TrainableEntityExtractionTask, extraction_identifier: ExtractionIdentifier, queue_name: str
     ) -> QueueProcessResults:
-        extractor_job = self.get_extractor_job(extraction_identifier)
+        extractor_job = self.model_storage.get_extractor_job(extraction_identifier)
 
         if not extractor_job:
             return self._create_extractor_not_found_result(task)
@@ -160,24 +160,6 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         distributed_job = get_performance_job_use_case.get_distributed_job(task, queue_name)
         self.orchestrator.add_job(distributed_job)
         return self.process(queue_name)
-
-    def get_extractor_job(self, extraction_identifier: ExtractionIdentifier) -> TrainableEntityExtractorJob | None:
-        path = Path(extraction_identifier.get_path(), EXTRACTOR_JOB_PATH)
-
-        if not path.exists():
-            extractor_job = self.model_storage.get_extractor_job(extraction_identifier)
-            if not extractor_job:
-                self.logger.log(extraction_identifier, "Failed to download model from cloud storage", LogSeverity.error)
-                return None
-
-        try:
-            with open(path, "r", encoding="utf-8") as file:
-                job_data = file.read()
-                extractor_job = TrainableEntityExtractorJob.model_validate_json(job_data)
-                return extractor_job
-        except Exception as e:
-            self.logger.log(extraction_identifier, f"Error reading extractor job file: {e}", LogSeverity.error)
-            return None
 
     def _validate_and_parse_message(self, message: dict[str, Any]) -> TaskType | None:
         try:

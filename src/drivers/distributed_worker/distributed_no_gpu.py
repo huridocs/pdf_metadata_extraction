@@ -20,9 +20,7 @@ app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis:
 
 
 @app.task
-def upload_model(
-    extraction_identifier: ExtractionIdentifier, method_name: str, extractor_job: TrainableEntityExtractorJob = None
-):
+def upload_model(extraction_identifier: ExtractionIdentifier, extractor_job: TrainableEntityExtractorJob = None):
     try:
         success = cloud_storage.upload_model(extraction_identifier, extractor_job)
         if success:

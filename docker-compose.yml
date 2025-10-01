@@ -39,11 +39,13 @@ services:
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
     init: true
-    entrypoint: [ "celery", "-A", "src.drivers.distributed_worker.distributed_no_gpu", "worker", "--loglevel=info" ]
+    entrypoint: [ "celery", "-A", "src.drivers.distributed_worker.distributed_no_gpu", "worker", "--loglevel=info", "--concurrency=1" ]
     restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      - data:/app/models_data
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}

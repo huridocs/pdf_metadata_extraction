@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.domain.LogSeverity import LogSeverity
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
 from trainable_entity_extractor.ports.Logger import Logger
 from trainable_entity_extractor.ports.ModelStorage import ModelStorage
@@ -18,23 +19,24 @@ class CloudModelStorage(ModelStorage):
 
     def upload_model(self, extraction_identifier: ExtractionIdentifier, extractor_job: TrainableEntityExtractorJob) -> bool:
         try:
-            if self.google_cloud_storage is None:
-                self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
-                return False
-
-            source_path = Path(extraction_identifier.get_path())
-
             local_storage = LocalModelStorage()
             if not local_storage.upload_model(extraction_identifier, extractor_job):
-                self.logger.log(extraction_identifier, "Failed to save extractor job locally before upload", "error")
+                self.logger.log(
+                    extraction_identifier, "Failed to save extractor job locally before upload", LogSeverity.error
+                )
                 return False
 
+            if self.google_cloud_storage is None:
+                self.logger.log(extraction_identifier, "Google Cloud Storage not available")
+                return True
+
+            source_path = Path(extraction_identifier.get_path())
             cloud_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
             self.google_cloud_storage.copy_to_cloud(source_path, cloud_path)
             self.logger.log(extraction_identifier, f"Model uploaded to cloud storage from {source_path}")
             return True
         except Exception as e:
-            self.logger.log(extraction_identifier, f"Model upload failed: {e}", "error")
+            self.logger.log(extraction_identifier, f"Model upload failed: {e}", LogSeverity.error)
             return False
 
     def download_model(self, extraction_identifier: ExtractionIdentifier) -> bool:
@@ -64,21 +66,21 @@ class CloudModelStorage(ModelStorage):
     def get_extractor_job(self, extraction_identifier: ExtractionIdentifier) -> Optional[TrainableEntityExtractorJob]:
         try:
             local_path = Path(extraction_identifier.get_path(), EXTRACTOR_JOB_PATH)
-            if not local_path.exists():
-                if self.google_cloud_storage is None:
-                    self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
-                    return None
+            if local_path.exists():
+                return LocalModelStorage.get_extractor_job(extraction_identifier)
 
-                cloud_job_path = Path(
-                    extraction_identifier.run_name, extraction_identifier.extraction_name, EXTRACTOR_JOB_PATH
-                )
-                local_path.parent.mkdir(parents=True, exist_ok=True)
+            if self.google_cloud_storage is None:
+                self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
+                return None
 
-                self.google_cloud_storage.copy_from_cloud(cloud_job_path, local_path)
+            cloud_job_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name, EXTRACTOR_JOB_PATH)
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+
+            self.google_cloud_storage.copy_from_cloud(cloud_job_path, local_path)
 
             with open(local_path, "r", encoding="utf-8") as f:
                 job_data = json.load(f)
-                return LocalModelStorage._deserialize_job_from_dict(job_data)
+                return self.deserialize_job_from_dict(job_data)
 
         except Exception as e:
             self.logger.log(extraction_identifier, f"Failed to get extractor job from cloud: {e}", "error")

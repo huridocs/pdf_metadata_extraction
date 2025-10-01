@@ -3,6 +3,7 @@ from time import sleep
 import requests
 from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
 from ml_cloud_connector.domain.ServerParameters import ServerParameters
+from ml_cloud_connector.domain.ServerType import ServerType
 from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
 from trainable_entity_extractor.adapters.extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import (
     PdfToMultiOptionExtractor,
@@ -41,6 +42,8 @@ predict_use_case = PredictUseCase(EXTRACTORS, logger)
 try:
     server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
     google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
+    if not google_cloud_storage.is_properly_configured():
+        google_cloud_storage = None
     config_logger.info("Google Cloud Storage client initialized successfully")
 except Exception as e:
     config_logger.error(f"Failed to initialize Google Cloud Storage client: {e}")
@@ -81,8 +84,6 @@ def train_one_method(
         extraction_identifier=extraction_identifier,
     )
     success, message = train_use_case.train_one_method(extractor_job, extraction_data)
-    if success:
-        cloud_storage.upload_model(extraction_identifier)
     return success, message
 
 
