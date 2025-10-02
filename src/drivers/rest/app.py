@@ -123,6 +123,8 @@ async def get_samples_training(run_name: str, extraction_name: str):
 
     if cached_samples is not None:
         config_logger.info(f"Returning cached training samples from file for {run_name}/{extraction_name}")
+        if isinstance(cached_samples, list):
+            config_logger.info(f"Cached samples count: {len(cached_samples)}")
         return cached_samples
 
     extraction_identifier = ExtractionIdentifier(

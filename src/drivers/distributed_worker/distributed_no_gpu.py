@@ -17,8 +17,10 @@ app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis:
 
 
 @app.task
-def upload_model(extraction_identifier: ExtractionIdentifier, extractor_job: TrainableEntityExtractorJob = None):
+def upload_model(extraction_identifier_dict: dict, extractor_job_dict: dict):
     try:
+        extraction_identifier = ExtractionIdentifier.model_validate(extraction_identifier_dict)
+        extractor_job = TrainableEntityExtractorJob.model_validate(extractor_job_dict)
         success = cloud_storage.upload_model(extraction_identifier, extractor_job)
         if success:
             cloud_storage.create_model_completion_signal(extraction_identifier)
@@ -30,15 +32,18 @@ def upload_model(extraction_identifier: ExtractionIdentifier, extractor_job: Tra
 
 
 @app.task
-def predict_no_gpu(extractor_job: TrainableEntityExtractorJob) -> tuple[bool, str]:
+def predict_no_gpu(extractor_job_dict: dict) -> tuple[bool, str]:
+    extractor_job = TrainableEntityExtractorJob(**extractor_job_dict)
     return distributed_predict(extractor_job)
 
 
 @app.task
-def train_no_gpu(extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool) -> tuple[bool, str]:
-    return train_one_method(extractor_job, options, multi_value)
+def train_no_gpu(extractor_job_dict: dict) -> tuple[bool, str]:
+    extractor_job = TrainableEntityExtractorJob(**extractor_job_dict)
+    return train_one_method(extractor_job)
 
 
 @app.task
-def performance_no_gpu(extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool) -> Performance:
-    return performance_one_method(extractor_job, options, multi_value)
+def performance_no_gpu(extractor_job_dict: dict) -> dict:
+    extractor_job = TrainableEntityExtractorJob(**extractor_job_dict)
+    return performance_one_method(extractor_job).model_dump()

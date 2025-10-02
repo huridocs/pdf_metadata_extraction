@@ -17,7 +17,6 @@ from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.domain.ExtractionData import ExtractionData
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
-from trainable_entity_extractor.domain.Option import Option
 from trainable_entity_extractor.domain.Performance import Performance
 from trainable_entity_extractor.domain.Suggestion import Suggestion
 from trainable_entity_extractor.ports.ExtractorBase import ExtractorBase
@@ -49,9 +48,7 @@ if GoogleCloudStorage.could_be_configured():
 cloud_storage = CloudModelStorage(google_cloud_storage, logger)
 
 
-def performance_one_method(
-    extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool
-) -> Performance:
+def performance_one_method(extractor_job: TrainableEntityExtractorJob) -> Performance:
     extraction_identifier = ExtractionIdentifier(
         run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
     )
@@ -59,16 +56,14 @@ def performance_one_method(
     samples = sample_processor.get_training_samples()
     extraction_data = ExtractionData(
         samples=samples,
-        options=options,
-        multi_value=multi_value,
+        options=extractor_job.options,
+        multi_value=extractor_job.multi_value,
         extraction_identifier=extraction_identifier,
     )
     return train_use_case.get_performance(extractor_job, extraction_data)
 
 
-def train_one_method(
-    extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool
-) -> tuple[bool, str]:
+def train_one_method(extractor_job: TrainableEntityExtractorJob) -> tuple[bool, str]:
     extraction_identifier = ExtractionIdentifier(
         run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
     )
@@ -76,8 +71,8 @@ def train_one_method(
     samples = sample_processor.get_training_samples()
     extraction_data = ExtractionData(
         samples=samples,
-        options=options,
-        multi_value=multi_value,
+        options=extractor_job.options,
+        multi_value=extractor_job.multi_value,
         extraction_identifier=extraction_identifier,
     )
     success, message = train_use_case.train_one_method(extractor_job, extraction_data)

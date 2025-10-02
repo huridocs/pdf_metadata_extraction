@@ -5,6 +5,7 @@ from trainable_entity_extractor.domain.DistributedSubJob import DistributedSubJo
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.JobStatus import JobStatus
 from trainable_entity_extractor.domain.LogSeverity import LogSeverity
+from trainable_entity_extractor.domain.Performance import Performance
 from trainable_entity_extractor.ports.JobExecutor import JobExecutor
 from trainable_entity_extractor.ports.Logger import Logger
 
@@ -25,12 +26,9 @@ class CeleryJobExecutor(JobExecutor):
         try:
             extractor_job = distributed_sub_job.extractor_job
             if extractor_job.gpu_needed:
-                try:
-                    celery_result = performance_gpu.delay(extractor_job, extractor_job.options, extractor_job.multi_value)
-                except Exception:
-                    celery_result = performance_no_gpu.delay(extractor_job, extractor_job.options, extractor_job.multi_value)
+                celery_result = performance_gpu.delay(extractor_job.model_dump())
             else:
-                celery_result = performance_no_gpu.delay(extractor_job, extractor_job.options, extractor_job.multi_value)
+                celery_result = performance_no_gpu.delay(extractor_job.model_dump())
 
             distributed_sub_job.job_id = celery_result.id
             distributed_sub_job.status = JobStatus.RUNNING
@@ -90,11 +88,13 @@ class CeleryJobExecutor(JobExecutor):
                     celery_result = AsyncResult(sub_job.job_id, app=self.app)
                     if celery_result.state == "SUCCESS":
                         sub_job.status = JobStatus.SUCCESS
-                        sub_job.result = celery_result.result
+                        sub_job.result = (
+                            Performance(**celery_result.result)
+                            if isinstance(celery_result.result, dict)
+                            else celery_result.result
+                        )
                     elif celery_result.state == "FAILURE":
                         sub_job.status = JobStatus.FAILURE
-                    elif celery_result.state == "REVOKED":
-                        sub_job.status = JobStatus.CANCELED
                 except Exception as e:
                     self.logger.log(
                         distributed_job.extraction_identifier,
@@ -116,7 +116,7 @@ class CeleryJobExecutor(JobExecutor):
 
     def upload_model(self, extraction_identifier: ExtractionIdentifier, extractor_job) -> bool:
         try:
-            job = self.app.control.broadcast("upload_model", args=[extraction_identifier, extractor_job], reply=True)
+            job = upload_model.broadcast(extraction_identifier.model_dump(), extractor_job.model_dump())
 
             results = []
             for worker_reply in job:

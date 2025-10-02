@@ -82,13 +82,14 @@ class SampleProcessorUseCase:
     ) -> list[TrainingSample | PredictionSample]:
         samples: list[TrainingSample | PredictionSample] = list()
         max_retries = 3
-        retry_delay = 5  # seconds
+        retry_delay = 5
+        retries = 0
 
         url = f"{SERVICE_HOST}:{SERVICE_PORT}"
         url += "/get_samples_training" if for_training else "/get_samples_prediction"
         url += f"/{extraction_identifier.run_name}/{extraction_identifier.extraction_name}"
 
-        while True:
+        while retries <= max_retries:
             try:
                 response = requests.get(url)
                 response.raise_for_status()
@@ -97,13 +98,13 @@ class SampleProcessorUseCase:
                     break
 
                 samples.extend([TrainingSample(**x) if for_training else PredictionSample(**x) for x in response.json()])
+                break
             except requests.exceptions.RequestException as e:
                 config_logger.error(f"Error fetching training samples: {e}")
-                if max_retries > 0:
-                    max_retries -= 1
-                    config_logger.info(f"Retrying in {retry_delay} seconds...")
+                retries += 1
+                if retries <= max_retries:
+                    config_logger.info(f"Retrying in {retry_delay} seconds... (attempt {retries}/{max_retries})")
                     sleep(retry_delay)
-                    continue
                 else:
                     config_logger.error("Max retries reached. Exiting.")
                     break

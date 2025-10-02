@@ -52,7 +52,7 @@ class CloudModelStorage(ModelStorage):
 
         try:
             if self.google_cloud_storage is None:
-                self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
+                self.logger.log(extraction_identifier, "Google Cloud Storage not available")
                 return False
 
             cloud_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
@@ -65,7 +65,7 @@ class CloudModelStorage(ModelStorage):
             return True
 
         except Exception as e:
-            self.logger.log(extraction_identifier, f"Model download failed: {e}", "error")
+            self.logger.log(extraction_identifier, f"Model download failed: {e}", LogSeverity.error)
             return False
 
     def get_extractor_job(self, extraction_identifier: ExtractionIdentifier) -> Optional[TrainableEntityExtractorJob]:
