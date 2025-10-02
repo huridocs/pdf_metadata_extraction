@@ -408,6 +408,10 @@ class TestEndToEnd(TestCase):
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
+        result = self.get_results_message()
+
+        print(result)
+
         predict_data_json = {
             "tenant": tenant,
             "id": extraction_id,
@@ -425,8 +429,6 @@ class TestEndToEnd(TestCase):
         }
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
-
-        self.get_results_message()
 
         task = TrainableEntityExtractionTask(
             tenant=tenant,

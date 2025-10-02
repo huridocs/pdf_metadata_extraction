@@ -44,12 +44,9 @@ class CeleryJobExecutor(JobExecutor):
         try:
             extractor_job = distributed_sub_job.extractor_job
             if extractor_job.gpu_needed:
-                try:
-                    train_result = train_gpu.delay(extractor_job, extractor_job.options, extractor_job.multi_value)
-                except Exception:
-                    train_result = train_no_gpu.delay(extractor_job, extractor_job.options, extractor_job.multi_value)
+                train_result = train_gpu.delay(extractor_job.model_dump())
             else:
-                train_result = train_no_gpu.delay(extractor_job, extractor_job.options, extractor_job.multi_value)
+                train_result = train_no_gpu.delay(extractor_job.model_dump())
 
             distributed_sub_job.job_id = train_result.id
             distributed_sub_job.status = JobStatus.RUNNING
@@ -65,9 +62,9 @@ class CeleryJobExecutor(JobExecutor):
         try:
             extractor_job = distributed_sub_job.extractor_job
             if extractor_job.gpu_needed:
-                celery_result = predict_gpu.delay(extractor_job)
+                celery_result = predict_gpu.delay(extractor_job.model_dump())
             else:
-                celery_result = predict_no_gpu.delay(extractor_job)
+                celery_result = predict_no_gpu.delay(extractor_job.model_dump())
 
             distributed_sub_job.job_id = celery_result.id
             distributed_sub_job.status = JobStatus.RUNNING
@@ -116,15 +113,19 @@ class CeleryJobExecutor(JobExecutor):
 
     def upload_model(self, extraction_identifier: ExtractionIdentifier, extractor_job) -> bool:
         try:
-            job = upload_model.broadcast(extraction_identifier.model_dump(), extractor_job.model_dump())
-
+            self.logger.log(extraction_identifier, f"Uploading model :::::::::::::::::::: ")
+            job = self.app.control.broadcast(
+                "upload_model",
+                arguments=[extraction_identifier.model_dump(), extractor_job.model_dump()],
+                reply=True,
+                timeout=5.0,
+            )
             results = []
             for worker_reply in job:
-                for worker_name, result in worker_reply.items():
+                for _, result in worker_reply.items():
                     if result and len(result) > 0:
                         success, message = result[0]
-                        results.append(success)
-
+                        results.append(bool(success))
             if not results:
                 self.logger.log(
                     extraction_identifier,
@@ -132,11 +133,9 @@ class CeleryJobExecutor(JobExecutor):
                     LogSeverity.error,
                 )
                 return False
-
             any_successful = any(results)
-            successful_count = sum(results)
+            successful_count = sum(1 for r in results if r)
             total_workers = len(results)
-
             if any_successful:
                 self.logger.log(
                     extraction_identifier,
@@ -149,9 +148,7 @@ class CeleryJobExecutor(JobExecutor):
                     f"Model upload failed on all workers. Failed on {total_workers} workers",
                     LogSeverity.error,
                 )
-
             return any_successful
-
         except Exception as e:
             self.logger.log(
                 extraction_identifier,

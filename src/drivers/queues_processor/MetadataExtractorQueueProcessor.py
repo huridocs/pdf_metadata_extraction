@@ -76,7 +76,12 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         if task_type.task == TasksNames.PARAGRAPH_EXTRACTION_TASK_NAME:
             return self._handle_paragraph_extraction_task(message)
 
-        return self._handle_trainable_entity_extraction_task(queue_name, message)
+        result = self._handle_trainable_entity_extraction_task(queue_name, message)
+
+        if result.results:
+            self.logger.log(ExtractionIdentifier.get_default(), f"process_message result: {result}")
+
+        return result
 
     def process(self, queue_name: str) -> QueueProcessResults:
         job_processing_result, distributed_job = self.orchestrator.execute_job_for_domain(queue_name)
@@ -87,7 +92,11 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         if not job_processing_result.finished:
             return QueueProcessResults()
 
-        return self._convert_orchestrator_result_to_queue_result(job_processing_result, distributed_job)
+        result = self._convert_orchestrator_result_to_queue_result(job_processing_result, distributed_job)
+        if result.results:
+            self.logger.log(ExtractionIdentifier.get_default(), f"process result: {result}")
+
+        return result
 
     def _convert_orchestrator_result_to_queue_result(
         self, job_processing_result: JobProcessingResult, processed_job: DistributedJob

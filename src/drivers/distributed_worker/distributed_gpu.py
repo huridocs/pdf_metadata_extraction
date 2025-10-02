@@ -13,23 +13,23 @@ app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis:
 
 
 @app.task
-def predict_gpu(extractor_job_dict: dict) -> tuple[bool, str]:
+def predict_gpu(extractor_job_dict: dict) -> bool:
     is_gpu_available()
-    extractor_job = TrainableEntityExtractorJob(**extractor_job_dict)
+    extractor_job = TrainableEntityExtractorJob.model_validate(extractor_job_dict)
     return distributed_predict(extractor_job)
 
 
 @app.task
-def train_gpu(extractor_job_dict: dict) -> tuple[bool, str]:
+def train_gpu(extractor_job_dict: dict) -> bool:
     is_gpu_available()
-    extractor_job = TrainableEntityExtractorJob(**extractor_job_dict)
+    extractor_job = TrainableEntityExtractorJob.model_validate(extractor_job_dict)
     return train_one_method(extractor_job)
 
 
 @app.task
 def performance_gpu(extractor_job_dict: dict) -> dict:
     is_gpu_available()
-    extractor_job = TrainableEntityExtractorJob(**extractor_job_dict)
+    extractor_job = TrainableEntityExtractorJob.model_validate(extractor_job_dict)
     return performance_one_method(extractor_job).model_dump()
 
 

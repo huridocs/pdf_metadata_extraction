@@ -24,7 +24,7 @@ from trainable_entity_extractor.use_cases.PredictUseCase import PredictUseCase
 from trainable_entity_extractor.use_cases.TrainUseCase import TrainUseCase
 
 from adapters.CloudModelStorage import CloudModelStorage
-from config import DATA_PATH, SERVICE_HOST, SERVICE_PORT
+from config import SERVICE_HOST, SERVICE_PORT, MODELS_DATA_PATH
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 EXTRACTORS: list[type[ExtractorBase]] = [
@@ -50,7 +50,7 @@ cloud_storage = CloudModelStorage(google_cloud_storage, logger)
 
 def performance_one_method(extractor_job: TrainableEntityExtractorJob) -> Performance:
     extraction_identifier = ExtractionIdentifier(
-        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
+        run_name=extractor_job.run_name, output_path=MODELS_DATA_PATH, extraction_name=extractor_job.extraction_name
     )
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
@@ -63,9 +63,9 @@ def performance_one_method(extractor_job: TrainableEntityExtractorJob) -> Perfor
     return train_use_case.get_performance(extractor_job, extraction_data)
 
 
-def train_one_method(extractor_job: TrainableEntityExtractorJob) -> tuple[bool, str]:
+def train_one_method(extractor_job: TrainableEntityExtractorJob) -> bool:
     extraction_identifier = ExtractionIdentifier(
-        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
+        run_name=extractor_job.run_name, output_path=MODELS_DATA_PATH, extraction_name=extractor_job.extraction_name
     )
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
@@ -76,22 +76,22 @@ def train_one_method(extractor_job: TrainableEntityExtractorJob) -> tuple[bool, 
         extraction_identifier=extraction_identifier,
     )
     success, message = train_use_case.train_one_method(extractor_job, extraction_data)
-    return success, message
+    return success
 
 
-def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> tuple[bool, str]:
+def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> bool:
     extraction_identifier = ExtractionIdentifier(
-        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
+        run_name=extractor_job.run_name, output_path=MODELS_DATA_PATH, extraction_name=extractor_job.extraction_name
     )
 
     success = cloud_storage.download_model(extraction_identifier)
     if not success:
-        return False, "Could not download model from cloud storage"
+        return False
 
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_prediction_samples_for_suggestions()
     suggestions = predict_use_case.predict(extractor_job, samples)
-    return _send_suggestions(extraction_identifier, suggestions)
+    return _send_suggestions(extraction_identifier, suggestions)[0]
 
 
 def _send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> tuple[bool, str]:
