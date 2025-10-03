@@ -97,7 +97,12 @@ def train_one_method(extractor_job: TrainableEntityExtractorJob) -> bool:
         extraction_identifier=extraction_identifier,
     )
     success, message = train_use_case.train_one_method(extractor_job, extraction_data)
-    return success
+    extraction_identifier.clean_extractor_folder(extractor_job.method_name)
+
+    if not success:
+        return False
+
+    return cloud_storage.upload_model(extraction_identifier, extractor_job)
 
 
 def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> bool:

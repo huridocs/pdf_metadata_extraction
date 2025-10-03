@@ -117,7 +117,7 @@ class SampleProcessorUseCase:
         return samples
 
     def get_prediction_samples_for_suggestions(self) -> list[PredictionSample]:
-        return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
+        return self.import_samples(for_training=False)
 
     def is_extractor_cancelled(self) -> bool:
         try:

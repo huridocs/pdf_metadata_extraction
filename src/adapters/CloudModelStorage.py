@@ -66,7 +66,7 @@ class CloudModelStorage(ModelStorage):
         try:
             local_path = Path(extraction_identifier.get_path(), EXTRACTOR_JOB_PATH)
             if local_path.exists():
-                return LocalModelStorage.get_extractor_job(extraction_identifier)
+                return LocalModelStorage().get_extractor_job(extraction_identifier)
 
             if self.google_cloud_storage is None:
                 self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
