@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from config import MODELS_DATA_PATH
 
 
-class FileCacheManager:
+class SamplesCacheUseCase:
     def __init__(self):
         self.cache_dir = Path(MODELS_DATA_PATH, "cache")
         self.cache_dir.mkdir(exist_ok=True, parents=True)
@@ -79,6 +79,3 @@ class FileCacheManager:
     @staticmethod
     def get_prediction_cache_key(run_name: str, extraction_name: str) -> str:
         return f"samples_prediction_{run_name}_{extraction_name}"
-
-
-file_cache_manager = FileCacheManager()

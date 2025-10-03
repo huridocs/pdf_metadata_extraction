@@ -54,7 +54,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             self.logger.log(ExtractionIdentifier.get_default(), "Google Cloud Storage client initialized successfully")
 
         self.model_storage = CloudModelStorage(self.google_cloud_storage, self.logger)
-        self.job_executor = CeleryJobExecutor(self.logger)
+        self.job_executor = CeleryJobExecutor(self.model_storage, self.logger)
         self.orchestrator = OrchestratorUseCase(self.job_executor, self.logger)
         server_parameters = ServerParameters(namespace="google_v2", server_type=ServerType.METADATA_EXTRACTION)
         try:

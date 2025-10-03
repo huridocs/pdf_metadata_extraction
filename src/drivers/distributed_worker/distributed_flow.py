@@ -1,5 +1,7 @@
+from datetime import timedelta, datetime
+from pathlib import Path
 from time import sleep
-
+import shutil
 import requests
 from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
 from ml_cloud_connector.domain.ServerParameters import ServerParameters
@@ -48,10 +50,28 @@ if GoogleCloudStorage.could_be_configured():
 cloud_storage = CloudModelStorage(google_cloud_storage, logger)
 
 
+def ensure_fresh_model_folder(extraction_identifier: ExtractionIdentifier, max_age_hours: int = 1) -> None:
+    path = Path(extraction_identifier.get_path())
+
+    if path.exists():
+        folder_modified_time = datetime.fromtimestamp(path.stat().st_mtime)
+        current_time = datetime.now()
+        age = current_time - folder_modified_time
+
+        if age > timedelta(hours=max_age_hours):
+            shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+    else:
+        path.mkdir(parents=True, exist_ok=True)
+
+
 def performance_one_method(extractor_job: TrainableEntityExtractorJob) -> Performance:
     extraction_identifier = ExtractionIdentifier(
         run_name=extractor_job.run_name, output_path=MODELS_DATA_PATH, extraction_name=extractor_job.extraction_name
     )
+
+    ensure_fresh_model_folder(extraction_identifier)
+
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
     extraction_data = ExtractionData(
@@ -69,6 +89,7 @@ def train_one_method(extractor_job: TrainableEntityExtractorJob) -> bool:
     )
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
+    sample_processor.delete_cache()
     extraction_data = ExtractionData(
         samples=samples,
         options=extractor_job.options,

@@ -9,15 +9,16 @@ from trainable_entity_extractor.domain.Performance import Performance
 from trainable_entity_extractor.ports.JobExecutor import JobExecutor
 from trainable_entity_extractor.ports.Logger import Logger
 
+from adapters.CloudModelStorage import CloudModelStorage
 from config import NAME, REDIS_HOST, REDIS_PORT
 from drivers.distributed_worker.distributed_gpu import train_gpu, performance_gpu, predict_gpu
-from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performance_no_gpu, predict_no_gpu, upload_model
+from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performance_no_gpu, predict_no_gpu
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 
 class CeleryJobExecutor(JobExecutor):
-    def __init__(self, logger: Logger):
-        super().__init__([], None, None, logger)
+    def __init__(self, model_storage: CloudModelStorage, logger: Logger):
+        super().__init__([], None, model_storage, logger)
         self.app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
     def start_performance_evaluation(
@@ -32,6 +33,14 @@ class CeleryJobExecutor(JobExecutor):
 
             distributed_sub_job.job_id = celery_result.id
             distributed_sub_job.status = JobStatus.RUNNING
+        except KeyError:
+            distributed_sub_job.status = JobStatus.WAITING
+            self.logger.log(
+                extraction_identifier,
+                f"Asynchronous Job did not start for {distributed_sub_job.extractor_job.method_name}: "
+                f"Invalid configuration or missing resources.",
+                LogSeverity.info,
+            )
         except Exception as e:
             self.logger.log(
                 extraction_identifier,
@@ -50,6 +59,14 @@ class CeleryJobExecutor(JobExecutor):
 
             distributed_sub_job.job_id = train_result.id
             distributed_sub_job.status = JobStatus.RUNNING
+        except KeyError:
+            distributed_sub_job.status = JobStatus.WAITING
+            self.logger.log(
+                extraction_identifier,
+                f"Asynchronous Job did not start for {distributed_sub_job.extractor_job.method_name}: "
+                f"Invalid configuration or missing resources.",
+                LogSeverity.info,
+            )
         except Exception as e:
             self.logger.log(
                 extraction_identifier,
@@ -68,6 +85,14 @@ class CeleryJobExecutor(JobExecutor):
 
             distributed_sub_job.job_id = celery_result.id
             distributed_sub_job.status = JobStatus.RUNNING
+        except KeyError:
+            distributed_sub_job.status = JobStatus.WAITING
+            self.logger.log(
+                extraction_identifier,
+                f"Asynchronous Job did not start for {distributed_sub_job.extractor_job.method_name}: "
+                f"Invalid configuration or missing resources.",
+                LogSeverity.info,
+            )
         except Exception as e:
             self.logger.log(
                 extraction_identifier,
@@ -110,52 +135,6 @@ class CeleryJobExecutor(JobExecutor):
                     self.logger.log(
                         job.extraction_identifier, f"Error canceling job {sub_job.job_id}: {e}", LogSeverity.error
                     )
-
-    def upload_model(self, extraction_identifier: ExtractionIdentifier, extractor_job) -> bool:
-        try:
-            self.logger.log(extraction_identifier, f"Uploading model :::::::::::::::::::: ")
-            job = self.app.control.broadcast(
-                "upload_model",
-                arguments=[extraction_identifier.model_dump(), extractor_job.model_dump()],
-                reply=True,
-                timeout=5.0,
-            )
-            results = []
-            for worker_reply in job:
-                for _, result in worker_reply.items():
-                    if result and len(result) > 0:
-                        success, message = result[0]
-                        results.append(bool(success))
-            if not results:
-                self.logger.log(
-                    extraction_identifier,
-                    "No workers responded to upload_model broadcast",
-                    LogSeverity.error,
-                )
-                return False
-            any_successful = any(results)
-            successful_count = sum(1 for r in results if r)
-            total_workers = len(results)
-            if any_successful:
-                self.logger.log(
-                    extraction_identifier,
-                    f"Model uploaded successfully. Success rate: {successful_count}/{total_workers} workers",
-                    LogSeverity.info,
-                )
-            else:
-                self.logger.log(
-                    extraction_identifier,
-                    f"Model upload failed on all workers. Failed on {total_workers} workers",
-                    LogSeverity.error,
-                )
-            return any_successful
-        except Exception as e:
-            self.logger.log(
-                extraction_identifier,
-                f"Error broadcasting upload_model: {e}",
-                LogSeverity.error,
-            )
-            return False
 
     def is_extractor_cancelled(self, extractor_identifier: ExtractionIdentifier) -> bool:
         return SampleProcessorUseCase(extractor_identifier).is_extractor_cancelled()

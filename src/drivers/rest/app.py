@@ -25,8 +25,8 @@ from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.XML import XML
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
 from drivers.rest.catch_exceptions import catch_exceptions
-from drivers.rest.file_cache import file_cache_manager
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
+from use_cases.SamplesCacheUseCase import SamplesCacheUseCase
 
 
 @asynccontextmanager
@@ -105,8 +105,7 @@ async def labeled_data_post(labeled_data: LabeledData):
     app.persistence_repository.save_labeled_data(extraction_identifier, labeled_data)
 
     try:
-        training_cache_key = file_cache_manager.get_training_cache_key(labeled_data.tenant, labeled_data.id)
-        file_cache_manager.delete_cache(training_cache_key)
+        SampleProcessorUseCase(extraction_identifier).delete_cache()
         config_logger.info(f"Deleted training cache for {labeled_data.tenant}/{labeled_data.id}")
     except Exception:
         pass
@@ -117,23 +116,22 @@ async def labeled_data_post(labeled_data: LabeledData):
 @app.get("/get_samples_training/{run_name}/{extraction_name}")
 @catch_exceptions
 async def get_samples_training(run_name: str, extraction_name: str):
-    file_cache_manager.cleanup_expired_cache()
-    cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
-    cached_samples = file_cache_manager.get_cached_samples(cache_key)
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
+    samples_cache = SamplesCacheUseCase()
+    samples_cache.cleanup_expired_cache()
+    cache_key = samples_cache.get_training_cache_key(run_name, extraction_name)
+    cached_samples = samples_cache.get_cached_samples(cache_key)
 
     if cached_samples is not None:
         config_logger.info(f"Returning cached training samples from file for {run_name}/{extraction_name}")
         return cached_samples
 
-    extraction_identifier = ExtractionIdentifier(
-        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
-    )
     labeled_data = app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 50)
-    samples = SampleProcessorUseCase.get_samples_for_training(
-        extraction_identifier=extraction_identifier, labeled_data_list=labeled_data
-    )
+    samples = SampleProcessorUseCase(extraction_identifier).get_samples_for_training(labeled_data_list=labeled_data)
 
-    file_cache_manager.cache_samples(cache_key, samples)
+    samples_cache.cache_samples(cache_key, samples)
     config_logger.info(f"Cached training samples to file for {run_name}/{extraction_name}")
 
     return samples
@@ -142,22 +140,11 @@ async def get_samples_training(run_name: str, extraction_name: str):
 @app.get("/get_samples_prediction/{run_name}/{extraction_name}")
 @catch_exceptions
 async def get_samples_prediction(run_name: str, extraction_name: str):
-    file_cache_manager.cleanup_expired_cache()
-    cache_key = file_cache_manager.get_prediction_cache_key(run_name, extraction_name)
-    cached_samples = file_cache_manager.get_cached_samples(cache_key)
-
-    if cached_samples is not None:
-        config_logger.info(f"Returning cached prediction samples from file for {run_name}/{extraction_name}")
-        return cached_samples
-
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
     prediction_data = app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 50)
-    samples = SampleProcessorUseCase.get_prediction_samples(
-        extractor_identifier=extraction_identifier, prediction_data_list=prediction_data
-    )
-    file_cache_manager.cache_samples(cache_key, samples)
+    samples = SampleProcessorUseCase(extraction_identifier).get_prediction_samples(prediction_data_list=prediction_data)
     config_logger.info(f"Cached prediction samples to file for {run_name}/{extraction_name}")
 
     return samples
@@ -170,14 +157,6 @@ async def prediction_data_post(prediction_data: PredictionData):
         run_name=prediction_data.tenant, extraction_name=prediction_data.id, output_path=MODELS_DATA_PATH
     )
     app.persistence_repository.save_prediction_data(extraction_identifier, prediction_data)
-
-    prediction_cache_key = file_cache_manager.get_prediction_cache_key(prediction_data.tenant, prediction_data.id)
-    try:
-        file_cache_manager.delete_cache(prediction_cache_key)
-        config_logger.info(f"Deleted prediction cache for {prediction_data.tenant}/{prediction_data.id}")
-    except Exception:
-        pass
-
     return "prediction data saved"
 
 
@@ -226,16 +205,12 @@ async def cancel_training(run_name: str, extraction_name: str):
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
+
     app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 5000000)
 
     try:
-        training_cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
-        file_cache_manager.delete_cache(training_cache_key)
-    except Exception:
-        pass
-    try:
-        prediction_cache_key = file_cache_manager.get_prediction_cache_key(run_name, extraction_name)
-        file_cache_manager.delete_cache(prediction_cache_key)
+        samples_processor = SampleProcessorUseCase(extraction_identifier)
+        samples_processor.delete_cache()
     except Exception:
         pass
 
@@ -252,13 +227,8 @@ async def delete_extractor(run_name: str, extraction_name: str):
     app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 5000000)
 
     try:
-        training_cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
-        file_cache_manager.delete_cache(training_cache_key)
-    except Exception:
-        pass
-    try:
-        prediction_cache_key = file_cache_manager.get_prediction_cache_key(run_name, extraction_name)
-        file_cache_manager.delete_cache(prediction_cache_key)
+        samples_processor = SampleProcessorUseCase(extraction_identifier)
+        samples_processor.delete_cache()
     except Exception:
         pass
 

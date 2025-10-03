@@ -15,22 +15,21 @@ from trainable_entity_extractor.domain.XmlFile import XmlFile
 from trainable_entity_extractor.use_cases.FilterValidSegmentsPagesUseCase import FilterValidSegmentsPagesUseCase
 
 from config import SERVICE_HOST, SERVICE_PORT
+from use_cases.SamplesCacheUseCase import SamplesCacheUseCase
 
 
 class SampleProcessorUseCase:
-    def __init__(self, extraction_identifier: ExtractionIdentifier):
-        self.extraction_identifier = extraction_identifier
+    def __init__(self, extractor_identifier: ExtractionIdentifier):
+        self.extraction_identifier = extractor_identifier
+        self.samples_cache_use_case = SamplesCacheUseCase()
 
-    @staticmethod
-    def get_samples_for_training(
-        extraction_identifier: ExtractionIdentifier, labeled_data_list: list[LabeledData]
-    ) -> list[TrainingSample]:
+    def get_samples_for_training(self, labeled_data_list: list[LabeledData]) -> list[TrainingSample]:
         multi_option_samples: list[TrainingSample] = list()
-        page_numbers_list = FilterValidSegmentsPagesUseCase(extraction_identifier).for_training(labeled_data_list)
+        page_numbers_list = FilterValidSegmentsPagesUseCase(self.extraction_identifier).for_training(labeled_data_list)
         for labeled_data, page_numbers_to_keep in zip(labeled_data_list, page_numbers_list):
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             xml_file = XmlFile(
-                extraction_identifier=extraction_identifier,
+                extraction_identifier=self.extraction_identifier,
                 to_train=True,
                 xml_file_name=labeled_data.xml_file_name,
             )
@@ -47,11 +46,8 @@ class SampleProcessorUseCase:
 
         return multi_option_samples
 
-    @staticmethod
-    def get_prediction_samples(
-        extractor_identifier: ExtractionIdentifier, prediction_data_list: list[PredictionData] = None
-    ) -> list[PredictionSample]:
-        filter_valid_pages = FilterValidSegmentsPagesUseCase(extractor_identifier)
+    def get_prediction_samples(self, prediction_data_list: list[PredictionData] = None) -> list[PredictionSample]:
+        filter_valid_pages = FilterValidSegmentsPagesUseCase(self.extraction_identifier)
         page_numbers_list = filter_valid_pages.for_prediction(prediction_data_list)
         prediction_samples: list[PredictionSample] = []
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
@@ -59,7 +55,7 @@ class SampleProcessorUseCase:
             entity_name = prediction_data.entity_name if prediction_data.entity_name else prediction_data.xml_file_name
 
             xml_file = XmlFile(
-                extraction_identifier=extractor_identifier,
+                extraction_identifier=self.extraction_identifier,
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
@@ -76,10 +72,7 @@ class SampleProcessorUseCase:
 
         return prediction_samples
 
-    @staticmethod
-    def import_samples(
-        extraction_identifier: ExtractionIdentifier, for_training: bool
-    ) -> list[TrainingSample | PredictionSample]:
+    def import_samples(self, for_training: bool) -> list[TrainingSample | PredictionSample]:
         samples: list[TrainingSample | PredictionSample] = list()
         max_retries = 3
         retry_delay = 5
@@ -87,7 +80,7 @@ class SampleProcessorUseCase:
 
         url = f"{SERVICE_HOST}:{SERVICE_PORT}"
         url += "/get_samples_training" if for_training else "/get_samples_prediction"
-        url += f"/{extraction_identifier.run_name}/{extraction_identifier.extraction_name}"
+        url += f"/{self.extraction_identifier.run_name}/{self.extraction_identifier.extraction_name}"
 
         while retries <= max_retries:
             try:
@@ -112,7 +105,16 @@ class SampleProcessorUseCase:
         return samples
 
     def get_training_samples(self) -> list[TrainingSample]:
-        return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=True)
+        key = SamplesCacheUseCase.get_training_cache_key(
+            run_name=self.extraction_identifier.run_name, extraction_name=self.extraction_identifier.extraction_name
+        )
+        cached_samples = self.samples_cache_use_case.get_cached_samples(key)
+        if cached_samples:
+            return [TrainingSample(**sample) for sample in cached_samples]
+
+        samples = self.import_samples(for_training=True)
+        self.samples_cache_use_case.cache_samples(key, samples)
+        return samples
 
     def get_prediction_samples_for_suggestions(self) -> list[PredictionSample]:
         return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
@@ -135,3 +137,9 @@ class SampleProcessorUseCase:
         except requests.exceptions.RequestException as e:
             config_logger.error(f"Error checking if extractor is cancelled: {e}")
             return False
+
+    def delete_cache(self):
+        key = SamplesCacheUseCase.get_training_cache_key(
+            run_name=self.extraction_identifier.run_name, extraction_name=self.extraction_identifier.extraction_name
+        )
+        self.samples_cache_use_case.delete_cache(key)
