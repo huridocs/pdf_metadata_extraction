@@ -76,6 +76,9 @@ class CeleryJobExecutor(JobExecutor):
             distributed_sub_job.status = JobStatus.FAILURE
 
     def start_prediction(self, extraction_identifier: ExtractionIdentifier, distributed_sub_job: DistributedSubJob):
+        if distributed_sub_job.status != JobStatus.WAITING:
+            return
+
         try:
             extractor_job = distributed_sub_job.extractor_job
             if extractor_job.gpu_needed:
