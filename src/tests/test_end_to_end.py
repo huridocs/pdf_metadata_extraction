@@ -449,13 +449,17 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(tenant, suggestion_1.tenant)
         self.assertEqual(extraction_id, suggestion_1.id)
-        self.assertEqual("Option 1", suggestion_1.segment_text)
+        self.assertEqual(
+            '<p class="ix_matching_paragraph">Option <span class="ix_match">1</span></p>', suggestion_1.segment_text
+        )
         self.assertEqual("entity_name_1", suggestion_1.entity_name)
         self.assertEqual("1", suggestion_1.text)
 
         self.assertEqual(tenant, suggestion_2.tenant)
         self.assertEqual(extraction_id, suggestion_2.id)
-        self.assertEqual("Option 3", suggestion_2.segment_text)
+        self.assertEqual(
+            '<p class="ix_matching_paragraph">Option <span class="ix_match">3</span></p>', suggestion_2.segment_text
+        )
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
         self.assertEqual("3", suggestion_2.text)
 

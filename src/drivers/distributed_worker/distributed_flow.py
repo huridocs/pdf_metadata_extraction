@@ -116,6 +116,7 @@ def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> bool:
 
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_prediction_samples_for_suggestions()
+    extractor_job = extractor_job.set_extractors_path(MODELS_DATA_PATH)
     suggestions = predict_use_case.predict(extractor_job, samples)
     return _send_suggestions(extraction_identifier, suggestions)[0]
 
