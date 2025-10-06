@@ -61,9 +61,9 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id, metadata={"name": "test"}),
+            params=Params(id=extraction_id),
             success=False,
-            error_message="No data to create model",
+            error_message="No valid performance results to select the best model",
             data_url=None,
         )
 
@@ -82,7 +82,7 @@ class TestEndToEnd(TestCase):
             task="suggestions",
             params=Params(id=extraction_id, metadata={"name": "test"}),
             success=False,
-            error_message="No data to calculate suggestions",
+            error_message="Extractor job not found",
             data_url=None,
         )
 

@@ -7,14 +7,6 @@ from ml_cloud_connector.domain.ServerType import ServerType
 from pydantic import ValidationError
 from queue_processor.QueueProcess import QueueProcess
 from queue_processor.QueueProcessResults import QueueProcessResults
-from trainable_entity_extractor.adapters.extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import (
-    PdfToMultiOptionExtractor,
-)
-from trainable_entity_extractor.adapters.extractors.pdf_to_text_extractor.PdfToTextExtractor import PdfToTextExtractor
-from trainable_entity_extractor.adapters.extractors.text_to_multi_option_extractor.TextToMultiOptionExtractor import (
-    TextToMultiOptionExtractor,
-)
-from trainable_entity_extractor.adapters.extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
 from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.JobProcessingResult import JobProcessingResult
@@ -23,7 +15,6 @@ from trainable_entity_extractor.domain.DistributedJob import DistributedJob
 from trainable_entity_extractor.domain.JobType import JobType
 from trainable_entity_extractor.domain.DistributedSubJob import DistributedSubJob
 from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
-from trainable_entity_extractor.ports.ExtractorBase import ExtractorBase
 from trainable_entity_extractor.use_cases.OrchestratorUseCase import OrchestratorUseCase
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository

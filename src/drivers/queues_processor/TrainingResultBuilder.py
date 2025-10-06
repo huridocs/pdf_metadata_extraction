@@ -13,11 +13,14 @@ class TrainingResultBuilder:
         sub_job = job.sub_jobs[0] if job.sub_jobs else None
         options = sub_job.extractor_job.options if sub_job and sub_job.extractor_job else []
         multi_value = sub_job.extractor_job.multi_value if sub_job and sub_job.extractor_job else False
+        metadata = sub_job.extractor_job.metadata if sub_job and sub_job.extractor_job else {}
         task = TasksNames.CREATE_MODEL_TASK_NAME
         result_message = ResultsMessage(
             tenant=job.extraction_identifier.run_name,
             task=str(task),
-            params=Params(id=job.extraction_identifier.extraction_name, options=options, multi_value=multi_value),
+            params=Params(
+                id=job.extraction_identifier.extraction_name, options=options, multi_value=multi_value, metadata=metadata
+            ),
             success=True,
             error_message="",
             data_url=None,
@@ -29,11 +32,14 @@ class TrainingResultBuilder:
         sub_job = job.sub_jobs[0] if job.sub_jobs else None
         options = sub_job.extractor_job.options if sub_job and sub_job.extractor_job else []
         multi_value = sub_job.extractor_job.multi_value if sub_job and sub_job.extractor_job else False
+        metadata = sub_job.extractor_job.metadata if sub_job and sub_job.extractor_job else {}
         task = TasksNames.CREATE_MODEL_TASK_NAME
         result_message = ResultsMessage(
             tenant=job.extraction_identifier.run_name,
             task=str(task),
-            params=Params(id=job.extraction_identifier.extraction_name, options=options, multi_value=multi_value),
+            params=Params(
+                id=job.extraction_identifier.extraction_name, options=options, multi_value=multi_value, metadata=metadata
+            ),
             success=False,
             error_message=error_message,
             data_url=None,
