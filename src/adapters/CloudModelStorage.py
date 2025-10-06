@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.LogSeverity import LogSeverity
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
@@ -13,7 +14,7 @@ from trainable_entity_extractor.adapters.LocalModelStorage import LocalModelStor
 
 class CloudModelStorage(ModelStorage):
 
-    def __init__(self, google_cloud_storage, logger: Logger):
+    def __init__(self, google_cloud_storage: GoogleCloudStorage | None, logger: Logger):
         self.google_cloud_storage = google_cloud_storage
         self.logger = logger
 
@@ -31,7 +32,7 @@ class CloudModelStorage(ModelStorage):
 
             source_path = Path(extraction_identifier.get_path())
             cloud_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
-            self.google_cloud_storage.copy_to_cloud(source_path, cloud_path)
+            self.google_cloud_storage.upload_to_cloud(str(cloud_path), source_path)
             self.logger.log(extraction_identifier, f"Model uploaded to cloud storage from {source_path}")
             return True
         except Exception as e:
@@ -84,51 +85,6 @@ class CloudModelStorage(ModelStorage):
         except Exception as e:
             self.logger.log(extraction_identifier, f"Failed to get extractor job from cloud: {e}", "error")
             return None
-
-    def check_model_completion_signal(self, extraction_identifier: ExtractionIdentifier) -> bool:
-        try:
-            completion_signal_path = Path(extraction_identifier.get_path(), "model_upload_complete.signal")
-
-            if completion_signal_path.exists():
-                return True
-
-            if self.google_cloud_storage is not None:
-                cloud_signal_path = Path(
-                    extraction_identifier.run_name, extraction_identifier.extraction_name, "model_upload_complete.signal"
-                )
-                try:
-                    self.google_cloud_storage.copy_from_cloud(completion_signal_path.parent, cloud_signal_path.parent)
-                    return completion_signal_path.exists()
-                except Exception:
-                    return False
-
-            return False
-
-        except Exception as e:
-            self.logger.log(extraction_identifier, f"Error checking model completion signal: {e}", "error")
-            return False
-
-    def create_model_completion_signal(self, extraction_identifier: ExtractionIdentifier) -> bool:
-        try:
-            completion_signal_path = Path(extraction_identifier.get_path(), "model_upload_complete.signal")
-            completion_signal_path.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(completion_signal_path, "w") as f:
-                f.write("Model upload completed successfully")
-
-            if self.google_cloud_storage is not None:
-                cloud_signal_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
-                try:
-                    self.google_cloud_storage.copy_to_cloud(completion_signal_path.parent, cloud_signal_path)
-                    self.logger.log(extraction_identifier, "Model completion signal uploaded to cloud storage")
-                except Exception as e:
-                    self.logger.log(extraction_identifier, f"Failed to upload completion signal to cloud: {e}", "error")
-
-            return True
-
-        except Exception as e:
-            self.logger.log(extraction_identifier, f"Error creating model completion signal: {e}", "error")
-            return False
 
     @staticmethod
     def model_exists_locally(extraction_identifier: ExtractionIdentifier) -> bool:

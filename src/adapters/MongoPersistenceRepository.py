@@ -49,10 +49,8 @@ class MongoPersistenceRepository(PersistenceRepository):
         self.mongo_db.prediction_data.delete_many(self.get_filter(extraction_identifier))
         return prediction_data
 
-    def load_and_delete_prediction_data(
-        self, extraction_identifier: ExtractionIdentifier, batch_size: int
-    ) -> list[PredictionData]:
-        data_cursor = self.mongo_db.prediction_data.find(self.get_filter(extraction_identifier)).limit(batch_size)
+    def load_and_delete_prediction_data(self, extraction_identifier: ExtractionIdentifier) -> list[PredictionData]:
+        data_cursor = self.mongo_db.prediction_data.find(self.get_filter(extraction_identifier))
         data = list(data_cursor)
         prediction_data = [PredictionData(**document) for document in data]
         ids_to_delete = [document["_id"] for document in data]
@@ -71,10 +69,8 @@ class MongoPersistenceRepository(PersistenceRepository):
         self.mongo_db.labeled_data.delete_many(self.get_filter(extraction_identifier))
         return labeled_data
 
-    def load_and_delete_labeled_data(
-        self, extraction_identifier: ExtractionIdentifier, batch_size: int
-    ) -> list[LabeledData]:
-        data_cursor = self.mongo_db.labeled_data.find(self.get_filter(extraction_identifier)).limit(batch_size)
+    def load_and_delete_labeled_data(self, extraction_identifier: ExtractionIdentifier) -> list[LabeledData]:
+        data_cursor = self.mongo_db.labeled_data.find(self.get_filter(extraction_identifier))
         data = list(data_cursor)
         labeled_data = [LabeledData(**document) for document in data]
         ids_to_delete = [document["_id"] for document in data]

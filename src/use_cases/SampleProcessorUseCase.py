@@ -139,7 +139,32 @@ class SampleProcessorUseCase:
             return False
 
     def delete_cache(self):
-        key = SamplesCacheUseCase.get_training_cache_key(
-            run_name=self.extraction_identifier.run_name, extraction_name=self.extraction_identifier.extraction_name
-        )
-        self.samples_cache_use_case.delete_cache(key)
+        try:
+            key = SamplesCacheUseCase.get_training_cache_key(
+                run_name=self.extraction_identifier.run_name, extraction_name=self.extraction_identifier.extraction_name
+            )
+            self.samples_cache_use_case.delete_cache(key)
+        except requests.exceptions.RequestException as e:
+            config_logger.error(f"Error deleting extractor cache: {e}")
+            return False
+
+    def delete_queue_processor_cache(self):
+        try:
+            url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+            url += f"/delete_cache/{self.extraction_identifier.run_name}/{self.extraction_identifier.extraction_name}"
+
+            response = requests.post(url)
+            response.raise_for_status()
+
+            if response.status_code == 200:
+                config_logger.info(
+                    f"Successfully deleted extractor cache for {self.extraction_identifier.run_name}/{self.extraction_identifier.extraction_name}"
+                )
+                return True
+            else:
+                config_logger.warning(f"Failed to delete extractor cache: status {response.status_code}")
+                return False
+
+        except requests.exceptions.RequestException as e:
+            config_logger.error(f"Error deleting extractor cache: {e}")
+            return False

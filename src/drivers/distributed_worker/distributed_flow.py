@@ -51,12 +51,40 @@ def ensure_fresh_model_folder(extraction_identifier: ExtractionIdentifier, max_a
         path.mkdir(parents=True, exist_ok=True)
 
 
+def cleanup_old_model_folders(max_age_days: int = 3) -> None:
+    models_path = Path(MODELS_DATA_PATH)
+
+    if not models_path.exists():
+        return
+
+    current_time = datetime.now()
+    cache_folders = {"cache"}
+
+    for folder in models_path.iterdir():
+        if not folder.is_dir():
+            continue
+
+        if folder.name in cache_folders:
+            continue
+
+        try:
+            folder_modified_time = datetime.fromtimestamp(folder.stat().st_mtime)
+            age = current_time - folder_modified_time
+
+            if age > timedelta(days=max_age_days):
+                config_logger.info(f"Deleting old model folder: {folder.name} (age: {age.days} days)")
+                shutil.rmtree(folder)
+        except Exception as e:
+            config_logger.error(f"Error deleting old model folder {folder.name}: {e}")
+
+
 def performance_one_method(extractor_job: TrainableEntityExtractorJob) -> Performance:
     extraction_identifier = ExtractionIdentifier(
         run_name=extractor_job.run_name, output_path=MODELS_DATA_PATH, extraction_name=extractor_job.extraction_name
     )
 
-    ensure_fresh_model_folder(extraction_identifier)
+    cleanup_old_model_folders(max_age_days=3)
+    ensure_fresh_model_folder(extraction_identifier=extraction_identifier, max_age_hours=1)
 
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
@@ -76,6 +104,7 @@ def train_one_method(extractor_job: TrainableEntityExtractorJob) -> bool:
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
     sample_processor.delete_cache()
+    sample_processor.delete_queue_processor_cache()
     extraction_data = ExtractionData(
         samples=samples,
         options=extractor_job.options,
@@ -104,6 +133,7 @@ def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> bool:
     samples = sample_processor.get_prediction_samples_for_suggestions()
     extractor_job = extractor_job.set_extractors_path(MODELS_DATA_PATH)
     suggestions = predict_use_case.predict(extractor_job, samples)
+    extraction_identifier.clean_extractor_folder(extractor_job.method_name)
     return _send_suggestions(extraction_identifier, suggestions)[0]
 
 
