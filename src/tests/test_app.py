@@ -883,25 +883,3 @@ class TestApp(TestCase):
         self.assertTrue(response.json())
 
         self.assertFalse(os.path.exists(extractor_identifier.get_path()))
-
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_cancel_training(self):
-        run_name = "test_run"
-        extraction_name = "test_extraction"
-
-        extractor_identifier = ExtractionIdentifier(
-            run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
-        )
-
-        self._create_test_extraction_folder(extractor_identifier)
-
-        self.assertTrue(os.path.exists(extractor_identifier.get_path()))
-        self.assertLessEqual(4, len(os.listdir(extractor_identifier.get_path())))
-
-        with TestClient(app) as client:
-            response = client.post(f"/cancel_training/{run_name}/{extraction_name}")
-
-        self.assertEqual(200, response.status_code)
-        self.assertTrue(response.json())
-
-        self.assertTrue(extractor_identifier.is_training_canceled())

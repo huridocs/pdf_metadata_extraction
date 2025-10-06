@@ -42,6 +42,7 @@ class TestEndToEnd(TestCase):
         requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_text")
         requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_multi_option")
         requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_text")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/cancel_training_test")
 
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
@@ -462,6 +463,73 @@ class TestEndToEnd(TestCase):
         )
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
         self.assertEqual("3", suggestion_2.text)
+
+    def test_cancel_training(self):
+        run_name = "end_to_end_test"
+        extraction_name = "cancel_training_test"
+
+        labeled_data_json = {
+            "run_name": run_name,
+            "extraction_name": extraction_name,
+            "tenant": run_name,
+            "id": extraction_name,
+            "xml_file_name": "test_file.xml",
+            "language_iso": "en",
+            "label_text": "test label",
+            "page_width": 612.0,
+            "page_height": 792.0,
+            "xml_segments_boxes": [
+                {
+                    "left": 100,
+                    "top": 200,
+                    "width": 300,
+                    "height": 40,
+                    "page_width": 612,
+                    "page_height": 792,
+                    "page_number": 1,
+                }
+            ],
+            "label_segments_boxes": [
+                {
+                    "left": 100,
+                    "top": 200,
+                    "width": 300,
+                    "height": 40,
+                    "page_width": 612,
+                    "page_height": 792,
+                    "page_number": 1,
+                }
+            ],
+        }
+
+        response = requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+        self.assertEqual(200, response.status_code)
+
+        response = requests.get(f"{SERVER_URL}/get_samples_training/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        samples_before = response.json()
+        self.assertEqual(1, len(samples_before))
+
+        response = requests.get(f"{SERVER_URL}/is_extractor_cancelled/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        self.assertFalse(response.json()["cancelled"])
+
+        response = requests.post(f"{SERVER_URL}/cancel_training/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(response.json())
+
+        response = requests.get(f"{SERVER_URL}/is_extractor_cancelled/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(response.json()["cancelled"])
+
+        response = requests.get(f"{SERVER_URL}/is_extractor_cancelled/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        self.assertFalse(response.json()["cancelled"])
+
+        response = requests.get(f"{SERVER_URL}/get_samples_training/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        samples_after = response.json()
+        self.assertEqual(0, len(samples_after))
 
     @staticmethod
     def get_results_message() -> ResultsMessage | ParagraphExtractionResultsMessage | None:

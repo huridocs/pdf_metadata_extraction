@@ -190,7 +190,7 @@ async def is_extractor_cancelled(run_name: str, extraction_name: str):
     key = f"{NAME}_training:{run_name}:{extraction_name}:canceled"
     cancelled_flag = r.get(key)
     if cancelled_flag == "true":
-        await r.delete(key)
+        r.delete(key)
     return {"cancelled": cancelled_flag == "true"}
 
 
@@ -198,7 +198,7 @@ async def is_extractor_cancelled(run_name: str, extraction_name: str):
 async def cancel_training(run_name: str, extraction_name: str):
     try:
         r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
-        await r.set(f"{NAME}_training:{run_name}:{extraction_name}:canceled", "true")
+        r.set(f"{NAME}_training:{run_name}:{extraction_name}:canceled", "true")
     except:
         return False
 
