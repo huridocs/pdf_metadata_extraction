@@ -36,6 +36,7 @@ from domain.ResultsMessage import ResultsMessage
 from domain.TasksNames import TasksNames
 from domain.TaskType import TaskType
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
+from drivers.extractors import EXTRACTORS
 from use_cases.GetPerformanceJobUseCase import GetPerformanceJobUseCase
 from use_cases.ParagraphExtractorUseCase import ParagraphExtractorUseCase
 from drivers.queues_processor.PredictionResultBuilder import PredictionResultBuilder
@@ -61,12 +62,6 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             self.cloud_provider = GoogleV2Repository(server_parameters=server_parameters, service_logger=config_logger)
         except:
             self.cloud_provider = None
-        self.extractors: list[type[ExtractorBase]] = [
-            PdfToMultiOptionExtractor,
-            TextToMultiOptionExtractor,
-            PdfToTextExtractor,
-            TextToTextExtractor,
-        ]
 
     def process_message(self, queue_name: str, message: dict[str, Any]) -> QueueProcessResults:
         task_type = self._validate_and_parse_message(message)
@@ -160,7 +155,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         get_performance_job_use_case = GetPerformanceJobUseCase(
             extraction_identifier, task.params.options, task.params.multi_value
         )
-        distributed_job = get_performance_job_use_case.get_distributed_job(queue_name, self.extractors, self.logger)
+        distributed_job = get_performance_job_use_case.get_distributed_job(queue_name, EXTRACTORS, self.logger)
         self.orchestrator.add_job(distributed_job)
         return self.process(queue_name)
 

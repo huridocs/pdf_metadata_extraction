@@ -7,34 +7,20 @@ from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloud
 from ml_cloud_connector.domain.ServerParameters import ServerParameters
 from ml_cloud_connector.domain.ServerType import ServerType
 from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
-from trainable_entity_extractor.adapters.extractors.pdf_to_multi_option_extractor.PdfToMultiOptionExtractor import (
-    PdfToMultiOptionExtractor,
-)
-from trainable_entity_extractor.adapters.extractors.pdf_to_text_extractor.PdfToTextExtractor import PdfToTextExtractor
-from trainable_entity_extractor.adapters.extractors.text_to_multi_option_extractor.TextToMultiOptionExtractor import (
-    TextToMultiOptionExtractor,
-)
-from trainable_entity_extractor.adapters.extractors.text_to_text_extractor.TextToTextExtractor import TextToTextExtractor
 from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.domain.ExtractionData import ExtractionData
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
 from trainable_entity_extractor.domain.Performance import Performance
 from trainable_entity_extractor.domain.Suggestion import Suggestion
-from trainable_entity_extractor.ports.ExtractorBase import ExtractorBase
 from trainable_entity_extractor.use_cases.PredictUseCase import PredictUseCase
 from trainable_entity_extractor.use_cases.TrainUseCase import TrainUseCase
 
 from adapters.CloudModelStorage import CloudModelStorage
 from config import SERVICE_HOST, SERVICE_PORT, MODELS_DATA_PATH
+from drivers.extractors import EXTRACTORS
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
-EXTRACTORS: list[type[ExtractorBase]] = [
-    PdfToMultiOptionExtractor,
-    TextToMultiOptionExtractor,
-    PdfToTextExtractor,
-    TextToTextExtractor,
-]
 
 logger = ExtractorLogger()
 train_use_case = TrainUseCase(EXTRACTORS, logger)
