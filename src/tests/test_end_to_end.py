@@ -566,6 +566,7 @@ class TestEndToEnd(TestCase):
             params=Params(id=extraction_id),
         )
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+        time.sleep(60 * 3)
         self.get_results_message()
 
         predict_data_json = {
