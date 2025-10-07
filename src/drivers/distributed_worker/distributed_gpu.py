@@ -3,11 +3,10 @@ import os
 import torch
 from celery import Celery
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
-from trainable_entity_extractor.domain.Option import Option
-from trainable_entity_extractor.domain.Performance import Performance
 
+from drivers.distributed_worker.distributed_no_gpu import predict_no_gpu, train_no_gpu, performance_no_gpu
 from config import REDIS_HOST, REDIS_PORT, NAME
-from drivers.distributed_worker.distributed_flow import distributed_predict, train_one_method, performance_one_method
+from drivers.distributed_worker.distributed_flow import train_one_method, performance_one_method
 
 app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
@@ -15,22 +14,19 @@ app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis:
 @app.task
 def predict_gpu(extractor_job_dict: dict) -> bool:
     is_gpu_available()
-    extractor_job = TrainableEntityExtractorJob.model_validate(extractor_job_dict)
-    return distributed_predict(extractor_job)
+    return predict_no_gpu(extractor_job_dict)
 
 
 @app.task
 def train_gpu(extractor_job_dict: dict) -> bool:
     is_gpu_available()
-    extractor_job = TrainableEntityExtractorJob.model_validate(extractor_job_dict)
-    return train_one_method(extractor_job)
+    return train_no_gpu(extractor_job_dict)
 
 
 @app.task
 def performance_gpu(extractor_job_dict: dict) -> dict:
     is_gpu_available()
-    extractor_job = TrainableEntityExtractorJob.model_validate(extractor_job_dict)
-    return performance_one_method(extractor_job).model_dump()
+    return performance_no_gpu(extractor_job_dict)
 
 
 def is_gpu_available():

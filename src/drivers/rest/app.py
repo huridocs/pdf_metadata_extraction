@@ -220,20 +220,25 @@ async def cancel_training(run_name: str, extraction_name: str):
     return True
 
 
-@app.post("/delete_cache/{run_name}/{extraction_name}")
-async def delete_cache(run_name: str, extraction_name: str):
+async def _delete_cache_logic(run_name: str, extraction_name: str) -> bool:
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
     try:
         shutil.rmtree(extraction_identifier.get_path(), ignore_errors=True)
+        config_logger.info(f"Folder deleted for {run_name}/{extraction_name}")
+
         samples_processor = SampleProcessorUseCase(extraction_identifier)
         samples_processor.delete_cache()
-        config_logger.info(f"Successfully deleted extractor cache for {run_name}/{extraction_name}")
         return True
     except Exception as e:
         config_logger.error(f"Error deleting extractor cache for {run_name}/{extraction_name}: {e}")
         return False
+
+
+@app.post("/delete_cache/{run_name}/{extraction_name}")
+async def delete_cache(run_name: str, extraction_name: str):
+    return await _delete_cache_logic(run_name, extraction_name)
 
 
 @app.delete("/{run_name}/{extraction_name}")
@@ -241,23 +246,33 @@ async def delete_extractor(run_name: str, extraction_name: str):
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
-    shutil.rmtree(extraction_identifier.get_path(), ignore_errors=True)
-    app.persistence_repository.load_and_delete_labeled_data(extraction_identifier)
-    app.persistence_repository.load_and_delete_prediction_data(extraction_identifier)
+
+    await _delete_cache_logic(run_name, extraction_name)
 
     try:
-        samples_processor = SampleProcessorUseCase(extraction_identifier)
-        samples_processor.delete_cache()
+        app.persistence_repository.load_and_delete_labeled_data(extraction_identifier)
+    except Exception as e:
+        config_logger.error(f"Error deleting labeled data for {run_name}/{extraction_name}: {e}")
 
+    try:
+        app.persistence_repository.load_and_delete_prediction_data(extraction_identifier)
+    except Exception as e:
+        config_logger.error(f"Error deleting prediction data for {run_name}/{extraction_name}: {e}")
+
+    try:
         if GoogleCloudStorage.could_be_configured():
             server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
             google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
             google_cloud_storage.delete_from_cloud(run_name, extraction_name)
-            config_logger.info(f"Deleted extractor from cloud storage for {run_name}/{extraction_name}")
+            config_logger.info(f"Successfully deleted extractor from cloud storage for {run_name}/{extraction_name}")
+        else:
+            config_logger.info(
+                f"Google Cloud Storage not configured, skipping cloud deletion for {run_name}/{extraction_name}"
+            )
     except Exception as e:
-        config_logger.error(f"Error during deletion of extractor {run_name}/{extraction_name}: {e}")
-        pass
+        config_logger.error(f"Error during cloud storage deletion for {run_name}/{extraction_name}: {e}")
 
+    config_logger.info(f"Completed deletion process for {run_name}/{extraction_name}")
     return True
 
 
