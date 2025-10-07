@@ -39,7 +39,7 @@ services:
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
     init: true
-    entrypoint: [ "celery", "-A", "drivers.distributed_worker.distributed_no_gpu", "worker", "--loglevel=info", "--concurrency=1" ]
+    entrypoint: [ "celery", "-A", "drivers.distributed_worker.distributed_no_gpu", "worker", "--loglevel=info", "--concurrency=1", "--pool=threads" ]
     restart: unless-stopped
     build:
       context: .

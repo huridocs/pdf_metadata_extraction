@@ -42,6 +42,7 @@ class TestEndToEnd(TestCase):
         requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_text")
         requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_multi_option")
         requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_text")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_text_gpu")
         requests.delete(f"{SERVER_URL}/end_to_end_test/cancel_training_test")
 
     def test_redis_message_to_ignore(self):
@@ -530,6 +531,80 @@ class TestEndToEnd(TestCase):
         self.assertEqual(200, response.status_code)
         samples_after = response.json()
         self.assertEqual(0, len(samples_after))
+
+    def test_text_to_text_gpu(self):
+        tenant = "end_to_end_test"
+        extraction_id = "text_to_text_gpu"
+
+        for i in range(25):
+            labeled_data_json = {
+                "id": extraction_id,
+                "tenant": tenant,
+                "entity_name": f"entity_name_1_{i}",
+                "language_iso": "en",
+                "label_text": "output_not_in_input",
+                "source_text": "Option 1",
+            }
+            requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        for i in range(25):
+            labeled_data_json = {
+                "id": extraction_id,
+                "tenant": tenant,
+                "entity_name": f"entity_name_2_{i}",
+                "language_iso": "en",
+                "label_text": "another_output_not_in_input",
+                "source_text": "Option 2",
+            }
+            requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id),
+        )
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+        self.get_results_message()
+
+        predict_data_json = {
+            "tenant": tenant,
+            "id": extraction_id,
+            "source_text": "Option 1",
+            "entity_name": "entity_name_1_0",
+        }
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        predict_data_json = {
+            "tenant": tenant,
+            "id": extraction_id,
+            "source_text": "Option 2",
+            "entity_name": "entity_name_2_0",
+        }
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="suggestions",
+            params=Params(id=extraction_id, metadata={"name": "test"}),
+        )
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        results_message = self.get_results_message()
+        response = requests.get(results_message.data_url)
+
+        suggestions = json.loads(response.json())
+        suggestion_1 = Suggestion(**suggestions[0])
+        suggestion_2 = Suggestion(**suggestions[1])
+
+        self.assertEqual(2, len(suggestions))
+        self.assertEqual(tenant, suggestion_1.tenant)
+        self.assertEqual(extraction_id, suggestion_1.id)
+        self.assertEqual("entity_name_1_0", suggestion_1.entity_name)
+        self.assertEqual("output_not_in_input", suggestion_1.text)
+        self.assertEqual(tenant, suggestion_2.tenant)
+        self.assertEqual(extraction_id, suggestion_2.id)
+        self.assertEqual("entity_name_2_0", suggestion_2.entity_name)
+        self.assertEqual("another_output_not_in_input", suggestion_2.text)
 
     @staticmethod
     def get_results_message() -> ResultsMessage | ParagraphExtractionResultsMessage | None:
