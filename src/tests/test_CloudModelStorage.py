@@ -25,6 +25,7 @@ class TestCloudModelStorage(unittest.TestCase):
         self.logger = MagicMock()
         self.cloud_storage = CloudModelStorage(self.google_cloud_storage, self.logger)
 
+    @unittest.skipIf(GoogleCloudStorage.could_be_configured() is False, "Google Cloud Storage not configured")
     def test_upload_model(self):
         extraction_identifier = ExtractionIdentifier(
             run_name="test_run", extraction_name="test_extraction", output_path=MODELS_DATA_PATH
@@ -68,6 +69,7 @@ class TestCloudModelStorage(unittest.TestCase):
         self.assertTrue(result)
         self.logger.log.assert_called()
 
+    @unittest.skipIf(GoogleCloudStorage.could_be_configured() is False, "Google Cloud Storage not configured")
     def test_download_model(self):
         extraction_identifier = ExtractionIdentifier(
             run_name="test_run", extraction_name="test_extraction", output_path=MODELS_DATA_PATH
