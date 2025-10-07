@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import time
+import unittest
 from unittest import TestCase
 
 from pdf_token_type_labels.TokenType import TokenType
@@ -532,6 +533,7 @@ class TestEndToEnd(TestCase):
         samples_after = response.json()
         self.assertEqual(0, len(samples_after))
 
+    @unittest.skip("Skipping GPU test in CI")
     def test_text_to_text_gpu(self):
         tenant = "end_to_end_test"
         extraction_id = "text_to_text_gpu"

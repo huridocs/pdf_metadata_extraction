@@ -31,7 +31,7 @@ class CloudModelStorage(ModelStorage):
                 return True
 
             source_path = Path(extraction_identifier.get_path())
-            cloud_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
+            cloud_path = Path(extraction_identifier.run_name)
             self.google_cloud_storage.upload_to_cloud(str(cloud_path), source_path)
             self.logger.log(extraction_identifier, f"Model uploaded to cloud storage from {source_path}")
             return True
@@ -55,7 +55,7 @@ class CloudModelStorage(ModelStorage):
             if destination_path is None:
                 destination_path = extraction_identifier.get_path()
 
-            self.google_cloud_storage.copy_from_cloud(Path(destination_path), cloud_path)
+            self.google_cloud_storage.copy_from_cloud(cloud_path, Path(destination_path).parent)
             self.logger.log(extraction_identifier, f"Model downloaded from cloud storage to {destination_path}")
             return True
 
@@ -73,8 +73,11 @@ class CloudModelStorage(ModelStorage):
                 self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
                 return None
 
-            cloud_job_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name, EXTRACTOR_JOB_PATH)
-            local_path.parent.mkdir(parents=True, exist_ok=True)
+            cloud_base_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
+            cloud_job_path = cloud_base_path / EXTRACTOR_JOB_PATH
+
+            local_base_path = Path(extraction_identifier.get_path())
+            local_base_path.mkdir(parents=True, exist_ok=True)
 
             self.google_cloud_storage.copy_from_cloud(cloud_job_path, local_path)
 
