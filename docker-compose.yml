@@ -1,46 +1,11 @@
+include:
+  - docker-compose.base.yml
+
 services:
-  pdf_metadata_extraction_api:
-    container_name: pdf_metadata_extraction_api
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--workers", "1", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"  ]
-    init: true
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - data:/app/models_data
-    depends_on:
-      - pdf_metadata_extraction_queue_processor
-    environment:
-      - ENVIRONMENT=${ENVIRONMENT:-development}
-      - SENTRY_DSN=${SENTRY_DSN:-}
-    ports:
-      - "5056:5056"
-    env_file: .env
-    network_mode: host
-  pdf_metadata_extraction_queue_processor:
-    container_name: pdf_metadata_extraction_queue_processor
-    init: true
-    entrypoint: [ "python", "-m", "src.drivers.queues_processor.start_queue_processor" ]
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - data:/app/models_data
-    depends_on:
-      - mongo_metadata_extraction
-      - redis_metadata_extraction
-    environment:
-      - ENVIRONMENT=${ENVIRONMENT:-development}
-      - SENTRY_DSN=${SENTRY_DSN:-}
-      - NO_GPU=true
-    network_mode: host
-    env_file: .env
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
     init: true
-    entrypoint: [ "celery", "-A", "drivers.distributed_worker.distributed_no_gpu", "worker", "--loglevel=info", "--concurrency=1", "--pool=threads" ]
+    entrypoint: [ "celery", "-A", "drivers.distributed_worker.distributed_no_gpu", "worker", "--loglevel=info", "--concurrency=1", "--pool=solo" ]
     restart: unless-stopped
     build:
       context: .
@@ -52,30 +17,3 @@ services:
       - SENTRY_DSN=${SENTRY_DSN:-}
     network_mode: host
     env_file: .env
-  mongo_metadata_extraction:
-    restart: unless-stopped
-    command: mongod --port 29017
-    image: "mongo:7.0.12"
-    network_mode: host
-    ports:
-      - "29017:29017"
-  redis_metadata_extraction:
-    restart: unless-stopped
-    image: "redis:7.2.5"
-    command: redis-server
-    environment:
-      - REDIS_REPLICATION_MODE=master
-    network_mode: host
-    ports:
-      - "6379:6379"
-  redis_commander:
-    container_name: redis_commander
-    image: "rediscommander/redis-commander:latest"
-    restart: unless-stopped
-    environment:
-      - REDIS_HOSTS=local:redis_metadata_extraction:6379
-    ports:
-      - "8081:8081"
-    network_mode: host
-volumes:
-  data:

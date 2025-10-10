@@ -67,26 +67,34 @@ class CloudModelStorage(ModelStorage):
         try:
             local_path = Path(extraction_identifier.get_path(), EXTRACTOR_JOB_PATH)
             if local_path.exists():
-                return LocalModelStorage().get_extractor_job(extraction_identifier)
+                with open(local_path, "r", encoding="utf-8") as f:
+                    job_data = json.load(f)
+                    return TrainableEntityExtractorJob(**job_data)
 
             if self.google_cloud_storage is None:
-                self.logger.log(extraction_identifier, "Google Cloud Storage not available", "error")
+                self.logger.log(extraction_identifier, "Google Cloud Storage not available", LogSeverity.error)
                 return None
 
             cloud_base_path = Path(extraction_identifier.run_name, extraction_identifier.extraction_name)
-            cloud_job_path = cloud_base_path / EXTRACTOR_JOB_PATH
+            cloud_job_path = cloud_base_path / EXTRACTOR_JOB_PATH.parent
 
             local_base_path = Path(extraction_identifier.get_path())
             local_base_path.mkdir(parents=True, exist_ok=True)
 
-            self.google_cloud_storage.copy_from_cloud(cloud_job_path, local_path)
+            self.google_cloud_storage.copy_from_cloud(cloud_job_path, local_base_path)
 
-            with open(local_path, "r", encoding="utf-8") as f:
-                job_data = json.load(f)
-                return self.deserialize_job_from_dict(job_data)
+            if local_path.exists():
+                with open(local_path, "r", encoding="utf-8") as f:
+                    job_data = json.load(f)
+                    return TrainableEntityExtractorJob(**job_data)
+            else:
+                self.logger.log(
+                    extraction_identifier, f"Extractor job file not found after download: {local_path}", LogSeverity.error
+                )
+                return None
 
         except Exception as e:
-            self.logger.log(extraction_identifier, f"Failed to get extractor job from cloud: {e}", "error")
+            self.logger.log(extraction_identifier, f"Failed to get extractor job from cloud: {e}", LogSeverity.error)
             return None
 
     @staticmethod
@@ -100,7 +108,7 @@ class CloudModelStorage(ModelStorage):
             return False
 
         for file in files:
-            if file.name != EXTRACTOR_JOB_PATH.parent:
+            if file.name != EXTRACTOR_JOB_PATH.name:
                 return True
 
         return False

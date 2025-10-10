@@ -85,3 +85,22 @@ class TestCloudModelStorage(unittest.TestCase):
 
         downloaded_job = self.cloud_storage.get_extractor_job(extraction_identifier)
         self.assertIsNotNone(downloaded_job)
+
+    def test_get_extractor_job_from_cloud(self):
+        extraction_identifier = ExtractionIdentifier(
+            run_name="right", extraction_name="68e9016daab14476dcab7ab0", output_path=MODELS_DATA_PATH
+        )
+
+        local_path = Path(extraction_identifier.get_path())
+        if local_path.exists():
+            shutil.rmtree(local_path)
+
+        extractor_job = self.cloud_storage.get_extractor_job(extraction_identifier)
+
+        self.assertIsNotNone(extractor_job, "Extractor job should be downloaded from cloud")
+        self.assertEqual(extractor_job.run_name, "right")
+        self.assertEqual(extractor_job.extraction_name, "68e9016daab14476dcab7ab0")
+        self.assertIsNotNone(extractor_job.extractor_name)
+        self.assertIsNotNone(extractor_job.method_name)
+
+        self.assertTrue(local_path.exists(), "Extractor job file should exist locally after download")
