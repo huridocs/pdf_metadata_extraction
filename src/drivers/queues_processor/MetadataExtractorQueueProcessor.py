@@ -147,6 +147,8 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             extraction_identifier, task.params.options, task.params.multi_value
         )
         distributed_job = get_performance_job_use_case.get_distributed_job(queue_name, EXTRACTORS, self.logger)
+        methods_names = [sub_job.extractor_job.method_name for sub_job in distributed_job.sub_jobs]
+        self.logger.log(extraction_identifier, f"Created sub-jobs for methods: {methods_names}")
         self.orchestrator.add_job(distributed_job)
         return self.process(queue_name)
 

@@ -31,6 +31,15 @@ class GetPerformanceJobUseCase:
             multi_value=self.multi_value,
             extraction_identifier=self.extraction_identifier,
         )
+
+        logger.log(
+            self.extraction_identifier,
+            f"Creating performance job for {len(samples)} samples, "
+            f"{'multi-value' if extraction_data.multi_value else 'single-value'}, "
+            f"{len(extraction_data.options)} options, "
+            f"languages: {set(sample.labeled_data.language_iso for sample in samples)}",
+        )
+
         train_use_case = TrainUseCase(extractors, logger)
 
         extractor_jobs = train_use_case.get_jobs(extraction_data)

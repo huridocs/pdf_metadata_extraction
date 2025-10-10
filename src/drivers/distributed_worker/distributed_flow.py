@@ -85,9 +85,12 @@ def performance_one_method(extractor_job: TrainableEntityExtractorJob) -> Perfor
 
     cleanup_old_model_folders(max_age_days=3)
     ensure_fresh_model_folder(extraction_identifier=extraction_identifier, max_age_hours=1)
+    if extractor_job.method_name:
+        shutil.rmtree(Path(extraction_identifier.get_path()) / extractor_job.method_name, ignore_errors=True)
 
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
+
     extraction_data = ExtractionData(
         samples=samples,
         options=extractor_job.options,

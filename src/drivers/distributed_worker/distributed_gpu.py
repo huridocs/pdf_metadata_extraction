@@ -1,4 +1,6 @@
 import os
+import time
+
 from celery import Celery
 from celery.schedules import crontab
 from trainable_entity_extractor.config import config_logger
@@ -8,11 +10,13 @@ from config import REDIS_HOST, REDIS_PORT, NAME
 
 app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
+WORKER_START_TIME = time.time()
+GRACE_PERIOD_SECONDS = 60 * 30
 
 app.conf.beat_schedule = {
     "health-check-every-3-hours": {
         "task": "drivers.distributed_worker.distributed_gpu.scheduled_health_check",
-        "schedule": crontab(minute="0", hour="*/3"),  # every 3 hours
+        "schedule": crontab(minute="0", hour="*/3"),
         "options": {
             "expires": 30,
         },
@@ -23,6 +27,11 @@ app.conf.beat_schedule = {
 @app.task
 def scheduled_health_check():
     config_logger.info("Scheduled health check executed.")
+
+    uptime = time.time() - WORKER_START_TIME
+    if uptime < GRACE_PERIOD_SECONDS:
+        return
+
     if not has_pending_tasks():
         config_logger.info("No pending tasks found. Exiting worker.")
         os._exit(1)

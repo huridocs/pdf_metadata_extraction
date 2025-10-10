@@ -566,7 +566,7 @@ class TestEndToEnd(TestCase):
             params=Params(id=extraction_id),
         )
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
-        time.sleep(60 * 3)
+        time.sleep(60 * 6)
         self.get_results_message()
 
         predict_data_json = {
@@ -608,6 +608,107 @@ class TestEndToEnd(TestCase):
         self.assertEqual(extraction_id, suggestion_2.id)
         self.assertEqual("entity_name_2_0", suggestion_2.entity_name)
         self.assertEqual("another_output_not_in_input", suggestion_2.text)
+
+    @unittest.skip("Skipping GPU test in CI")
+    def test_pdf_to_multi_option_gpu(self):
+        tenant = "end_to_end_test"
+        extraction_id = "pdf_to_multi_option"
+        test_xml_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_train/test.xml"
+        spanish_xml_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_train/spanish.xml"
+
+        xml_paths = [
+            (test_xml_path, "test", "1"),
+            (spanish_xml_path, "spanish", "2"),
+        ]
+
+        for xml_path, name_prefix, option_id in xml_paths:
+            for i in range(5):
+                new_xml_path = f"{MODELS_DATA_PATH}/{name_prefix}_{i}.xml"
+                shutil.copyfile(xml_path, new_xml_path)
+
+                with open(new_xml_path, mode="rb") as stream:
+                    files = {"file": stream}
+                    requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
+
+                os.remove(new_xml_path)
+
+                is_mislabeled = (name_prefix == "test" and i == 3) or (name_prefix == "spanish" and i == 4)
+
+                if is_mislabeled:
+                    wrong_option_id = "2" if option_id == "1" else "1"
+                    wrong_label = "spanish PDF" if name_prefix == "test" else "test PDF"
+                    labeled_data_json = {
+                        "id": extraction_id,
+                        "tenant": tenant,
+                        "xml_file_name": f"{name_prefix}_{i}.xml",
+                        "language_iso": "en",
+                        "values": [{"id": wrong_option_id, "label": wrong_label}],
+                        "page_width": 612,
+                        "page_height": 792,
+                        "xml_segments_boxes": [],
+                    }
+                else:
+                    labeled_data_json = {
+                        "id": extraction_id,
+                        "tenant": tenant,
+                        "xml_file_name": f"{name_prefix}_{i}.xml",
+                        "language_iso": "en",
+                        "values": [{"id": option_id, "label": f"{name_prefix} PDF"}],
+                        "page_width": 612,
+                        "page_height": 792,
+                        "xml_segments_boxes": [],
+                    }
+                requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        options = [Option(id="1", label="test PDF"), Option(id="2", label="spanish PDF")]
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id, multi_value=False, options=options),
+        )
+
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+        time.sleep(60 * 6)
+        self.get_results_message()
+
+        for xml_path, expected_label, _ in xml_paths:
+            xml_filename = os.path.basename(xml_path)
+
+            with open(xml_path, mode="rb") as stream:
+                files = {"file": stream}
+                requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
+
+            predict_data_json = {
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": xml_filename,
+                "page_width": 612,
+                "page_height": 792,
+                "xml_segments_boxes": [],
+            }
+
+            requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+            task = TrainableEntityExtractionTask(
+                tenant=tenant,
+                task="suggestions",
+                params=Params(id=extraction_id),
+            )
+
+            QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+            results_message = self.get_results_message()
+            assert results_message.data_url is not None, "Data URL should not be None"
+            response = requests.get(results_message.data_url)
+
+            suggestions = json.loads(response.json())
+            suggestion = Suggestion(**suggestions[0])
+            self.assertEqual(1, len(suggestions))
+            self.assertEqual(tenant, suggestion.tenant)
+            self.assertEqual(extraction_id, suggestion.id)
+            self.assertEqual(xml_filename, suggestion.xml_file_name)
+            self.assertEqual(1, len(suggestion.values))
+            self.assertEqual(Value(id="1", label="test PDF"), suggestion.values[0])
 
     @staticmethod
     def get_results_message() -> ResultsMessage | ParagraphExtractionResultsMessage | None:

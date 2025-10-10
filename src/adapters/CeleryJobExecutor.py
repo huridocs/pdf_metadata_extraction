@@ -10,7 +10,7 @@ from trainable_entity_extractor.ports.JobExecutor import JobExecutor
 from trainable_entity_extractor.ports.Logger import Logger
 
 from adapters.CloudModelStorage import CloudModelStorage
-from config import NAME, REDIS_HOST, REDIS_PORT
+from config import NAME, REDIS_HOST, REDIS_PORT, NO_GPU
 from drivers.distributed_worker.distributed_gpu import train_gpu, performance_gpu, predict_gpu
 from drivers.distributed_worker.distributed_no_gpu import train_no_gpu, performance_no_gpu, predict_no_gpu
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
@@ -24,6 +24,10 @@ class CeleryJobExecutor(JobExecutor):
     def start_performance_evaluation(
         self, extraction_identifier: ExtractionIdentifier, distributed_sub_job: DistributedSubJob
     ):
+        if NO_GPU and distributed_sub_job.extractor_job.gpu_needed:
+            distributed_sub_job.status = JobStatus.CANCELED
+            return
+
         try:
             extractor_job = distributed_sub_job.extractor_job
             if extractor_job.gpu_needed:
@@ -34,7 +38,7 @@ class CeleryJobExecutor(JobExecutor):
             distributed_sub_job.job_id = celery_result.id
             distributed_sub_job.status = JobStatus.RUNNING
         except KeyError:
-            distributed_sub_job.status = JobStatus.WAITING
+            distributed_sub_job.status = JobStatus.PENDING
             self.logger.log(
                 extraction_identifier,
                 f"Asynchronous Job did not start for {distributed_sub_job.extractor_job.method_name}: "
@@ -60,7 +64,7 @@ class CeleryJobExecutor(JobExecutor):
             distributed_sub_job.job_id = train_result.id
             distributed_sub_job.status = JobStatus.RUNNING
         except KeyError:
-            distributed_sub_job.status = JobStatus.WAITING
+            distributed_sub_job.status = JobStatus.PENDING
             self.logger.log(
                 extraction_identifier,
                 f"Asynchronous Job did not start for {distributed_sub_job.extractor_job.method_name}: "
@@ -76,7 +80,7 @@ class CeleryJobExecutor(JobExecutor):
             distributed_sub_job.status = JobStatus.FAILURE
 
     def start_prediction(self, extraction_identifier: ExtractionIdentifier, distributed_sub_job: DistributedSubJob):
-        if distributed_sub_job.status != JobStatus.WAITING:
+        if distributed_sub_job.status != JobStatus.PENDING:
             return
 
         try:
@@ -89,7 +93,7 @@ class CeleryJobExecutor(JobExecutor):
             distributed_sub_job.job_id = celery_result.id
             distributed_sub_job.status = JobStatus.RUNNING
         except KeyError:
-            distributed_sub_job.status = JobStatus.WAITING
+            distributed_sub_job.status = JobStatus.PENDING
             self.logger.log(
                 extraction_identifier,
                 f"Asynchronous Job did not start for {distributed_sub_job.extractor_job.method_name}: "
