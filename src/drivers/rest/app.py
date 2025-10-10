@@ -2,11 +2,14 @@ import os
 import shutil
 from contextlib import asynccontextmanager
 import json
-
+import redis
+from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
+from ml_cloud_connector.domain.ServerParameters import ServerParameters
+from ml_cloud_connector.domain.ServerType import ServerType
 from queue_processor.QueueProcessor import QueueProcessor
+from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
 from trainable_entity_extractor.domain.Suggestion import Suggestion
-from trainable_entity_extractor.use_cases.XmlFile import XmlFile
-from trainable_entity_extractor.use_cases.send_logs import send_logs
+from trainable_entity_extractor.domain.XmlFile import XmlFile
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
@@ -19,19 +22,20 @@ from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIde
 from trainable_entity_extractor.domain.LabeledData import LabeledData
 from trainable_entity_extractor.domain.PredictionData import PredictionData
 
-from config import MODELS_DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME
+from config import MODELS_DATA_PATH, REDIS_HOST, REDIS_PORT, PARAGRAPH_EXTRACTION_NAME, NAME
 from domain.ParagraphExtractionData import ParagraphExtractionData
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
 from domain.XML import XML
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
 from drivers.rest.catch_exceptions import catch_exceptions
-from drivers.rest.file_cache import file_cache_manager
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
+from use_cases.SamplesCacheUseCase import SamplesCacheUseCase
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.persistence_repository = MongoPersistenceRepository()
+    app.logger = ExtractorLogger()
     yield
     app.persistence_repository.close()
 
@@ -104,8 +108,7 @@ async def labeled_data_post(labeled_data: LabeledData):
     app.persistence_repository.save_labeled_data(extraction_identifier, labeled_data)
 
     try:
-        training_cache_key = file_cache_manager.get_training_cache_key(labeled_data.tenant, labeled_data.id)
-        file_cache_manager.delete_cache(training_cache_key)
+        SampleProcessorUseCase(extraction_identifier).delete_cache()
         config_logger.info(f"Deleted training cache for {labeled_data.tenant}/{labeled_data.id}")
     except Exception:
         pass
@@ -116,23 +119,22 @@ async def labeled_data_post(labeled_data: LabeledData):
 @app.get("/get_samples_training/{run_name}/{extraction_name}")
 @catch_exceptions
 async def get_samples_training(run_name: str, extraction_name: str):
-    file_cache_manager.cleanup_expired_cache()
-    cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
-    cached_samples = file_cache_manager.get_cached_samples(cache_key)
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
+    samples_cache = SamplesCacheUseCase()
+    samples_cache.cleanup_expired_cache()
+    cache_key = samples_cache.get_training_cache_key(run_name, extraction_name)
+    cached_samples = samples_cache.get_cached_samples(cache_key)
 
     if cached_samples is not None:
         config_logger.info(f"Returning cached training samples from file for {run_name}/{extraction_name}")
         return cached_samples
 
-    extraction_identifier = ExtractionIdentifier(
-        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
-    )
-    labeled_data = app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 50)
-    samples = SampleProcessorUseCase.get_samples_for_training(
-        extraction_identifier=extraction_identifier, labeled_data_list=labeled_data
-    )
+    labeled_data = app.persistence_repository.load_and_delete_labeled_data(extraction_identifier)
+    samples = SampleProcessorUseCase(extraction_identifier).get_samples_for_training(labeled_data_list=labeled_data)
 
-    file_cache_manager.cache_samples(cache_key, samples)
+    samples_cache.cache_samples(cache_key, samples)
     config_logger.info(f"Cached training samples to file for {run_name}/{extraction_name}")
 
     return samples
@@ -141,22 +143,11 @@ async def get_samples_training(run_name: str, extraction_name: str):
 @app.get("/get_samples_prediction/{run_name}/{extraction_name}")
 @catch_exceptions
 async def get_samples_prediction(run_name: str, extraction_name: str):
-    file_cache_manager.cleanup_expired_cache()
-    cache_key = file_cache_manager.get_prediction_cache_key(run_name, extraction_name)
-    cached_samples = file_cache_manager.get_cached_samples(cache_key)
-
-    if cached_samples is not None:
-        config_logger.info(f"Returning cached prediction samples from file for {run_name}/{extraction_name}")
-        return cached_samples
-
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
-    prediction_data = app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 50)
-    samples = SampleProcessorUseCase.get_prediction_samples(
-        extractor_identifier=extraction_identifier, prediction_data_list=prediction_data
-    )
-    file_cache_manager.cache_samples(cache_key, samples)
+    prediction_data = app.persistence_repository.load_and_delete_prediction_data(extraction_identifier)
+    samples = SampleProcessorUseCase(extraction_identifier).get_prediction_samples(prediction_data_list=prediction_data)
     config_logger.info(f"Cached prediction samples to file for {run_name}/{extraction_name}")
 
     return samples
@@ -169,14 +160,6 @@ async def prediction_data_post(prediction_data: PredictionData):
         run_name=prediction_data.tenant, extraction_name=prediction_data.id, output_path=MODELS_DATA_PATH
     )
     app.persistence_repository.save_prediction_data(extraction_identifier, prediction_data)
-
-    prediction_cache_key = file_cache_manager.get_prediction_cache_key(prediction_data.tenant, prediction_data.id)
-    try:
-        file_cache_manager.delete_cache(prediction_cache_key)
-        config_logger.info(f"Deleted prediction cache for {prediction_data.tenant}/{prediction_data.id}")
-    except Exception:
-        pass
-
     return "prediction data saved"
 
 
@@ -188,7 +171,7 @@ async def get_suggestions(run_name: str, extraction_name: str):
     )
     suggestions = app.persistence_repository.load_suggestions(extraction_identifier)
     suggestions_list = [x.scale_up().to_output() for x in suggestions]
-    send_logs(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
+    app.logger.log(extraction_identifier, f"{len(suggestions_list)} suggestions queried")
 
     return json.dumps(suggestions_list)
 
@@ -200,30 +183,62 @@ async def save_suggestions(run_name: str, extraction_name: str, suggestions: lis
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
     app.persistence_repository.save_suggestions(extraction_identifier, suggestions)
-    send_logs(extraction_identifier, f"{len(suggestions)} suggestions saved")
+    app.logger.log(extraction_identifier, f"{len(suggestions)} suggestions saved")
     return True
+
+
+@app.get("/is_extractor_cancelled/{run_name}/{extraction_name}")
+async def is_extractor_cancelled(run_name: str, extraction_name: str):
+    r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+    key = f"{NAME}_training:{run_name}:{extraction_name}:canceled"
+    cancelled_flag = r.get(key)
+    if cancelled_flag == "true":
+        r.delete(key)
+    return {"cancelled": cancelled_flag == "true"}
 
 
 @app.post("/cancel_training/{run_name}/{extraction_name}")
 async def cancel_training(run_name: str, extraction_name: str):
+    try:
+        r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+        r.set(f"{NAME}_training:{run_name}:{extraction_name}:canceled", "true")
+    except:
+        return False
+
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
-    app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 5000000)
-    extraction_identifier.cancel_training()
+
+    app.persistence_repository.load_and_delete_labeled_data(extraction_identifier)
 
     try:
-        training_cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
-        file_cache_manager.delete_cache(training_cache_key)
-    except Exception:
-        pass
-    try:
-        prediction_cache_key = file_cache_manager.get_prediction_cache_key(run_name, extraction_name)
-        file_cache_manager.delete_cache(prediction_cache_key)
+        samples_processor = SampleProcessorUseCase(extraction_identifier)
+        samples_processor.delete_cache()
     except Exception:
         pass
 
     return True
+
+
+async def _delete_cache_logic(run_name: str, extraction_name: str) -> bool:
+    extraction_identifier = ExtractionIdentifier(
+        run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
+    )
+    try:
+        shutil.rmtree(extraction_identifier.get_path(), ignore_errors=True)
+        config_logger.info(f"Folder deleted for {run_name}/{extraction_name}")
+
+        samples_processor = SampleProcessorUseCase(extraction_identifier)
+        samples_processor.delete_cache()
+        return True
+    except Exception as e:
+        config_logger.error(f"Error deleting extractor cache for {run_name}/{extraction_name}: {e}")
+        return False
+
+
+@app.post("/delete_cache/{run_name}/{extraction_name}")
+async def delete_cache(run_name: str, extraction_name: str):
+    return await _delete_cache_logic(run_name, extraction_name)
 
 
 @app.delete("/{run_name}/{extraction_name}")
@@ -231,21 +246,33 @@ async def delete_extractor(run_name: str, extraction_name: str):
     extraction_identifier = ExtractionIdentifier(
         run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
     )
-    shutil.rmtree(extraction_identifier.get_path(), ignore_errors=True)
-    app.persistence_repository.load_and_delete_labeled_data(extraction_identifier, 5000000)
-    app.persistence_repository.load_and_delete_prediction_data(extraction_identifier, 5000000)
+
+    await _delete_cache_logic(run_name, extraction_name)
 
     try:
-        training_cache_key = file_cache_manager.get_training_cache_key(run_name, extraction_name)
-        file_cache_manager.delete_cache(training_cache_key)
-    except Exception:
-        pass
-    try:
-        prediction_cache_key = file_cache_manager.get_prediction_cache_key(run_name, extraction_name)
-        file_cache_manager.delete_cache(prediction_cache_key)
-    except Exception:
-        pass
+        app.persistence_repository.load_and_delete_labeled_data(extraction_identifier)
+    except Exception as e:
+        config_logger.error(f"Error deleting labeled data for {run_name}/{extraction_name}: {e}")
 
+    try:
+        app.persistence_repository.load_and_delete_prediction_data(extraction_identifier)
+    except Exception as e:
+        config_logger.error(f"Error deleting prediction data for {run_name}/{extraction_name}: {e}")
+
+    try:
+        if GoogleCloudStorage.could_be_configured():
+            server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
+            google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
+            google_cloud_storage.delete_from_cloud(run_name, extraction_name)
+            config_logger.info(f"Successfully deleted extractor from cloud storage for {run_name}/{extraction_name}")
+        else:
+            config_logger.info(
+                f"Google Cloud Storage not configured, skipping cloud deletion for {run_name}/{extraction_name}"
+            )
+    except Exception as e:
+        config_logger.error(f"Error during cloud storage deletion for {run_name}/{extraction_name}: {e}")
+
+    config_logger.info(f"Completed deletion process for {run_name}/{extraction_name}")
     return True
 
 

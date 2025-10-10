@@ -1,7 +1,7 @@
 services:
   pdf_metadata_extraction_api:
     container_name: pdf_metadata_extraction_api
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"  ]
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--workers", "1", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5056", "--timeout", "300"  ]
     init: true
     restart: unless-stopped
     build:
@@ -10,7 +10,8 @@ services:
     volumes:
       - data:/app/models_data
     depends_on:
-      - pdf_metadata_extraction_worker
+      - mongo_metadata_extraction
+      - redis_metadata_extraction
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
@@ -31,6 +32,7 @@ services:
       - data:/app/models_data
     depends_on:
       - mongo_metadata_extraction
+      - redis_metadata_extraction
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
@@ -40,11 +42,13 @@ services:
   pdf_metadata_extraction_worker:
     container_name: pdf_metadata_extraction_worker
     init: true
-    entrypoint: [ "celery", "-A", "src.drivers.distributed_worker.distributed_gpu", "worker", "--loglevel=info" ]
+    entrypoint: [ "celery", "-A", "drivers.distributed_worker.distributed_gpu", "worker", "--beat", "--loglevel=info", "--concurrency=1", "--pool=solo"]
     restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      - data:/app/models_data
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
@@ -64,6 +68,23 @@ services:
     network_mode: host
     ports:
       - "29017:29017"
-
+  redis_metadata_extraction:
+    restart: unless-stopped
+    image: "redis:7.2.5"
+    command: redis-server
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    network_mode: host
+    ports:
+      - "6379:6379"
+  redis_commander:
+    container_name: redis_commander
+    image: "rediscommander/redis-commander:latest"
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis_metadata_extraction:6379
+    ports:
+      - "8081:8081"
+    network_mode: host
 volumes:
   data:

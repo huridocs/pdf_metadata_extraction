@@ -709,6 +709,112 @@ class TestApp(TestCase):
         self.assertEqual([], training_samples[1].labeled_data.label_segments_boxes)
 
     @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+    def test_get_samples_training_with_cache(self):
+        tenant = "cache_test_tenant"
+        extraction_id = "cache_test_extraction"
+
+        labeled_data_samples = [
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": "test_file.xml",
+                "label_text": "first_sample_text",
+                "page_width": 612.0,
+                "page_height": 792.0,
+                "xml_segments_boxes": [
+                    {
+                        "left": 10,
+                        "top": 20,
+                        "width": 30,
+                        "height": 40,
+                        "page_width": 612,
+                        "page_height": 792,
+                        "page_number": 1,
+                    }
+                ],
+                "label_segments_boxes": [
+                    {
+                        "left": 50,
+                        "top": 60,
+                        "width": 70,
+                        "height": 80,
+                        "page_width": 612,
+                        "page_height": 792,
+                        "page_number": 1,
+                    }
+                ],
+            },
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": "test_file2.xml",
+                "label_text": "second_sample_text",
+                "page_width": 612.0,
+                "page_height": 792.0,
+                "xml_segments_boxes": [
+                    {
+                        "left": 15,
+                        "top": 25,
+                        "width": 35,
+                        "height": 45,
+                        "page_width": 612,
+                        "page_height": 792,
+                        "page_number": 2,
+                    }
+                ],
+                "label_segments_boxes": [
+                    {
+                        "left": 55,
+                        "top": 65,
+                        "width": 75,
+                        "height": 85,
+                        "page_width": 612,
+                        "page_height": 792,
+                        "page_number": 2,
+                    }
+                ],
+            },
+        ]
+
+        with TestClient(app) as client:
+            for sample_data in labeled_data_samples:
+                response = client.post("/labeled_data", json=sample_data)
+                self.assertEqual(200, response.status_code)
+
+            first_response = client.get(f"/get_samples_training/{tenant}/{extraction_id}")
+            self.assertEqual(200, first_response.status_code)
+            first_samples = first_response.json()
+
+            second_response = client.get(f"/get_samples_training/{tenant}/{extraction_id}")
+            self.assertEqual(200, second_response.status_code)
+            second_samples = second_response.json()
+
+        self.assertEqual(2, len(first_samples))
+        self.assertEqual(2, len(second_samples))
+
+        self.assertEqual(first_samples, second_samples)
+
+        first_training_samples = [TrainingSample(**x) for x in first_samples]
+        second_training_samples = [TrainingSample(**x) for x in second_samples]
+
+        self.assertEqual({tenant}, {x.labeled_data.tenant for x in first_training_samples})
+        self.assertEqual({extraction_id}, {x.labeled_data.id for x in first_training_samples})
+
+        self.assertEqual("first_sample_text", first_training_samples[0].labeled_data.label_text)
+        self.assertEqual("second_sample_text", first_training_samples[1].labeled_data.label_text)
+
+        self.assertEqual(
+            first_training_samples[0].labeled_data.label_text, second_training_samples[0].labeled_data.label_text
+        )
+        self.assertEqual(
+            first_training_samples[1].labeled_data.label_text, second_training_samples[1].labeled_data.label_text
+        )
+
+    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_samples_prediction(self):
         tenant = "example_tenant_name"
         extraction_id = "extraction_id"
@@ -777,25 +883,3 @@ class TestApp(TestCase):
         self.assertTrue(response.json())
 
         self.assertFalse(os.path.exists(extractor_identifier.get_path()))
-
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_cancel_training(self):
-        run_name = "test_run"
-        extraction_name = "test_extraction"
-
-        extractor_identifier = ExtractionIdentifier(
-            run_name=run_name, extraction_name=extraction_name, output_path=MODELS_DATA_PATH
-        )
-
-        self._create_test_extraction_folder(extractor_identifier)
-
-        self.assertTrue(os.path.exists(extractor_identifier.get_path()))
-        self.assertLessEqual(4, len(os.listdir(extractor_identifier.get_path())))
-
-        with TestClient(app) as client:
-            response = client.post(f"/cancel_training/{run_name}/{extraction_name}")
-
-        self.assertEqual(200, response.status_code)
-        self.assertTrue(response.json())
-
-        self.assertTrue(extractor_identifier.is_training_canceled())

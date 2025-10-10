@@ -1,91 +1,143 @@
+from datetime import timedelta, datetime
+from pathlib import Path
 from time import sleep
-import os
-
+import shutil
 import requests
+from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
+from ml_cloud_connector.domain.ServerParameters import ServerParameters
+from ml_cloud_connector.domain.ServerType import ServerType
+from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
 from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.domain.ExtractionData import ExtractionData
 from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
-from trainable_entity_extractor.domain.Option import Option
 from trainable_entity_extractor.domain.Performance import Performance
 from trainable_entity_extractor.domain.Suggestion import Suggestion
-from trainable_entity_extractor.use_cases.TrainableEntityExtractor import TrainableEntityExtractor
+from trainable_entity_extractor.use_cases.PredictUseCase import PredictUseCase
+from trainable_entity_extractor.use_cases.TrainUseCase import TrainUseCase
 
-from config import DATA_PATH, SERVICE_HOST, SERVICE_PORT
-from drivers.distributed_worker.model_to_cloud import upload_model_to_cloud, download_model_from_cloud, check_model_completion_signal
+from adapters.CloudModelStorage import CloudModelStorage
+from config import SERVICE_HOST, SERVICE_PORT, MODELS_DATA_PATH
+from drivers.extractors import EXTRACTORS
 from use_cases.SampleProcessorUseCase import SampleProcessorUseCase
 
 
-def performance_one_method(
-    extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool
-) -> Performance:
+logger = ExtractorLogger()
+train_use_case = TrainUseCase(EXTRACTORS, logger)
+predict_use_case = PredictUseCase(EXTRACTORS, logger)
+
+google_cloud_storage = None
+
+if GoogleCloudStorage.could_be_configured():
+    server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
+    google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
+    config_logger.info("Google Cloud Storage client initialized successfully")
+
+cloud_storage = CloudModelStorage(google_cloud_storage, logger)
+
+
+def ensure_fresh_model_folder(extraction_identifier: ExtractionIdentifier, max_age_hours: int = 1) -> None:
+    path = Path(extraction_identifier.get_path())
+
+    if path.exists():
+        folder_modified_time = datetime.fromtimestamp(path.stat().st_mtime)
+        current_time = datetime.now()
+        age = current_time - folder_modified_time
+
+        if age > timedelta(hours=max_age_hours):
+            shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+    else:
+        path.mkdir(parents=True, exist_ok=True)
+
+
+def cleanup_old_model_folders(max_age_days: int = 3) -> None:
+    models_path = Path(MODELS_DATA_PATH)
+
+    if not models_path.exists():
+        return
+
+    current_time = datetime.now()
+    cache_folders = {"cache"}
+
+    for folder in models_path.iterdir():
+        if not folder.is_dir():
+            continue
+
+        if folder.name in cache_folders:
+            continue
+
+        try:
+            folder_modified_time = datetime.fromtimestamp(folder.stat().st_mtime)
+            age = current_time - folder_modified_time
+
+            if age > timedelta(days=max_age_days):
+                config_logger.info(f"Deleting old model folder: {folder.name} (age: {age.days} days)")
+                shutil.rmtree(folder)
+        except Exception as e:
+            config_logger.error(f"Error deleting old model folder {folder.name}: {e}")
+
+
+def performance_one_method(extractor_job: TrainableEntityExtractorJob) -> Performance:
     extraction_identifier = ExtractionIdentifier(
-        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
+        run_name=extractor_job.run_name, output_path=MODELS_DATA_PATH, extraction_name=extractor_job.extraction_name
+    )
+
+    cleanup_old_model_folders(max_age_days=3)
+    ensure_fresh_model_folder(extraction_identifier=extraction_identifier, max_age_hours=1)
+    if extractor_job.method_name:
+        shutil.rmtree(Path(extraction_identifier.get_path()) / extractor_job.method_name, ignore_errors=True)
+
+    sample_processor = SampleProcessorUseCase(extraction_identifier)
+    samples = sample_processor.get_training_samples()
+
+    extraction_data = ExtractionData(
+        samples=samples,
+        options=extractor_job.options,
+        multi_value=extractor_job.multi_value,
+        extraction_identifier=extraction_identifier,
+    )
+    return train_use_case.get_performance(extractor_job, extraction_data)
+
+
+def train_one_method(extractor_job: TrainableEntityExtractorJob) -> bool:
+    extraction_identifier = ExtractionIdentifier(
+        run_name=extractor_job.run_name, output_path=MODELS_DATA_PATH, extraction_name=extractor_job.extraction_name
     )
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_training_samples()
-    trainable_entity_extractor = TrainableEntityExtractor(extraction_identifier)
+    sample_processor.delete_cache()
+    sample_processor.delete_queue_processor_cache()
     extraction_data = ExtractionData(
         samples=samples,
-        options=options,
-        multi_value=multi_value,
+        options=extractor_job.options,
+        multi_value=extractor_job.multi_value,
         extraction_identifier=extraction_identifier,
     )
-    return trainable_entity_extractor.get_performance(extractor_job, extraction_data)
+    success, message = train_use_case.train_one_method(extractor_job, extraction_data)
+    extraction_identifier.clean_extractor_folder(extractor_job.method_name)
+
+    if not success:
+        return False
+
+    return cloud_storage.upload_model(extraction_identifier, extractor_job)
 
 
-def train_one_method(
-    extractor_job: TrainableEntityExtractorJob, options: list[Option], multi_value: bool
-) -> tuple[bool, str]:
+def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> bool:
     extraction_identifier = ExtractionIdentifier(
-        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
+        run_name=extractor_job.run_name, output_path=MODELS_DATA_PATH, extraction_name=extractor_job.extraction_name
     )
-    sample_processor = SampleProcessorUseCase(extraction_identifier)
-    samples = sample_processor.get_training_samples()
-    trainable_entity_extractor = TrainableEntityExtractor(extraction_identifier)
-    extraction_data = ExtractionData(
-        samples=samples,
-        options=options,
-        multi_value=multi_value,
-        extraction_identifier=extraction_identifier,
-    )
-    success, message = trainable_entity_extractor.train_one_method(extractor_job, extraction_data)
-    if success:
-        upload_model_to_cloud(extraction_identifier, extractor_job.run_name)
-    return success, message
 
-
-def distributed_predict(extractor_job: TrainableEntityExtractorJob) -> tuple[bool, str]:
-    extraction_identifier = ExtractionIdentifier(
-        run_name=extractor_job.run_name, output_path=DATA_PATH, extraction_name=extractor_job.extraction_name
-    )
-    model_path = extraction_identifier.get_path()
-
-    if not os.path.exists(model_path):
-        max_retries = 10
-        base_delay = 30
-        max_delay = 15*60
-
-        for attempt in range(max_retries + 1):
-            if check_model_completion_signal(extraction_identifier):
-                success = download_model_from_cloud(extraction_identifier)
-                if success:
-                    break
-                else:
-                    return False, f"Model not found locally and could not be downloaded from cloud: {model_path}"
-            else:
-                if attempt == max_retries:
-                    return False, f"Model upload not yet complete for {model_path}. Completion signal not found after {max_retries} retries."
-
-                delay = min(base_delay * (2 ** attempt), max_delay)
-                config_logger.info(f"Model upload not complete for {model_path}. Retrying in {delay} seconds... (attempt {attempt + 1}/{max_retries + 1})")
-                sleep(delay)
+    success = cloud_storage.download_model(extraction_identifier)
+    if not success:
+        return False
 
     sample_processor = SampleProcessorUseCase(extraction_identifier)
     samples = sample_processor.get_prediction_samples_for_suggestions()
-    trainable_entity_extractor = TrainableEntityExtractor(extraction_identifier)
-    suggestions = trainable_entity_extractor.predict(samples)
-    return _send_suggestions(extraction_identifier, suggestions)
+    extractor_job = extractor_job.set_extractors_path(MODELS_DATA_PATH)
+    suggestions = predict_use_case.predict(extractor_job, samples)
+    extraction_identifier.clean_extractor_folder(extractor_job.method_name)
+    return _send_suggestions(extraction_identifier, suggestions)[0]
 
 
 def _send_suggestions(extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]) -> tuple[bool, str]:

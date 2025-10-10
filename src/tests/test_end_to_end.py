@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import time
+import unittest
 from unittest import TestCase
 
 from pdf_token_type_labels.TokenType import TokenType
@@ -42,6 +43,8 @@ class TestEndToEnd(TestCase):
         requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_text")
         requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_multi_option")
         requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_text")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/text_to_text_gpu")
+        requests.delete(f"{SERVER_URL}/end_to_end_test/cancel_training_test")
 
     def test_redis_message_to_ignore(self):
         QUEUE.sendMessage().message('{"message_to_ignore":"to_be_written_in_log_file"}').execute()
@@ -61,9 +64,9 @@ class TestEndToEnd(TestCase):
         expected_result = ResultsMessage(
             tenant=tenant,
             task="create_model",
-            params=Params(id=extraction_id, metadata={"name": "test"}),
+            params=Params(id=extraction_id),
             success=False,
-            error_message="No data to create model",
+            error_message="No valid performance results to select the best model",
             data_url=None,
         )
 
@@ -82,7 +85,7 @@ class TestEndToEnd(TestCase):
             task="suggestions",
             params=Params(id=extraction_id, metadata={"name": "test"}),
             success=False,
-            error_message="No data to calculate suggestions",
+            error_message="Extractor job not found",
             data_url=None,
         )
 
@@ -361,15 +364,32 @@ class TestEndToEnd(TestCase):
         self.assertEqual(tenant, suggestion_1.tenant)
         self.assertEqual(extraction_id, suggestion_1.id)
         self.assertEqual("entity_name_1", suggestion_1.entity_name)
-        self.assertEqual([Value(id="1", label="1", segment_text="Option 1")], suggestion_1.values)
+        self.assertEqual(
+            [
+                Value(
+                    id="1",
+                    label="1",
+                    segment_text='<p class="ix_matching_paragraph">Option <span class="ix_match">1</span></p>',
+                )
+            ],
+            suggestion_1.values,
+        )
 
         self.assertEqual(tenant, suggestion_2.tenant)
         self.assertEqual(extraction_id, suggestion_2.id)
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
         self.assertEqual(
             [
-                Value(id="2", label="2", segment_text="Option 2 Option 3"),
-                Value(id="3", label="3", segment_text="Option 2 Option 3"),
+                Value(
+                    id="2",
+                    label="2",
+                    segment_text='<p class="ix_matching_paragraph">Option <span class="ix_match">2</span> Option 3</p>',
+                ),
+                Value(
+                    id="3",
+                    label="3",
+                    segment_text='<p class="ix_matching_paragraph">Option 2 Option <span class="ix_match">3</span></p>',
+                ),
             ],
             suggestion_2.values,
         )
@@ -408,6 +428,10 @@ class TestEndToEnd(TestCase):
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
+        result = self.get_results_message()
+
+        print(result)
+
         predict_data_json = {
             "tenant": tenant,
             "id": extraction_id,
@@ -425,8 +449,6 @@ class TestEndToEnd(TestCase):
         }
 
         requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
-
-        self.get_results_message()
 
         task = TrainableEntityExtractionTask(
             tenant=tenant,
@@ -447,15 +469,263 @@ class TestEndToEnd(TestCase):
 
         self.assertEqual(tenant, suggestion_1.tenant)
         self.assertEqual(extraction_id, suggestion_1.id)
-        self.assertEqual("Option 1", suggestion_1.segment_text)
+        self.assertEqual(
+            '<p class="ix_matching_paragraph">Option <span class="ix_match">1</span></p>', suggestion_1.segment_text
+        )
         self.assertEqual("entity_name_1", suggestion_1.entity_name)
         self.assertEqual("1", suggestion_1.text)
 
         self.assertEqual(tenant, suggestion_2.tenant)
         self.assertEqual(extraction_id, suggestion_2.id)
-        self.assertEqual("Option 3", suggestion_2.segment_text)
+        self.assertEqual(
+            '<p class="ix_matching_paragraph">Option <span class="ix_match">3</span></p>', suggestion_2.segment_text
+        )
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
         self.assertEqual("3", suggestion_2.text)
+
+    def test_cancel_training(self):
+        run_name = "end_to_end_test"
+        extraction_name = "cancel_training_test"
+
+        labeled_data_json = {
+            "run_name": run_name,
+            "extraction_name": extraction_name,
+            "tenant": run_name,
+            "id": extraction_name,
+            "xml_file_name": "test_file.xml",
+            "language_iso": "en",
+            "label_text": "test label",
+            "page_width": 612.0,
+            "page_height": 792.0,
+            "xml_segments_boxes": [
+                {
+                    "left": 100,
+                    "top": 200,
+                    "width": 300,
+                    "height": 40,
+                    "page_width": 612,
+                    "page_height": 792,
+                    "page_number": 1,
+                }
+            ],
+            "label_segments_boxes": [
+                {
+                    "left": 100,
+                    "top": 200,
+                    "width": 300,
+                    "height": 40,
+                    "page_width": 612,
+                    "page_height": 792,
+                    "page_number": 1,
+                }
+            ],
+        }
+
+        response = requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+        self.assertEqual(200, response.status_code)
+
+        response = requests.get(f"{SERVER_URL}/get_samples_training/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        samples_before = response.json()
+        self.assertEqual(1, len(samples_before))
+
+        response = requests.get(f"{SERVER_URL}/is_extractor_cancelled/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        self.assertFalse(response.json()["cancelled"])
+
+        response = requests.post(f"{SERVER_URL}/cancel_training/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(response.json())
+
+        response = requests.get(f"{SERVER_URL}/is_extractor_cancelled/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(response.json()["cancelled"])
+
+        response = requests.get(f"{SERVER_URL}/is_extractor_cancelled/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        self.assertFalse(response.json()["cancelled"])
+
+        response = requests.get(f"{SERVER_URL}/get_samples_training/{run_name}/{extraction_name}")
+        self.assertEqual(200, response.status_code)
+        samples_after = response.json()
+        self.assertEqual(0, len(samples_after))
+
+    @unittest.skip("Skipping GPU test in CI")
+    def test_text_to_text_gpu(self):
+        tenant = "end_to_end_test"
+        extraction_id = "text_to_text_gpu"
+
+        for i in range(25):
+            labeled_data_json = {
+                "id": extraction_id,
+                "tenant": tenant,
+                "entity_name": f"entity_name_1_{i}",
+                "language_iso": "en",
+                "label_text": "output_not_in_input",
+                "source_text": "Option 1",
+            }
+            requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        for i in range(25):
+            labeled_data_json = {
+                "id": extraction_id,
+                "tenant": tenant,
+                "entity_name": f"entity_name_2_{i}",
+                "language_iso": "en",
+                "label_text": "another_output_not_in_input",
+                "source_text": "Option 2",
+            }
+            requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id),
+        )
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+        time.sleep(60 * 6)
+        self.get_results_message()
+
+        predict_data_json = {
+            "tenant": tenant,
+            "id": extraction_id,
+            "source_text": "Option 1",
+            "entity_name": "entity_name_1_0",
+        }
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        predict_data_json = {
+            "tenant": tenant,
+            "id": extraction_id,
+            "source_text": "Option 2",
+            "entity_name": "entity_name_2_0",
+        }
+        requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="suggestions",
+            params=Params(id=extraction_id, metadata={"name": "test"}),
+        )
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+        results_message = self.get_results_message()
+        response = requests.get(results_message.data_url)
+
+        suggestions = json.loads(response.json())
+        suggestion_1 = Suggestion(**suggestions[0])
+        suggestion_2 = Suggestion(**suggestions[1])
+
+        self.assertEqual(2, len(suggestions))
+        self.assertEqual(tenant, suggestion_1.tenant)
+        self.assertEqual(extraction_id, suggestion_1.id)
+        self.assertEqual("entity_name_1_0", suggestion_1.entity_name)
+        self.assertEqual("output_not_in_input", suggestion_1.text)
+        self.assertEqual(tenant, suggestion_2.tenant)
+        self.assertEqual(extraction_id, suggestion_2.id)
+        self.assertEqual("entity_name_2_0", suggestion_2.entity_name)
+        self.assertEqual("another_output_not_in_input", suggestion_2.text)
+
+    @unittest.skip("Skipping GPU test in CI")
+    def test_pdf_to_multi_option_gpu(self):
+        tenant = "end_to_end_test"
+        extraction_id = "pdf_to_multi_option"
+        test_xml_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_train/test.xml"
+        spanish_xml_path = f"{APP_PATH}/tests/resources/tenant_test/extraction_id/xml_to_train/spanish.xml"
+
+        xml_paths = [
+            (test_xml_path, "test", "1"),
+            (spanish_xml_path, "spanish", "2"),
+        ]
+
+        for xml_path, name_prefix, option_id in xml_paths:
+            for i in range(5):
+                new_xml_path = f"{MODELS_DATA_PATH}/{name_prefix}_{i}.xml"
+                shutil.copyfile(xml_path, new_xml_path)
+
+                with open(new_xml_path, mode="rb") as stream:
+                    files = {"file": stream}
+                    requests.post(f"{SERVER_URL}/xml_to_train/{tenant}/{extraction_id}", files=files)
+
+                os.remove(new_xml_path)
+
+                is_mislabeled = (name_prefix == "test" and i == 3) or (name_prefix == "spanish" and i == 4)
+
+                if is_mislabeled:
+                    wrong_option_id = "2" if option_id == "1" else "1"
+                    wrong_label = "spanish PDF" if name_prefix == "test" else "test PDF"
+                    labeled_data_json = {
+                        "id": extraction_id,
+                        "tenant": tenant,
+                        "xml_file_name": f"{name_prefix}_{i}.xml",
+                        "language_iso": "en",
+                        "values": [{"id": wrong_option_id, "label": wrong_label}],
+                        "page_width": 612,
+                        "page_height": 792,
+                        "xml_segments_boxes": [],
+                    }
+                else:
+                    labeled_data_json = {
+                        "id": extraction_id,
+                        "tenant": tenant,
+                        "xml_file_name": f"{name_prefix}_{i}.xml",
+                        "language_iso": "en",
+                        "values": [{"id": option_id, "label": f"{name_prefix} PDF"}],
+                        "page_width": 612,
+                        "page_height": 792,
+                        "xml_segments_boxes": [],
+                    }
+                requests.post(f"{SERVER_URL}/labeled_data", json=labeled_data_json)
+
+        options = [Option(id="1", label="test PDF"), Option(id="2", label="spanish PDF")]
+        task = TrainableEntityExtractionTask(
+            tenant=tenant,
+            task="create_model",
+            params=Params(id=extraction_id, multi_value=False, options=options),
+        )
+
+        QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+        time.sleep(60 * 6)
+        self.get_results_message()
+
+        for xml_path, expected_label, _ in xml_paths:
+            xml_filename = os.path.basename(xml_path)
+
+            with open(xml_path, mode="rb") as stream:
+                files = {"file": stream}
+                requests.post(f"{SERVER_URL}/xml_to_predict/{tenant}/{extraction_id}", files=files)
+
+            predict_data_json = {
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": xml_filename,
+                "page_width": 612,
+                "page_height": 792,
+                "xml_segments_boxes": [],
+            }
+
+            requests.post(f"{SERVER_URL}/prediction_data", json=predict_data_json)
+
+            task = TrainableEntityExtractionTask(
+                tenant=tenant,
+                task="suggestions",
+                params=Params(id=extraction_id),
+            )
+
+            QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
+
+            results_message = self.get_results_message()
+            assert results_message.data_url is not None, "Data URL should not be None"
+            response = requests.get(results_message.data_url)
+
+            suggestions = json.loads(response.json())
+            suggestion = Suggestion(**suggestions[0])
+            self.assertEqual(1, len(suggestions))
+            self.assertEqual(tenant, suggestion.tenant)
+            self.assertEqual(extraction_id, suggestion.id)
+            self.assertEqual(xml_filename, suggestion.xml_file_name)
+            self.assertEqual(1, len(suggestion.values))
+            self.assertEqual(Value(id="1", label="test PDF"), suggestion.values[0])
 
     @staticmethod
     def get_results_message() -> ResultsMessage | ParagraphExtractionResultsMessage | None:

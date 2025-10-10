@@ -11,26 +11,25 @@ from trainable_entity_extractor.domain.PredictionData import PredictionData
 from trainable_entity_extractor.domain.PredictionSample import PredictionSample
 from trainable_entity_extractor.domain.SegmentationData import SegmentationData
 from trainable_entity_extractor.domain.TrainingSample import TrainingSample
-from trainable_entity_extractor.use_cases.FilterValidSegmentsPages import FilterValidSegmentsPages
-from trainable_entity_extractor.use_cases.XmlFile import XmlFile
+from trainable_entity_extractor.domain.XmlFile import XmlFile
+from trainable_entity_extractor.use_cases.FilterValidSegmentsPagesUseCase import FilterValidSegmentsPagesUseCase
 
 from config import SERVICE_HOST, SERVICE_PORT
+from use_cases.SamplesCacheUseCase import SamplesCacheUseCase
 
 
 class SampleProcessorUseCase:
-    def __init__(self, extraction_identifier: ExtractionIdentifier):
-        self.extraction_identifier = extraction_identifier
+    def __init__(self, extractor_identifier: ExtractionIdentifier):
+        self.extraction_identifier = extractor_identifier
+        self.samples_cache_use_case = SamplesCacheUseCase()
 
-    @staticmethod
-    def get_samples_for_training(
-        extraction_identifier: ExtractionIdentifier, labeled_data_list: list[LabeledData]
-    ) -> list[TrainingSample]:
+    def get_samples_for_training(self, labeled_data_list: list[LabeledData]) -> list[TrainingSample]:
         multi_option_samples: list[TrainingSample] = list()
-        page_numbers_list = FilterValidSegmentsPages(extraction_identifier).for_training(labeled_data_list)
+        page_numbers_list = FilterValidSegmentsPagesUseCase(self.extraction_identifier).for_training(labeled_data_list)
         for labeled_data, page_numbers_to_keep in zip(labeled_data_list, page_numbers_list):
             segmentation_data = SegmentationData.from_labeled_data(labeled_data)
             xml_file = XmlFile(
-                extraction_identifier=extraction_identifier,
+                extraction_identifier=self.extraction_identifier,
                 to_train=True,
                 xml_file_name=labeled_data.xml_file_name,
             )
@@ -47,11 +46,8 @@ class SampleProcessorUseCase:
 
         return multi_option_samples
 
-    @staticmethod
-    def get_prediction_samples(
-        extractor_identifier: ExtractionIdentifier, prediction_data_list: list[PredictionData] = None
-    ) -> list[PredictionSample]:
-        filter_valid_pages = FilterValidSegmentsPages(extractor_identifier)
+    def get_prediction_samples(self, prediction_data_list: list[PredictionData] = None) -> list[PredictionSample]:
+        filter_valid_pages = FilterValidSegmentsPagesUseCase(self.extraction_identifier)
         page_numbers_list = filter_valid_pages.for_prediction(prediction_data_list)
         prediction_samples: list[PredictionSample] = []
         for prediction_data, page_numbers in zip(prediction_data_list, page_numbers_list):
@@ -59,7 +55,7 @@ class SampleProcessorUseCase:
             entity_name = prediction_data.entity_name if prediction_data.entity_name else prediction_data.xml_file_name
 
             xml_file = XmlFile(
-                extraction_identifier=extractor_identifier,
+                extraction_identifier=self.extraction_identifier,
                 to_train=False,
                 xml_file_name=prediction_data.xml_file_name,
             )
@@ -76,19 +72,17 @@ class SampleProcessorUseCase:
 
         return prediction_samples
 
-    @staticmethod
-    def import_samples(
-        extraction_identifier: ExtractionIdentifier, for_training: bool
-    ) -> list[TrainingSample | PredictionSample]:
+    def import_samples(self, for_training: bool) -> list[TrainingSample | PredictionSample]:
         samples: list[TrainingSample | PredictionSample] = list()
         max_retries = 3
-        retry_delay = 5  # seconds
+        retry_delay = 5
+        retries = 0
 
         url = f"{SERVICE_HOST}:{SERVICE_PORT}"
         url += "/get_samples_training" if for_training else "/get_samples_prediction"
-        url += f"/{extraction_identifier.run_name}/{extraction_identifier.extraction_name}"
+        url += f"/{self.extraction_identifier.run_name}/{self.extraction_identifier.extraction_name}"
 
-        while True:
+        while retries <= max_retries:
             try:
                 response = requests.get(url)
                 response.raise_for_status()
@@ -97,13 +91,13 @@ class SampleProcessorUseCase:
                     break
 
                 samples.extend([TrainingSample(**x) if for_training else PredictionSample(**x) for x in response.json()])
+                break
             except requests.exceptions.RequestException as e:
                 config_logger.error(f"Error fetching training samples: {e}")
-                if max_retries > 0:
-                    max_retries -= 1
-                    config_logger.info(f"Retrying in {retry_delay} seconds...")
+                retries += 1
+                if retries <= max_retries:
+                    config_logger.info(f"Retrying in {retry_delay} seconds... (attempt {retries}/{max_retries})")
                     sleep(retry_delay)
-                    continue
                 else:
                     config_logger.error("Max retries reached. Exiting.")
                     break
@@ -111,7 +105,66 @@ class SampleProcessorUseCase:
         return samples
 
     def get_training_samples(self) -> list[TrainingSample]:
-        return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=True)
+        key = SamplesCacheUseCase.get_training_cache_key(
+            run_name=self.extraction_identifier.run_name, extraction_name=self.extraction_identifier.extraction_name
+        )
+        cached_samples = self.samples_cache_use_case.get_cached_samples(key)
+        if cached_samples:
+            return [TrainingSample(**sample) for sample in cached_samples]
+
+        samples = self.import_samples(for_training=True)
+        self.samples_cache_use_case.cache_samples(key, samples)
+        return samples
 
     def get_prediction_samples_for_suggestions(self) -> list[PredictionSample]:
-        return self.import_samples(extraction_identifier=self.extraction_identifier, for_training=False)
+        return self.import_samples(for_training=False)
+
+    def is_extractor_cancelled(self) -> bool:
+        try:
+            url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+            url += (
+                f"/is_extractor_cancelled/{self.extraction_identifier.run_name}/{self.extraction_identifier.extraction_name}"
+            )
+
+            response = requests.get(url)
+            response.raise_for_status()
+
+            if response.status_code == 200:
+                return response.json().get("cancelled", False)
+            else:
+                return False
+
+        except requests.exceptions.RequestException as e:
+            config_logger.error(f"Error checking if extractor is cancelled: {e}")
+            return False
+
+    def delete_cache(self):
+        try:
+            key = SamplesCacheUseCase.get_training_cache_key(
+                run_name=self.extraction_identifier.run_name, extraction_name=self.extraction_identifier.extraction_name
+            )
+            self.samples_cache_use_case.delete_cache(key)
+        except requests.exceptions.RequestException as e:
+            config_logger.error(f"Error deleting extractor cache: {e}")
+            return False
+
+    def delete_queue_processor_cache(self):
+        try:
+            url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+            url += f"/delete_cache/{self.extraction_identifier.run_name}/{self.extraction_identifier.extraction_name}"
+
+            response = requests.post(url)
+            response.raise_for_status()
+
+            if response.status_code == 200:
+                config_logger.info(
+                    f"Successfully deleted extractor cache for {self.extraction_identifier.run_name}/{self.extraction_identifier.extraction_name}"
+                )
+                return True
+            else:
+                config_logger.warning(f"Failed to delete extractor cache: status {response.status_code}")
+                return False
+
+        except requests.exceptions.RequestException as e:
+            config_logger.error(f"Error deleting extractor cache: {e}")
+            return False

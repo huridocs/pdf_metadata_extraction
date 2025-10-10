@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 
 from ml_cloud_connector.adapters.google_v2.GoogleCloudStorage import GoogleCloudStorage
@@ -10,41 +9,50 @@ from queue_processor.QueueProcess import QueueProcess
 from queue_processor.QueueProcessResults import QueueProcessResults
 from trainable_entity_extractor.config import config_logger
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
+from trainable_entity_extractor.domain.JobProcessingResult import JobProcessingResult
 from trainable_entity_extractor.domain.LogSeverity import LogSeverity
-from trainable_entity_extractor.domain.TrainableEntityExtractorJob import TrainableEntityExtractorJob
-from trainable_entity_extractor.use_cases.send_logs import send_logs
+from trainable_entity_extractor.domain.DistributedJob import DistributedJob
+from trainable_entity_extractor.domain.JobType import JobType
+from trainable_entity_extractor.domain.DistributedSubJob import DistributedSubJob
+from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
+from trainable_entity_extractor.use_cases.OrchestratorUseCase import OrchestratorUseCase
 
 from adapters.MongoPersistenceRepository import MongoPersistenceRepository
-from config import SERVICE_HOST, SERVICE_PORT, MODELS_DATA_PATH, EXTRACTOR_JOB_PATH
-from domain.DistributedJob import DistributedJob
-from domain.DistributedJobType import DistributedJobType
-from domain.DistributedSubJob import DistributedSubJob
+from adapters.CeleryJobExecutor import CeleryJobExecutor
+from adapters.CloudModelStorage import CloudModelStorage
+from config import SERVICE_HOST, SERVICE_PORT, MODELS_DATA_PATH
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from domain.ParagraphExtractorTask import ParagraphExtractorTask
-from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
 from domain.ResultsMessage import ResultsMessage
 from domain.TasksNames import TasksNames
-from use_cases.ParagraphExtractorUseCase import ParagraphExtractorUseCase
 from domain.TaskType import TaskType
-from use_cases.TrainUseCase import TrainUseCase
-from drivers.queues_processor.PredictionJobOrchestrator import PredictionJobOrchestrator
-from drivers.queues_processor.TrainingJobOrchestrator import TrainingJobOrchestrator
+from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
+from drivers.extractors import EXTRACTORS
+from use_cases.GetPerformanceJobUseCase import GetPerformanceJobUseCase
+from use_cases.ParagraphExtractorUseCase import ParagraphExtractorUseCase
+from drivers.queues_processor.PredictionResultBuilder import PredictionResultBuilder
+from drivers.queues_processor.TrainingResultBuilder import TrainingResultBuilder
 
 
 class MetadataExtractorQueueProcessor(QueueProcess):
-    SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.METADATA_EXTRACTION)
-    CLOUD_PROVIDER = GoogleV2Repository(server_parameters=SERVER_PARAMETERS, service_logger=config_logger)
-
     def __init__(self):
         super().__init__()
-        try:
+        self.logger = ExtractorLogger()
+        self.google_cloud_storage = None
+
+        if GoogleCloudStorage.could_be_configured():
             server_parameters = ServerParameters(namespace="metadata_extractor", server_type=ServerType.METADATA_EXTRACTION)
             self.google_cloud_storage = GoogleCloudStorage(server_parameters, config_logger)
-            config_logger.info("Google Cloud Storage client initialized successfully")
-        except Exception as e:
-            config_logger.error(f"Failed to initialize Google Cloud Storage client: {e}")
-            self.google_cloud_storage = None
-        self.jobs: list[DistributedJob] = list()
+            self.logger.log(ExtractionIdentifier.get_default(), "Google Cloud Storage client initialized successfully")
+
+        self.model_storage = CloudModelStorage(self.google_cloud_storage, self.logger)
+        self.job_executor = CeleryJobExecutor(self.model_storage, self.logger)
+        self.orchestrator = OrchestratorUseCase(self.job_executor, self.logger)
+        server_parameters = ServerParameters(namespace="google_v2", server_type=ServerType.METADATA_EXTRACTION)
+        try:
+            self.cloud_provider = GoogleV2Repository(server_parameters=server_parameters, service_logger=config_logger)
+        except:
+            self.cloud_provider = None
 
     def process_message(self, queue_name: str, message: dict[str, Any]) -> QueueProcessResults:
         task_type = self._validate_and_parse_message(message)
@@ -54,79 +62,112 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         if task_type.task == TasksNames.PARAGRAPH_EXTRACTION_TASK_NAME:
             return self._handle_paragraph_extraction_task(message)
 
-        return self._handle_trainable_entity_extraction_task(queue_name, message)
+        result = self._handle_trainable_entity_extraction_task(queue_name, message)
+
+        if result.results:
+            self.logger.log(ExtractionIdentifier.get_default(), f"process_message result: {result}")
+
+        return result
+
+    def process(self, queue_name: str) -> QueueProcessResults:
+        job_processing_result, distributed_job = self.orchestrator.execute_job_for_domain(queue_name)
+
+        if job_processing_result.gpu_needed and self.cloud_provider:
+            self.cloud_provider.start()
+
+        if not job_processing_result.finished:
+            return QueueProcessResults()
+
+        result = self._convert_orchestrator_result_to_queue_result(job_processing_result, distributed_job)
+        if result.results:
+            self.logger.log(ExtractionIdentifier.get_default(), f"process result: {result}")
+
+        return result
+
+    def _convert_orchestrator_result_to_queue_result(
+        self, job_processing_result: JobProcessingResult, processed_job: DistributedJob
+    ) -> QueueProcessResults:
+        if not processed_job:
+            return QueueProcessResults()
+
+        try:
+            if processed_job.type == JobType.PREDICT:
+                if job_processing_result.success:
+                    return PredictionResultBuilder.build_success_result(processed_job)
+                else:
+                    return PredictionResultBuilder.build_failure_result(processed_job, job_processing_result.error_message)
+            elif processed_job.type in [JobType.TRAIN, JobType.PERFORMANCE]:
+                if job_processing_result.success:
+                    return TrainingResultBuilder.build_success_result(processed_job)
+                else:
+                    return TrainingResultBuilder.build_failure_result(processed_job, job_processing_result.error_message)
+        except Exception as e:
+            self.logger.log(
+                processed_job.extraction_identifier, f"Error converting orchestrator result: {e}", LogSeverity.error
+            )
+            if processed_job.type == JobType.PREDICT:
+                return PredictionResultBuilder.build_failure_result(processed_job, str(e))
+            else:
+                return TrainingResultBuilder.build_failure_result(processed_job, str(e))
+
+        return QueueProcessResults()
 
     def _handle_trainable_entity_extraction_task(self, queue_name: str, message: dict[str, Any]) -> QueueProcessResults:
         task = TrainableEntityExtractionTask(**message)
         extraction_identifier = self._create_extraction_identifier(task)
 
         if task.task == TasksNames.SUGGESTIONS_TASK_NAME:
-            self._handle_suggestions_task(task, extraction_identifier, queue_name)
+            return self._handle_suggestions_task(task, extraction_identifier, queue_name)
         elif task.task == TasksNames.CREATE_MODEL_TASK_NAME:
-            self._handle_create_model_task(task, extraction_identifier, queue_name)
+            return self._handle_create_model_task(task, extraction_identifier, queue_name)
         else:
             return self._create_task_not_found_result(task)
 
+    def _handle_suggestions_task(
+        self, task: TrainableEntityExtractionTask, extraction_identifier: ExtractionIdentifier, queue_name: str
+    ) -> QueueProcessResults:
+        extractor_job = self.model_storage.get_extractor_job(extraction_identifier)
+
+        if not extractor_job:
+            return self._create_extractor_not_found_result(task)
+
+        distributed_job = DistributedJob(
+            type=JobType.PREDICT,
+            sub_jobs=[DistributedSubJob(extractor_job=extractor_job)],
+            domain_name=queue_name,
+            extraction_identifier=extraction_identifier,
+        )
+        self.orchestrator.add_job(distributed_job)
         return self.process(queue_name)
 
-    def process(self, queue_name: str) -> QueueProcessResults:
-        for job in self.jobs:
-            if job.queue_name != queue_name:
-                continue
+    def _handle_create_model_task(
+        self, task: TrainableEntityExtractionTask, extraction_identifier: ExtractionIdentifier, queue_name: str
+    ):
+        get_performance_job_use_case = GetPerformanceJobUseCase(
+            extraction_identifier, task.params.options, task.params.multi_value
+        )
+        distributed_job = get_performance_job_use_case.get_distributed_job(queue_name, EXTRACTORS, self.logger)
+        methods_names = [sub_job.extractor_job.method_name for sub_job in distributed_job.sub_jobs]
+        self.logger.log(extraction_identifier, f"Created sub-jobs for methods: {methods_names}")
+        self.orchestrator.add_job(distributed_job)
+        return self.process(queue_name)
 
-            return self.process_job(job)
-
-        return QueueProcessResults()
-
-    def process_job(self, job: DistributedJob) -> QueueProcessResults:
-        if job.type == DistributedJobType.PREDICT:
-            if job.sub_jobs[0].extractor_job.gpu_needed:
-                self.CLOUD_PROVIDER.start()
-
-            return PredictionJobOrchestrator(self.jobs).process_prediction_job(job)
-        elif job.type in [DistributedJobType.TRAIN, DistributedJobType.PERFORMANCE]:
-            if any(sub_job.extractor_job.gpu_needed for sub_job in job.sub_jobs):
-                self.CLOUD_PROVIDER.start()
-
-            return TrainingJobOrchestrator(self.jobs, self.google_cloud_storage).process_training_job(job)
-
-        return QueueProcessResults()
-
-    def get_extractor_job(self, extraction_identifier: ExtractionIdentifier) -> TrainableEntityExtractorJob | None:
-        path = Path(extraction_identifier.get_path(), EXTRACTOR_JOB_PATH)
-
-        if not path.exists():
-            self.google_cloud_storage.copy_from_cloud(
-                path.parent, Path(MODELS_DATA_PATH, extraction_identifier.run_name, EXTRACTOR_JOB_PATH.parent)
-            )
-
-        try:
-            with open(path, "r", encoding="utf-8") as file:
-                job_data = file.read()
-                extractor_job = TrainableEntityExtractorJob.model_validate_json(job_data)
-                return extractor_job
-        except Exception as e:
-            send_logs(extraction_identifier, f"Error reading extractor job file: {e}", LogSeverity.error)
-            return None
-
-    @staticmethod
-    def _validate_and_parse_message(message: dict[str, Any]) -> TaskType | None:
+    def _validate_and_parse_message(self, message: dict[str, Any]) -> TaskType | None:
         try:
             task_type = TaskType(**message)
-            send_logs(ExtractionIdentifier.get_default(), f"New task {message}")
+            self.logger.log(ExtractionIdentifier.get_default(), f"New task {message}")
             return task_type
         except ValidationError:
-            send_logs(ExtractionIdentifier.get_default(), f"Not a valid Redis message: {message}", LogSeverity.error)
+            self.logger.log(ExtractionIdentifier.get_default(), f"Not a valid Redis message: {message}", LogSeverity.error)
             return None
 
-    @staticmethod
-    def _handle_paragraph_extraction_task(message: dict[str, Any]) -> QueueProcessResults:
+    def _handle_paragraph_extraction_task(self, message: dict[str, Any]) -> QueueProcessResults:
         task = ParagraphExtractorTask(**message)
         persistence_repository = MongoPersistenceRepository()
         task_calculated, error_message = ParagraphExtractorUseCase.execute_task(task, persistence_repository)
 
         if not task_calculated:
-            send_logs(ExtractionIdentifier.get_default(), f"Error: {error_message}")
+            self.logger.log(ExtractionIdentifier.get_default(), f"Error: {error_message}", LogSeverity.error)
             result_message = ParagraphExtractionResultsMessage(
                 key=task.key, xmls=task.xmls, success=False, error_message=error_message
             )
@@ -148,31 +189,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             output_path=MODELS_DATA_PATH,
         )
 
-    def _handle_suggestions_task(
-        self, task: TrainableEntityExtractionTask, extraction_identifier: ExtractionIdentifier, queue_name: str
-    ):
-        extractor_job = self.get_extractor_job(extraction_identifier)
-
-        if not extractor_job:
-            return self._create_extractor_not_found_result(task)
-
-        distributed_job = DistributedJob(
-            type=DistributedJobType.PREDICT,
-            task=task,
-            sub_jobs=[DistributedSubJob(extractor_job=extractor_job)],
-            queue_name=queue_name,
-        )
-        self.jobs.append(distributed_job)
-
-    def _handle_create_model_task(
-        self, task: TrainableEntityExtractionTask, extraction_identifier: ExtractionIdentifier, queue_name: str
-    ):
-        train_use_case = TrainUseCase(extraction_identifier, task.params.options, task.params.multi_value)
-        distributed_job = train_use_case.get_distributed_job(task, queue_name)
-        self.jobs.append(distributed_job)
-
-    @staticmethod
-    def _create_extractor_not_found_result(task: TrainableEntityExtractionTask) -> QueueProcessResults:
+    def _create_extractor_not_found_result(self, task: TrainableEntityExtractionTask) -> QueueProcessResults:
         result_message = ResultsMessage(
             tenant=task.tenant,
             task=task.task,
@@ -180,11 +197,12 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             success=False,
             error_message="Extractor job not found",
         )
-        send_logs(ExtractionIdentifier.get_default(), f"Extractor job not found: {task.model_dump()}", LogSeverity.error)
+        self.logger.log(
+            ExtractionIdentifier.get_default(), f"Extractor job not found: {task.model_dump()}", LogSeverity.error
+        )
         return QueueProcessResults(results=result_message.model_dump())
 
-    @staticmethod
-    def _create_task_not_found_result(task: TrainableEntityExtractionTask) -> QueueProcessResults:
+    def _create_task_not_found_result(self, task: TrainableEntityExtractionTask) -> QueueProcessResults:
         result_message = ResultsMessage(
             tenant=task.tenant,
             task=task.task,
@@ -192,5 +210,5 @@ class MetadataExtractorQueueProcessor(QueueProcess):
             success=False,
             error_message="Task not found",
         )
-        send_logs(ExtractionIdentifier.get_default(), f"Task not found: {task.model_dump()}", LogSeverity.error)
+        self.logger.log(ExtractionIdentifier.get_default(), f"Task not found: {task.model_dump()}", LogSeverity.error)
         return QueueProcessResults(results=result_message.model_dump())
