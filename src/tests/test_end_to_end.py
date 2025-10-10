@@ -364,15 +364,32 @@ class TestEndToEnd(TestCase):
         self.assertEqual(tenant, suggestion_1.tenant)
         self.assertEqual(extraction_id, suggestion_1.id)
         self.assertEqual("entity_name_1", suggestion_1.entity_name)
-        self.assertEqual([Value(id="1", label="1", segment_text="Option 1")], suggestion_1.values)
+        self.assertEqual(
+            [
+                Value(
+                    id="1",
+                    label="1",
+                    segment_text='<p class="ix_matching_paragraph">Option <span class="ix_match">1</span></p>',
+                )
+            ],
+            suggestion_1.values,
+        )
 
         self.assertEqual(tenant, suggestion_2.tenant)
         self.assertEqual(extraction_id, suggestion_2.id)
         self.assertEqual("entity_name_2", suggestion_2.entity_name)
         self.assertEqual(
             [
-                Value(id="2", label="2", segment_text="Option 2 Option 3"),
-                Value(id="3", label="3", segment_text="Option 2 Option 3"),
+                Value(
+                    id="2",
+                    label="2",
+                    segment_text='<p class="ix_matching_paragraph">Option <span class="ix_match">2</span> Option 3</p>',
+                ),
+                Value(
+                    id="3",
+                    label="3",
+                    segment_text='<p class="ix_matching_paragraph">Option 2 Option <span class="ix_match">3</span></p>',
+                ),
             ],
             suggestion_2.values,
         )
