@@ -1,12 +1,13 @@
 import json
 import gzip
+import shutil
 import time
 from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel
 
-from config import MODELS_DATA_PATH
+from config import MODELS_DATA_PATH, LAST_RUN_PATH
 
 
 class SamplesCacheUseCase:
@@ -50,6 +51,27 @@ class SamplesCacheUseCase:
         try:
             file_path = self._get_cache_file_path(cache_key)
             self._compress_and_save(data, file_path)
+
+            if "train" in cache_key:
+                self._save_last_run_training_data(data)
+        except Exception:
+            pass
+
+    def _save_last_run_training_data(self, data: list[BaseModel]) -> None:
+        try:
+            last_run_dir = Path(LAST_RUN_PATH)
+
+            if last_run_dir.exists():
+                shutil.rmtree(last_run_dir)
+
+            last_run_dir.mkdir(exist_ok=True, parents=True)
+
+            metadata_file = last_run_dir / "metadata.json"
+            metadata = {"timestamp": time.time(), "sample_count": len(data)}
+            metadata_file.write_text(json.dumps(metadata, indent=2))
+
+            data_file = last_run_dir / "training_data.json.gz"
+            self._compress_and_save(data, data_file)
         except Exception:
             pass
 
