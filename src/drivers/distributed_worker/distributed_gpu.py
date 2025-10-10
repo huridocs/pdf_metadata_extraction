@@ -1,12 +1,14 @@
 import os
 import time
 
+import torch
 from celery import Celery
 from celery.schedules import crontab
 from trainable_entity_extractor.config import config_logger
 
 from drivers.distributed_worker.distributed_no_gpu import predict_no_gpu, train_no_gpu, performance_no_gpu
 from config import REDIS_HOST, REDIS_PORT, NAME
+
 
 app = Celery(NAME, broker=f"redis://{REDIS_HOST}:{REDIS_PORT}", backend=f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
@@ -27,6 +29,15 @@ app.conf.beat_schedule = {
 @app.task
 def scheduled_health_check():
     config_logger.info("Scheduled health check executed.")
+
+    for i in range(5):
+        if not torch.cuda.is_available():
+            config_logger.warning(f"CUDA is not available. Attempt {i + 1}/5")
+            time.sleep(5)
+
+    if not torch.cuda.is_available():
+        config_logger.error("CUDA is not available after 5 attempts. Exiting.")
+        os._exit(1)
 
     uptime = time.time() - WORKER_START_TIME
     if uptime < GRACE_PERIOD_SECONDS:

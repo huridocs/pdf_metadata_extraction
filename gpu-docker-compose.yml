@@ -36,7 +36,7 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-      - PARAGRAPH_EXTRACTION_NAME=development_extract_paragraphs
+      - NO_GPU=true
     network_mode: host
     env_file: .env
   pdf_metadata_extraction_worker:
