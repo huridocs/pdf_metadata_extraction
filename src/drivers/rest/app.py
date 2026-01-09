@@ -148,8 +148,6 @@ async def get_samples_prediction(run_name: str, extraction_name: str):
     )
     prediction_data = app.persistence_repository.load_and_delete_prediction_data(extraction_identifier)
     samples = SampleProcessorUseCase(extraction_identifier).get_prediction_samples(prediction_data_list=prediction_data)
-    config_logger.info(f"Cached prediction samples to file for {run_name}/{extraction_name}")
-
     return samples
 
 

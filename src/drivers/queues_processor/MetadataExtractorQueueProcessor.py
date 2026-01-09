@@ -48,8 +48,8 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         self.model_storage = CloudModelStorage(self.google_cloud_storage, self.logger)
         self.job_executor = CeleryJobExecutor(self.model_storage, self.logger)
         self.orchestrator = OrchestratorUseCase(self.job_executor, self.logger)
-        server_parameters = ServerParameters(namespace="google_v2", server_type=ServerType.METADATA_EXTRACTION)
         try:
+            server_parameters = ServerParameters(namespace="google_v2", server_type=ServerType.METADATA_EXTRACTION)
             self.cloud_provider = GoogleV2Repository(server_parameters=server_parameters, service_logger=config_logger)
         except:
             self.cloud_provider = None
