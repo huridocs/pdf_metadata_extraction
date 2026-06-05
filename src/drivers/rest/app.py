@@ -315,4 +315,11 @@ async def get_paragraphs_translations(key: str) -> ParagraphsTranslations:
         run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=key, output_path=MODELS_DATA_PATH
     )
     paragraphs_from_languages = app.persistence_repository.load_paragraphs_from_languages(extractor_identifier)
+    if paragraphs_from_languages:
+        message = f"Getting {len(paragraphs_from_languages[0].paragraphs)} paragraphs"
+        message += f" in {len(paragraphs_from_languages)} languages"
+        message += f" for {key}"
+        config_logger.info(message)
+    else:
+        config_logger.info(f"Getting 0 with 0 languagesparagraphs for {key}")
     return ParagraphsTranslations.from_paragraphs_from_languages(key, paragraphs_from_languages)
