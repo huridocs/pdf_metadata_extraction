@@ -108,8 +108,9 @@ async def labeled_data_post(labeled_data: LabeledData):
     app.persistence_repository.save_labeled_data(extraction_identifier, labeled_data)
 
     try:
-        SampleProcessorUseCase(extraction_identifier).delete_cache()
-        config_logger.info(f"Deleted training cache for {labeled_data.tenant}/{labeled_data.id}")
+        deleted = SampleProcessorUseCase(extraction_identifier).delete_cache()
+        if deleted:
+            config_logger.info(f"Deleted training cache for {labeled_data.tenant}/{labeled_data.id}")
     except Exception:
         pass
 

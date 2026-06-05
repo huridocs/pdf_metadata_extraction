@@ -138,12 +138,12 @@ class SampleProcessorUseCase:
             config_logger.error(f"Error checking if extractor is cancelled: {e}")
             return False
 
-    def delete_cache(self):
+    def delete_cache(self) -> bool:
         try:
             key = SamplesCacheUseCase.get_training_cache_key(
                 run_name=self.extraction_identifier.run_name, extraction_name=self.extraction_identifier.extraction_name
             )
-            self.samples_cache_use_case.delete_cache(key)
+            return self.samples_cache_use_case.delete_cache(key)
         except requests.exceptions.RequestException as e:
             config_logger.error(f"Error deleting extractor cache: {e}")
             return False

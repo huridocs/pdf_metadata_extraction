@@ -11,3 +11,6 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [ gpu ]
+    environment:
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+

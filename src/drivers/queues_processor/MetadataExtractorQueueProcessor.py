@@ -59,7 +59,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
         if not task_type:
             return QueueProcessResults()
 
-        if task_type.task == TasksNames.PARAGRAPH_EXTRACTION_TASK_NAME:
+        if TasksNames.PARAGRAPH_EXTRACTION_TASK_NAME in task_type.task:
             return self._handle_paragraph_extraction_task(message)
 
         result = self._handle_trainable_entity_extraction_task(queue_name, message)
