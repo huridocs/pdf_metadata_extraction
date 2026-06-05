@@ -18,10 +18,10 @@ class ParagraphExtractorUseCase:
         self.extraction_identifier = extraction_identifier
         self.persistence_repository = persistence_repository
 
-    def save_paragraphs_from_languages(self) -> tuple[bool, str]:
+    def save_paragraphs_from_languages(self) -> tuple[bool, str, int]:
         paragraph_extraction_data = self.persistence_repository.load_paragraph_extraction_data(self.extraction_identifier)
         if not paragraph_extraction_data:
-            return False, "No data to extract paragraphs"
+            return False, "No data to extract paragraphs", 0
 
         paragraphs_from_languages = self.get_paragraphs_from_languages(paragraph_extraction_data)
 
@@ -33,7 +33,10 @@ class ParagraphExtractorUseCase:
                 self.extraction_identifier, paragraphs_from_language.to_db()
             )
 
-        return True, ""
+        if paragraphs_from_languages and paragraphs_from_languages[0].paragraphs:
+            return True, "", len(paragraphs_from_languages[0].paragraphs)
+
+        return True, "", 0
 
     def get_paragraphs_from_languages(self, paragraph_extraction_data):
         paragraphs_from_languages: list[ParagraphsFromLanguage] = list()
@@ -56,7 +59,7 @@ class ParagraphExtractorUseCase:
         return paragraphs_from_languages
 
     @staticmethod
-    def execute_task(task: ParagraphExtractorTask, persistence_repository: PersistenceRepository) -> tuple[bool, str]:
+    def execute_task(task: ParagraphExtractorTask, persistence_repository: PersistenceRepository) -> tuple[bool, str, int]:
         extraction_identifier = ExtractionIdentifier(
             run_name=PARAGRAPH_EXTRACTION_NAME, extraction_name=task.key, output_path=MODELS_DATA_PATH
         )

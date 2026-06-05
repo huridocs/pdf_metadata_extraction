@@ -43,7 +43,7 @@ start-detached:
 	docker compose up --build -d
 
 start:
-	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+	docker compose -f gpu-docker-compose.yml up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --attach pdf_metadata_extraction_queue_processor --build
 
 start-no-gpu:
 	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build

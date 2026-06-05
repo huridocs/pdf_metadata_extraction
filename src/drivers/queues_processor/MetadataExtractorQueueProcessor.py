@@ -164,7 +164,9 @@ class MetadataExtractorQueueProcessor(QueueProcess):
     def _handle_paragraph_extraction_task(self, message: dict[str, Any]) -> QueueProcessResults:
         task = ParagraphExtractorTask(**message)
         persistence_repository = MongoPersistenceRepository()
-        task_calculated, error_message = ParagraphExtractorUseCase.execute_task(task, persistence_repository)
+        task_calculated, error_message, paragraph_number = ParagraphExtractorUseCase.execute_task(
+            task, persistence_repository
+        )
 
         if not task_calculated:
             self.logger.log(ExtractionIdentifier.get_default(), f"Error: {error_message}", LogSeverity.error)
@@ -172,6 +174,10 @@ class MetadataExtractorQueueProcessor(QueueProcess):
                 key=task.key, xmls=task.xmls, success=False, error_message=error_message
             )
             return QueueProcessResults(results=result_message.model_dump())
+
+        self.logger.log(
+            ExtractionIdentifier.get_default(), f"Saved {paragraph_number} paragraphs for {task.key}", LogSeverity.info
+        )
 
         data_url = f"{SERVICE_HOST}:{SERVICE_PORT}/get_paragraphs_translations/{task.key}"
 
