@@ -9,10 +9,11 @@ import requests
 from rsmq import RedisSMQ
 from trainable_entity_extractor.domain.SegmentBox import SegmentBox
 
-from config import APP_PATH
+from config import APP_PATH, PARAGRAPH_EXTRACTION_NAME
 from domain.ParagraphExtractionData import ParagraphExtractionData, XmlData
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
+from tests.test_helpers import drain_queue, delete_tenant_data
 
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = "6379"
@@ -20,6 +21,10 @@ SERVER_URL = "http://127.0.0.1:5056"
 
 
 class TestEndToEndParagraphExtractor(TestCase):
+    def setUp(self):
+        drain_queue("extract_paragraphs_results")
+        delete_tenant_data(PARAGRAPH_EXTRACTION_NAME)
+
     def test_extract_paragraphs(self):
         response = requests.post(f"{SERVER_URL}/extract_paragraphs", files=[])
         self.assertEqual(422, response.status_code)

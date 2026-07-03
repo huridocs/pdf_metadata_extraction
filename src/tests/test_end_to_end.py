@@ -19,6 +19,7 @@ from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsM
 from domain.Params import Params
 from domain.ResultsMessage import ResultsMessage
 from domain.TrainableEntityExtractionTask import TrainableEntityExtractionTask
+from tests.test_helpers import drain_queue, delete_tenant_data
 
 ROOT_PATH = "../"
 
@@ -37,6 +38,8 @@ SERVER_URL = "http://127.0.0.1:5056"
 
 class TestEndToEnd(TestCase):
     def setUp(self):
+        drain_queue("information_extraction_results")
+        delete_tenant_data("end_to_end_test")
         requests.delete(f"{SERVER_URL}/end_to_end_test/extraction_id")
         requests.delete(f"{SERVER_URL}/end_to_end_test/model_without_data")
         requests.delete(f"{SERVER_URL}/end_to_end_test/pdf_to_multi_option")
