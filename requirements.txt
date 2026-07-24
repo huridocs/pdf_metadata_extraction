@@ -11,4 +11,4 @@ gunicorn==22.0.0
 celery==5.5.3
 git+https://github.com/huridocs/queue-processor@2026.7.3.2
 git+https://github.com/huridocs/ml-cloud-connector@2026.7.3.1
-git+https://github.com/huridocs/trainable-entity-extractor@2026.7.3.5
+git+https://github.com/huridocs/trainable-entity-extractor@2026.7.24.1
