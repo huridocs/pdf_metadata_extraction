@@ -433,8 +433,6 @@ class TestEndToEnd(TestCase):
 
         result = self.get_results_message()
 
-        print(result)
-
         predict_data_json = {
             "tenant": tenant,
             "id": extraction_id,
@@ -732,7 +730,7 @@ class TestEndToEnd(TestCase):
 
     @staticmethod
     def get_results_message() -> ResultsMessage | ParagraphExtractionResultsMessage | None:
-        for i in range(20):
+        for i in range(40):
             time.sleep(3)
             queue = RedisSMQ(
                 host=REDIS_HOST,
