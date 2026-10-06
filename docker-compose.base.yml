@@ -46,16 +46,17 @@ services:
     restart: unless-stopped
     image: "postgres:16-alpine"
     network_mode: host
+    command: ["postgres", "-p", "25018"]
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=pdf_metadata_extraction
     ports:
-      - "5433:5432"
+      - "25018:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d pdf_metadata_extraction"]
+      test: ["CMD-SHELL", "pg_isready -p 25018 -U postgres -d pdf_metadata_extraction"]
       interval: 5s
       timeout: 5s
       retries: 10
