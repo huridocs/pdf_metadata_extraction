@@ -10,8 +10,10 @@ services:
     volumes:
       - data:/app/models_data
     depends_on:
-      - mongo_metadata_extraction
-      - redis_metadata_extraction
+      postgres_metadata_extraction:
+        condition: service_healthy
+      redis_metadata_extraction:
+        condition: service_started
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
@@ -30,21 +32,33 @@ services:
     volumes:
       - data:/app/models_data
     depends_on:
-      - mongo_metadata_extraction
-      - redis_metadata_extraction
+      postgres_metadata_extraction:
+        condition: service_healthy
+      redis_metadata_extraction:
+        condition: service_started
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
       - NO_GPU=true
     network_mode: host
     env_file: .env
-  mongo_metadata_extraction:
+  postgres_metadata_extraction:
     restart: unless-stopped
-    command: mongod --port 29017
-    image: "mongo:7.0.12"
+    image: "postgres:16-alpine"
     network_mode: host
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pdf_metadata_extraction
     ports:
-      - "29017:29017"
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pdf_metadata_extraction"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   redis_metadata_extraction:
     restart: unless-stopped
     image: "redis:7.2.5"
@@ -65,4 +79,5 @@ services:
     network_mode: host
 volumes:
   data:
+  postgres_data:
 

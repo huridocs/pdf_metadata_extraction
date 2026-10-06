@@ -18,6 +18,9 @@ check-format:
 test:
 	. .venv/bin/activate; command cd src; command python -m pytest -n 0 tests/test_app.py tests/test_end_to_end.py tests/test_end_to_end_paragraph_extractor.py
 
+start-test-postgres:
+	docker run -d --rm --name pdf_meta_pg_test -p 5433:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pdf_metadata_extraction postgres:16-alpine
+
 test-cloud:
 	. .venv/bin/activate; command cd src; command python -m pytest -n 0 tests/test_end_to_end.py
 

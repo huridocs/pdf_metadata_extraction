@@ -52,6 +52,10 @@ class PersistenceRepository(ABC):
         pass
 
     @abstractmethod
+    def delete_expired_suggestions(self, extraction_identifier: ExtractionIdentifier):
+        pass
+
+    @abstractmethod
     def save_paragraph_extraction_data(
         self, extraction_identifier: ExtractionIdentifier, paragraph_extraction_data: ParagraphExtractionData
     ):

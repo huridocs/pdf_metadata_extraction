@@ -17,7 +17,7 @@ from trainable_entity_extractor.domain.DistributedSubJob import DistributedSubJo
 from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
 from trainable_entity_extractor.use_cases.OrchestratorUseCase import OrchestratorUseCase
 
-from adapters.MongoPersistenceRepository import MongoPersistenceRepository
+from adapters.PostgresPersistenceRepository import PostgresPersistenceRepository
 from adapters.CeleryJobExecutor import CeleryJobExecutor
 from adapters.CloudModelStorage import CloudModelStorage
 from config import SERVICE_HOST, SERVICE_PORT, MODELS_DATA_PATH
@@ -163,7 +163,7 @@ class MetadataExtractorQueueProcessor(QueueProcess):
 
     def _handle_paragraph_extraction_task(self, message: dict[str, Any]) -> QueueProcessResults:
         task = ParagraphExtractorTask(**message)
-        persistence_repository = MongoPersistenceRepository()
+        persistence_repository = PostgresPersistenceRepository()
         task_calculated, error_message, paragraph_number = ParagraphExtractorUseCase.execute_task(
             task, persistence_repository
         )

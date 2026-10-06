@@ -11,7 +11,7 @@ from trainable_entity_extractor.adapters.ExtractorLogger import ExtractorLogger
 from trainable_entity_extractor.domain.Suggestion import Suggestion
 from trainable_entity_extractor.domain.XmlFile import XmlFile
 
-from adapters.MongoPersistenceRepository import MongoPersistenceRepository
+from adapters.PostgresPersistenceRepository import PostgresPersistenceRepository
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 import sys
 
@@ -34,7 +34,7 @@ from use_cases.SamplesCacheUseCase import SamplesCacheUseCase
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.persistence_repository = MongoPersistenceRepository()
+    app.persistence_repository = PostgresPersistenceRepository()
     app.logger = ExtractorLogger()
     yield
     app.persistence_repository.close()

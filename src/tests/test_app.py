@@ -1,12 +1,13 @@
 import json
 import os
 import shutil
+from datetime import datetime, timedelta, timezone
 from os.path import join
-
-import mongomock
-import pymongo
-from fastapi.testclient import TestClient
 from unittest import TestCase
+
+import psycopg2
+from fastapi.testclient import TestClient
+from psycopg2.extras import Json
 
 from pdf_token_type_labels.TokenType import TokenType
 from trainable_entity_extractor.domain.ExtractionIdentifier import ExtractionIdentifier
@@ -15,8 +16,52 @@ from trainable_entity_extractor.domain.Suggestion import Suggestion
 from trainable_entity_extractor.domain.SegmentBox import SegmentBox
 from trainable_entity_extractor.domain.TrainingSample import TrainingSample
 
+from adapters.PostgresPersistenceRepository import PostgresPersistenceRepository
+from config import APP_PATH, MODELS_DATA_PATH, POSTGRES_DSN
+from tests.test_helpers import truncate_all_data
+
 from drivers.rest.app import app
-from config import MODELS_DATA_PATH, APP_PATH, MONGO_HOST, MONGO_PORT
+
+
+def insert_documents(table: str, documents: list[dict]):
+    conn = psycopg2.connect(POSTGRES_DSN)
+    try:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for document in documents:
+                created_at = document.pop("created_at", None)
+                if created_at is not None:
+                    cur.execute(
+                        f"INSERT INTO {table} (run_name, extraction_name, created_at, data) VALUES (%s, %s, %s, %s)",
+                        (document["run_name"], document["extraction_name"], created_at, Json(document)),
+                    )
+                else:
+                    cur.execute(
+                        f"INSERT INTO {table} (run_name, extraction_name, data) VALUES (%s, %s, %s)",
+                        (document["run_name"], document["extraction_name"], Json(document)),
+                    )
+    finally:
+        conn.close()
+
+
+def fetch_all_documents(table: str) -> list[dict]:
+    conn = psycopg2.connect(POSTGRES_DSN)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT data FROM {table}")
+            return [row[0] for row in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def count_documents(table: str) -> int:
+    conn = psycopg2.connect(POSTGRES_DSN)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT count(*) FROM {table}")
+            return cur.fetchone()[0]
+    finally:
+        conn.close()
 
 
 class TestApp(TestCase):
@@ -24,6 +69,10 @@ class TestApp(TestCase):
 
     def setUp(self):
         """Set up test environment before each test."""
+        # Ensure the Postgres schema exists while no records survive between tests
+        PostgresPersistenceRepository()
+        truncate_all_data()
+
         # Create a temporary test directory
         self.test_base_dir = os.path.join(MODELS_DATA_PATH, "test_temp")
         os.makedirs(self.test_base_dir, exist_ok=True)
@@ -86,12 +135,9 @@ class TestApp(TestCase):
 
         shutil.rmtree(join(MODELS_DATA_PATH, tenant), ignore_errors=True)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data(self):
         tenant = "endpoint_test"
         extraction_id = "extraction_id"
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "run_name": tenant,
@@ -114,7 +160,7 @@ class TestApp(TestCase):
         with TestClient(app) as client:
             response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
+        labeled_data_document = fetch_all_documents("labeled_data")[0]
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -155,12 +201,9 @@ class TestApp(TestCase):
             labeled_data_document["label_segments_boxes"],
         )
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data_different_values(self):
         tenant = "different_endpoint_test"
         extraction_id = "different_extraction_id"
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
@@ -176,7 +219,7 @@ class TestApp(TestCase):
         with TestClient(app) as client:
             response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
+        labeled_data_document = fetch_all_documents("labeled_data")[0]
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -189,12 +232,9 @@ class TestApp(TestCase):
         self.assertEqual([], labeled_data_document["xml_segments_boxes"])
         self.assertEqual([], labeled_data_document["label_segments_boxes"])
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_labeled_data_multi_option(self):
         tenant = "endpoint_test"
         extraction_id = "extraction_id"
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         options_json = [{"id": "id1", "label": "label1"}, {"id": "id2", "label": "label2"}]
 
@@ -217,7 +257,7 @@ class TestApp(TestCase):
         with TestClient(app) as client:
             response = client.post("/labeled_data", json=json_data)
 
-        labeled_data_document = mongo_client.pdf_metadata_extraction.labeled_data.find_one()
+        labeled_data_document = fetch_all_documents("labeled_data")[0]
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, labeled_data_document["tenant"])
@@ -258,12 +298,9 @@ class TestApp(TestCase):
             labeled_data_document["label_segments_boxes"],
         )
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_post_prediction_data(self):
         tenant = "endpoint_test"
         extraction_id = "extraction_id"
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = {
             "tenant": tenant,
@@ -288,7 +325,7 @@ class TestApp(TestCase):
         with TestClient(app) as client:
             response = client.post("/prediction_data", json=json_data)
 
-        prediction_data_document = mongo_client.pdf_metadata_extraction.prediction_data.find_one()
+        prediction_data_document = fetch_all_documents("prediction_data")[0]
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, prediction_data_document["tenant"])
@@ -312,13 +349,9 @@ class TestApp(TestCase):
             prediction_data_document["xml_segments_boxes"],
         )
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions(self):
-        print(f"mongodb://{MONGO_HOST}:{MONGO_PORT}")
         tenant = "example_tenant_name"
         extraction_id = "prediction_extraction_id"
-
-        mongo_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
 
         json_data = [
             {
@@ -375,7 +408,7 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
+        insert_documents("suggestions", json_data)
 
         with TestClient(app) as client:
             response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
@@ -402,12 +435,9 @@ class TestApp(TestCase):
         self.assertEqual("other_text_predicted", suggestions[1]["text"])
         self.assertEqual(3, suggestions[1]["page_number"])
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_suggestions_multi_option(self):
         tenant = "example_tenant_name"
         extraction_id = "prediction_extraction_id"
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = [
             {
@@ -467,7 +497,7 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
+        insert_documents("suggestions", json_data)
 
         with TestClient(app) as client:
             response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
@@ -498,12 +528,9 @@ class TestApp(TestCase):
         )
         self.assertEqual(3, suggestions[1]["page_number"])
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
-    def test_should_remove_suggestions_when_returned(self):
+    def test_suggestions_kept_when_returned(self):
         tenant = "example_tenant_name"
         extraction_id = "prediction_extraction_id"
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         json_data = [
             {
@@ -534,19 +561,118 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client.pdf_metadata_extraction.suggestions.insert_many(json_data)
+        insert_documents("suggestions", json_data)
 
         with TestClient(app) as client:
-            client.get(f"/get_suggestions/{tenant}1/{extraction_id}")
+            response = client.get(f"/get_suggestions/{tenant}1/{extraction_id}")
 
-        suggestion = Suggestion(**mongo_client.pdf_metadata_extraction.suggestions.find_one())
+        suggestions = json.loads(response.json())
 
-        suggestions_collection = mongo_client.pdf_metadata_extraction.suggestions
-        self.assertEqual(1, suggestions_collection.count_documents({}))
-        self.assertEqual(tenant + "2", suggestion.tenant)
-        self.assertEqual(extraction_id, suggestion.id)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(1, len(suggestions))
+        self.assertEqual(2, count_documents("suggestions"))
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
+        with TestClient(app) as client:
+            second_response = client.get(f"/get_suggestions/{tenant}1/{extraction_id}")
+
+        second_suggestions = json.loads(second_response.json())
+        self.assertEqual(200, second_response.status_code)
+        self.assertEqual(suggestions, second_suggestions)
+
+    def test_expired_suggestions_deleted_when_queried(self):
+        tenant = "example_tenant_name"
+        extraction_id = "prediction_extraction_id"
+
+        now = datetime.now(timezone.utc)
+
+        json_data = [
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": "expired_file_name",
+                "text": "expired_text_predicted",
+                "segment_text": "expired_segment_text",
+                "page_number": 1,
+                "created_at": now - timedelta(hours=7),
+            },
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": "fresh_file_name",
+                "text": "fresh_text_predicted",
+                "segment_text": "fresh_segment_text",
+                "page_number": 2,
+                "created_at": now - timedelta(minutes=5),
+            },
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": "legacy_file_name",
+                "text": "legacy_text_predicted",
+                "segment_text": "legacy_segment_text",
+                "page_number": 3,
+            },
+        ]
+
+        insert_documents("suggestions", json_data)
+
+        with TestClient(app) as client:
+            response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
+
+        suggestions = json.loads(response.json())
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(2, len(suggestions))
+        self.assertEqual({"fresh_file_name", "legacy_file_name"}, {x["xml_file_name"] for x in suggestions})
+        self.assertEqual(2, count_documents("suggestions"))
+
+    def test_save_suggestions_deletes_expired_ones(self):
+        tenant = "example_tenant_name"
+        extraction_id = "prediction_extraction_id"
+
+        now = datetime.now(timezone.utc)
+
+        expired_suggestion = {
+            "run_name": tenant,
+            "extraction_name": extraction_id,
+            "tenant": tenant,
+            "id": extraction_id,
+            "xml_file_name": "expired_file_name",
+            "text": "expired_text_predicted",
+            "segment_text": "expired_segment_text",
+            "page_number": 1,
+            "created_at": now - timedelta(hours=7),
+        }
+
+        insert_documents("suggestions", [expired_suggestion])
+
+        suggestion = Suggestion(
+            tenant=tenant,
+            id=extraction_id,
+            xml_file_name="xml_file_name",
+            entity_name="entity_name",
+            text="text_predicted",
+            segment_text="segment_text",
+            page_number=1,
+        )
+
+        with TestClient(app) as client:
+            response = client.post(f"/save_suggestions/{tenant}/{extraction_id}", json=[suggestion.model_dump()])
+
+        self.assertEqual(200, response.status_code)
+
+        remaining = fetch_all_documents("suggestions")
+
+        self.assertEqual(1, len(remaining))
+        self.assertEqual("xml_file_name", remaining[0]["xml_file_name"])
+        self.assertIsNotNone(remaining[0].get("created_at"))
+
     def test_get_suggestions_when_no_suggestions(self):
         with TestClient(app) as client:
             response = client.get("/get_suggestions/tenant/property")
@@ -555,12 +681,9 @@ class TestApp(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(0, len(suggestions))
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_save_suggestions(self):
         tenant = "example_tenant_name"
         extraction_id = "prediction_extraction_id"
-
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
 
         suggestions = [
             Suggestion(
@@ -591,7 +714,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
 
-        suggestion_document = mongo_client.pdf_metadata_extraction.suggestions.find_one()
+        suggestion_document = fetch_all_documents("suggestions")[0]
 
         self.assertEqual(tenant, suggestion_document["tenant"])
         self.assertEqual(extraction_id, suggestion_document["id"])
@@ -616,7 +739,6 @@ class TestApp(TestCase):
             suggestion_document["segments_boxes"],
         )
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_samples_training(self):
         tenant = "example_tenant_name"
         extraction_id = "extraction_id"
@@ -654,8 +776,7 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-        mongo_client.pdf_metadata_extraction.labeled_data.insert_many(labeled_data)
+        insert_documents("labeled_data", labeled_data)
 
         with TestClient(app) as client:
             response = client.get(f"/get_samples_training/{tenant}/{extraction_id}")
@@ -708,7 +829,6 @@ class TestApp(TestCase):
         self.assertEqual([], training_samples[1].labeled_data.xml_segments_boxes)
         self.assertEqual([], training_samples[1].labeled_data.label_segments_boxes)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_samples_training_with_cache(self):
         tenant = "cache_test_tenant"
         extraction_id = "cache_test_extraction"
@@ -814,7 +934,6 @@ class TestApp(TestCase):
             first_training_samples[1].labeled_data.label_text, second_training_samples[1].labeled_data.label_text
         )
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_get_samples_prediction(self):
         tenant = "example_tenant_name"
         extraction_id = "extraction_id"
@@ -846,8 +965,7 @@ class TestApp(TestCase):
             },
         ]
 
-        mongo_client = pymongo.MongoClient("mongodb://127.0.0.1:29017")
-        mongo_client.pdf_metadata_extraction.prediction_data.insert_many(prediction_data)
+        insert_documents("prediction_data", prediction_data)
 
         with TestClient(app) as client:
             response = client.get(f"/get_samples_prediction/{tenant}/{extraction_id}")
@@ -862,7 +980,6 @@ class TestApp(TestCase):
         self.assertEqual("entity_name", prediction_samples[0].entity_name)
         self.assertEqual("other_entity_name", prediction_samples[1].entity_name)
 
-    @mongomock.patch(servers=["mongodb://127.0.0.1:29017"])
     def test_delete_extractor(self):
         run_name = "test_run"
         extraction_name = "test_extraction"

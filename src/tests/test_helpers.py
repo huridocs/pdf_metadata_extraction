@@ -1,9 +1,18 @@
 """Test utilities for cleaning up between test runs to avoid stale data."""
 
-from pymongo import MongoClient
+import psycopg2
+
 from rsmq import RedisSMQ
 
-from config import MONGO_HOST, MONGO_PORT, REDIS_HOST, REDIS_PORT
+from config import POSTGRES_DSN, REDIS_HOST, REDIS_PORT
+
+TABLES = [
+    "labeled_data",
+    "prediction_data",
+    "suggestions",
+    "paragraph_extraction_data",
+    "paragraphs_from_languages",
+]
 
 
 def drain_queue(qname: str) -> None:
@@ -16,16 +25,25 @@ def drain_queue(qname: str) -> None:
         queue.deleteMessage(id=message["id"]).execute()
 
 
+def truncate_all_data() -> None:
+    """Remove all records from all persistence tables."""
+    conn = psycopg2.connect(POSTGRES_DSN)
+    try:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for table in TABLES:
+                cur.execute(f"TRUNCATE TABLE {table}")
+    finally:
+        conn.close()
+
+
 def delete_tenant_data(run_name: str) -> None:
-    """Delete all MongoDB records for a given run_name across all relevant collections."""
-    client = MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
-    db = client["pdf_metadata_extraction"]
-    for collection in [
-        "labeled_data",
-        "prediction_data",
-        "suggestions",
-        "paragraph_extraction_data",
-        "paragraphs_from_languages",
-    ]:
-        db[collection].delete_many({"run_name": run_name})
-    client.close()
+    """Delete all PostgreSQL records for a given run_name across all relevant tables."""
+    conn = psycopg2.connect(POSTGRES_DSN)
+    try:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for table in TABLES:
+                cur.execute(f"DELETE FROM {table} WHERE run_name = %s", (run_name,))
+    finally:
+        conn.close()
