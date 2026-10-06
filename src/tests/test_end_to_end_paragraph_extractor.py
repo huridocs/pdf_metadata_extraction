@@ -9,7 +9,7 @@ import requests
 from rsmq import RedisSMQ
 from trainable_entity_extractor.domain.SegmentBox import SegmentBox
 
-from config import APP_PATH, PARAGRAPH_EXTRACTION_NAME
+from config import APP_PATH
 from domain.ParagraphExtractionData import ParagraphExtractionData, XmlData
 from domain.ParagraphExtractionResultsMessage import ParagraphExtractionResultsMessage
 from drivers.rest.ParagraphsTranslations import ParagraphsTranslations
@@ -22,8 +22,8 @@ SERVER_URL = "http://127.0.0.1:5056"
 
 class TestEndToEndParagraphExtractor(TestCase):
     def setUp(self):
-        drain_queue("extract_paragraphs_results")
-        delete_tenant_data(PARAGRAPH_EXTRACTION_NAME)
+        drain_queue("development_extract_paragraphs_results")
+        delete_tenant_data("development_extract_paragraphs")
 
     def test_extract_paragraphs(self):
         response = requests.post(f"{SERVER_URL}/extract_paragraphs", files=[])
@@ -41,7 +41,7 @@ class TestEndToEndParagraphExtractor(TestCase):
 
         paragraph_extraction_data = ParagraphExtractionData(
             key="key_1",
-            queue_name="extract_paragraphs",
+            queue_name="development_extract_paragraphs",
             xmls=[
                 XmlData(xml_file_name="test_en.xml", language="en", is_main_language=True, xml_segments_boxes=segment_boxes),
                 XmlData(
@@ -119,7 +119,7 @@ Ipsum."""
 
         paragraph_extraction_data = ParagraphExtractionData(
             key="key_2",
-            queue_name="extract_paragraphs",
+            queue_name="development_extract_paragraphs",
             xmls=[
                 XmlData(xml_file_name="test_en.xml", language="en", is_main_language=True, xml_segments_boxes=segment_boxes),
                 XmlData(
@@ -187,7 +187,7 @@ Ipsum."""
             queue = RedisSMQ(
                 host=REDIS_HOST,
                 port=REDIS_PORT,
-                qname="extract_paragraphs_results",
+                qname="development_extract_paragraphs_results",
                 quiet=False,
             )
             message = queue.receiveMessage().exceptions(False).execute()

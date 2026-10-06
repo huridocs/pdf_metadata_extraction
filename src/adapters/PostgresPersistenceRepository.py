@@ -12,7 +12,7 @@ from trainable_entity_extractor.domain.LabeledData import LabeledData
 from trainable_entity_extractor.domain.PredictionData import PredictionData
 from trainable_entity_extractor.domain.Suggestion import Suggestion
 
-from config import POSTGRES_DSN, SUGGESTIONS_HOURS_TO_KEEP
+from config import POSTGRES_DSN, MATERIALS_HOURS_TO_KEEP
 from domain.ParagraphExtractionData import ParagraphExtractionData
 from ports.PersistenceRepository import PersistenceRepository
 
@@ -32,9 +32,11 @@ CREATE INDEX IF NOT EXISTS prediction_data_identity_idx ON prediction_data (run_
 CREATE TABLE IF NOT EXISTS paragraphs_from_languages (
     run_name TEXT NOT NULL,
     extraction_name TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     data JSONB NOT NULL
 );
 CREATE INDEX IF NOT EXISTS paragraphs_from_languages_identity_idx ON paragraphs_from_languages (run_name, extraction_name);
+ALTER TABLE paragraphs_from_languages ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
 CREATE TABLE IF NOT EXISTS suggestions (
     run_name TEXT NOT NULL,
     extraction_name TEXT NOT NULL,
@@ -160,7 +162,7 @@ class PostgresPersistenceRepository(PersistenceRepository):
             cur.execute(
                 "DELETE FROM suggestions WHERE run_name = %s AND extraction_name = %s"
                 " AND created_at < now() - make_interval(hours => %s)",
-                (extraction_identifier.run_name, extraction_identifier.extraction_name, SUGGESTIONS_HOURS_TO_KEEP),
+                (extraction_identifier.run_name, extraction_identifier.extraction_name, MATERIALS_HOURS_TO_KEEP),
             )
 
     def load_suggestions(self, extraction_identifier: ExtractionIdentifier) -> list[Suggestion]:
@@ -170,7 +172,7 @@ class PostgresPersistenceRepository(PersistenceRepository):
             cur.execute(
                 "SELECT data FROM suggestions WHERE run_name = %s AND extraction_name = %s"
                 " AND created_at >= now() - make_interval(hours => %s) ORDER BY created_at",
-                (extraction_identifier.run_name, extraction_identifier.extraction_name, SUGGESTIONS_HOURS_TO_KEEP),
+                (extraction_identifier.run_name, extraction_identifier.extraction_name, MATERIALS_HOURS_TO_KEEP),
             )
             documents = [row[0] for row in cur.fetchall()]
 
@@ -200,10 +202,38 @@ class PostgresPersistenceRepository(PersistenceRepository):
     def save_paragraphs_from_language(
         self, extraction_identifier: ExtractionIdentifier, paragraphs_from_languages: ParagraphsFromLanguage
     ):
-        self.save_data(extraction_identifier, paragraphs_from_languages, "paragraphs_from_languages")
+        created_at = datetime.now(timezone.utc)
+        data_dict = paragraphs_from_languages.model_dump()
+        data_dict = self.inject_extractor_identifier(extraction_identifier, data_dict)
+        data_dict["created_at"] = created_at.isoformat()
+
+        with self._get_connection().cursor() as cur:
+            cur.execute(
+                "INSERT INTO paragraphs_from_languages (run_name, extraction_name, created_at, data) "
+                "VALUES (%s, %s, %s, %s)",
+                (extraction_identifier.run_name, extraction_identifier.extraction_name, created_at, Json(data_dict)),
+            )
+
+    def delete_expired_paragraphs(self, extraction_identifier: ExtractionIdentifier):
+        with self._get_connection().cursor() as cur:
+            cur.execute(
+                "DELETE FROM paragraphs_from_languages WHERE run_name = %s AND extraction_name = %s"
+                " AND created_at < now() - make_interval(hours => %s)",
+                (extraction_identifier.run_name, extraction_identifier.extraction_name, MATERIALS_HOURS_TO_KEEP),
+            )
 
     def load_paragraphs_from_languages(self, extraction_identifier: ExtractionIdentifier) -> list[ParagraphsFromLanguage]:
-        return self._load_all("paragraphs_from_languages", extraction_identifier, ParagraphsFromLanguage)
+        self.delete_expired_paragraphs(extraction_identifier)
+
+        with self._get_connection().cursor() as cur:
+            cur.execute(
+                "SELECT data FROM paragraphs_from_languages WHERE run_name = %s AND extraction_name = %s"
+                " AND created_at >= now() - make_interval(hours => %s) ORDER BY created_at",
+                (extraction_identifier.run_name, extraction_identifier.extraction_name, MATERIALS_HOURS_TO_KEEP),
+            )
+            documents = [row[0] for row in cur.fetchall()]
+
+        return [ParagraphsFromLanguage(**document) for document in documents]
 
     def delete_paragraphs_from_languages(self, extraction_identifier: ExtractionIdentifier):
         with self._get_connection().cursor() as cur:

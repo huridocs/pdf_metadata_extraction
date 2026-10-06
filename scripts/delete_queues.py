@@ -4,7 +4,7 @@ from rsmq import RedisSMQ
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = "6379"
 
-queues = ["information_extraction", "extract_paragraphs"]
+queues = ["development_information_extraction", "information_extraction", "development_extract_paragraphs"]
 
 
 def delete_queues():

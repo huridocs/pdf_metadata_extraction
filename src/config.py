@@ -14,7 +14,7 @@ REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
 POSTGRES_DSN = os.environ.get("POSTGRES_DSN", "postgresql://postgres:postgres@127.0.0.1:25018/pdf_metadata_extraction")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
-SUGGESTIONS_HOURS_TO_KEEP = int(os.environ.get("SUGGESTIONS_HOURS_TO_KEEP", "6"))
+MATERIALS_HOURS_TO_KEEP = int(os.environ.get("MATERIALS_HOURS_TO_KEEP", "6"))
 
 APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()
