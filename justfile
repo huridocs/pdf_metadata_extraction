@@ -51,6 +51,9 @@ start:
 start-no-gpu:
 	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
 
+development:
+	docker compose up --attach pdf_metadata_extraction_worker --attach pdf_metadata_extraction_api --build
+
 stop:
 	docker compose stop
 
