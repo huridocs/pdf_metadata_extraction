@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -120,42 +119,44 @@ class PostgresPersistenceRepository(PersistenceRepository):
 
         return [model(**document) for document in documents]
 
-    def load_prediction_data(self, extraction_identifier: ExtractionIdentifier) -> list[PredictionData]:
-        return self._load_all("prediction_data", extraction_identifier, PredictionData)
-
     def load_and_delete_prediction_data(self, extraction_identifier: ExtractionIdentifier) -> list[PredictionData]:
         return self._load_all("prediction_data", extraction_identifier, PredictionData)
 
     def save_labeled_data(self, extraction_identifier: ExtractionIdentifier, labeled_data: LabeledData):
         self.save_data(extraction_identifier, labeled_data, "labeled_data")
 
-    def delete_labeled_data(self, extraction_identifier: ExtractionIdentifier):
-        with self._get_connection().cursor() as cur:
-            cur.execute(
-                "DELETE FROM labeled_data WHERE run_name = %s AND extraction_name = %s",
-                (extraction_identifier.run_name, extraction_identifier.extraction_name),
-            )
-
-    def load_labeled_data(self, extraction_identifier: ExtractionIdentifier) -> list[LabeledData]:
-        return self._load_all("labeled_data", extraction_identifier, LabeledData)
-
     def load_and_delete_labeled_data(self, extraction_identifier: ExtractionIdentifier) -> list[LabeledData]:
         return self._load_all("labeled_data", extraction_identifier, LabeledData)
 
     def save_suggestions(self, extraction_identifier: ExtractionIdentifier, suggestions: list[Suggestion]):
-        self.delete_expired_suggestions(extraction_identifier)
-
         created_at = datetime.now(timezone.utc)
-        for suggestion in suggestions:
-            data_dict = suggestion.model_dump()
-            data_dict = self.inject_extractor_identifier(extraction_identifier, data_dict)
-            data_dict["created_at"] = created_at.isoformat()
-
-            with self._get_connection().cursor() as cur:
+        conn = self._connect()
+        conn.autocommit = False
+        try:
+            with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO suggestions (run_name, extraction_name, created_at, data) VALUES (%s, %s, %s, %s)",
-                    (extraction_identifier.run_name, extraction_identifier.extraction_name, created_at, Json(data_dict)),
+                    "DELETE FROM suggestions WHERE run_name = %s AND extraction_name = %s",
+                    (extraction_identifier.run_name, extraction_identifier.extraction_name),
                 )
+                for suggestion in suggestions:
+                    data_dict = suggestion.model_dump()
+                    data_dict = self.inject_extractor_identifier(extraction_identifier, data_dict)
+                    data_dict["created_at"] = created_at.isoformat()
+                    cur.execute(
+                        "INSERT INTO suggestions (run_name, extraction_name, created_at, data) VALUES (%s, %s, %s, %s)",
+                        (
+                            extraction_identifier.run_name,
+                            extraction_identifier.extraction_name,
+                            created_at,
+                            Json(data_dict),
+                        ),
+                    )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     def delete_expired_suggestions(self, extraction_identifier: ExtractionIdentifier):
         with self._get_connection().cursor() as cur:
@@ -241,15 +242,3 @@ class PostgresPersistenceRepository(PersistenceRepository):
                 "DELETE FROM paragraphs_from_languages WHERE run_name = %s AND extraction_name = %s",
                 (extraction_identifier.run_name, extraction_identifier.extraction_name),
             )
-
-    def delete_prediction_data(self, extraction_identifier: ExtractionIdentifier, filters: list[dict[str, str]]):
-        for one_filter in filters:
-            with self._get_connection().cursor() as cur:
-                cur.execute(
-                    "DELETE FROM suggestions WHERE run_name = %s AND extraction_name = %s AND data @> %s::jsonb",
-                    (
-                        extraction_identifier.run_name,
-                        extraction_identifier.extraction_name,
-                        json.dumps(one_filter),
-                    ),
-                )

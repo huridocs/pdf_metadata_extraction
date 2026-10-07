@@ -22,3 +22,10 @@ MODELS_DATA_PATH = join(ROOT_PATH, "models_data")
 DATA_PATH = join(ROOT_PATH, "data")
 LAST_RUN_PATH = Path(DATA_PATH, "last_run_data")
 NO_GPU = os.environ.get("NO_GPU", "false").lower().strip() == "true"
+
+# Flair based NER text-to-text methods are currently disabled: the installed Flair/torch
+# combination cannot load the `ner-ontonotes-large` checkpoint (torch>=2.6 defaults
+# `weights_only=True`), which makes the methods fail and stalls the first training run on a
+# ~2.2 GB model download. The method code is kept in trainable_entity_extractor; set this to
+# `true` to register them again once the dependency issue is resolved.
+FLAIR_NER_METHODS_ENABLED = os.environ.get("FLAIR_NER_METHODS_ENABLED", "false").lower().strip() == "true"

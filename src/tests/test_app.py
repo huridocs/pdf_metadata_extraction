@@ -739,6 +739,61 @@ class TestApp(TestCase):
             suggestion_document["segments_boxes"],
         )
 
+    def test_save_suggestions_replaces_previous_for_same_key(self):
+        tenant = "example_tenant_name"
+        extraction_id = "prediction_extraction_id"
+
+        previous_suggestions = [
+            {
+                "run_name": tenant,
+                "extraction_name": extraction_id,
+                "tenant": tenant,
+                "id": extraction_id,
+                "xml_file_name": "previous_file_name",
+                "text": "previous_text_predicted",
+                "segment_text": "previous_segment_text",
+                "page_number": 1,
+            },
+            {
+                "run_name": tenant,
+                "extraction_name": "other_extraction_id",
+                "tenant": tenant,
+                "id": "other_extraction_id",
+                "xml_file_name": "other_extraction_file_name",
+                "text": "other_extraction_text_predicted",
+                "segment_text": "other_extraction_segment_text",
+                "page_number": 1,
+            },
+        ]
+
+        insert_documents("suggestions", previous_suggestions)
+
+        new_suggestions = [
+            Suggestion(
+                tenant=tenant,
+                id=extraction_id,
+                xml_file_name="new_file_name",
+                entity_name="entity_name",
+                text="new_text_predicted",
+                segment_text="new_segment_text",
+                page_number=2,
+            )
+        ]
+
+        with TestClient(app) as client:
+            response = client.post(
+                f"/save_suggestions/{tenant}/{extraction_id}", json=[s.model_dump() for s in new_suggestions]
+            )
+            second_response = client.get(f"/get_suggestions/{tenant}/{extraction_id}")
+
+        self.assertEqual(200, response.status_code)
+
+        suggestions = json.loads(second_response.json())
+
+        self.assertEqual(1, len(suggestions))
+        self.assertEqual("new_file_name", suggestions[0]["xml_file_name"])
+        self.assertEqual(2, count_documents("suggestions"))
+
     def test_get_samples_training(self):
         tenant = "example_tenant_name"
         extraction_id = "extraction_id"

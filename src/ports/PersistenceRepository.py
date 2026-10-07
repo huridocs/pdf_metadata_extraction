@@ -20,23 +20,11 @@ class PersistenceRepository(ABC):
         pass
 
     @abstractmethod
-    def load_prediction_data(self, extraction_identifier: ExtractionIdentifier) -> list[PredictionData]:
-        pass
-
-    @abstractmethod
     def load_and_delete_prediction_data(self, extraction_identifier: ExtractionIdentifier) -> list[PredictionData]:
         pass
 
     @abstractmethod
     def save_labeled_data(self, extraction_identifier: ExtractionIdentifier, labeled_data: LabeledData):
-        pass
-
-    @abstractmethod
-    def delete_labeled_data(self, extraction_identifier: ExtractionIdentifier):
-        pass
-
-    @abstractmethod
-    def load_labeled_data(self, extraction_identifier: ExtractionIdentifier) -> list[LabeledData]:
         pass
 
     @abstractmethod

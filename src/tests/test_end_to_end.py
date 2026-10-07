@@ -431,7 +431,9 @@ class TestEndToEnd(TestCase):
 
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
-        result = self.get_results_message()
+        result = self.get_results_message(max_wait_seconds=600)
+        self.assertIsNotNone(result, "Timed out waiting for create_model result")
+        self.assertTrue(result.success, f"create_model failed: {result.error_message}")
 
         predict_data_json = {
             "tenant": tenant,
@@ -460,6 +462,8 @@ class TestEndToEnd(TestCase):
         QUEUE.sendMessage(delay=0).message(task.model_dump_json()).execute()
 
         results_message = self.get_results_message()
+        self.assertIsNotNone(results_message, "Timed out waiting for suggestions result")
+        self.assertTrue(results_message.success, f"suggestions failed: {results_message.error_message}")
         response = requests.get(results_message.data_url)
 
         suggestions = json.loads(response.json())
@@ -729,8 +733,8 @@ class TestEndToEnd(TestCase):
             self.assertEqual(Value(id="1", label="test PDF"), suggestion.values[0])
 
     @staticmethod
-    def get_results_message() -> ResultsMessage | ParagraphExtractionResultsMessage | None:
-        for i in range(40):
+    def get_results_message(max_wait_seconds: int = 120) -> ResultsMessage | ParagraphExtractionResultsMessage | None:
+        for i in range(max_wait_seconds // 3):
             time.sleep(3)
             queue = RedisSMQ(
                 host=REDIS_HOST,

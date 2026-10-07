@@ -27,6 +27,9 @@ test-cloud:
 wait-for-queues:
 	. .venv/bin/activate; command cd scripts; command python wait_for_queues.py
 
+download-flair-models:
+	. .venv/bin/activate; python scripts/download_flair_models.py
+
 remove-docker-containers:
 	docker compose ps -q | xargs docker rm
 
